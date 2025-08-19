@@ -16,7 +16,7 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("1.21.1-R0.1-SNAPSHOT")
 
-    implementation("net.kyori:adventure-text-minimessage:4.23.0")
+    implementation("net.kyori:adventure-text-minimessage:4.24.0")
     compileOnly("de.oliver:FancyNpcs:2.7.0")
     compileOnly("de.oliver:FancyHolograms:2.7.0")
     compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
