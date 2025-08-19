@@ -1,0 +1,141 @@
+name: AdvancedCreative
+version: 1.0.0
+main: com.ratger.acreative.AdvancedCreative
+api-version: '1.21.1'
+authors: [ ratger ]
+description: Adds some silly features
+website: https://minetoday.org
+softdepend: [ProtocolLib]
+
+commands:
+  ahelp:
+    description: Show helpful commands
+    usage: /ahelp
+  sit:
+    description: Sit down
+    usage: /sit
+  lay:
+    description: Lay down
+    usage: /lay
+  crawl:
+    description: Crawl
+    usage: /crawl
+  hide:
+    description: Hide a pepich from player view
+    usage: /hide <player>
+  sneeze:
+    description: Literally sneeze
+    usage: /sneeze
+  glide:
+    description: Toggle gliding without elytra
+    usage: /glide
+  gravity:
+    description: Sets custom gravity
+    usage: /gravity <value>
+  resize:
+    description: Sets custom size
+    usage: /resize <value>
+  strength:
+    description: Sets custom strength
+    usage: /strength <value>
+  health:
+    description: Sets custom max health
+    usage: /health <value>
+  freeze:
+    description: Freezes the player
+    usage: /freeze
+  bind:
+    description: Bind a command to item
+    usage: /bind <type> <command>
+  glow:
+    description: Toggles glowing effect
+    usage: /glow
+  spit:
+    description: Literally spit
+    usage: /spit
+  piss:
+    description: Literally piss
+    usage: /piss
+  disguise:
+    description: Turns the player into a mob
+    usage: /disguise <type>
+  effects:
+    description: Applies an effect to player
+    usage: /effects <effect> [level]
+  slap:
+    description: Toggles slap mode
+    usage: /slap
+
+permissions:
+  advancedcreative.ahelp:
+    description: Allows using /ahelp
+    default: true
+  advancedcreative.sit:
+    description: Allows using /sit
+    default: op
+  advancedcreative.lay:
+    description: Allows using /lay
+    default: op
+  advancedcreative.crawl:
+    description: Allows using /crawl
+    default: op
+  advancedcreative.hide:
+    description: Allows using /hide
+    default: op
+  advancedcreative.hide.bypass:
+    description: Prevents hiding the player
+    default: op
+  advancedcreative.sneeze:
+    description: Allows using /sneeze
+    default: op
+  advancedcreative.glide:
+    description: Allows using /glide
+    default: op
+  advancedcreative.gravity:
+    description: Allows using /gravity
+    default: op
+  advancedcreative.resize:
+    description: Allows using /resize
+    default: op
+  advancedcreative.strength:
+    description: Allows using /strength
+    default: op
+  advancedcreative.health:
+    description: Allows using /health
+    default: op
+  advancedcreative.freeze:
+    description: Allows using /freeze
+    default: op
+  advancedcreative.freeze.other:
+    description: Allows using /freeze <player>
+    default: op
+  advancedcreative.bind:
+    description: Allows using /bind
+    default: op
+  advancedcreative.glow:
+    description: Allows using /glow
+    default: op
+  advancedcreative.spit:
+    description: Allows using /spit
+    default: op
+  advancedcreative.piss:
+    description: Allows using /piss
+    default: op
+  advancedcreative.disguise:
+    description: Allows using /disguise
+    default: op
+  advancedcreative.disguise.full:
+    description: Allows using /disguise & all types
+    default: op
+  advancedcreative.effects:
+    description: Allows using /effects
+    default: op
+  advancedcreative.effects.admin:
+    description: Allows using /effects & target
+    default: op
+  advancedcreative.slap:
+    description: Allows using /slap
+    default: op
+  advancedcreative.slap.bypass:
+    description: Prevents slapping the player
+    default: op

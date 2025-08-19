@@ -1,0 +1,47 @@
+cooldowns:
+  help:       150
+  bind:       150
+  glide:      150
+  gravity:    150
+  resize:     150
+  strength:   150
+  health:     150
+  hide:       500
+  sit:        500
+  lay:        500
+  crawl:      500
+  glow:       500
+  disguise:   500
+  effects:    500
+  slap:       500
+  freeze:     3500
+  sneeze:     5000
+  spit:       5000
+  piss:       30000
+  hideState:  1800000 # 30 минут
+
+blocked-disguises:
+  - ARROW
+  - BLOCK_DISPLAY
+  - EGG
+  - ENDER_PEARL
+  - EVOKER_FANGS
+  - EXPERIENCE_BOTTLE
+  - EXPERIENCE_ORB
+  - FALLING_BLOCK
+  - FIREWORK_ROCKET
+  - FISHING_BOBBER
+  - INTERACTION
+  - ITEM
+  - ITEM_DISPLAY
+  - LIGHTNING_BOLT
+  - LLAMA_SPIT
+  - MARKER
+  - PAINTING
+  - POTION
+  - SNOWBALL
+  - SPECTRAL_ARROW
+  - TEXT_DISPLAY
+  - TNT
+  - TRIDENT
+  - UNKNOWN

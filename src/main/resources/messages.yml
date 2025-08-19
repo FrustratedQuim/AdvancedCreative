@@ -1,0 +1,120 @@
+messages:
+  ahelp: |
+    <#FFD700><st>                      </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                      </st>
+    <#FFE68A>/sit <#EDC800>- <#FFF3E0>Сесть
+    <#FFE68A>/lay <#EDC800>- <#FFF3E0>Лечь
+    <#FFE68A>/crawl <#EDC800>- <#FFF3E0>Ползти
+    <#FFE68A>/hide <игрок> <#EDC800>- <#FFF3E0>Скрыть игрока
+    <#FFE68A>/strength <значение> <#EDC800>- <#FFF3E0>Установить силу удара
+    <#FFE68A>/health <значение> <#EDC800>- <#FFF3E0>Установить максимальное здоровье
+    <#FFE68A>/effects <эффект> [уровень] <#EDC800>- <#FFF3E0>Наложить эффект зелья
+    <#FFE68A>/sneeze <#EDC800>- <#FFF3E0>Чихнуть, вот это да
+    <#FFE68A>/glide <#EDC800>- <#FFF3E0>Включить парение без элитр
+    <#FFE68A>/gravity <значение> <#EDC800>- <#FFF3E0>Изменить свою гравитацию
+    <#FFE68A>/resize <значение> <#EDC800>- <#FFF3E0>Изменить размер персонажа
+    <#FFE68A>/freeze <#EDC800>- <#FFF3E0>Замёрзнуть? Буквально
+    <#FFE68A>/bind <тип> <команда> <#EDC800>- <#FFF3E0>Забиндить команду на предмет
+    <#FFE68A>/disguise <существо> <#EDC800>- <#FFF3E0>Превратиться в что-то
+    <#FFE68A>/glow <#EDC800>- <#FFF3E0>Включить свечение
+    <#FFE68A>/spit <#EDC800>- <#FFF3E0>Плюнуть, агрессивно
+    <#FFE68A>/piss <#EDC800>- <#FFF3E0>Пописать на негодяев
+    <#FFD700><st>                                                                             </st>
+  # Permissions
+  permission-unknown: "<dark_red>▍ <#FF1500>У вас недостаточно прав!"
+  permission-rise: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#24B0B0>(<b>ʀɪѕᴇ</b>)"
+  permission-flare: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#21CF83>(<b>ꜰʟᴀʀᴇ</b>)"
+  permission-shine: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#9265FC>(<b>ѕʜɪɴᴇ</b>)"
+  permission-spark: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#CB55F9>(<b>ѕᴘᴀʀᴋ</b>)"
+  permission-sunny: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#FC7D32>(<b>ѕᴜɴɴʏ</b>)"
+  permission-horizon: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#FCFA00>(<b>ʜᴏʀɪᴢᴏɴ</b>)"
+
+  # General errors
+  info-empty: ""
+  error-unknown-value: "<dark_red>▍ <#FF1500>Неизвестное значение!"
+  error-unknown-player: "<dark_red>▍ <#FF1500>Неизвестный игрок."
+  error-cannot-lay: "<dark_red>▍ <#FF1500>Вы не можете делать это лёжа!"
+  error-cannot-disguised: "<dark_red>▍ <#FF1500>Вы не можете делать это в облике!"
+  error-cannot-other-disguised: "<dark_red>▍ <#FF1500>Это не получится сделать в облике!"
+  error-too-small: "<dark_red>▍ <#FF1500>Вы слишком маленькие для этого!"
+  error-too-large: "<dark_red>▍ <#FF1500>Вы слишком большие для этого!"
+
+  # Action bar
+  action-pose-unset: "<#00FF40>Нажмите шифт, чтобы встать"
+  action-cooldown: "<#FF1500>Подождите %time%"
+
+  # Air actions
+  error-sit-in-air: "<dark_red>▍ <#FF1500>Вы не можете сидеть в воздухе!"
+  error-lay-in-air: "<dark_red>▍ <#FF1500>Вы не можете лежать в воздухе!"
+  error-crawl-in-air: "<dark_red>▍ <#FF1500>Вы не можете ползать в воздухе!"
+
+  # Glide & crawl
+  info-glide-on: "<dark_green>▍ <#00FF40>Режим парения без элитр включён!"
+  info-glide-off: "<dark_red>▍ <#FF1500>Режим парения без элитр отключён."
+  info-crawl-on: "<dark_green>▍ <#00FF40>Режим ползания включён!"
+  info-crawl-off: "<dark_red>▍ <#FF1500>Режим ползания отключён."
+
+  # Hide
+  usage-hide: "<dark_red>▍ <#FF1500>Используйте /hide <ник_игрока>"
+  error-hide-self: "<dark_red>▍ <#FF1500>Вы не можете скрыть себя!"
+  success-hide: "<dark_green>▍ <#00FF40>Игрок %target% был скрыт от вас на 30 минут!"
+  success-hide-removed: "<dark_red>▍ <#FF1500>Игрок %target% снова виден для вас."
+  notify-hide: "<dark_red>▍ <#FF1500>Игрок %hider% скрыл вас для себя на 30 минут."
+  error-hide-bypass: "<dark_red>▍ <#FF1500>Вы не можете скрыть этого игрока!"
+
+  # Gravity
+  usage-gravity: "<dark_red>▍ <#FF1500>Используйте /gravity <значение>"
+  success-gravity-set: "<dark_green>▍ <#00FF40>Установлена гравитация: %value%"
+  success-gravity-reset: "<dark_green>▍ <#00FF40>Гравитация восстановлена!"
+
+  # Resize
+  usage-resize: "<dark_red>▍ <#FF1500>Используйте /resize <значение>"
+  success-resize-set: "<dark_green>▍ <#00FF40>Установлен размер: %value%"
+  success-resize-reset: "<dark_green>▍ <#00FF40>Размер восстановлен!"
+
+  # Strength
+  usage-strength: "<dark_red>▍ <#FF1500>Используйте /strength <значение>"
+  success-strength-set: "<dark_green>▍ <#00FF40>Установлена сила: %value%"
+  success-strength-reset: "<dark_green>▍ <#00FF40>Сила восстановлена!"
+
+  # Health
+  usage-health: "<dark_red>▍ <#FF1500>Используйте /health <значение>"
+  success-health-set: "<dark_green>▍ <#00FF40>Установлено максимальное здоровье: %value%"
+  success-health-reset: "<dark_green>▍ <#00FF40>Максимальное здоровье восстановлен!"
+
+  # Freeze
+  success-freeze: "<dark_green>▍ <#00FF40>Игрок %target% был заморожен!"
+  success-freeze-self: "<dark_green>▍ <#00FF40>Вы заморозили себя!"
+
+  # Bind
+  usage-bind: "<dark_red>▍ <#FF1500>Используйте /bind <тип> <команда>"
+  error-bind-type: "<dark_red>▍ <#FF1500>Неизвестный тип бинда."
+  error-bind-no-command: "<dark_red>▍ <#FF1500>Укажите команду для бинда."
+  success-bind-item: "<dark_green>▍ <#00FF40>Команда успешно наложена на предмет!"
+  success-bind-hand: "<dark_green>▍ <#00FF40>Команда успешно наложена на пустую руку!"
+  success-bind-reset-item: "<dark_red>▍ <#FF1500>Бинд снят с предмета."
+  success-bind-reset-hand: "<dark_red>▍ <#FF1500>Бинд снят с пустой руки."
+  success-bind-reset-all: "<dark_red>▍ <#FF1500>Все бинды сброшены."
+
+  # Glow
+  info-glow-on: "<dark_green>▍ <#00FF40>Свечение включено."
+  info-glow-off: "<dark_red>▍ <#FF1500>Свечение отключено."
+
+  # Disguise
+  usage-disguise: "<dark_red>▍ <#FF1500>Используйте /disguise <существо>"
+  error-disguise-unknown: "<dark_red>▍ <#FF1500>Неизвестное существо!"
+  error-disguise-disabled: "<dark_red>▍ <#FF1500>Заблокировано из-за непредсказуемого поведения."
+  success-disguise: "<dark_green>▍ <#00FF40>Вы успешно превратились!"
+  success-disguise-removed: "<dark_green>▍ <#00FF40>Ваш облик восстановлен."
+
+  # Effects
+  usage-effects: "<dark_red>▍ <#FF1500>Используйте /effects <эффект> [уровень]"
+  error-effect-unknown: "<dark_red>▍ <#FF1500>Неизвестный эффект!"
+  success-effect: "<dark_green>▍ <#00FF40>Эффект успешно наложен."
+  success-effect-target: "<dark_green>▍ <#00FF40>Эффект успешно наложен на %player%."
+  success-effect-removed: "<dark_red>▍ <#FF1500>Эффект снят."
+  success-effects-cleared: "<dark_red>▍ <#FF1500>Все эффекты сняты."
+  success-effect-removed-target: "<dark_red>▍ <#FF1500>Эффект снят с %player%."
+
+  # Slap
+  info-slap-on: "<dark_green>▍ <#00FF40>Режим пощёчин включён!"
+  info-slap-off: "<dark_red>▍ <#FF1500>Режим пощёчин отключён."
