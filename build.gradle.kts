@@ -21,7 +21,7 @@ dependencies {
     compileOnly("de.oliver:FancyHolograms:2.7.0")
     compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.10")
 }
 
 java {
