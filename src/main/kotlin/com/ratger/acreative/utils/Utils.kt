@@ -65,7 +65,6 @@ class Utils(
     fun isCustomEffect(player: Player) = effectsManager.activeEffects.containsKey(player.uniqueId)
     fun isSlapping(player: Player) = slapManager.slappingPlayers.contains(player)
 
-    fun stopAllSits() = stopAll(sitManager.sittingMap) { sitManager.unsitPlayer(it) }
     fun stopAllGlides() = stopAll(glideManager.glidingPlayers.associateWith { true }) { glideManager.unglidePlayer(it) }
     fun stopAllCrawls() = stopAll(crawlManager.crawlingPlayers) { crawlManager.uncrawlPlayer(it) }
     fun stopAllLays() = stopAll(layManager.layingMap) { layManager.unlayPlayer(it) }
@@ -149,13 +148,50 @@ class Utils(
         return true
     }
 
-    fun unsetAllPoses(player: Player) {
-        checkSitUnsit(player)
+    fun stopAllSits() {
+        val playersToUnsit = mutableListOf<Player>()
+        val processed = mutableSetOf<Player>()
+        val maxDepth = 10
+
+        for (player in sitManager.sittingMap.keys) {
+            if (player in processed) continue
+            var current: Player? = player
+            val stack = mutableListOf<Player>()
+            var depth = 0
+            while (current != null && depth < maxDepth) {
+                if (current in processed) break
+                stack.add(current)
+                processed.add(current)
+                current = sitManager.getHeadPassenger(current)
+                depth++
+            }
+            playersToUnsit.addAll(stack.reversed())
+        }
+
+        playersToUnsit.forEach { player ->
+            if (sitManager.sittingMap.containsKey(player)) {
+                sitManager.unsitPlayer(player)
+            }
+        }
+    }
+
+    fun unsetAllPoses(player: Player, removeHeadPassengers: Boolean = false) {
         checkGlideUnglide(player)
         checkCrawlUncrawl(player)
         checkLayingUnlay(player)
         checkFreezeUnfreeze(player)
         checkPissStop(player)
+
+        if (isSitting(player)) {
+            sitManager.unsitPlayer(player, !removeHeadPassengers)
+        }
+
+        if (removeHeadPassengers) {
+            val headPassenger = sitManager.getHeadPassenger(player)
+            if (headPassenger != null) {
+                sitManager.unsitPlayer(headPassenger, true)
+            }
+        }
     }
 
     fun unsetAllStates(player: Player) {

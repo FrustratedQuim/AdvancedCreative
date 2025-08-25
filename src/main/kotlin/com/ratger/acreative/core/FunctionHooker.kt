@@ -16,12 +16,14 @@ import com.ratger.acreative.commands.lay.LayManager
 import com.ratger.acreative.commands.piss.PissManager
 import com.ratger.acreative.commands.resize.ResizeManager
 import com.ratger.acreative.commands.sit.SitManager
+import com.ratger.acreative.commands.sit.SitheadManager
 import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.utils.EntityManager
 import com.ratger.acreative.utils.EventHandler
+import com.ratger.acreative.utils.PacketHandler
 import com.ratger.acreative.utils.PlayerStateManager
 import com.ratger.acreative.utils.Utils
 
@@ -38,6 +40,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     lateinit var entityManager: EntityManager
         private set
     lateinit var sitManager: SitManager
+        private set
+    lateinit var sitheadManager: SitheadManager
         private set
     lateinit var glideManager: GlideManager
         private set
@@ -75,6 +79,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var utils: Utils
         private set
+    lateinit var packetHandler: PacketHandler
+        private set
 
     fun init() {
         configManager = ConfigManager(this)
@@ -82,8 +88,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
 
         messageManager = MessageManager(this, configManager)
         playerStateManager = PlayerStateManager(this)
-        entityManager = EntityManager()
+        entityManager = EntityManager(this)
         sitManager = SitManager(this)
+        sitheadManager = SitheadManager(this)
         glideManager = GlideManager(this)
         sneezeManager = SneezeManager(this)
         crawlManager = CrawlManager(this)
@@ -101,6 +108,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         disguiseManager = DisguiseManager(this)
         effectsManager = EffectsManager(this)
         slapManager = SlapManager(this)
+        packetHandler = PacketHandler(this)
 
         utils = Utils(
             this,
@@ -142,7 +150,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             "piss",
             "disguise",
             "effects",
-            "slap"
+            "slap",
+            "sithead"
         )
         for (cmd in commands) {
             plugin.getCommand(cmd)?.setExecutor(commandManager)
@@ -153,6 +162,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         sitManager.startArmorStandChecker()
         crawlManager.startBarrierUpdater()
         layManager.startArmorStandChecker()
+        packetHandler.register()
     }
 
     fun shutdown() {
@@ -174,5 +184,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         utils.stopAllCustomEffects()
         utils.stopAllSlaps()
         messageManager.clearAllTasks()
+        packetHandler.unregister()
     }
 }

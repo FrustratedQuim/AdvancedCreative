@@ -1,11 +1,11 @@
 name: AdvancedCreative
 version: 1.0.0
 main: com.ratger.acreative.AdvancedCreative
-api-version: '1.21.1'
+api-version: '1.21'
 authors: [ ratger ]
 description: Adds some silly features
 website: https://minetoday.org
-softdepend: [ProtocolLib]
+depend: [ packetevents ]
 
 commands:
   ahelp:
@@ -14,6 +14,9 @@ commands:
   sit:
     description: Sit down
     usage: /sit
+  sithead:
+    description: Sit player on another player
+    usage: /sithead <target> [player]
   lay:
     description: Lay down
     usage: /lay
@@ -72,6 +75,12 @@ permissions:
     default: true
   advancedcreative.sit:
     description: Allows using /sit
+    default: op
+  advancedcreative.sit.head:
+    description: Allows to sit on head of other player
+    default: op
+  advancedcreative.sithead:
+    description: Allows using /sithead
     default: op
   advancedcreative.lay:
     description: Allows using /lay

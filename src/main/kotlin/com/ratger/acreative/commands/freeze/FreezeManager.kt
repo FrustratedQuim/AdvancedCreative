@@ -1,23 +1,30 @@
 package com.ratger.acreative.commands.freeze
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
+import com.github.retrooper.packetevents.protocol.world.Location
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes
+import com.github.retrooper.packetevents.util.Quaternion4f
+import com.github.retrooper.packetevents.util.Vector3f
 import com.ratger.acreative.core.FunctionHooker
+import me.tofaa.entitylib.meta.display.BlockDisplayMeta
+import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.entity.BlockDisplay
+import org.bukkit.GameMode
 import org.bukkit.entity.Player
-import org.bukkit.util.Transformation
-import org.joml.Quaternionf
-import org.joml.Vector3f
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
 class FreezeManager(private val hooker: FunctionHooker) {
 
-    val frozenPlayers = ConcurrentHashMap<Player, MutableList<BlockDisplay>>()
+    val frozenPlayers = ConcurrentHashMap<Player, MutableList<WrapperEntity>>()
     private val freezeTaskIds = ConcurrentHashMap<Player, Int>()
-    val hiddenFreezeBlocks = ConcurrentHashMap<UUID, MutableMap<UUID, MutableList<BlockDisplay>>>()
+    val hiddenFreezeBlocks = ConcurrentHashMap<UUID, MutableMap<UUID, MutableList<WrapperEntity>>>()
 
     fun prepareToFreezePlayer(initiator: Player, targetName: String?) {
         if (targetName == null || !initiator.hasPermission("advancedcreative.freeze.other")) {
@@ -41,7 +48,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
     }
 
     fun freezePlayer(player: Player, initiator: Player? = null) {
-        if (hooker.utils.isDisguised(player)) {
+        if (hooker.utils.isDisguised(player) || player.gameMode != GameMode.SPECTATOR) {
             return
         }
         if (frozenPlayers.containsKey(player)) {
@@ -53,14 +60,14 @@ class FreezeManager(private val hooker: FunctionHooker) {
         frozenPlayers[player] = blocks
 
         if (hooker.utils.isGlowing(player)) {
-            blocks.forEach { it.isGlowing = true }
+            blocks.forEach { it.entityMeta.isGlowing = true }
         }
 
         for (hider in Bukkit.getOnlinePlayers()) {
             if (hider != player && hooker.utils.isHiddenFromPlayer(hider, player)) {
                 val hiddenBlocks = hiddenFreezeBlocks.computeIfAbsent(hider.uniqueId) { ConcurrentHashMap() }
                 hiddenBlocks[player.uniqueId] = blocks
-                blocks.forEach { hider.hideEntity(hooker.plugin, it) }
+                blocks.forEach { it.removeViewer(hider.uniqueId) }
             }
         }
 
@@ -86,7 +93,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun unfreezePlayer(player: Player) {
         frozenPlayers[player]?.forEach {
-            it.isGlowing = false
+            it.entityMeta.isGlowing = false
             it.remove()
         }
         frozenPlayers.remove(player)
@@ -97,8 +104,8 @@ class FreezeManager(private val hooker: FunctionHooker) {
             if (hiddenBlocks != null && hiddenBlocks.containsKey(player.uniqueId)) {
                 if (!hooker.utils.isHiddenFromPlayer(hider, player)) {
                     hiddenBlocks[player.uniqueId]?.forEach { block ->
-                        if (block.isValid) {
-                            hider.showEntity(hooker.plugin, block)
+                        if (block.isSpawned) {
+                            block.addViewer(hider.uniqueId)
                         }
                     }
                 }
@@ -115,9 +122,9 @@ class FreezeManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun spawnFreezeBlocks(player: Player): MutableList<BlockDisplay> {
+    private fun spawnFreezeBlocks(player: Player): MutableList<WrapperEntity> {
         val location = player.location
-        val blocks = mutableListOf<BlockDisplay>()
+        val blocks = mutableListOf<WrapperEntity>()
 
         for (viewer in location.world?.players?.filter { it.isOnline } ?: emptyList()) {
             if (viewer != player && hooker.utils.isHiddenFromPlayer(viewer, player)) {
@@ -133,7 +140,11 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
         val scale = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE)?.value ?: 1.0
         val blockCount = 4
-        val data = Material.ICE.createBlockData()
+        val api = PacketEvents.getAPI()
+        val blockState = WrappedBlockState.getDefaultState(
+            api.serverManager.version.toClientVersion(),
+            StateTypes.ICE
+        )
 
         val hitboxRadius = 0.05 * scale
         val centerBias = -0.1 * scale
@@ -190,27 +201,46 @@ class FreezeManager(private val hooker: FunctionHooker) {
             val pitch = Random.nextFloat() * 180f - 90f
             val size = (Random.nextDouble(0.5, 0.6) * scale).toFloat()
 
-            val display = blockLoc.world.spawn(blockLoc, BlockDisplay::class.java) { d ->
-                d.block = data
-                d.transformation = Transformation(
-                    Vector3f(0f, 0f, 0f),
-                    Quaternionf().rotateXYZ(
-                        Math.toRadians(pitch.toDouble()).toFloat(),
-                        Math.toRadians(yaw.toDouble()).toFloat(),
-                        0f
-                    ),
-                    Vector3f(size, size, size),
-                    Quaternionf()
-                )
+            val entity = WrapperEntity(EntityTypes.BLOCK_DISPLAY)
+            val blockMeta = entity.entityMeta as BlockDisplayMeta
+            blockMeta.blockId = blockState.globalId
+            blockMeta.scale = Vector3f(size, size, size)
+
+            val yawRad = Math.toRadians(yaw.toDouble()).toFloat()
+            val pitchRad = Math.toRadians(pitch.toDouble()).toFloat()
+            val cy = cos(yawRad * 0.5f)
+            val sy = sin(yawRad * 0.5f)
+            val cp = cos(pitchRad * 0.5f)
+            val sp = sin(pitchRad * 0.5f)
+            blockMeta.rightRotation = Quaternion4f(
+                sp * cy,
+                cp * sy,
+                -sp * sy,
+                cp * cy
+            )
+
+            val packetLoc = Location(
+                blockLoc.x,
+                blockLoc.y,
+                blockLoc.z,
+                blockLoc.yaw,
+                blockLoc.pitch
+            )
+
+            entity.addViewer(player.uniqueId)
+            for (viewer in location.world?.players?.filter { it.isOnline && it != player && !hooker.utils.isHiddenFromPlayer(it, player) } ?: emptyList()) {
+                entity.addViewer(viewer.uniqueId)
             }
-            blocks.add(display)
+            entity.spawn(packetLoc)
+
+            blocks.add(entity)
         }
         return blocks
     }
 
     fun updateIceGlowing(player: Player, isGlowing: Boolean) {
         frozenPlayers[player]?.forEach { block ->
-            block.isGlowing = isGlowing && !hiddenFreezeBlocks.any { it.value.containsKey(player.uniqueId) }
+            block.entityMeta.isGlowing = isGlowing && !hiddenFreezeBlocks.any { it.value.containsKey(player.uniqueId) }
         }
     }
 }

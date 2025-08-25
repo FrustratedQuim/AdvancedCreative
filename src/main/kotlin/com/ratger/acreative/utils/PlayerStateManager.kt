@@ -77,8 +77,11 @@ class PlayerStateManager(
             val newItem = inventory.getItem(newSlot)?.clone()
             state.hotbarItems[newSlot] = newItem
             inventory.setItem(newSlot, null)
-
             state.currentHotbarSlot = newSlot
+
+            if (hooker.utils.isLaying(player)) {
+                hooker.layManager.updateMainHandEquipment(player)
+            }
         }
     }
 

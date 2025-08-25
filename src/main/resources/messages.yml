@@ -19,6 +19,7 @@ messages:
     <#FFE68A>/spit <#EDC800>- <#FFF3E0>Плюнуть, агрессивно
     <#FFE68A>/piss <#EDC800>- <#FFF3E0>Пописать на негодяев
     <#FFD700><st>                                                                             </st>
+
   # Permissions
   permission-unknown: "<dark_red>▍ <#FF1500>У вас недостаточно прав!"
   permission-rise: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#24B0B0>(<b>ʀɪѕᴇ</b>)"
@@ -47,6 +48,15 @@ messages:
   error-lay-in-air: "<dark_red>▍ <#FF1500>Вы не можете лежать в воздухе!"
   error-crawl-in-air: "<dark_red>▍ <#FF1500>Вы не можете ползать в воздухе!"
 
+  # Sithead
+  usage-sithead: "<dark_red>▍ <#FF1500>Используйте /sithead <цель> [игрок]"
+  sithead-hidden-by-one: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл вас!"
+  sithead-hidden-by-one-target: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл %player%!"
+  sithead-hidden-self: "<dark_red>▍ <#FF1500>Этот игрок скрыл вас от себя!"
+  sithead-hidden-self-target: "<dark_red>▍ <#FF1500>Этот игрок скрыл %player% от себя!"
+  sithead-you-hide-one: "<dark_red>▍ <#FF1500>Вы скрыли одного из сидящих игроков!"
+  sithead-one-hidden-by-player: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыт %player%!"
+
   # Glide & crawl
   info-glide-on: "<dark_green>▍ <#00FF40>Режим парения без элитр включён!"
   info-glide-off: "<dark_red>▍ <#FF1500>Режим парения без элитр отключён."
@@ -54,7 +64,7 @@ messages:
   info-crawl-off: "<dark_red>▍ <#FF1500>Режим ползания отключён."
 
   # Hide
-  usage-hide: "<dark_red>▍ <#FF1500>Используйте /hide <ник_игрока>"
+  usage-hide: "<dark_red>▍ <#FF1500>Используйте /hide <игрок>"
   error-hide-self: "<dark_red>▍ <#FF1500>Вы не можете скрыть себя!"
   success-hide: "<dark_green>▍ <#00FF40>Игрок %target% был скрыт от вас на 30 минут!"
   success-hide-removed: "<dark_red>▍ <#FF1500>Игрок %target% снова виден для вас."
@@ -101,8 +111,8 @@ messages:
 
   # Disguise
   usage-disguise: "<dark_red>▍ <#FF1500>Используйте /disguise <существо>"
-  error-disguise-unknown: "<dark_red>▍ <#FF1500>Неизвестное существо!"
-  error-disguise-disabled: "<dark_red>▍ <#FF1500>Заблокировано из-за непредсказуемого поведения."
+  error-disguise-type: "<dark_red>▍ <#FF1500>Неизвестное существо!"
+  error-disguise-blocked: "<dark_red>▍ <#FF1500>Заблокировано из-за непредсказуемого поведения."
   success-disguise: "<dark_green>▍ <#00FF40>Вы успешно превратились!"
   success-disguise-removed: "<dark_green>▍ <#00FF40>Ваш облик восстановлен."
 

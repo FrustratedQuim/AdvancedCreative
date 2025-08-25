@@ -29,6 +29,7 @@ class SitManager(private val hooker: FunctionHooker) {
         val blockBelow = player.location.clone().add(0.0, -1.0, 0.0).block
         return player.gameMode != GameMode.SPECTATOR &&
                 !player.isFlying &&
+                !player.isInsideVehicle &&
                 blockBelow.type.isSolid
     }
 
@@ -62,54 +63,185 @@ class SitManager(private val hooker: FunctionHooker) {
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
+            } else if (!armorStand.passengers.contains(player)) {
+                armorStand.remove()
+                sittingMap.remove(player)
             }
         }, ARMORSTAND_REATTACH_DELAY_TICKS)
     }
 
-    fun unsitPlayer(player: Player) {
-        val sitData = sittingMap[player] ?: return
-        val block = sitData.block
-        var targetY = player.location.y
-        if (block != null) {
-            targetY = determineStyleAndHeight(block, block.location.y).second
-        } else if (sitData.style == "basic") {
-            val checkY = player.location.y + 0.2
-            val checkBlock = player.world.getBlockAt(
-                player.location.blockX, checkY.toInt(), player.location.blockZ
-            )
-            targetY = determineStyleAndHeight(checkBlock, checkY.toInt().toDouble()).second
+    fun sitOnHead(player: Player, target: Player?, sender: Player? = null) {
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - (lastInteract[player.uniqueId] ?: 0L) < INTERACT_DELAY_MS) return
+        lastInteract[player.uniqueId] = currentTime
+
+        if (!hooker.utils.checkAndRemovePose(player)) return
+
+        var finalTarget = target ?: return
+        var currentTarget: Player? = target
+        val checkedPlayers = mutableSetOf<Player>()
+        val maxDepth = 10
+        var depth = 0
+        while (currentTarget != null && depth < maxDepth) {
+            if (currentTarget in checkedPlayers) return
+            checkedPlayers.add(currentTarget)
+            if (currentTarget == player) return
+            finalTarget = currentTarget
+            currentTarget = getHeadPassenger(currentTarget)
+            depth++
         }
-        player.world.getEntity(sitData.armorStandId)?.remove()
-        sittingMap.remove(player)
-        player.teleport(player.location.clone().apply { y = targetY })
-        hooker.messageManager.sendMiniMessage(player, "ACTION_STOP")
-        hooker.playerStateManager.refreshPlayerPose(player)
+
+        if (hooker.utils.isHiddenFromPlayer(finalTarget, player)) {
+            hooker.messageManager.sendMiniMessage(player, key = "sithead-hidden-self")
+            return
+        }
+
+        var baseTarget: Player? = finalTarget
+        val baseCheckedPlayers = mutableSetOf<Player>()
+        depth = 0
+        do {
+            if (baseTarget == null) break
+            if (baseTarget in baseCheckedPlayers) return
+            baseCheckedPlayers.add(baseTarget)
+            if (baseTarget == player) return
+            if (hooker.utils.isHiddenFromPlayer(baseTarget, player)) {
+                hooker.messageManager.sendMiniMessage(sender ?: player, key = "sithead-hidden-by-one")
+                return
+            }
+            val sitData = sittingMap[baseTarget]
+            if (sitData == null || sitData.style != "head") {
+                break
+            }
+            val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break
+            baseTarget = baseStand.vehicle as? Player ?: break
+            depth++
+            if (depth >= maxDepth) break
+        } while (true)
+
+        currentTarget = target
+        checkedPlayers.clear()
+        depth = 0
+        while (currentTarget != null && depth < maxDepth) {
+            if (currentTarget in checkedPlayers) return
+            checkedPlayers.add(currentTarget)
+            if (hooker.utils.isHiddenFromPlayer(player, currentTarget)) {
+                hooker.messageManager.sendMiniMessage(player, key = "sithead-you-hide-one")
+                return
+            }
+            currentTarget = getHeadPassenger(currentTarget)
+            depth++
+        }
+
+        baseTarget = finalTarget
+        checkedPlayers.clear()
+        depth = 0
+        do {
+            if (baseTarget == null) break
+            if (baseTarget in checkedPlayers) return
+            checkedPlayers.add(baseTarget)
+            if (hooker.utils.isHiddenFromPlayer(player, baseTarget)) {
+                hooker.messageManager.sendMiniMessage(player, key = "sithead-you-hide-one")
+                return
+            }
+            val sitData = sittingMap[baseTarget]
+            if (sitData == null || sitData.style != "head") {
+                break
+            }
+            val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break
+            baseTarget = baseStand.vehicle as? Player ?: break
+            depth++
+            if (depth >= maxDepth) break
+        } while (true)
+
+        val location = finalTarget.location.clone().apply {
+            y += 1.8
+            pitch = 0f
+        }
+        val armorStand = hooker.entityManager.createArmorStand(location, finalTarget.location.yaw)
+
+        sittingMap[player] = SitData(armorStand.uniqueId, null, "head")
+        armorStand.addPassenger(player)
+        finalTarget.addPassenger(armorStand)
+        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+
+        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
+                armorStand.addPassenger(player)
+            } else if (!armorStand.passengers.contains(player)) {
+                armorStand.remove()
+                sittingMap.remove(player)
+            }
+            if (!finalTarget.passengers.contains(armorStand)) {
+                finalTarget.addPassenger(armorStand)
+            }
+        }, ARMORSTAND_REATTACH_DELAY_TICKS)
+
     }
 
-    private fun determineStyleAndHeight(block: Block?, baseY: Double): Pair<String, Double> {
-        if (block == null) return "basic" to (baseY + 1.0)
-        val blockType = block.type.name
-        val blockData = block.blockData.toString()
-        return when {
-            "SLAB" in blockType -> {
-                when {
-                    "type=top" in blockData -> "slab" to (block.location.y + 1.0)
-                    "type=double" in blockData -> "slab" to (block.location.y + 1.0)
-                    else -> "slab" to (block.location.y + 0.5)
-                }
-            }
-            "CARPET" in blockType -> "carpet" to (block.location.y + 0.0625)
-            "TRAPDOOR" in blockType && "half=bottom" in blockData -> "trapdoor_bottom" to (block.location.y + 0.1875)
-            "CAKE" in blockType -> "cake" to (block.location.y + 0.5)
-            "FENCE" in blockType -> "fence" to (block.location.y + 0.5)
-            "LANTERN" in blockType -> "lantern" to (block.location.y + 0.5625)
-            "STONECUTTER" in blockType -> "stonecutter" to (block.location.y + 0.5625)
-            "HEAD" in blockType || "SKULL" in blockType -> "head_skull" to (block.location.y + 0.5)
-            "FLOWER_POT" in blockType -> "flower_pot" to (block.location.y + 0.375)
-            "CANDLE" in blockType -> "candle" to (block.location.y + 0.375)
-            "BED" in blockType -> "bed" to (block.location.y + 0.5625)
-            else -> "basic" to (block.location.y + 1.0)
+    fun getHeadPassenger(player: Player): Player? {
+        val armorStand = player.passengers.firstOrNull { it is org.bukkit.entity.ArmorStand } as? org.bukkit.entity.ArmorStand
+        if (armorStand == null) return null
+
+        val passenger = armorStand.passengers.firstOrNull { it is Player } as? Player
+        if (
+            passenger != null &&
+            sittingMap[passenger]?.style == "head" &&
+            sittingMap[passenger]?.armorStandId == armorStand.uniqueId
+            ) {
+            return passenger
         }
+        return null
+    }
+
+    fun launchHeadPassenger(player: Player) {
+        val passenger = getHeadPassenger(player) ?: return
+        val direction = player.location.direction.clone().normalize()
+        direction.y = direction.y + 0.5
+        direction.multiply(1.0)
+
+        unsitPlayer(passenger, saveHeadPassenger = true)
+        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            if (passenger.isOnline) passenger.velocity = direction
+        }, 1L)
+    }
+
+    fun unsitPlayer(player: Player, saveHeadPassenger: Boolean = false) {
+        val sitData = sittingMap[player] ?: return
+        val stackTrace = Thread.currentThread().stackTrace
+        val caller = stackTrace.getOrNull(2)?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
+
+        val armorStand = player.world.getEntity(sitData.armorStandId)
+        if (armorStand == null) {
+            sittingMap.remove(player)
+            return
+        }
+
+        val location = player.location.clone()
+        if (sitData.style == "head") {
+            location.y = location.y - 0.2
+            if (armorStand.vehicle != null) {
+                location.y = armorStand.vehicle?.location?.y ?: location.y
+            }
+            val basePlayer = armorStand.vehicle as? Player
+            basePlayer?.removePassenger(armorStand)
+        }
+
+        if (!saveHeadPassenger) {
+            val headPassenger = getHeadPassenger(player)
+            if (headPassenger != null) unsitPlayer(headPassenger)
+        }
+
+        armorStand.removePassenger(player)
+        armorStand.remove()
+        player.teleport(location)
+        sittingMap.remove(player)
+
+        if (!caller.contains("HideManager.hidePlayer") && !caller.contains("SitManager.sitOnHead")) {
+            hooker.messageManager.sendMiniMessage(player, "ACTION_STOP", "info-empty")
+        }
+
+        if (player.isOnline && hooker.plugin.isEnabled) hooker.playerStateManager.refreshPlayerPose(player)
     }
 
     private fun isLocationOccupied(location: Location, excluding: Player): Boolean {
@@ -195,8 +327,8 @@ class SitManager(private val hooker: FunctionHooker) {
             }
         }
         val sittingHere = sittingMap.filterValues {
-            val stand = player.world.getEntity(it.armorStandId)
-            stand?.location?.block?.location == block.location
+            val stand = player.world.getEntity(it.armorStandId) ?: return@filterValues false
+            stand.location.block.location == block.location
         }
         val occupiedIndices = sittingHere.values.mapNotNull { sitData ->
             val stand = player.world.getEntity(sitData.armorStandId) ?: return@mapNotNull null

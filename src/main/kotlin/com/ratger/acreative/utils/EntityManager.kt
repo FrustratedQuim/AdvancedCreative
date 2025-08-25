@@ -1,16 +1,30 @@
 package com.ratger.acreative.utils
 
-import de.oliver.fancynpcs.api.FancyNpcsPlugin
-import de.oliver.fancynpcs.api.Npc
-import de.oliver.fancynpcs.api.NpcData
-import de.oliver.fancynpcs.api.utils.NpcEquipmentSlot
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.entity.pose.EntityPose
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
+import com.github.retrooper.packetevents.protocol.player.Equipment
+import com.github.retrooper.packetevents.protocol.player.EquipmentSlot
+import com.github.retrooper.packetevents.protocol.player.TextureProperty
+import com.github.retrooper.packetevents.protocol.player.UserProfile
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate
+import com.ratger.acreative.core.FunctionHooker
+import io.github.retrooper.packetevents.util.SpigotConversionUtil
+import me.tofaa.entitylib.meta.types.PlayerMeta
+import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ArmorStand
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
+import java.util.*
+import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 
-class EntityManager {
+class EntityManager(
+    private val hooker: FunctionHooker
+) {
+
     fun createArmorStand(location: Location, yaw: Float): ArmorStand {
         return location.world.spawn(location, ArmorStand::class.java) { stand ->
             stand.setGravity(false)
@@ -26,37 +40,116 @@ class EntityManager {
         }
     }
 
-    fun createNpc(player: Player, location: Location, yaw: Float): Npc {
+    fun createPlayerNPC(player: Player, location: Location, yaw: Float, isGlowing: Boolean): Pair<WrapperEntity, List<Equipment>> {
 
-        val npcData = NpcData(player.name, player.uniqueId, location).apply {
+        val npcUUID = UUID.randomUUID()
+        val entity = WrapperEntity(npcUUID, EntityTypes.PLAYER)
+        val playerMeta = entity.entityMeta as PlayerMeta
 
-            location.yaw = yaw
-            isCollidable = false
-            setSkin(player.uniqueId.toString())
+        playerMeta.pose = EntityPose.SLEEPING
+        playerMeta.isGlowing = isGlowing
 
-            val poseAttr = FancyNpcsPlugin.get().attributeManager.getAttributeByName(EntityType.PLAYER, "pose")
-            attributes[poseAttr] = "sleeping"
-
-            player.inventory.helmet?.clone()?.let { equipment[NpcEquipmentSlot.HEAD] = it }
-            player.inventory.chestplate?.clone()?.let { equipment[NpcEquipmentSlot.CHEST] = it }
-            player.inventory.leggings?.clone()?.let { equipment[NpcEquipmentSlot.LEGS] = it }
-            player.inventory.boots?.clone()?.let { equipment[NpcEquipmentSlot.FEET] = it }
-            equipment[NpcEquipmentSlot.MAINHAND] = player.inventory.itemInMainHand.clone()
-            equipment[NpcEquipmentSlot.OFFHAND] = player.inventory.itemInOffHand.clone()
+        val craftPlayer = player as CraftPlayer
+        val gameProfile = craftPlayer.profile
+        val textureProperties = mutableListOf<TextureProperty>()
+        gameProfile.properties.get("textures").forEach { property ->
+            textureProperties.add(TextureProperty("textures", property.value, property.signature ?: ""))
         }
 
-        val npc = FancyNpcsPlugin.get().npcAdapter.apply(npcData).apply {
-            isSaveToFile = false
-            FancyNpcsPlugin.get().npcManager.registerNpc(this)
-            create()
-            spawnForAll()
+        Bukkit.getOnlinePlayers().forEach { viewer ->
+            if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                entity.addViewer(viewer.uniqueId)
+            }
         }
 
-        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "npc displayname ${npc.data.name} @none")
-        npc.updateForAll()
+        val userProfile = UserProfile(npcUUID, "", textureProperties)
+        val playerInfoUpdate = WrapperPlayServerPlayerInfoUpdate(
+            WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
+            WrapperPlayServerPlayerInfoUpdate.PlayerInfo(userProfile)
+        )
+        Bukkit.getOnlinePlayers().forEach { viewer ->
+            if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, playerInfoUpdate)
+            }
+        }
 
-        npc.entityId
+        val equipment = mutableListOf<Equipment>()
+        player.inventory.helmet?.clone()?.let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.HELMET,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        player.inventory.chestplate?.clone()?.let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.CHEST_PLATE,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        player.inventory.leggings?.clone()?.let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.LEGGINGS,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        player.inventory.boots?.clone()?.let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.BOOTS,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        player.inventory.itemInMainHand.clone().let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.MAIN_HAND,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        player.inventory.itemInOffHand.clone().let {
+            equipment.add(
+                Equipment(
+                    EquipmentSlot.OFF_HAND,
+                    SpigotConversionUtil.fromBukkitItemStack(it)
+                )
+            )
+        }
+        val equipPacket = WrapperPlayServerEntityEquipment(entity.entityId, equipment)
+        Bukkit.getOnlinePlayers().forEach { viewer ->
+            if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+            }
+        }
 
-        return npc
+        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            val subEquipPacket = WrapperPlayServerEntityEquipment(entity.entityId, equipment)
+            Bukkit.getOnlinePlayers().forEach { viewer ->
+                if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, subEquipPacket)
+                }
+            }
+        }, 1L)
+
+        entity.spawn(PacketLocation(location.x, location.y, location.z, yaw, 0f))
+
+        return Pair(entity, equipment)
+    }
+
+    fun updatePlayerNPCEquipment(npc: WrapperEntity, equipment: List<Equipment>, player: Player) {
+        val equipPacket = WrapperPlayServerEntityEquipment(npc.entityId, equipment)
+        val viewers = Bukkit.getOnlinePlayers().filter { viewer ->
+            !hooker.utils.isHiddenFromPlayer(viewer, player)
+        }
+        viewers.forEach { viewer ->
+            PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+        }
     }
 }

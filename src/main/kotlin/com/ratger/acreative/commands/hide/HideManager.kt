@@ -1,13 +1,11 @@
 package com.ratger.acreative.commands.hide
 
-import com.comphenix.protocol.PacketType
-import com.comphenix.protocol.ProtocolLibrary
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class HideManager(private val hooker: FunctionHooker) {
@@ -41,6 +39,74 @@ class HideManager(private val hooker: FunctionHooker) {
             return
         }
 
+        val hiderPlayersToUnsit = mutableListOf<Player>()
+        if (hooker.utils.isSitting(hider)) {
+            var current = hider
+            val checkedPlayers = mutableSetOf<Player>()
+            var depth = 0
+            val maxDepth = 10
+            while (depth < maxDepth) {
+                if (current in checkedPlayers) break
+                checkedPlayers.add(current)
+                hiderPlayersToUnsit.add(current)
+                val passenger = hooker.sitManager.getHeadPassenger(current)
+                if (passenger == null) break
+                current = passenger
+                depth++
+            }
+
+            hiderPlayersToUnsit.reversed().forEach { player ->
+                hooker.sitManager.unsitPlayer(player)
+            }
+        }
+
+        val targetChain = mutableListOf<Player>()
+        var current = target
+        val checkedPlayers = mutableSetOf<Player>()
+        var depth = 0
+        val maxDepth = 10
+        while (depth < maxDepth) {
+            if (current in checkedPlayers) {
+                hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+                return
+            }
+            checkedPlayers.add(current)
+            targetChain.add(current)
+            val passenger = hooker.sitManager.getHeadPassenger(current)
+            if (passenger == null) break
+            current = passenger
+            depth++
+        }
+        if (depth >= maxDepth) {
+            hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+            return
+        }
+
+        var basePlayer = target
+        val baseCheckedPlayers = mutableSetOf<Player>()
+        depth = 0
+        while (depth < maxDepth) {
+            if (basePlayer in baseCheckedPlayers) {
+                hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+                return
+            }
+            baseCheckedPlayers.add(basePlayer)
+            if (hider == basePlayer) {
+                targetChain.reversed().forEach { player ->
+                    if (hooker.utils.isSitting(player)) {
+                        hooker.sitManager.unsitPlayer(player)
+                    }
+                }
+                break
+            }
+            val sitData = hooker.sitManager.sittingMap[basePlayer]
+            if (sitData == null || sitData.style != "head") break
+            val armorStand = basePlayer.world.getEntity(sitData.armorStandId) ?: break
+            val vehicle = armorStand.vehicle as? Player ?: break
+            basePlayer = vehicle
+            depth++
+        }
+
         val hiderId = hider.uniqueId
         val targetId = target.uniqueId
         val hiddenSet = hiddenPlayers.computeIfAbsent(hiderId) { mutableSetOf() }
@@ -51,20 +117,24 @@ class HideManager(private val hooker: FunctionHooker) {
         }
 
         hiddenSet.add(targetId)
-        hider.hidePlayer(hooker.plugin, target)
-        hideFreezeBlocks(hider, target)
-        hidePuddleDisplays(hider, target)
+        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            if (hider.isOnline && target.isOnline) {
+                hider.hidePlayer(hooker.plugin, target)
+                hideFreezeBlocks(hider, target)
+                hidePuddleDisplays(hider, target)
+            }
+        }, 1L)
 
         if (hooker.utils.isDisguised(target)) {
-            hooker.disguiseManager.disguisedPlayers[target]?.let { (entityId, _, _) ->
-                val protocolManager = ProtocolLibrary.getProtocolManager()
-                val destroyPacket = protocolManager.createPacket(PacketType.Play.Server.ENTITY_DESTROY)
-                destroyPacket.intLists.write(0, listOf(entityId))
-                try {
-                    protocolManager.sendServerPacket(hider, destroyPacket)
-                    hooker.plugin.logger.info("Sent ENTITY_DESTROY packet for ${target.name}'s disguise to ${hider.name}")
-                } catch (e: Exception) {
-                    hooker.plugin.logger.warning("Failed to send ENTITY_DESTROY packet for ${target.name}'s disguise to ${hider.name}: ${e.message}")
+            hooker.disguiseManager.disguisedPlayers[target]?.entity?.removeViewer(hider.uniqueId)
+        }
+
+        if (hooker.utils.isLaying(target)) {
+            hooker.layManager.layingMap[target]?.let { layData ->
+                layData.npc.removeViewer(hider.uniqueId)
+                val armorStand = target.world.getEntity(layData.armorStandId)
+                if (armorStand != null) {
+                    hider.hideEntity(hooker.plugin, armorStand)
                 }
             }
         }
@@ -107,6 +177,15 @@ class HideManager(private val hooker: FunctionHooker) {
         hider.hidePlayer(hooker.plugin, target)
         hideFreezeBlocks(hider, target)
         hidePuddleDisplays(hider, target)
+        if (hooker.utils.isLaying(target)) {
+            hooker.layManager.layingMap[target]?.let { layData ->
+                layData.npc.removeViewer(hider.uniqueId)
+                val armorStand = target.world.getEntity(layData.armorStandId)
+                if (armorStand != null) {
+                    hider.hideEntity(hooker.plugin, armorStand)
+                }
+            }
+        }
     }
 
     fun hideEntity(hider: Player, entity: Entity) {
@@ -127,7 +206,7 @@ class HideManager(private val hooker: FunctionHooker) {
     private fun hideFreezeBlocks(hider: Player, target: Player) {
         val blocks = hooker.freezeManager.frozenPlayers[target]
         if (blocks != null) {
-            blocks.forEach { hider.hideEntity(hooker.plugin, it) }
+            blocks.forEach { it.removeViewer(hider.uniqueId) }
             val hiddenBlocks = hooker.freezeManager.hiddenFreezeBlocks.computeIfAbsent(hider.uniqueId) { ConcurrentHashMap() }
             hiddenBlocks[target.uniqueId] = blocks
         }
@@ -136,8 +215,8 @@ class HideManager(private val hooker: FunctionHooker) {
     private fun showFreezeBlocks(hider: Player, target: Player) {
         val blocks = hooker.freezeManager.frozenPlayers[target]
         blocks?.forEach { block ->
-            if (block.isValid) {
-                hider.showEntity(hooker.plugin, block)
+            if (block.isSpawned) {
+                block.addViewer(hider.uniqueId)
             }
         }
         hooker.freezeManager.hiddenFreezeBlocks[hider.uniqueId]?.remove(target.uniqueId)
@@ -149,7 +228,7 @@ class HideManager(private val hooker: FunctionHooker) {
     private fun hidePuddleDisplays(hider: Player, target: Player) {
         hooker.pissManager.scorePoints.filter { it.creator == target.uniqueId && it.display != null }.forEach { point ->
             val display = point.display!!
-            hider.hideEntity(hooker.plugin, display)
+            display.removeViewer(hider.uniqueId)
             val hiddenMap = hooker.pissManager.hiddenPuddleDisplays.computeIfAbsent(hider.uniqueId) { ConcurrentHashMap() }
             val list = hiddenMap.computeIfAbsent(target.uniqueId) { mutableListOf() }
             if (!list.contains(display)) {
@@ -162,8 +241,8 @@ class HideManager(private val hooker: FunctionHooker) {
         val hiddenMap = hooker.pissManager.hiddenPuddleDisplays[hider.uniqueId] ?: return
         val list = hiddenMap[target.uniqueId] ?: return
         list.forEach { display ->
-            if (display.isValid) {
-                hider.showEntity(hooker.plugin, display)
+            if (display.isSpawned) {
+                display.addViewer(hider.uniqueId)
             }
         }
         hiddenMap.remove(target.uniqueId)
@@ -172,7 +251,7 @@ class HideManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun unhidePlayer(hider: Player, target: Player) {
+    fun unhidePlayer(hider: Player, target: Player) {
         val hiderId = hider.uniqueId
         val targetId = target.uniqueId
         val hiddenSet = hiddenPlayers[hiderId] ?: return
@@ -184,14 +263,24 @@ class HideManager(private val hooker: FunctionHooker) {
             showPuddleDisplays(hider, target)
 
             if (hooker.utils.isDisguised(target)) {
-                hooker.plugin.logger.info("Scheduling disguise update for ${target.name} to ${hider.name}")
                 Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
                     if (!hider.isOnline || !target.isOnline) {
-                        hooker.plugin.logger.info("Skipped disguise update for ${target.name} to ${hider.name}: one of the players is offline")
                         return@Runnable
                     }
                     hooker.disguiseManager.updateDisguiseForPlayer(target, hider)
                 }, 3L)
+            }
+
+            if (hooker.utils.isLaying(target)) {
+                hooker.layManager.layingMap[target]?.let { layData ->
+                    if (layData.npc.isSpawned) {
+                        layData.npc.addViewer(hider.uniqueId)
+                        val armorStand = target.world.getEntity(layData.armorStandId)
+                        if (armorStand != null && armorStand.isValid) {
+                            hider.showEntity(hooker.plugin, armorStand)
+                        }
+                    }
+                }
             }
 
             hooker.messageManager.sendMiniMessage(
@@ -204,4 +293,28 @@ class HideManager(private val hooker: FunctionHooker) {
             }
         }
     }
+
+    fun reapplyAllHides(player: Player) {
+        val playerId = player.uniqueId
+
+        // Повторно скрываем скрытых игроков
+        val hiddenSet = hiddenPlayers[playerId] ?: emptySet()
+        hiddenSet.forEach { targetId ->
+            val target = Bukkit.getPlayer(targetId)
+            if (target != null && target.isOnline) {
+                reapplyHide(player, target)
+            }
+        }
+
+        // Скрываем игрока от тех, кто скрыл его
+        hiddenPlayers.forEach { (hiderId, targets) ->
+            if (playerId in targets) {
+                val hider = Bukkit.getPlayer(hiderId)
+                if (hider != null && hider.isOnline) {
+                    reapplyHide(hider, player)
+                }
+            }
+        }
+    }
+
 }

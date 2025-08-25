@@ -41,6 +41,7 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
         cooldownPlayers.add(target.uniqueId)
 
         hooker.utils.unsetAllPoses(target)
+        target.leaveVehicle()
 
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
             val location = target.location.clone().add(0.0, 1.5, 0.0)
@@ -66,7 +67,7 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
 
             Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
                 cooldownPlayers.remove(target.uniqueId)
-            }, 20L) // 1 секунда
+            }, 20L)
         }, 2L)
     }
 }

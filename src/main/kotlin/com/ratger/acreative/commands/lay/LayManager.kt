@@ -1,19 +1,29 @@
 package com.ratger.acreative.commands.lay
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.player.Equipment
+import com.github.retrooper.packetevents.protocol.player.EquipmentSlot
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove
 import com.ratger.acreative.core.FunctionHooker
-import de.oliver.fancynpcs.api.FancyNpcsPlugin
-import de.oliver.fancynpcs.api.Npc
+import io.github.retrooper.packetevents.util.SpigotConversionUtil
+import me.tofaa.entitylib.meta.types.PlayerMeta
+import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.Location
-import org.bukkit.entity.Player
-import java.util.*
-import kotlin.math.roundToLong
+import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.Bed
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
+import org.bukkit.Location
+import java.util.*
+import kotlin.collections.iterator
+import kotlin.math.abs
 
 class LayManager(private val hooker: FunctionHooker) {
 
@@ -27,7 +37,14 @@ class LayManager(private val hooker: FunctionHooker) {
     val layingMap: MutableMap<Player, LayData> = mutableMapOf()
     private val lastInteract: MutableMap<UUID, Long> = mutableMapOf()
 
-    data class LayData(val npc: Any, val armorStandId: UUID, val bedY: Double?)
+    data class LayData(
+        val npc: WrapperEntity,
+        val headRotationTaskId: Int,
+        val armorStandId: UUID,
+        val bedLocation: Location?,
+        val equipment: List<Equipment>,
+        val baseYaw: Float
+    )
 
     fun canLay(player: Player): Boolean {
         val blockBelow = player.location.clone().add(0.0, -1.0, 0.0).block
@@ -53,7 +70,7 @@ class LayManager(private val hooker: FunctionHooker) {
         }
         val location = player.location.clone()
         val yaw = player.location.yaw
-        layPlayerAt(player, location, yaw)
+        layPlayerAt(player, location, yaw, null)
     }
 
     fun findBedHeadBlock(block: Block): Block? {
@@ -102,62 +119,32 @@ class LayManager(private val hooker: FunctionHooker) {
             val headBlock = findBedHeadBlock(block)
             if (headBlock != null) {
                 val location = headBlock.location.clone().add(0.5, 0.5625, 0.5)
-                val yaw = when {
-                    "facing=north" in headBlock.blockData.toString() -> 0f
-                    "facing=south" in headBlock.blockData.toString() -> 180f
-                    "facing=west" in headBlock.blockData.toString() -> -90f
-                    "facing=east" in headBlock.blockData.toString() -> 90f
+                val bedData = headBlock.blockData as? Bed
+                val yaw = when (bedData?.facing?.name) {
+                    "NORTH" -> -1f
+                    "SOUTH" -> 180f
+                    "WEST" -> -90f
+                    "EAST" -> 90f
                     else -> player.location.yaw
                 }
-                layPlayerAt(player, location, yaw, headBlock.location.y)
-            } else {
-                val location = block.location.clone().add(0.5, 0.525, 0.5)
-                val yaw = player.location.yaw
-                hooker.sitManager.sitPlayerAt(player, location, yaw, "bed", block)
+                layPlayerAt(player, location, yaw, headBlock.location)
+                return true
             }
-            return true
-        } else {
-            hooker.messageManager.sendMiniMessage(player, key = "error-lay-in-air")
-            return false
         }
+        return false
     }
 
-    fun layPlayerAt(player: Player, baseLocation: Location, yaw: Float, bedY: Double? = null) {
-        if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-disguised")
-            return
+    fun layPlayerAt(player: Player, location: Location, yaw: Float, bedLocation: Location?) {
+        val yFloat = ((yaw + 180) % 360)
+        var y = yFloat.toInt() - 180
+        y = when {
+            y in -45..45 -> 0
+            y in 46..135 -> 90
+            y in -135..-46 -> -90
+            y > 135 -> 180
+            else -> -180
         }
-        if (layingMap.containsKey(player)) return
-
-        val world = player.location.world
-        val baseX = baseLocation.x
-        val baseY = baseLocation.y
-        val baseZ = baseLocation.z
-
-        for ((otherPlayer, _) in layingMap) {
-            if (otherPlayer == player || otherPlayer.location.world != world) continue
-            val loc = otherPlayer.location
-            if (kotlin.math.abs(baseX - loc.x) < 0.8 &&
-                kotlin.math.abs(baseY - loc.y) < 0.8 &&
-                kotlin.math.abs(baseZ - loc.z) < 0.8
-            ) {
-                return
-            }
-        }
-
-        val location = baseLocation.clone().apply {
-            x = blockX + 0.5
-            z = blockZ + 0.5
-            if (hooker.utils.isSitting(player)) y += 0.55
-        }
-
-        if (!canLay(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-lay-in-air")
-            return
-        }
-
-        val roundedYaw = ((yaw / 90.0).roundToLong() * 90) % 360
-        val (npcYaw, offsetX, offsetZ) = when (roundedYaw.toInt()) {
+        val (npcYaw, offsetX, offsetZ) = when (y) {
             0 -> Triple(-90f, 0.0, 1.45)
             90 -> Triple(180f, -1.45, 0.0)
             180, -180 -> Triple(90f, 0.0, -1.45)
@@ -166,14 +153,22 @@ class LayManager(private val hooker: FunctionHooker) {
         }
 
         val npcLocation = location.clone().add(offsetX, 0.12, offsetZ).apply {
+            this.yaw = npcYaw
             pitch = 0f
         }
-        val npc = hooker.entityManager.createNpc(player, npcLocation, npcYaw)
-        if (hooker.utils.isGlowing(player)) {
-            player.isGlowing = false
-            npc.data.isGlowing = true
-            npc.updateForAll()
+
+        for ((otherPlayer, data) in layingMap) {
+            if (otherPlayer == player) continue
+            val otherNpcLocation = data.npc.location
+            if (otherPlayer.world == player.world &&
+                abs(otherNpcLocation.x - npcLocation.x) <= 0.5 &&
+                abs(otherNpcLocation.y - npcLocation.y) <= 0.5 &&
+                abs(otherNpcLocation.z - npcLocation.z) <= 0.5) {
+                return
+            }
         }
+
+        val (entity, equipment) = hooker.entityManager.createPlayerNPC(player, npcLocation, npcYaw, hooker.utils.isGlowing(player))
 
         val armorStandLocation = location.clone().add(0.0, 0.3, 0.0)
         val armorStand = hooker.entityManager.createArmorStand(armorStandLocation, npcYaw).apply {
@@ -190,7 +185,36 @@ class LayManager(private val hooker: FunctionHooker) {
             }
         }, ARMORSTAND_REATTACH_DELAY_TICKS)
 
-        layingMap[player] = LayData(npc, armorStand.uniqueId, bedY)
+        val headRotationTask = object : BukkitRunnable() {
+            override fun run() {
+                if (!player.isOnline || !entity.isSpawned) {
+                    cancel()
+                    return
+                }
+
+                fun normalizeYawDiff(diff: Int): Int {
+                    var d = (diff + 540) % 360 - 180
+                    if (d > 90) d = 90
+                    if (d < -90) d = -90
+                    return d
+                }
+
+                val finalYaw = when (y) {
+                    -90, 180, -180, 90, 0 -> npcYaw + normalizeYawDiff(y - player.location.yaw.toInt()) * -1
+                    else -> 0f
+                }
+
+                val headLookPacket = WrapperPlayServerEntityHeadLook(entity.entityId, finalYaw)
+                Bukkit.getOnlinePlayers().forEach { viewer ->
+                    if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                        PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+                    }
+                }
+            }
+        }
+        val taskId = headRotationTask.runTaskTimer(hooker.plugin, 0L, 2L).taskId
+
+        layingMap[player] = LayData(entity, taskId, armorStand.uniqueId, bedLocation, equipment, y.toFloat())
 
         hooker.playerStateManager.savePlayerInventory(player)
         player.inventory.armorContents = arrayOf(null, null, null, null)
@@ -210,17 +234,22 @@ class LayManager(private val hooker: FunctionHooker) {
             hooker.sitManager.unsitPlayer(player)
         }
 
-        layingMap.remove(player)?.let { (npc, armorStandId, bedY) ->
+        layingMap.remove(player)?.let { data ->
+            Bukkit.getScheduler().cancelTask(data.headRotationTaskId)
 
-            (npc as? Npc)?.let {
-                FancyNpcsPlugin.get().npcManager.removeNpc(it)
-                it.removeForAll()
+            val playerInfoRemove = WrapperPlayServerPlayerInfoRemove(listOf(data.npc.uuid))
+            Bukkit.getOnlinePlayers().forEach { viewer ->
+                if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, playerInfoRemove)
+                }
             }
+            data.npc.remove()
 
-            player.world.getEntity(armorStandId)?.remove()
-            if (bedY != null) {
-                val targetLocation = player.location.clone().apply {
-                    y = bedY + 0.5625
+            player.world.getEntity(data.armorStandId)?.remove()
+
+            if (data.bedLocation != null) {
+                val targetLocation = data.bedLocation.clone().apply {
+                    y += 0.5625
                 }
                 player.teleport(targetLocation)
             }
@@ -233,8 +262,6 @@ class LayManager(private val hooker: FunctionHooker) {
             hooker.messageManager.sendMiniMessage(player, "ACTION_STOP")
             hooker.playerStateManager.refreshPlayerPose(player)
         }
-
-        if (hooker.utils.isGlowing(player)) player.isGlowing = true
     }
 
     private fun getDisplayName(player: Player): Component {
@@ -264,10 +291,21 @@ class LayManager(private val hooker: FunctionHooker) {
 
     fun updateNpcGlowing(player: Player, isGlowing: Boolean = true) {
         val data = layingMap[player] ?: return
-        val npc = data.npc as? Npc ?: return
-        if (npc.data.isGlowing != isGlowing) {
-            npc.data.setGlowing(isGlowing)
+        val playerMeta = data.npc.entityMeta as? PlayerMeta ?: return
+        if (playerMeta.isGlowing != isGlowing) {
+            playerMeta.isGlowing = isGlowing
         }
-        npc.updateForAll()
+    }
+
+    fun updateMainHandEquipment(player: Player) {
+        layingMap[player]?.let { data ->
+            val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
+            val currentItem = state.hotbarItems[state.currentHotbarSlot]?.clone() ?: ItemStack(Material.AIR)
+            val packetItem = SpigotConversionUtil.fromBukkitItemStack(currentItem)
+            val newEquipment = data.equipment.filter { it.slot != EquipmentSlot.MAIN_HAND }.toMutableList()
+            newEquipment.add(Equipment(EquipmentSlot.MAIN_HAND, packetItem))
+            hooker.entityManager.updatePlayerNPCEquipment(data.npc, newEquipment, player)
+            layingMap[player] = data.copy(equipment = newEquipment)
+        }
     }
 }

@@ -32,7 +32,8 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         "disguise" to "spark",
         "spit" to "horizon",
         "piss" to "horizon",
-        "slap" to "admin"
+        "slap" to "admin",
+        "sithead" to "admin"
     )
 
     private val permissionMessages = mapOf(
@@ -69,6 +70,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         val cmdName = command.name.lowercase()
         return when (cmdName) {
             "hide" -> completeOnlinePlayers(args)
+            "sithead" -> completeOnlinePlayers(args)
             "gravity" -> completeFromList(args, listOf("0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","basic"))
             "resize" -> completeFromList(args, listOf("0.1","0.5","1.0","1.5","5.0","10.0","15.0","basic"))
             "strength" -> completeFromList(args, listOf("0","5","10","100","500","basic"))
@@ -86,28 +88,30 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
     private fun checkCooldown(player: Player, command: String): Boolean {
         val lastTimes = playerCooldowns[player.uniqueId] ?: return true
         val lastTime = lastTimes[command] ?: return true
-        val now = System.currentTimeMillis()
-        val cooldown = functionHooker.configManager.config.getLong("cooldowns.$command", 0L)
-        val remaining = cooldown - (now - lastTime)
-        if (remaining > 0) {
-            val formatted = String.format(Locale.US, "%.1f", remaining / 1000.0)
-            functionHooker.messageManager.sendMiniMessage(player, type = "ACTION", key = "action-cooldown", variables = mapOf("time" to "$formatted с."))
+        val cooldown = functionHooker.configManager.config.getInt("cooldowns.$command", 1000).toLong()
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastTime < cooldown) {
+            val remainingTime = String.format("%.1f", (lastTime + cooldown - currentTime) / 1000.0)
+            functionHooker.messageManager.sendMiniMessage(
+                player,
+                type = "ACTION",
+                key = "action-cooldown",
+                variables = mapOf("time" to remainingTime)
+            )
             return false
         }
         return true
     }
 
     private fun setCooldown(player: Player, command: String) {
-        val now = System.currentTimeMillis()
-        val lastTimes = playerCooldowns.getOrPut(player.uniqueId) { mutableMapOf() }
-        lastTimes[command] = now
+        val cooldown = functionHooker.configManager.config.getInt("cooldowns.$command", 1000).toLong()
+        playerCooldowns.computeIfAbsent(player.uniqueId) { mutableMapOf() }[command] = System.currentTimeMillis() + cooldown
     }
 
-    private fun sendPermissionMessage(player: Player, command: String, notify: Boolean = true) {
-        if (!notify) return
-        val permGroup = commandPermissions[command] ?: return
-        val msgKey = permissionMessages[permGroup] ?: "permission-unknown"
-        functionHooker.messageManager.sendMiniMessage(player, key = msgKey)
+    private fun sendPermissionMessage(player: Player, command: String) {
+        val permissionType = commandPermissions[command] ?: "player"
+        val messageKey = permissionMessages[permissionType] ?: "permission-unknown"
+        functionHooker.messageManager.sendMiniMessage(player, key = messageKey)
     }
 
     private fun executePlayerCommand(player: Player, command: String, args: Array<out String>) {
@@ -131,12 +135,13 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             "disguise" -> functionHooker.disguiseManager.disguisePlayer(player, args.firstOrNull(), args.getOrNull(1))
             "effects" -> functionHooker.effectsManager.applyEffect(player, args.getOrNull(0), args.getOrNull(1), args.getOrNull(2))
             "slap" -> functionHooker.slapManager.slapPlayer(player)
+            "sithead" -> functionHooker.sitheadManager.prepareToSithead(player, args.getOrNull(0), args.getOrNull(1))
         }
     }
 
     private fun completeOnlinePlayers(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[0], ignoreCase = true) }
+        return if (args.size == 1 || args.size == 2) {
+            Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
         } else emptyList()
     }
 

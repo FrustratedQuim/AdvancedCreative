@@ -1,4 +1,4 @@
-cooldowns:
+cooldowns: # В миллисекундах
   help:       150
   bind:       150
   glide:      150
@@ -8,6 +8,7 @@ cooldowns:
   health:     150
   hide:       500
   sit:        500
+  sithead:    500
   lay:        500
   crawl:      500
   glow:       500

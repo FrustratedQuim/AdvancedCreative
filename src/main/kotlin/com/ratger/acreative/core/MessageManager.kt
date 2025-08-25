@@ -27,7 +27,7 @@ class MessageManager(
         val msgType = type ?: "CHAT"
         val msgKey = key ?: "info-empty"
 
-        println("[sendMiniMessage] Key: $msgKey")
+        if (msgType == "CHAT" && msgKey == "info-empty") return
 
         val rawMessage = configManager.messages.getString("messages.$msgKey")
             ?: configManager.messages.getString("messages.info-empty")

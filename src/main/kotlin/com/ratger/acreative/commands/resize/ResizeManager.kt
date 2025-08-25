@@ -47,8 +47,9 @@ class ResizeManager(private val hooker: FunctionHooker) {
     }
 
     private fun setScaleToPlayer(player: Player, value: Float) {
-
         hooker.utils.checkCrawlUncrawl(player)
+
+        resetAttributes(player)
 
         scaledPlayers[player] = value
         player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = value.toDouble()
@@ -67,7 +68,6 @@ class ResizeManager(private val hooker: FunctionHooker) {
     }
 
     fun removeEffect(player: Player) {
-        if (!scaledPlayers.containsKey(player)) return
         scaledPlayers.remove(player)
         resetAttributes(player)
         hooker.messageManager.sendMiniMessage(player, key = "success-resize-reset")

@@ -3,14 +3,20 @@ package com.ratger.acreative.utils
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.GameMode
 import org.bukkit.Material
+import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
-import org.bukkit.event.entity.*
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.entity.ProjectileLaunchEvent
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.*
 import org.bukkit.inventory.EquipmentSlot
 import kotlin.math.roundToInt
@@ -23,16 +29,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     private val hideManager = hooker.hideManager
     private val bindManager = hooker.bindManager
 
-    private val interactableBlocks = listOf(
-        "LEVER", "BUTTON", "REPEATER", "COMPARATOR",
-        "GATE", "DOOR", "TRAPDOOR", "BELL", "SIGN",
-        "ANCHOR", "TNT", "REDSTONE"
-    )
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
-        utils.unsetAllPoses(player)
+        utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkBindClear(player)
         utils.checkGlowDisable(player)
@@ -42,33 +42,37 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.checkSlapUnslap(player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.player
-        utils.unsetAllPoses(player)
+        utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkPissStop(player)
         utils.checkDisguiseDisable(player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW)
     fun onGameModeChange(event: PlayerGameModeChangeEvent) {
         if (event.newGameMode == GameMode.SPECTATOR) {
             val player = event.player
-            utils.unsetAllPoses(player)
+            utils.unsetAllPoses(player, true)
             utils.checkPissStop(player)
             utils.checkDisguiseDisable(player)
+            val sitData = sitManager.sittingMap[player]
+            if (sitData != null && sitData.style == "head") {
+                sitManager.unsitPlayer(player)
+            }
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerToggleSneak(event: PlayerToggleSneakEvent) {
         if (event.isSneaking) {
             utils.unsetAllPoses(event.player)
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerTeleport(event: PlayerTeleportEvent) {
         val player = event.player
         val destination = event.to
@@ -87,7 +91,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {
         val player = event.player
 
@@ -96,7 +100,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
 
-        if (utils.isSitting(player) || utils.isLaying(player)) {
+        if (utils.isSitting(player) || utils.isLaying(player) || utils.isDisguised(player)) {
             val entityType = event.rightClicked.type
             if (entityType != EntityType.ITEM_FRAME && entityType != EntityType.ARMOR_STAND) {
                 event.isCancelled = true
@@ -104,44 +108,43 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
-        if (event.rightClicked is Player && utils.isSlapping(player)) {
-            hooker.slapManager.applySlap(player, event.rightClicked as Player)
-            event.isCancelled = true
+        if (event.rightClicked is Player && player.inventory.itemInMainHand.type == Material.AIR) {
+            val target = event.rightClicked as Player
+            if (target.gameMode == GameMode.SPECTATOR) {
+                event.isCancelled = true
+                return
+            }
+            if (player.hasPermission("advancedcreative.sit.head")) {
+                sitManager.sitOnHead(player, target)
+            }
         }
     }
 
-    @EventHandler
-    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
-        val damager = event.damager as? Player ?: return
-        val target = event.entity as? Player ?: return
-
-        if (utils.isSlapping(damager)) {
-            hooker.slapManager.applySlap(damager, target)
-            event.isCancelled = true
-        }
-    }
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
-
-        if (utils.isDisguised(player)) {
-            hooker.disguiseManager.sendSwingAnimation(player)
-        }
 
         if (event.action.isClickAction()) {
             bindManager.executeBind(player)
         }
 
-        if (shouldCancelInteraction(event, player)) {
+        if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
+        }
+
+        if (event.action == Action.LEFT_CLICK_AIR) {
+            val headPassenger = sitManager.getHeadPassenger(player)
+            if (headPassenger != null) {
+                sitManager.launchHeadPassenger(player)
+                return
+            }
         }
 
         handleRightClickBlock(event, player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val block = event.block
@@ -155,24 +158,39 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             block.type.name.contains("STAIRS") ||
             block.type.name.contains("SLAB") ||
             block.type.name.contains("BED")
-            ) {
+        ) {
             utils.checkSitUnsit(player)
             utils.checkLayingUnlay(player)
             sitManager.handleBlockBreak(block)
-            layManager.layingMap.entries
-                .filter { it.value.bedY == block.location.y }
-                .forEach { layManager.unlayPlayer(it.key) }
+            if (block.type.name.contains("BED")) {
+                val bedData = block.blockData as? Bed
+                val headBlock = if (bedData?.part == Bed.Part.HEAD) {
+                    block
+                } else {
+                    val facing = bedData?.facing ?: return
+                    val headLocation = block.location.clone()
+                    when (facing.name) {
+                        "WEST" -> headLocation.add(-1.0, 0.0, 0.0)
+                        "SOUTH" -> headLocation.add(0.0, 0.0, 1.0)
+                        "NORTH" -> headLocation.add(0.0, 0.0, -1.0)
+                        "EAST" -> headLocation.add(1.0, 0.0, 0.0)
+                    }
+                    headLocation.block
+                }
+                layManager.layingMap.entries
+                    .filter { it.value.bedLocation != null && it.value.bedLocation == headBlock.location }
+                    .forEach { layManager.unlayPlayer(it.key) }
+            }
         }
-
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
         val player = event.entity as? Player ?: return
         if (utils.isGliding(player) && !event.isGliding) event.isCancelled = true
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
         val player = event.player
         utils.checkCrawlUncrawl(player)
@@ -180,11 +198,11 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.checkSitUnsit(player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val player = event.player
 
-        if (utils.isFrozen(player) || utils.isLaying(player) || utils.isDisguised(player)) {
+        if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
         }
@@ -193,35 +211,37 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.getPlayersWithHides().forEach { hideManager.hideDroppedItem(it, droppedItem, player) }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerPickupItem(event: PlayerAttemptPickupItemEvent) {
         val player = event.player
-        if (utils.isFrozen(player) || utils.isLaying(player) || utils.isDisguised(player)) {
+        if (utils.isFrozen(player)) {
             event.isCancelled = true
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onProjectileLaunch(event: ProjectileLaunchEvent) {
         val projectile = event.entity
         utils.getPlayersWithHides().forEach { hideManager.hideEntity(it, projectile) }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val joiningPlayer = event.player
-        utils.getPlayersWithHides().forEach {
-            if (utils.isHiddenFromPlayer(it, joiningPlayer)) hideManager.reapplyHide(it, joiningPlayer)
+        hideManager.reapplyAllHides(joiningPlayer)
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onInventoryClick(event: InventoryClickEvent) {
+        val player = event.whoClicked as Player
+        if (utils.isLaying(player) || utils.isDisguised(player)) {
+            if (event.slotType == InventoryType.SlotType.ARMOR || event.slot == 40) {
+                event.isCancelled = true
+            }
         }
     }
 
-    @EventHandler
-    fun onInventoryClick(event: InventoryClickEvent) {
-        val player = event.whoClicked as Player
-        if (utils.isLaying(player) || utils.isDisguised(player)) event.isCancelled = true
-    }
-
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerItemHeld(event: PlayerItemHeldEvent) {
         val player = event.player
         if (utils.isLaying(player)) hooker.playerStateManager.handleItemSwitch(player, event.newSlot)
@@ -231,18 +251,18 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerMove(event: PlayerMoveEvent) {
         val player = event.player
         if (utils.isFrozen(player) && event.from != event.to) event.isCancelled = true
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         hooker.glowManager.refreshGlow(event.player)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     fun onFallDamage(event: EntityDamageEvent) {
         val player = event.entity as? Player ?: return
         if (hooker.slapManager.fallProtectedPlayers.contains(player.uniqueId) &&
@@ -250,15 +270,6 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         ) {
             event.isCancelled = true
         }
-    }
-
-    private fun shouldCancelInteraction(event: PlayerInteractEvent, player: Player): Boolean {
-        if (utils.isFrozen(player) || utils.isLaying(player) || utils.isDisguised(player)) {
-            val block = event.clickedBlock
-            return !((utils.isLaying(player) || utils.isDisguised(player)) && block != null &&
-                    interactableBlocks.any { block.type.name.contains(it) })
-        }
-        return false
     }
 
     private fun handleRightClickBlock(event: PlayerInteractEvent, player: Player) {
@@ -269,7 +280,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val aboveBlock = block.location.clone().add(0.0, 1.0, 0.0).block
         if (aboveBlock.type.isSolid) return
 
-        if (sitManager.handleRightClickBlock(player, block) || layManager.handleRightClickBlock(player, block)) {
+        val handled = (player.hasPermission("advancedcreative.sit") && sitManager.handleRightClickBlock(player, block)) ||
+                (player.hasPermission("advancedcreative.lay") && layManager.handleRightClickBlock(player, block))
+
+        if (handled) {
             event.isCancelled = true
         }
     }

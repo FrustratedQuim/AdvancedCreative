@@ -1,34 +1,30 @@
-@file:Suppress("DEPRECATION", "removal")
-
 package com.ratger.acreative.commands.disguise
 
-import com.comphenix.protocol.PacketType
-import com.comphenix.protocol.ProtocolLibrary
-import com.comphenix.protocol.events.PacketContainer
-import com.comphenix.protocol.wrappers.WrappedChatComponent
-import com.comphenix.protocol.wrappers.WrappedDataValue
-import com.comphenix.protocol.wrappers.WrappedDataWatcher.Registry
-import com.comphenix.protocol.wrappers.EnumWrappers.ItemSlot
-import com.comphenix.protocol.wrappers.Pair as ProtocolPair
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook
 import com.ratger.acreative.core.FunctionHooker
+import io.github.retrooper.packetevents.util.SpigotConversionUtil
+import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import com.github.retrooper.packetevents.protocol.player.Equipment as PacketEquipment
+import com.github.retrooper.packetevents.protocol.player.EquipmentSlot as PacketEquipmentSlot
 
 data class DisguiseData(
-    val entityId: Int,
-    val uuid: UUID,
+    val entity: WrapperEntity,
     val type: EntityType,
-    val equipment: List<ProtocolPair<ItemSlot, ItemStack>>,
-    val showSelf: Boolean
+    val showSelf: Boolean,
+    val equipment: List<PacketEquipment> = emptyList()
 )
 
 class DisguiseManager(private val hooker: FunctionHooker) {
@@ -77,173 +73,124 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             .filter { !hooker.utils.isHiddenFromPlayer(it, player) && (showSelf || it != player) }
     }
 
-    private fun createMetadataPacket(player: Player): WrappedDataValue {
-        val nameJson = GsonComponentSerializer.gson().serialize(getDisplayName(player))
-        return WrappedDataValue(
-            2,
-            Registry.getChatComponentSerializer(true),
-            Optional.of(WrappedChatComponent.fromJson(nameJson).handle)
-        )
-    }
-
-    private fun sendPacketToPlayers(packet: Any, players: List<Player>, playerName: String, packetType: String) {
-        players.forEach {
-            try {
-                ProtocolLibrary.getProtocolManager().sendServerPacket(it, packet as PacketContainer)
-            } catch (e: Exception) {
-                hooker.plugin.logger.warning("Failed to send $packetType packet to ${it.name} for $playerName: ${e.message}")
-            }
+    private fun getEntityType(type: String): EntityType? {
+        return try {
+            EntityType.valueOf(type.uppercase())
+        } catch (_: IllegalArgumentException) {
+            null
         }
-    }
-
-    private fun createSpawnPacket(data: DisguiseData, location: Location): Any {
-        val spawnPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.SPAWN_ENTITY)
-        spawnPacket.integers.write(0, data.entityId)
-        spawnPacket.uuiDs.write(0, data.uuid)
-        spawnPacket.entityTypeModifier.write(0, data.type)
-        spawnPacket.doubles
-            .write(0, location.x)
-            .write(1, location.y)
-            .write(2, location.z)
-        return spawnPacket
-    }
-
-    private fun createMetadataPacket(entityId: Int, player: Player, isGlowing: Boolean): Any {
-        val metadataPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_METADATA)
-        metadataPacket.integers.write(0, entityId)
-        val dataValues = mutableListOf(
-            createMetadataPacket(player),
-            WrappedDataValue(3, Registry.get(java.lang.Boolean::class.java), true)
-        )
-        if (isGlowing) {
-            dataValues.add(WrappedDataValue(0, Registry.get(java.lang.Byte::class.java), 0x40.toByte()))
-        }
-        metadataPacket.dataValueCollectionModifier.write(0, dataValues)
-        return metadataPacket
-    }
-
-    private fun createEquipmentPacket(entityId: Int, equipment: List<ProtocolPair<ItemSlot, ItemStack>>): Any {
-        val equipPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_EQUIPMENT)
-        equipPacket.integers.write(0, entityId)
-        equipPacket.slotStackPairLists.write(0, equipment)
-        return equipPacket
-    }
-
-    private fun createUpdatePackets(data: DisguiseData, player: Player): Pair<Any, Any> {
-        val yaw = (player.location.yaw * 256 / 360).toInt().toByte()
-        val pitch = (player.location.pitch * 256 / 360).toInt().toByte()
-
-        val headRotationPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_HEAD_ROTATION)
-        headRotationPacket.integers.write(0, data.entityId)
-        headRotationPacket.bytes.write(0, yaw)
-
-        val teleportPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_TELEPORT)
-        teleportPacket.integers.write(0, data.entityId)
-        teleportPacket.doubles
-            .write(0, player.location.x)
-            .write(1, player.location.y)
-            .write(2, player.location.z)
-        teleportPacket.bytes.write(0, yaw).write(1, pitch)
-        teleportPacket.booleans.write(0, true)
-
-        return headRotationPacket to teleportPacket
-    }
-
-    private fun scheduleUpdateTask(player: Player, data: DisguiseData) {
-        val taskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
-            if (!player.isOnline || !disguisedPlayers.containsKey(player)) {
-                tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
-                return@Runnable
-            }
-            val (headRotationPacket, teleportPacket) = createUpdatePackets(data, player)
-            val nearbyPlayers = getNearbyPlayers(player, player.location, data.showSelf)
-            sendPacketToPlayers(headRotationPacket, nearbyPlayers, player.name, "ENTITY_HEAD_ROTATION")
-            sendPacketToPlayers(teleportPacket, nearbyPlayers, player.name, "ENTITY_TELEPORT")
-        }, 0L, 1L).taskId
-        tasks[player] = taskId
     }
 
     fun disguisePlayer(player: Player, type: String?, flag: String?) {
-        if (type.isNullOrEmpty() || type.equals("off", true) || type.equals("player", true)) {
+        if (type == null) {
             if (disguisedPlayers.containsKey(player)) {
                 undisguisePlayer(player)
-            } else {
-                hooker.messageManager.sendMiniMessage(player, key = "usage-disguise")
+                return
             }
+            hooker.messageManager.sendMiniMessage(player, key = "usage-disguise")
             return
         }
 
-        val entityType = try {
-            EntityType.valueOf(type.uppercase())
-        } catch (_: IllegalArgumentException) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-unknown")
+        if (type == "off" || type.equals("player", ignoreCase = true)) {
+            undisguisePlayer(player)
             return
         }
 
+        val entityType = getEntityType(type)
+        if (entityType == null) {
+            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-type")
+            return
+        }
+
+        val newShowSelf = flag != "-noself"
         if (disguisedPlayers.containsKey(player)) {
-            val currentDisguise = disguisedPlayers[player]!!.type
-            if (currentDisguise == entityType) {
+            val currentDisguise = disguisedPlayers[player]!!
+            if (currentDisguise.type == entityType && currentDisguise.showSelf == newShowSelf) {
                 undisguisePlayer(player)
                 return
-            } else {
-                undisguisePlayer(player, silent = true)
             }
+            undisguisePlayer(player, true)
+        }
+
+        if (!player.hasPermission("advancedcreative.disguise.full") && entityType in restrictedEntities) {
+            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-type")
+            return
         }
 
         if (hooker.configManager.getBlockedDisguises().contains(entityType)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-disabled")
+            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-blocked")
             return
         }
 
-        if (restrictedEntities.contains(entityType) && !player.hasPermission("advancedcreative.disguise.full")) {
-            hooker.messageManager.sendMiniMessage(player, key = "permission-horizon")
-            return
-        }
-
-        hooker.utils.unsetAllPoses(player)
+        hooker.utils.checkAndRemovePose(player)
+        hooker.utils.unsetAllStates(player)
         hooker.playerStateManager.savePlayerInventory(player)
 
-        val equipment = if (entityType.isAlive) {
-            val inv = player.inventory
-            listOfNotNull(
-                inv.helmet?.clone()?.let { ProtocolPair(ItemSlot.HEAD, it) },
-                inv.chestplate?.clone()?.let { ProtocolPair(ItemSlot.CHEST, it) },
-                inv.leggings?.clone()?.let { ProtocolPair(ItemSlot.LEGS, it) },
-                inv.boots?.clone()?.let { ProtocolPair(ItemSlot.FEET, it) },
-                inv.itemInMainHand.takeIf { !it.type.isAir }?.clone()?.let { ProtocolPair(ItemSlot.MAINHAND, it) },
-                inv.itemInOffHand.takeIf { !it.type.isAir }?.clone()?.let { ProtocolPair(ItemSlot.OFFHAND, it) }
-            )
-        } else emptyList()
+        val equipmentList = mutableListOf<PacketEquipment>()
+        val inventory = player.inventory
+        val mainHand = inventory.itemInMainHand
+        if (mainHand.type != Material.AIR) {
+            val packetItem = SpigotConversionUtil.fromBukkitItemStack(mainHand)
+            equipmentList.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
+        }
+        val offHand = inventory.itemInOffHand
+        if (offHand.type != Material.AIR) {
+            val packetItem = SpigotConversionUtil.fromBukkitItemStack(offHand)
+            equipmentList.add(PacketEquipment(PacketEquipmentSlot.OFF_HAND, packetItem))
+        }
+        inventory.armorContents.forEachIndexed { index, item ->
+            if (item != null && item.type != Material.AIR) {
+                val slot = when (index) {
+                    0 -> PacketEquipmentSlot.BOOTS
+                    1 -> PacketEquipmentSlot.LEGGINGS
+                    2 -> PacketEquipmentSlot.CHEST_PLATE
+                    3 -> PacketEquipmentSlot.HELMET
+                    else -> return@forEachIndexed
+                }
+                val packetItem = SpigotConversionUtil.fromBukkitItemStack(item)
+                equipmentList.add(PacketEquipment(slot, packetItem))
+            }
+        }
+        inventory.setItemInMainHand(null)
+        inventory.setItemInOffHand(null)
+        inventory.armorContents = arrayOfNulls(4)
 
-        player.inventory.armorContents = arrayOf(null, null, null, null)
-        player.inventory.setItemInOffHand(null)
-        player.inventory.setItem(player.inventory.heldItemSlot, null)
+        val entity = WrapperEntity(entityType.toPacketEventsType())
+        val meta = entity.entityMeta
+        meta.customName = getDisplayName(player)
+        meta.isCustomNameVisible = true
+        if (hooker.utils.isGlowing(player)) {
+            meta.isGlowing = true
+        }
 
-        val entityId = Random().nextInt(1000000) + 10000
-        val entityUUID = UUID.randomUUID()
-        val showSelf = flag != "-noself"
-        val data = DisguiseData(entityId, entityUUID, entityType, equipment, showSelf)
+        val showSelf = newShowSelf
+        val data = DisguiseData(entity, entityType, showSelf, equipmentList)
 
-        val nearbyPlayers = getNearbyPlayers(player, player.location, showSelf)
-        sendPacketToPlayers(createSpawnPacket(data, player.location), nearbyPlayers, player.name, "SPAWN_ENTITY")
-        sendPacketToPlayers(createMetadataPacket(entityId, player, hooker.utils.isGlowing(player)), nearbyPlayers, player.name, "ENTITY_METADATA")
-        if (equipment.isNotEmpty()) {
-            sendPacketToPlayers(createEquipmentPacket(entityId, equipment), nearbyPlayers, player.name, "ENTITY_EQUIPMENT")
+        val playerLoc = player.location
+        val loc = com.github.retrooper.packetevents.protocol.world.Location(
+            playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
+        )
+
+        val viewers = getNearbyPlayers(player, playerLoc, showSelf)
+        viewers.forEach { entity.addViewer(it.uniqueId) }
+        entity.spawn(loc)
+        if (equipmentList.isNotEmpty()) {
+            val equipPacket = WrapperPlayServerEntityEquipment(entity.entityId, equipmentList)
+            viewers.forEach { viewer ->
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+            }
         }
 
         player.isInvisible = true
         disguisedPlayers[player] = data
         player.isGlowing = false
-        scheduleUpdateTask(player, data)
+        scheduleUpdateTask(player)
         hooker.messageManager.sendMiniMessage(player, key = "success-disguise")
     }
 
     fun undisguisePlayer(player: Player, silent: Boolean = false) {
         disguisedPlayers[player]?.let { data ->
-            val destroyPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_DESTROY)
-            destroyPacket.intLists.write(0, listOf(data.entityId))
-            sendPacketToPlayers(destroyPacket, getNearbyPlayers(player, player.location, data.showSelf), player.name, "ENTITY_DESTROY")
-
+            data.entity.remove()
             player.isInvisible = false
             if (hooker.utils.isGlowing(player)) player.isGlowing = true
             hooker.playerStateManager.restorePlayerInventory(player)
@@ -258,35 +205,29 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     fun updateDisguiseForPlayer(disguisedPlayer: Player, viewer: Player) {
         disguisedPlayers[disguisedPlayer]?.let { data ->
             if (!data.showSelf && viewer == disguisedPlayer) return
-
-            val (headRotationPacket, teleportPacket) = createUpdatePackets(data, disguisedPlayer)
-            sendPacketToPlayers(createSpawnPacket(data, disguisedPlayer.location), listOf(viewer), disguisedPlayer.name, "SPAWN_ENTITY")
-            sendPacketToPlayers(headRotationPacket, listOf(viewer), disguisedPlayer.name, "ENTITY_HEAD_ROTATION")
-            sendPacketToPlayers(teleportPacket, listOf(viewer), disguisedPlayer.name, "ENTITY_TELEPORT")
-            sendPacketToPlayers(createMetadataPacket(data.entityId, disguisedPlayer, hooker.utils.isGlowing(disguisedPlayer)), listOf(viewer), disguisedPlayer.name, "ENTITY_METADATA")
-            if (data.equipment.isNotEmpty()) {
-                sendPacketToPlayers(createEquipmentPacket(data.entityId, data.equipment), listOf(viewer), disguisedPlayer.name, "ENTITY_EQUIPMENT")
+            val playerLoc = disguisedPlayer.location
+            val loc = com.github.retrooper.packetevents.protocol.world.Location(
+                playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
+            )
+            data.entity.addViewer(viewer.uniqueId)
+            data.entity.teleport(loc)
+            data.entity.entityMeta.customName = getDisplayName(disguisedPlayer)
+            data.entity.entityMeta.isCustomNameVisible = true
+            if (hooker.utils.isGlowing(disguisedPlayer)) {
+                data.entity.entityMeta.isGlowing = true
             }
-
-            Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
-                if (!viewer.isOnline || !disguisedPlayer.isOnline) return@Runnable
-                sendPacketToPlayers(headRotationPacket, listOf(viewer), disguisedPlayer.name, "ENTITY_HEAD_ROTATION")
-                sendPacketToPlayers(teleportPacket, listOf(viewer), disguisedPlayer.name, "ENTITY_TELEPORT")
-            }, 2L)
+            if (data.equipment.isNotEmpty()) {
+                val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+            }
         }
     }
 
     fun updateEntityGlowing(player: Player, isGlowing: Boolean) {
         disguisedPlayers[player]?.let { data ->
-            val metadataPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_METADATA)
-            metadataPacket.integers.write(0, data.entityId)
-            val dataValues = mutableListOf(
-                WrappedDataValue(0, Registry.get(java.lang.Byte::class.java), if (isGlowing) 0x40.toByte() else 0x00.toByte()),
-                createMetadataPacket(player),
-                WrappedDataValue(3, Registry.get(java.lang.Boolean::class.java), true)
-            )
-            metadataPacket.dataValueCollectionModifier.write(0, dataValues)
-            sendPacketToPlayers(metadataPacket, getNearbyPlayers(player, player.location, data.showSelf), player.name, "ENTITY_METADATA")
+            data.entity.entityMeta.isGlowing = isGlowing
+            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
+            viewers.forEach { data.entity.addViewer(it.uniqueId) }
         }
     }
 
@@ -294,40 +235,95 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         disguisedPlayers[player]?.let { data ->
             val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
             val currentItem = state.hotbarItems[state.currentHotbarSlot]?.clone() ?: ItemStack(Material.AIR)
-            val equipPacket = createEquipmentPacket(data.entityId, listOf(ProtocolPair(ItemSlot.MAINHAND, currentItem)))
-            sendPacketToPlayers(equipPacket, getNearbyPlayers(player, player.location, data.showSelf), player.name, "ENTITY_EQUIPMENT")
+            val packetItem = SpigotConversionUtil.fromBukkitItemStack(currentItem)
+            val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()
+            newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
+            val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, newEquipment)
+            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
+            viewers.forEach { viewer ->
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+            }
+            disguisedPlayers[player] = data.copy(equipment = newEquipment)
         }
     }
 
     fun recreateDisguise(player: Player, newLocation: Location) {
         disguisedPlayers[player]?.let { data ->
-            val destroyPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ENTITY_DESTROY)
-            destroyPacket.intLists.write(0, listOf(data.entityId))
-            sendPacketToPlayers(destroyPacket, getNearbyPlayers(player, player.location, data.showSelf), player.name, "ENTITY_DESTROY")
+            data.entity.remove()
             tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
 
-            val newEntityId = Random().nextInt(1000000) + 10000
-            val newEntityUUID = UUID.randomUUID()
-            val newData = DisguiseData(newEntityId, newEntityUUID, data.type, data.equipment, data.showSelf)
+            val newEntity = WrapperEntity(data.type.toPacketEventsType())
+            newEntity.entityMeta.customName = getDisplayName(player)
+            newEntity.entityMeta.isCustomNameVisible = true
+            if (hooker.utils.isGlowing(player)) {
+                newEntity.entityMeta.isGlowing = true
+            }
 
-            val nearbyPlayers = getNearbyPlayers(player, newLocation, data.showSelf)
-            sendPacketToPlayers(createSpawnPacket(newData, newLocation), nearbyPlayers, player.name, "SPAWN_ENTITY")
-            sendPacketToPlayers(createMetadataPacket(newEntityId, player, hooker.utils.isGlowing(player)), nearbyPlayers, player.name, "ENTITY_METADATA")
+            val newData = DisguiseData(newEntity, data.type, data.showSelf, data.equipment)
+            val loc = com.github.retrooper.packetevents.protocol.world.Location(
+                newLocation.x, newLocation.y, newLocation.z, newLocation.yaw, newLocation.pitch
+            )
+
+            val viewers = getNearbyPlayers(player, newLocation, data.showSelf)
+            viewers.forEach { newEntity.addViewer(it.uniqueId) }
+            newEntity.spawn(loc)
             if (data.equipment.isNotEmpty()) {
-                sendPacketToPlayers(createEquipmentPacket(newEntityId, data.equipment), nearbyPlayers, player.name, "ENTITY_EQUIPMENT")
+                val equipPacket = WrapperPlayServerEntityEquipment(newEntity.entityId, data.equipment)
+                viewers.forEach { viewer ->
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+                }
             }
 
             disguisedPlayers[player] = newData
-            scheduleUpdateTask(player, newData)
+            scheduleUpdateTask(player)
         }
     }
 
     fun sendSwingAnimation(player: Player) {
         disguisedPlayers[player]?.let { data ->
             if (data.type in noSwingAnimationEntities) return
-            val animationPacket = ProtocolLibrary.getProtocolManager().createPacket(PacketType.Play.Server.ANIMATION)
-            animationPacket.integers.write(0, data.entityId).write(1, 0)
-            sendPacketToPlayers(animationPacket, getNearbyPlayers(player, player.location, data.showSelf), player.name, "ENTITY_ANIMATION")
+            val animationPacket = WrapperPlayServerEntityAnimation(data.entity.entityId, WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM)
+            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
+            viewers.forEach { viewer ->
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, animationPacket)
+            }
         }
+    }
+
+    private fun scheduleUpdateTask(player: Player) {
+        val taskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+            if (!player.isOnline || !disguisedPlayers.containsKey(player)) {
+                tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
+                return@Runnable
+            }
+            val currentData = disguisedPlayers[player] ?: return@Runnable
+            val playerLoc = player.location
+            val loc = com.github.retrooper.packetevents.protocol.world.Location(
+                playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
+            )
+            currentData.entity.teleport(loc)
+            currentData.entity.entityMeta.customName = getDisplayName(player)
+            currentData.entity.entityMeta.isCustomNameVisible = true
+            if (hooker.utils.isGlowing(player)) {
+                currentData.entity.entityMeta.isGlowing = true
+            }
+            val viewers = getNearbyPlayers(player, player.location, currentData.showSelf)
+            viewers.forEach { currentData.entity.addViewer(it.uniqueId) }
+            if (currentData.equipment.isNotEmpty()) {
+                val equipPacket = WrapperPlayServerEntityEquipment(currentData.entity.entityId, currentData.equipment)
+                viewers.forEach { viewer ->
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+                }
+            }
+            val headLookPacket = WrapperPlayServerEntityHeadLook(currentData.entity.entityId, playerLoc.yaw)
+            viewers.forEach { viewer ->
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+            }
+        }, 0L, 2L).taskId
+        tasks[player] = taskId
+    }
+
+    private fun EntityType.toPacketEventsType(): com.github.retrooper.packetevents.protocol.entity.type.EntityType {
+        return EntityTypes.getByName("minecraft:${this.name.lowercase()}")
     }
 }
