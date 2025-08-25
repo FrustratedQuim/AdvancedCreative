@@ -1,6 +1,6 @@
 plugins {
-    kotlin("jvm") version "1.9.23"
-    id("com.gradleup.shadow") version "8.3.1"
+    kotlin("jvm") version "2.2.10"
+    id("com.gradleup.shadow") version "9.0.2"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.18"
 }
 
@@ -25,8 +25,8 @@ repositories {
 dependencies {
     paperweight.paperDevBundle("1.21.1-R0.1-SNAPSHOT")
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.23")
-    implementation("net.kyori:adventure-text-minimessage:4.23.0")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.10")
+    implementation("net.kyori:adventure-text-minimessage:4.24.0")
     implementation("com.github.Tofaa2.EntityLib:spigot:master-6fba8ea5fdc7880d1c62c3428f562fea2745b58b") // 2.4.11
 
 //    compileOnly("de.oliver:FancyNpcs:2.7.0")
@@ -44,7 +44,9 @@ val shadowJarName = "${project.name}-${project.version}_1.21.1-shadow.jar"
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "21"
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        }
     }
 
     compileJava {
