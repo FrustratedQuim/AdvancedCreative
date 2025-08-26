@@ -27,7 +27,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.10")
     implementation("net.kyori:adventure-text-minimessage:4.24.0")
-    implementation("com.github.Tofaa2.EntityLib:spigot:master-6fba8ea5fdc7880d1c62c3428f562fea2745b58b") // 2.4.11
+    implementation("com.github.Tofaa2.EntityLib:spigot:2.4.11") // 2.4.11
 
 //    compileOnly("de.oliver:FancyNpcs:2.7.0")
 //    compileOnly("de.oliver:FancyHolograms:2.7.0")
