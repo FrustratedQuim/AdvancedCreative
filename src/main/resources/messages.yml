@@ -128,3 +128,8 @@ messages:
   # Slap
   info-slap-on: "<dark_green>▍ <#00FF40>Режим пощёчин включён!"
   info-slap-off: "<dark_red>▍ <#FF1500>Режим пощёчин отключён."
+
+  # Itemdb
+  itemdb-info: |
+    <#FFD700><u>▍</u> <#FFE68A>Предмет: <#FFF3E0>%item_name%
+    <#FFD700>▍ <#FFE68A>Цифровое ID: <#FFF3E0>%numeric_id%

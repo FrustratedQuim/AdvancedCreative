@@ -22,6 +22,8 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         "strength" to "player",
         "health" to "player",
         "effects" to "player",
+        "itemdb" to "player",
+        "id" to "player",
         "sneeze" to "rise",
         "glide" to "rise",
         "gravity" to "rise",
@@ -136,6 +138,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             "effects" -> functionHooker.effectsManager.applyEffect(player, args.getOrNull(0), args.getOrNull(1), args.getOrNull(2))
             "slap" -> functionHooker.slapManager.slapPlayer(player)
             "sithead" -> functionHooker.sitheadManager.prepareToSithead(player, args.getOrNull(0), args.getOrNull(1))
+            "itemdb", "id" -> functionHooker.itemdbManager.showItemInfo(player)
         }
     }
 
@@ -166,12 +169,11 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
     }
 
     private fun completeEffects(sender: CommandSender, args: Array<out String>): List<String> {
-        return when {
-            args.size == 1 -> (Registry.EFFECT.iterator().asSequence().map { it.key.key.lowercase() } + "clear")
+        return when (args.size) {
+            1 -> (Registry.EFFECT.iterator().asSequence().map { it.key.key.lowercase() } + "clear")
                 .filter { it.startsWith(args[0], ignoreCase = true) }.sorted().toList()
-            args.size == 2 -> listOf("1","2","3","5","10").filter { it.startsWith(args[1], ignoreCase = true) }
-            args.size == 3 && sender.hasPermission("advancedcreative.effects.admin") ->
-                Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
+            2 -> listOf("1","2","3","5","10").filter { it.startsWith(args[1], ignoreCase = true) }
+            3 if sender.hasPermission("advancedcreative.effects.admin") -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
             else -> emptyList()
         }
     }

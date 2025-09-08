@@ -9,7 +9,6 @@ import com.github.retrooper.packetevents.util.Vector3f
 import com.ratger.acreative.core.FunctionHooker
 import me.tofaa.entitylib.meta.display.BlockDisplayMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
-import org.bukkit.Bukkit
 import org.bukkit.Location as BukkitLocation
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
@@ -29,7 +28,6 @@ data class ScorePoint(
 
 class PissManager(private val hooker: FunctionHooker) {
 
-    private val activeStreams = mutableListOf<MutableList<WrapperEntity>>()
     val scorePoints = mutableListOf<ScorePoint>()
     val pissingPlayers = mutableMapOf<Player, BukkitRunnable>()
     val hiddenPuddleDisplays = ConcurrentHashMap<UUID, MutableMap<UUID, MutableList<WrapperEntity>>>()
@@ -53,20 +51,23 @@ class PissManager(private val hooker: FunctionHooker) {
             return
         }
         val streamTask = object : BukkitRunnable() {
+            private var tickCounter = 0
+
             override fun run() {
+                if (tickCounter >= 120) {
+                    cancel()
+                    stopPiss(player)
+                    return
+                }
                 spawnStream(player)
+                tickCounter += 2
             }
         }
-        streamTask.runTaskTimer(hooker.plugin, 0L, 3L)
+        streamTask.runTaskTimer(hooker.plugin, 0L, 2L)
         pissingPlayers[player] = streamTask
-        object : BukkitRunnable() {
-            override fun run() {
-                stopPiss(player)
-            }
-        }.runTaskLater(hooker.plugin, 120L)
     }
 
-    private fun spawnStream(player: Player) {
+    fun spawnStream(player: Player) {
         val direction = player.location.direction.normalize()
         val startLocation = player.eyeLocation.clone().add(direction.x * 0.2, -0.9, direction.z * 0.2)
 
@@ -95,63 +96,58 @@ class PissManager(private val hooker: FunctionHooker) {
             traveled += step
         }
 
-        val streamBlocks = mutableListOf<WrapperEntity>()
-        activeStreams.add(streamBlocks)
+        if (spawnPositions.isEmpty()) return
+
+        val api = PacketEvents.getAPI()
+        val blockState = WrappedBlockState.getDefaultState(
+            api.serverManager.version.toClientVersion(),
+            StateTypes.GOLD_BLOCK
+        )
+
+        val entity = WrapperEntity(EntityTypes.BLOCK_DISPLAY)
+        val blockMeta = entity.entityMeta as BlockDisplayMeta
+        blockMeta.blockId = blockState.globalId
+        blockMeta.scale = Vector3f(0.1f, 0.1f, 0.1f)
+        blockMeta.isGlowing = hooker.utils.isGlowing(player)
+
+        val initialLocation = spawnPositions[0]
+        val packetLoc = PacketLocation(
+            initialLocation.x,
+            initialLocation.y,
+            initialLocation.z,
+            initialLocation.yaw,
+            initialLocation.pitch
+        )
+
+        entity.addViewer(player.uniqueId)
+        val viewers = getNearbyPlayers(player, initialLocation)
+        viewers.forEach { entity.addViewer(it.uniqueId) }
+        entity.spawn(packetLoc)
 
         object : BukkitRunnable() {
-            private var index = 0
-            private var tickCounter = 0
+            private var index = 1
 
             override fun run() {
                 if (index >= spawnPositions.size) {
+                    if (entity.isSpawned) {
+                        entity.remove()
+                    }
                     cancel()
                     return
                 }
 
-                val blocksToSpawn = if (tickCounter % 2 == 0) 2 else 1
-                repeat(blocksToSpawn) {
-                    if (index >= spawnPositions.size) return@repeat
-                    val spawnLocation = spawnPositions[index]
-                    val api = PacketEvents.getAPI()
-                    val blockState = WrappedBlockState.getDefaultState(
-                        api.serverManager.version.toClientVersion(),
-                        StateTypes.GOLD_BLOCK
-                    )
-
-                    val entity = WrapperEntity(EntityTypes.BLOCK_DISPLAY)
-                    val blockMeta = entity.entityMeta as BlockDisplayMeta
-                    blockMeta.blockId = blockState.globalId
-                    blockMeta.scale = Vector3f(0.1f, 0.1f, 0.1f)
-                    blockMeta.isGlowing = hooker.utils.isGlowing(player)
-
-                    val packetLoc = PacketLocation(
-                        spawnLocation.x,
-                        spawnLocation.y,
-                        spawnLocation.z,
-                        spawnLocation.yaw,
-                        spawnLocation.pitch
-                    )
-
-                    entity.addViewer(player.uniqueId)
-                    for (viewer in Bukkit.getOnlinePlayers().filter { it != player && !hooker.utils.isHiddenFromPlayer(it, player) }) {
-                        entity.addViewer(viewer.uniqueId)
-                    }
-                    entity.spawn(packetLoc)
-
-                    streamBlocks.add(entity)
-                    object : BukkitRunnable() {
-                        override fun run() {
-                            if (entity.isSpawned) {
-                                entity.remove()
-                                streamBlocks.remove(entity)
-                            }
-                        }
-                    }.runTaskLater(hooker.plugin, 2L)
-                    index++
-                }
-                tickCounter++
+                val nextLocation = spawnPositions[index]
+                val nextPacketLoc = PacketLocation(
+                    nextLocation.x,
+                    nextLocation.y,
+                    nextLocation.z,
+                    nextLocation.yaw,
+                    nextLocation.pitch
+                )
+                entity.teleport(nextPacketLoc)
+                index++
             }
-        }.runTaskTimer(hooker.plugin, 0L, 1L)
+        }.runTaskTimer(hooker.plugin, 1L, 1L)
     }
 
     private fun handleCollision(player: Player, location: BukkitLocation) {
@@ -193,22 +189,21 @@ class PissManager(private val hooker: FunctionHooker) {
                     )
 
                     entity.addViewer(player.uniqueId)
-                    for (viewer in Bukkit.getOnlinePlayers().filter { it != player && !hooker.utils.isHiddenFromPlayer(it, player) }) {
-                        entity.addViewer(viewer.uniqueId)
-                    }
+                    val viewers = getNearbyPlayers(player, spawnLocation)
+                    viewers.forEach { entity.addViewer(it.uniqueId) }
                     entity.spawn(packetLoc)
 
                     val point = ScorePoint(spawnLocation.clone(), existing.score, entity, randX, randY, randZ, creator = player.uniqueId)
                     scorePoints.remove(existing)
                     scorePoints.add(point)
 
-                    for (onlinePlayer in Bukkit.getOnlinePlayers()) {
-                        if (hooker.utils.isHiddenFromPlayer(onlinePlayer, player)) {
-                            val hiddenMap = hiddenPuddleDisplays.computeIfAbsent(onlinePlayer.uniqueId) { ConcurrentHashMap() }
-                            val list = hiddenMap.computeIfAbsent(player.uniqueId) { mutableListOf() }
-                            list.add(entity)
-                            entity.removeViewer(onlinePlayer.uniqueId)
-                        }
+                    val hiddenViewers = location.getNearbyPlayers(50.0)
+                        .filter { hooker.utils.isHiddenFromPlayer(it, player) }
+                    for (onlinePlayer in hiddenViewers) {
+                        val hiddenMap = hiddenPuddleDisplays.computeIfAbsent(onlinePlayer.uniqueId) { ConcurrentHashMap() }
+                        val list = hiddenMap.computeIfAbsent(player.uniqueId) { mutableListOf() }
+                        list.add(entity)
+                        entity.removeViewer(onlinePlayer.uniqueId)
                     }
 
                     scheduleDecay(point)
@@ -263,6 +258,11 @@ class PissManager(private val hooker: FunctionHooker) {
                 blockMeta.translation = Vector3f(translationX, translationY, translationZ)
             }
         }.runTaskTimer(hooker.plugin, 15 * 20L, 5L)
+    }
+
+    private fun getNearbyPlayers(player: Player, location: BukkitLocation): List<Player> {
+        return location.getNearbyPlayers(50.0)
+            .filter { !hooker.utils.isHiddenFromPlayer(it, player)}
     }
 
     fun stopPiss(player: Player) {

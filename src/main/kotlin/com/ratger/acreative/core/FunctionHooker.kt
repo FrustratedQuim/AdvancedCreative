@@ -12,6 +12,7 @@ import com.ratger.acreative.commands.glow.GlowManager
 import com.ratger.acreative.commands.gravity.GravityManager
 import com.ratger.acreative.commands.health.HealthManager
 import com.ratger.acreative.commands.hide.HideManager
+import com.ratger.acreative.commands.itemdb.ItemdbManager
 import com.ratger.acreative.commands.lay.LayManager
 import com.ratger.acreative.commands.piss.PissManager
 import com.ratger.acreative.commands.resize.ResizeManager
@@ -77,6 +78,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var slapManager: SlapManager
         private set
+    lateinit var itemdbManager: ItemdbManager
+        private set
     lateinit var utils: Utils
         private set
     lateinit var packetHandler: PacketHandler
@@ -108,6 +111,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         disguiseManager = DisguiseManager(this)
         effectsManager = EffectsManager(this)
         slapManager = SlapManager(this)
+        itemdbManager = ItemdbManager(this)
         packetHandler = PacketHandler(this)
 
         utils = Utils(
@@ -151,7 +155,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             "disguise",
             "effects",
             "slap",
-            "sithead"
+            "sithead",
+            "itemdb",
+            "id"
         )
         for (cmd in commands) {
             plugin.getCommand(cmd)?.setExecutor(commandManager)

@@ -68,11 +68,23 @@ commands:
   slap:
     description: Toggles slap mode
     usage: /slap
+  itemdb:
+    description: Shows the item String/Numeric ID
+    usage: /itemdb
+  id:
+    description: alt for /itemdb
+    usage: /id
 
 permissions:
   advancedcreative.ahelp:
     description: Allows using /ahelp
     default: true
+  advancedcreative.itemdb:
+    description: Allows using /itemdb
+    default: op
+  advancedcreative.id:
+    description: Allows using /id
+    default: op
   advancedcreative.sit:
     description: Allows using /sit
     default: op
