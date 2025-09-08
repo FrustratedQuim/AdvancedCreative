@@ -32,7 +32,7 @@ dependencies {
 //    compileOnly("de.oliver:FancyNpcs:2.7.0")
 //    compileOnly("de.oliver:FancyHolograms:2.7.0")
 //    compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.9.4")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.9.5")
 }
 
 java {
