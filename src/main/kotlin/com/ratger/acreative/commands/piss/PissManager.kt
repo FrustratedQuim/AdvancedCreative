@@ -2,19 +2,20 @@ package com.ratger.acreative.commands.piss
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
-import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes
 import com.github.retrooper.packetevents.util.Vector3f
 import com.ratger.acreative.core.FunctionHooker
 import me.tofaa.entitylib.meta.display.BlockDisplayMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
-import org.bukkit.Location as BukkitLocation
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
+import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
+import org.bukkit.Location as BukkitLocation
 
 data class ScorePoint(
     val location: BukkitLocation,
@@ -63,7 +64,7 @@ class PissManager(private val hooker: FunctionHooker) {
                 tickCounter += 2
             }
         }
-        streamTask.runTaskTimer(hooker.plugin, 0L, 2L)
+        streamTask.runTaskTimerAsynchronously(hooker.plugin, 0L, 2L)
         pissingPlayers[player] = streamTask
     }
 
@@ -120,7 +121,10 @@ class PissManager(private val hooker: FunctionHooker) {
         )
 
         entity.addViewer(player.uniqueId)
-        val viewers = getNearbyPlayers(player, initialLocation)
+
+        val viewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
+            getNearbyPlayers(player, initialLocation)
+        }.get()
         viewers.forEach { entity.addViewer(it.uniqueId) }
         entity.spawn(packetLoc)
 
@@ -147,7 +151,7 @@ class PissManager(private val hooker: FunctionHooker) {
                 entity.teleport(nextPacketLoc)
                 index++
             }
-        }.runTaskTimer(hooker.plugin, 1L, 1L)
+        }.runTaskTimerAsynchronously(hooker.plugin, 1L, 1L)
     }
 
     private fun handleCollision(player: Player, location: BukkitLocation) {
@@ -188,8 +192,9 @@ class PissManager(private val hooker: FunctionHooker) {
                         spawnLocation.pitch
                     )
 
-                    entity.addViewer(player.uniqueId)
-                    val viewers = getNearbyPlayers(player, spawnLocation)
+                    val viewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
+                        getNearbyPlayers(player, spawnLocation)
+                    }.get()
                     viewers.forEach { entity.addViewer(it.uniqueId) }
                     entity.spawn(packetLoc)
 
@@ -197,13 +202,17 @@ class PissManager(private val hooker: FunctionHooker) {
                     scorePoints.remove(existing)
                     scorePoints.add(point)
 
-                    val hiddenViewers = location.getNearbyPlayers(50.0)
-                        .filter { hooker.utils.isHiddenFromPlayer(it, player) }
-                    for (onlinePlayer in hiddenViewers) {
-                        val hiddenMap = hiddenPuddleDisplays.computeIfAbsent(onlinePlayer.uniqueId) { ConcurrentHashMap() }
-                        val list = hiddenMap.computeIfAbsent(player.uniqueId) { mutableListOf() }
-                        list.add(entity)
-                        entity.removeViewer(onlinePlayer.uniqueId)
+                    val hiddenViewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
+                        location.getNearbyPlayers(50.0)
+                            .filter { hooker.utils.isHiddenFromPlayer(it, player) }
+                    }.get()
+                    if (hiddenViewers.isNotEmpty()) {
+                        for (onlinePlayer in hiddenViewers) {
+                            val hiddenMap = hiddenPuddleDisplays.computeIfAbsent(onlinePlayer.uniqueId) { ConcurrentHashMap() }
+                            val list = hiddenMap.computeIfAbsent(player.uniqueId) { mutableListOf() }
+                            list.add(entity)
+                            entity.removeViewer(onlinePlayer.uniqueId)
+                        }
                     }
 
                     scheduleDecay(point)
@@ -225,7 +234,7 @@ class PissManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun scheduleDecay(point: ScorePoint) {
+        private fun scheduleDecay(point: ScorePoint) {
         object : BukkitRunnable() {
             override fun run() {
                 val display = point.display ?: return cancel()
@@ -257,7 +266,7 @@ class PissManager(private val hooker: FunctionHooker) {
                 blockMeta.scale = Vector3f(newSize, 0.025f, newSize)
                 blockMeta.translation = Vector3f(translationX, translationY, translationZ)
             }
-        }.runTaskTimer(hooker.plugin, 15 * 20L, 5L)
+        }.runTaskTimerAsynchronously(hooker.plugin, 15 * 20L, 5L)
     }
 
     private fun getNearbyPlayers(player: Player, location: BukkitLocation): List<Player> {
