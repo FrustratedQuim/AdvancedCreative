@@ -27,6 +27,10 @@
       - Возможность изменять свой атрибут здоровья.
     - `advancedcreative.effects`
       - Возможность переключать пермаментные эффекты от зелий.
+    - `advancedcreative.itemdb`
+      - Получить ID предмета
+    - `advancedcreative.id`
+      - Короткий аналог /itemdb
   - **Rise**
     - `advancedcreative.sneeze`
       - Возможность визуально чихнуть командой.
