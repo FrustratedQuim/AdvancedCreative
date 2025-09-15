@@ -6,6 +6,7 @@ import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
 import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes
 import com.github.retrooper.packetevents.util.Vector3f
 import com.ratger.acreative.core.FunctionHooker
+import me.tofaa.entitylib.meta.display.AbstractDisplayMeta
 import me.tofaa.entitylib.meta.display.BlockDisplayMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
@@ -110,6 +111,7 @@ class PissManager(private val hooker: FunctionHooker) {
         blockMeta.blockId = blockState.globalId
         blockMeta.scale = Vector3f(0.1f, 0.1f, 0.1f)
         blockMeta.isGlowing = hooker.utils.isGlowing(player)
+        blockMeta.positionRotationInterpolationDuration = 1
 
         val initialLocation = spawnPositions[0]
         val packetLoc = PacketLocation(
@@ -148,6 +150,10 @@ class PissManager(private val hooker: FunctionHooker) {
                     nextLocation.yaw,
                     nextLocation.pitch
                 )
+                (entity.entityMeta as AbstractDisplayMeta).let { meta ->
+                    meta.interpolationDelay = 0
+                    entity.sendPacketsToViewersIfSpawned(meta.createPacket())
+                }
                 entity.teleport(nextPacketLoc)
                 index++
             }
@@ -183,6 +189,7 @@ class PissManager(private val hooker: FunctionHooker) {
                     blockMeta.scale = Vector3f(initialSize, 0.025f, initialSize)
                     blockMeta.translation = Vector3f(translationX, translationY, translationZ)
                     blockMeta.isGlowing = hooker.utils.isGlowing(player)
+                    blockMeta.transformationInterpolationDuration = 5
 
                     val packetLoc = PacketLocation(
                         spawnLocation.x,
@@ -226,6 +233,7 @@ class PissManager(private val hooker: FunctionHooker) {
                     blockMeta.scale = Vector3f(sizeXZ, 0.025f, sizeXZ)
                     blockMeta.translation = Vector3f(translationX, translationY, translationZ)
                     blockMeta.isGlowing = hooker.utils.isGlowing(player)
+                    blockMeta.interpolationDelay = 0
                 }
             }
         } else {
