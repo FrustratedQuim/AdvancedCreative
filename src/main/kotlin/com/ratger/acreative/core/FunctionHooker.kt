@@ -156,8 +156,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             "effects",
             "slap",
             "sithead",
-            "itemdb",
-            "id"
+            "itemdb"
         )
         for (cmd in commands) {
             plugin.getCommand(cmd)?.setExecutor(commandManager)

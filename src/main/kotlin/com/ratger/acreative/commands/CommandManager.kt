@@ -23,7 +23,6 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         "health" to "player",
         "effects" to "player",
         "itemdb" to "player",
-        "id" to "player",
         "sneeze" to "rise",
         "glide" to "rise",
         "gravity" to "rise",
@@ -32,10 +31,10 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         "bind" to "flare",
         "glow" to "spark",
         "disguise" to "spark",
+        "sithead" to "sunny",
         "spit" to "horizon",
         "piss" to "horizon",
         "slap" to "admin",
-        "sithead" to "admin"
     )
 
     private val permissionMessages = mapOf(
@@ -72,7 +71,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         val cmdName = command.name.lowercase()
         return when (cmdName) {
             "hide" -> completeOnlinePlayers(args)
-            "sithead" -> completeOnlinePlayers(args)
+            "sithead" -> completeSithead(sender, args)
             "gravity" -> completeFromList(args, listOf("0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1.0","basic"))
             "resize" -> completeFromList(args, listOf("0.1","0.5","1.0","1.5","5.0","10.0","15.0","basic"))
             "strength" -> completeFromList(args, listOf("0","5","10","100","500","basic"))
@@ -138,7 +137,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             "effects" -> functionHooker.effectsManager.applyEffect(player, args.getOrNull(0), args.getOrNull(1), args.getOrNull(2))
             "slap" -> functionHooker.slapManager.slapPlayer(player)
             "sithead" -> functionHooker.sitheadManager.prepareToSithead(player, args.getOrNull(0), args.getOrNull(1))
-            "itemdb", "id" -> functionHooker.itemdbManager.showItemInfo(player)
+            "itemdb" -> functionHooker.itemdbManager.showItemInfo(player)
         }
     }
 
@@ -176,5 +175,22 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             3 if sender.hasPermission("advancedcreative.effects.admin") -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
             else -> emptyList()
         }
+    }
+
+    private fun completeSithead(sender: CommandSender, args: Array<out String>): List<String> {
+        if (sender.hasPermission("advancedcreative.sithead.other")) {
+            val completions = mutableListOf<String>()
+            if (args.size < 2) completions.add("toggle")
+            if (args.size < 3 && !args.contains("toggle")) {
+                completions.addAll(completeOnlinePlayers(args))
+                completions.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
+            }
+            return completions
+        } else {
+            if (args.size < 2) {
+                return listOf("toggle")
+            }
+        }
+        return emptyList()
     }
 }

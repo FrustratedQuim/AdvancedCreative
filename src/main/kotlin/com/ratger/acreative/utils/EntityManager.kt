@@ -13,6 +13,10 @@ import com.ratger.acreative.core.FunctionHooker
 import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
+import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
+import net.minecraft.world.scores.PlayerTeam
+import net.minecraft.world.scores.Scoreboard
+import net.minecraft.world.scores.Team
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
@@ -40,7 +44,7 @@ class EntityManager(
         }
     }
 
-    fun createPlayerNPC(player: Player, location: Location, yaw: Float, isGlowing: Boolean): Pair<WrapperEntity, List<Equipment>> {
+    fun createPlayerNPC(player: Player, location: Location, yaw: Float, isGlowing: Boolean): Triple<WrapperEntity, List<Equipment>, String> {
 
         val npcUUID = UUID.randomUUID()
         val entity = WrapperEntity(npcUUID, EntityTypes.PLAYER)
@@ -62,7 +66,24 @@ class EntityManager(
             }
         }
 
-        val userProfile = UserProfile(npcUUID, "", textureProperties)
+        val profileName = "NPC_${npcUUID.toString().substring(0,8)}"
+        val userProfile = UserProfile(npcUUID, profileName, textureProperties)
+
+        val teamName = "hide_${npcUUID.toString().substring(0,8)}"
+        val scoreboard = Scoreboard()
+        val team = PlayerTeam(scoreboard, teamName)
+        team.playerPrefix = net.minecraft.network.chat.Component.empty()
+        team.playerSuffix = net.minecraft.network.chat.Component.empty()
+        team.nameTagVisibility = Team.Visibility.NEVER
+        team.collisionRule = Team.CollisionRule.NEVER
+        team.players.add(profileName)
+        val createPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true)
+        Bukkit.getOnlinePlayers().forEach { viewer ->
+            if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                (viewer as CraftPlayer).handle.connection.send(createPacket)
+            }
+        }
+
         val playerInfoUpdate = WrapperPlayServerPlayerInfoUpdate(
             WrapperPlayServerPlayerInfoUpdate.Action.ADD_PLAYER,
             WrapperPlayServerPlayerInfoUpdate.PlayerInfo(userProfile)
@@ -140,7 +161,7 @@ class EntityManager(
 
         entity.spawn(PacketLocation(location.x, location.y, location.z, yaw, 0f))
 
-        return Pair(entity, equipment)
+        return Triple(entity, equipment, teamName)
     }
 
     fun updatePlayerNPCEquipment(npc: WrapperEntity, equipment: List<Equipment>, player: Player) {

@@ -28,9 +28,7 @@
     - `advancedcreative.effects`
       - Возможность переключать пермаментные эффекты от зелий.
     - `advancedcreative.itemdb`
-      - Получить ID предмета
-    - `advancedcreative.id`
-      - Короткий аналог /itemdb
+      - Получить ID предмета.
   - **Rise**
     - `advancedcreative.sneeze`
       - Возможность визуально чихнуть командой.
@@ -51,8 +49,8 @@
     - `advancedcreative.disguise`
       - Возможность превратиться в моба.
   - **Sunny**
-    - `advancedcreative.sit.head`
-      - Возможность сесть на голову игрока при помощи пкм.
+    - `advancedcreative.sithead`
+      - Возможность сесть на голову игрока при помощи пкм & команда на отключение.
   - **Horizon**
     - `advancedcreative.spit`
       - Возможность визуально плюнуть командой.
@@ -63,13 +61,13 @@
   - **Moder**
     - `advancedcreative.slap`
       - Возможность переключить режим пощёчины: откидывание игрока при ударе.
-    - `advancedcreative.sithead`
+    - `advancedcreative.sithead.other`
       - Возможность садить игроков на головы командой.
     - `advancedcreative.hide.bypass`
       - Байпас на попытку скрыть себя командой скрытия.
     - `advancedcreative.freeze.other`
       - Возможность замораживать других игроков командой.
-    - `advancedcreative.effects.admin`
+    - `advancedcreative.effects.other`
       - Возможность переключать пермаментные эффекты от зелий другим.
   - **Admin**
     - `advancedcreative.slap.bypass`

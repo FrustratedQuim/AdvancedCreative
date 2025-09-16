@@ -86,9 +86,9 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
-        if (utils.isDisguised(player)) {
-            hooker.disguiseManager.recreateDisguise(player, event.to)
-        }
+        if (utils.isSitting(player)) sitManager.unsitPlayer(player)
+        if (utils.isLaying(player)) layManager.unlayPlayer(player)
+        if (utils.isDisguised(player)) hooker.disguiseManager.recreateDisguise(player, event.to)
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -114,7 +114,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
                 event.isCancelled = true
                 return
             }
-            if (player.hasPermission("advancedcreative.sit.head")) {
+            if (player.hasPermission("advancedcreative.sithead") && !hooker.sitheadManager.isInteractionBlocked(player)) {
                 sitManager.sitOnHead(player, target)
             }
         }

@@ -4,12 +4,35 @@ import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
+import java.util.UUID
 
 class SitheadManager(private val hooker: FunctionHooker) {
 
+    private val blockInteractPlayers = mutableSetOf<UUID>()
+
     fun prepareToSithead(sender: Player, targetName: String?, playerName: String?) {
         if (targetName == null) {
-            hooker.messageManager.sendMiniMessage(sender, key = "usage-sithead")
+            if (sender.hasPermission("advancedcreative.sithead.other")) {
+                hooker.messageManager.sendMiniMessage(sender, key = "usage-sithead-other")
+            } else {
+                hooker.messageManager.sendMiniMessage(sender, key = "usage-sithead")
+            }
+            return
+        }
+
+        if (targetName == "toggle" && sender.hasPermission("advancedcreative.sithead")) {
+            if (blockInteractPlayers.contains(sender.uniqueId)) {
+                blockInteractPlayers.remove(sender.uniqueId)
+                hooker.messageManager.sendMiniMessage(sender, key = "sithead-unblock-interact")
+            } else {
+                blockInteractPlayers.add(sender.uniqueId)
+                hooker.messageManager.sendMiniMessage(sender, key = "sithead-block-interact")
+            }
+            return
+        }
+
+        if (!sender.hasPermission("advancedcreative.sithead.other")) {
+            hooker.messageManager.sendMiniMessage(sender, key = "permission-unknown")
             return
         }
 
@@ -123,5 +146,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
 
         hooker.utils.unsetAllPoses(playerToSit)
         hooker.sitManager.sitOnHead(playerToSit, finalTarget, sender)
+    }
+
+    fun isInteractionBlocked(player: Player): Boolean {
+        return blockInteractPlayers.contains(player.uniqueId)
     }
 }

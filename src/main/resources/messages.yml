@@ -49,13 +49,16 @@ messages:
   error-crawl-in-air: "<dark_red>▍ <#FF1500>Вы не можете ползать в воздухе!"
 
   # Sithead
-  usage-sithead: "<dark_red>▍ <#FF1500>Используйте /sithead <цель> [игрок]"
+  usage-sithead: "<dark_red>▍ <#FF1500>Используйте /sithead toggle"
+  usage-sithead-other: "<dark_red>▍ <#FF1500>Используйте /sithead <цель> [игрок]"
   sithead-hidden-by-one: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл вас!"
   sithead-hidden-by-one-target: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл %player%!"
   sithead-hidden-self: "<dark_red>▍ <#FF1500>Этот игрок скрыл вас от себя!"
   sithead-hidden-self-target: "<dark_red>▍ <#FF1500>Этот игрок скрыл %player% от себя!"
   sithead-you-hide-one: "<dark_red>▍ <#FF1500>Вы скрыли одного из сидящих игроков!"
   sithead-one-hidden-by-player: "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыт %player%!"
+  sithead-block-interact: "<dark_red>▍ <#FF1500>Вы отключили посадку на голову по нажатию!"
+  sithead-unblock-interact: "<dark_green>▍ <#00FF40>Посадка на голову по нажатию включена."
 
   # Glide & crawl
   info-glide-on: "<dark_green>▍ <#00FF40>Режим парения без элитр включён!"

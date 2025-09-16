@@ -11,6 +11,9 @@ import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
+import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
+import net.minecraft.world.scores.PlayerTeam
+import net.minecraft.world.scores.Scoreboard
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -21,6 +24,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
 import org.bukkit.Location
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import java.util.*
 import kotlin.collections.iterator
 import kotlin.math.abs
@@ -43,7 +47,8 @@ class LayManager(private val hooker: FunctionHooker) {
         val armorStandId: UUID,
         val bedLocation: Location?,
         val equipment: List<Equipment>,
-        val baseYaw: Float
+        val baseYaw: Float,
+        val teamName: String
     )
 
     fun canLay(player: Player): Boolean {
@@ -168,7 +173,7 @@ class LayManager(private val hooker: FunctionHooker) {
             }
         }
 
-        val (entity, equipment) = hooker.entityManager.createPlayerNPC(player, npcLocation, npcYaw, hooker.utils.isGlowing(player))
+        val (entity, equipment, teamName) = hooker.entityManager.createPlayerNPC(player, npcLocation, npcYaw, hooker.utils.isGlowing(player))
 
         val armorStandLocation = location.clone().add(0.0, 0.3, 0.0)
         val armorStand = hooker.entityManager.createArmorStand(armorStandLocation, npcYaw).apply {
@@ -214,7 +219,7 @@ class LayManager(private val hooker: FunctionHooker) {
         }
         val taskId = headRotationTask.runTaskTimer(hooker.plugin, 0L, 2L).taskId
 
-        layingMap[player] = LayData(entity, taskId, armorStand.uniqueId, bedLocation, equipment, y.toFloat())
+        layingMap[player] = LayData(entity, taskId, armorStand.uniqueId, bedLocation, equipment, y.toFloat(), teamName)
 
         hooker.playerStateManager.savePlayerInventory(player)
         player.inventory.armorContents = arrayOf(null, null, null, null)
@@ -235,6 +240,15 @@ class LayManager(private val hooker: FunctionHooker) {
         }
 
         layingMap.remove(player)?.let { data ->
+            val scoreboard = Scoreboard()
+            val team = PlayerTeam(scoreboard, data.teamName)
+            val removePacket = ClientboundSetPlayerTeamPacket.createRemovePacket(team)
+            Bukkit.getOnlinePlayers().forEach { viewer ->
+                if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                    (viewer as CraftPlayer).handle.connection.send(removePacket)
+                }
+            }
+
             Bukkit.getScheduler().cancelTask(data.headRotationTaskId)
 
             val playerInfoRemove = WrapperPlayServerPlayerInfoRemove(listOf(data.npc.uuid))

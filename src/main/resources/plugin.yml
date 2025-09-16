@@ -1,5 +1,5 @@
 name: AdvancedCreative
-version: 1.1.0
+version: 1.1.1
 main: com.ratger.acreative.AdvancedCreative
 api-version: '1.21'
 authors: [ ratger ]
@@ -62,6 +62,7 @@ commands:
   disguise:
     description: Turns the player into a mob
     usage: /disguise <type>
+    aliases: [dd]
   effects:
     description: Applies an effect to player
     usage: /effects <effect> [level]
@@ -71,9 +72,7 @@ commands:
   itemdb:
     description: Shows the item String/Numeric ID
     usage: /itemdb
-  id:
-    description: alt for /itemdb
-    usage: /id
+    aliases: [id]
 
 permissions:
   advancedcreative.ahelp:
@@ -82,17 +81,14 @@ permissions:
   advancedcreative.itemdb:
     description: Allows using /itemdb
     default: op
-  advancedcreative.id:
-    description: Allows using /id
-    default: op
   advancedcreative.sit:
     description: Allows using /sit
     default: op
-  advancedcreative.sit.head:
-    description: Allows to sit on head of other player
-    default: op
   advancedcreative.sithead:
-    description: Allows using /sithead
+    description: Allows to sit on head of other player & using /sithead
+    default: op
+  advancedcreative.sithead.other:
+    description: Allows to sit player on another player
     default: op
   advancedcreative.lay:
     description: Allows using /lay
@@ -151,7 +147,7 @@ permissions:
   advancedcreative.effects:
     description: Allows using /effects
     default: op
-  advancedcreative.effects.admin:
+  advancedcreative.effects.other:
     description: Allows using /effects & target
     default: op
   advancedcreative.slap:
