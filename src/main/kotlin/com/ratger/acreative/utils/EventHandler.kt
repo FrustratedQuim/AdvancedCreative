@@ -86,8 +86,9 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
-        if (utils.isSitting(player)) sitManager.unsitPlayer(player)
-        if (utils.isLaying(player)) layManager.unlayPlayer(player)
+        utils.checkFreezeUnfreeze(player)
+        utils.checkSitUnsit(player)
+        utils.checkLayingUnlay(player)
         if (utils.isDisguised(player)) hooker.disguiseManager.recreateDisguise(player, event.to)
     }
 
