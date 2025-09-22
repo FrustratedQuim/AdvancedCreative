@@ -42,7 +42,6 @@ class ConfigManager(private val hooker: FunctionHooker) {
     }
 
     fun getNumericId(materialName: String): String {
-        println("[ConfigManager] Получаем материал $materialName, цифровое ID: ${stringToNumericIds[materialName]}")
         return stringToNumericIds[materialName] ?: "none"
     }
 
