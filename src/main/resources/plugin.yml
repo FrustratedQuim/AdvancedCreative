@@ -1,5 +1,5 @@
-name: AdvancedCreative
-version: 1.1.1
+name: ${name}
+version: ${version}
 main: com.ratger.acreative.AdvancedCreative
 api-version: '1.21'
 authors: [ ratger ]
