@@ -61,6 +61,9 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
             val velocity = Vector(direction.x * 2.5, 1.0, direction.z * 2.5)
             target.velocity = velocity
 
+            // Protect from fall damage for a short duration after slap
+            fallProtectedPlayers.add(target.uniqueId)
+
             Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
                 fallProtectedPlayers.remove(target.uniqueId)
             }, 100L)
