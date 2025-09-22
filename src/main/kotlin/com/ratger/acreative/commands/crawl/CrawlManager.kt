@@ -88,13 +88,11 @@ class CrawlManager(private val hooker: FunctionHooker) {
             val iterator = crawlingPlayers.entries.iterator()
             while (iterator.hasNext()) {
                 val entry = iterator.next()
-                val player = entry.key
                 val crawler = entry.value
                 if (!crawler.updateBarrier()) {
                     iterator.remove()
                     continue
                 }
-                hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", null, true)
             }
         }, 0L, UPDATE_BARRIER_PERIOD_TICKS)
     }
