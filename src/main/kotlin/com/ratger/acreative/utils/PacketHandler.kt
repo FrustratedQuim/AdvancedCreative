@@ -11,9 +11,10 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 
 class PacketHandler(private val hooker: FunctionHooker) {
+    private var listener: PacketListenerAbstract? = null
 
     fun register() {
-        val listener = object : PacketListenerAbstract(PacketListenerPriority.NORMAL) {
+        listener = object : PacketListenerAbstract(PacketListenerPriority.NORMAL) {
             override fun onPacketReceive(event: PacketReceiveEvent) {
                 val type = event.packetType
                 if (type != PacketType.Play.Client.ANIMATION && type != PacketType.Play.Client.INTERACT_ENTITY) return
@@ -41,10 +42,13 @@ class PacketHandler(private val hooker: FunctionHooker) {
                 }
             }
         }
-        PacketEvents.getAPI().eventManager.registerListener(listener)
+        PacketEvents.getAPI().eventManager.registerListener(listener!!)
     }
 
     fun unregister() {
-        PacketEvents.getAPI().eventManager.unregisterAllListeners()
+        listener?.let {
+            PacketEvents.getAPI().eventManager.unregisterListener(it)
+            listener = null
+        }
     }
 }
