@@ -48,7 +48,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
     }
 
     fun freezePlayer(player: Player, initiator: Player? = null) {
-        if (hooker.utils.isDisguised(player) || player.gameMode != GameMode.SPECTATOR) {
+        if (hooker.utils.isDisguised(player) || player.gameMode == GameMode.SPECTATOR) {
             return
         }
         if (frozenPlayers.containsKey(player)) {
