@@ -81,16 +81,4 @@ tasks {
     build {
         dependsOn(shadowJar)
     }
-
-    val copyPluginJar by registering(Copy::class) {
-        from("$buildDir/libs/$shadowJarName")
-        into("C:/Users/Home/Desktop/Архив/Minecraft/Сервера/Creative_1.21.1/plugins")
-        doLast {
-            println("Plugin moved to server plugins.")
-        }
-    }
-
-    build {
-        finalizedBy(copyPluginJar)
-    }
 }
