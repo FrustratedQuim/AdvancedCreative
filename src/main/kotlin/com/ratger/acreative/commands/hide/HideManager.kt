@@ -155,20 +155,9 @@ class HideManager(private val hooker: FunctionHooker) {
         }
 
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
-            if (hiddenSet.contains(targetId)) {
-                hiddenSet.remove(targetId)
-                if (hiddenSet.isEmpty()) {
-                    hiddenPlayers.remove(hiderId)
-                }
-                if (hider.isOnline && target.isOnline) {
-                    hider.showPlayer(hooker.plugin, target)
-                    hooker.messageManager.sendMiniMessage(
-                        hider,
-                        key = "success-hide-removed",
-                        variables = mapOf("target" to target.name)
-                    )
-                    unhidePlayer(hider, target)
-                }
+            if (hiddenSet.contains(targetId) && hider.isOnline && target.isOnline) {
+                // Delegate full unhide flow (show entities, messages, data cleanup)
+                unhidePlayer(hider, target)
             }
         }, hideDuration / 50L)
     }
