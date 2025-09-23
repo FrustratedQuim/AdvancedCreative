@@ -5,8 +5,12 @@ import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.block.Block
+import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
 import org.bukkit.util.Vector
+import org.bukkit.block.data.type.Slab
+import org.bukkit.block.data.type.Stairs
+import org.bukkit.block.data.Bisected
 import java.util.*
 import kotlin.math.atan2
 
@@ -270,14 +274,17 @@ class SitManager(private val hooker: FunctionHooker) {
         hooker.utils.checkGlideUnglide(player)
 
         lastInteract[player.uniqueId] = currentTime
-        if (block.type.name.contains("STAIRS")) {
-            if ("half=top" in block.blockData.toString()) return false
-            sitOnStairs(player, block)
-            return true
-        } else if (block.type.name.contains("SLAB")) {
-            if ("type=top" in block.blockData.toString() || "type=double" in block.blockData.toString()) return false
-            sitOnSlab(player, block)
-            return true
+        when (val data = block.blockData) {
+            is Stairs -> {
+                if (data.half == Bisected.Half.TOP) return false
+                sitOnStairs(player, block)
+                return true
+            }
+            is Slab -> {
+                if (data.type != Slab.Type.BOTTOM) return false
+                sitOnSlab(player, block)
+                return true
+            }
         }
         return false
     }
@@ -290,11 +297,12 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     private fun sitOnStairs(player: Player, block: Block) {
-        val (yaw, offsetX, offsetZ) = when {
-            "facing=north" in block.blockData.toString() -> Triple(0f, 0.0, 0.13)
-            "facing=south" in block.blockData.toString() -> Triple(180f, 0.0, -0.13)
-            "facing=west" in block.blockData.toString() -> Triple(-90f, 0.13, 0.0)
-            "facing=east" in block.blockData.toString() -> Triple(90f, -0.13, 0.0)
+        val stairs = block.blockData as? Stairs
+        val (yaw, offsetX, offsetZ) = when (stairs?.facing) {
+            BlockFace.NORTH -> Triple(0f, 0.0, 0.13)
+            BlockFace.SOUTH -> Triple(180f, 0.0, -0.13)
+            BlockFace.WEST -> Triple(-90f, 0.13, 0.0)
+            BlockFace.EAST -> Triple(90f, -0.13, 0.0)
             else -> Triple(player.location.yaw, 0.0, 0.0)
         }
         val targetLocation = block.location.clone().add(0.5 + offsetX, 0.55, 0.5 + offsetZ)
