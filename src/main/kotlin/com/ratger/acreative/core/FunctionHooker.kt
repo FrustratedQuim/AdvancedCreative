@@ -185,7 +185,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         utils.stopAllGlows()
         utils.stopAllPiss()
         utils.stopAllDisguises()
-        utils.stopAllPiss()
         utils.stopAllCustomEffects()
         utils.stopAllSlaps()
         messageManager.clearAllTasks()
