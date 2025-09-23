@@ -185,7 +185,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             if (args.size < 2) completions.add("toggle")
             if (args.size < 3 && !args.contains("toggle")) {
                 completions.addAll(completeOnlinePlayers(args))
-                completions.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
+                return completions.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
             }
             return completions
         } else {
