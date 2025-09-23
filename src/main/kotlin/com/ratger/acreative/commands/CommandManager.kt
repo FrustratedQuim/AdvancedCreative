@@ -86,13 +86,17 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
 
     private fun hasPermission(player: Player, command: String) = player.hasPermission("advancedcreative.$command")
 
+    private fun getCooldownMillis(command: String): Long {
+        val key = if (command == "ahelp") "help" else command
+        return functionHooker.configManager.config.getInt("cooldowns.$key", 1000).toLong()
+    }
+
     private fun checkCooldown(player: Player, command: String): Boolean {
         val lastTimes = playerCooldowns[player.uniqueId] ?: return true
-        val lastTime = lastTimes[command] ?: return true
-        val cooldown = functionHooker.configManager.config.getInt("cooldowns.$command", 1000).toLong()
+        val expiresAt = lastTimes[command] ?: return true
         val currentTime = System.currentTimeMillis()
-        if (currentTime - lastTime < cooldown) {
-            val remainingTime = String.format("%.1f", (lastTime + cooldown - currentTime) / 1000.0)
+        if (currentTime < expiresAt) {
+            val remainingTime = String.format("%.1f", (expiresAt - currentTime) / 1000.0)
             functionHooker.messageManager.sendMiniMessage(
                 player,
                 type = "ACTION",
@@ -105,7 +109,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
     }
 
     private fun setCooldown(player: Player, command: String) {
-        val cooldown = functionHooker.configManager.config.getInt("cooldowns.$command", 1000).toLong()
+        val cooldown = getCooldownMillis(command)
         playerCooldowns.computeIfAbsent(player.uniqueId) { mutableMapOf() }[command] = System.currentTimeMillis() + cooldown
     }
 
