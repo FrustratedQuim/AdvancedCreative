@@ -172,7 +172,9 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             1 -> (Registry.EFFECT.iterator().asSequence().map { it.key.key.lowercase() } + "clear")
                 .filter { it.startsWith(args[0], ignoreCase = true) }.sorted().toList()
             2 -> listOf("1","2","3","5","10").filter { it.startsWith(args[1], ignoreCase = true) }
-            3 if sender.hasPermission("advancedcreative.effects.admin") -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
+            3 -> if (sender.hasPermission("advancedcreative.effects.other")) {
+                Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
+            } else emptyList()
             else -> emptyList()
         }
     }

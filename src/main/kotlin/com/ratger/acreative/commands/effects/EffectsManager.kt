@@ -32,7 +32,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
             return
         }
 
-        val target = if (targetName != null && player.hasPermission("advancedcreative.effects.admin")) {
+        val target = if (targetName != null && player.hasPermission("advancedcreative.effects.other")) {
             Bukkit.getPlayer(targetName) ?: run {
                 hooker.messageManager.sendMiniMessage(player, key = "error-unknown-player")
                 return
