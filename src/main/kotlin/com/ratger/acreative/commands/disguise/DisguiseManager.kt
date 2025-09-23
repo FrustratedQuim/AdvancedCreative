@@ -31,6 +31,10 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
     val disguisedPlayers = ConcurrentHashMap<Player, DisguiseData>()
     private val tasks = ConcurrentHashMap<Player, Int>()
+    private val lastViewers = ConcurrentHashMap<Player, MutableSet<java.util.UUID>>()
+    private val lastCustomName = ConcurrentHashMap<Player, Component>()
+    private val lastGlowingState = ConcurrentHashMap<Player, Boolean>()
+
     val restrictedEntities = setOf(
         EntityType.WITHER,
         EntityType.ENDER_DRAGON,
@@ -196,6 +200,9 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.restorePlayerInventory(player)
             disguisedPlayers.remove(player)
             tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
+            lastViewers.remove(player)
+            lastCustomName.remove(player)
+            lastGlowingState.remove(player)
             if (!silent) {
                 hooker.messageManager.sendMiniMessage(player, key = "success-disguise-removed")
             }
@@ -220,6 +227,8 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                 val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
                 PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
             }
+            // track as known viewer
+            lastViewers.computeIfAbsent(disguisedPlayer) { mutableSetOf() }.add(viewer.uniqueId)
         }
     }
 
@@ -231,61 +240,62 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         }
     }
 
-    fun updateMainHandEquipment(player: Player) {
-        disguisedPlayers[player]?.let { data ->
-            val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
-            val currentItem = state.hotbarItems[state.currentHotbarSlot]?.clone() ?: ItemStack(Material.AIR)
-            val packetItem = SpigotConversionUtil.fromBukkitItemStack(currentItem)
-            val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()
-            newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
-            val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, newEquipment)
-            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
+    fun sendSwingAnimation(player: Player) {
+        val data = disguisedPlayers[player] ?: return
+        if (data.type in noSwingAnimationEntities) return
+        val packet = WrapperPlayServerEntityAnimation(
+            data.entity.entityId,
+            WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM
+        )
+        val viewers = getNearbyPlayers(player, player.location, data.showSelf)
+        viewers.forEach { viewer ->
+            PacketEvents.getAPI().playerManager.sendPacket(viewer, packet)
+        }
+    }
+
+    fun recreateDisguise(player: Player, to: Location?) {
+        val data = disguisedPlayers[player] ?: return
+        val targetLoc = to ?: player.location
+        val loc = com.github.retrooper.packetevents.protocol.world.Location(
+            targetLoc.x, targetLoc.y, targetLoc.z, targetLoc.yaw, targetLoc.pitch
+        )
+        data.entity.teleport(loc)
+        val viewers = getNearbyPlayers(player, targetLoc, data.showSelf)
+        viewers.forEach { data.entity.addViewer(it.uniqueId) }
+        // Re-send head look to keep rotation in sync
+        val headLookPacket = WrapperPlayServerEntityHeadLook(data.entity.entityId, targetLoc.yaw)
+        viewers.forEach { viewer ->
+            PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+        }
+        // Ensure equipment visible after teleport
+        if (data.equipment.isNotEmpty()) {
+            val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
             viewers.forEach { viewer ->
                 PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
             }
-            disguisedPlayers[player] = data.copy(equipment = newEquipment)
         }
+        lastViewers[player] = viewers.map { it.uniqueId }.toMutableSet()
     }
 
-    fun recreateDisguise(player: Player, newLocation: Location) {
-        disguisedPlayers[player]?.let { data ->
-            data.entity.remove()
-            tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
+    fun updateMainHandEquipment(player: Player) {
+        val data = disguisedPlayers[player] ?: return
+        val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
+        val heldSlot = state.currentHotbarSlot
+        val bukkitItem: ItemStack = state.hotbarItems[heldSlot] ?: ItemStack(Material.AIR)
+        val packetItem = SpigotConversionUtil.fromBukkitItemStack(bukkitItem)
 
-            val newEntity = WrapperEntity(data.type.toPacketEventsType())
-            newEntity.entityMeta.customName = getDisplayName(player)
-            newEntity.entityMeta.isCustomNameVisible = true
-            if (hooker.utils.isGlowing(player)) {
-                newEntity.entityMeta.isGlowing = true
-            }
+        val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()
+        newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
 
-            val newData = DisguiseData(newEntity, data.type, data.showSelf, data.equipment)
-            val loc = com.github.retrooper.packetevents.protocol.world.Location(
-                newLocation.x, newLocation.y, newLocation.z, newLocation.yaw, newLocation.pitch
-            )
+        // Replace data in map with updated equipment list
+        disguisedPlayers[player] = DisguiseData(data.entity, data.type, data.showSelf, newEquipment)
 
-            val viewers = getNearbyPlayers(player, newLocation, data.showSelf)
-            viewers.forEach { newEntity.addViewer(it.uniqueId) }
-            newEntity.spawn(loc)
-            if (data.equipment.isNotEmpty()) {
-                val equipPacket = WrapperPlayServerEntityEquipment(newEntity.entityId, data.equipment)
-                viewers.forEach { viewer ->
-                    PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
-                }
-            }
-
-            disguisedPlayers[player] = newData
-            scheduleUpdateTask(player)
-        }
-    }
-
-    fun sendSwingAnimation(player: Player) {
-        disguisedPlayers[player]?.let { data ->
-            if (data.type in noSwingAnimationEntities) return
-            val animationPacket = WrapperPlayServerEntityAnimation(data.entity.entityId, WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM)
-            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
-            viewers.forEach { viewer ->
-                PacketEvents.getAPI().playerManager.sendPacket(viewer, animationPacket)
+        val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, newEquipment)
+        val viewerIds = lastViewers[player] ?: getNearbyPlayers(player, player.location, data.showSelf)
+            .map { it.uniqueId }.toMutableSet().also { lastViewers[player] = it }
+        viewerIds.forEach { uid ->
+            Bukkit.getPlayer(uid)?.let { v ->
+                PacketEvents.getAPI().playerManager.sendPacket(v, equipPacket)
             }
         }
     }
@@ -301,24 +311,44 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             val loc = com.github.retrooper.packetevents.protocol.world.Location(
                 playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
             )
+            // Always teleport entity to player's current position
             currentData.entity.teleport(loc)
-            currentData.entity.entityMeta.customName = getDisplayName(player)
-            currentData.entity.entityMeta.isCustomNameVisible = true
-            if (hooker.utils.isGlowing(player)) {
-                currentData.entity.entityMeta.isGlowing = true
+
+            // Update meta only on change
+            val newName = getDisplayName(player)
+            if (lastCustomName[player] != newName) {
+                currentData.entity.entityMeta.customName = newName
+                currentData.entity.entityMeta.isCustomNameVisible = true
+                lastCustomName[player] = newName
             }
+            val newGlow = hooker.utils.isGlowing(player)
+            if (lastGlowingState[player] != newGlow) {
+                currentData.entity.entityMeta.isGlowing = newGlow
+                lastGlowingState[player] = newGlow
+            }
+
+            // Viewers management
             val viewers = getNearbyPlayers(player, player.location, currentData.showSelf)
+            val known = lastViewers.computeIfAbsent(player) { mutableSetOf() }
+            val currentSet = viewers.map { it.uniqueId }.toMutableSet()
             viewers.forEach { currentData.entity.addViewer(it.uniqueId) }
             if (currentData.equipment.isNotEmpty()) {
-                val equipPacket = WrapperPlayServerEntityEquipment(currentData.entity.entityId, currentData.equipment)
-                viewers.forEach { viewer ->
-                    PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+                val newViewers = currentSet.filter { it !in known }
+                if (newViewers.isNotEmpty()) {
+                    val equipPacket = WrapperPlayServerEntityEquipment(currentData.entity.entityId, currentData.equipment)
+                    newViewers.forEach { uid ->
+                        val v = Bukkit.getPlayer(uid) ?: return@forEach
+                        PacketEvents.getAPI().playerManager.sendPacket(v, equipPacket)
+                    }
                 }
             }
+            // Update head look for all current viewers
             val headLookPacket = WrapperPlayServerEntityHeadLook(currentData.entity.entityId, playerLoc.yaw)
             viewers.forEach { viewer ->
                 PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
             }
+            // Save current viewers snapshot
+            lastViewers[player] = currentSet
         }, 0L, 2L).taskId
         tasks[player] = taskId
     }
