@@ -13,7 +13,7 @@ class HideManager(private val hooker: FunctionHooker) {
     val hiddenPlayers = ConcurrentHashMap<UUID, MutableSet<UUID>>()
     private val notificationCooldowns = ConcurrentHashMap<UUID, Long>()
     private val hideDuration: Long
-        get() = hooker.configManager.config.getLong("hideState", 1800000L)
+        get() = hooker.configManager.config.getLong("cooldowns.hideState", 1800000L)
     private val notifyCooldown = 60 * 1000L
 
     fun prepareToHidePlayer(hider: Player, targetName: String?) {
