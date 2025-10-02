@@ -1,5 +1,6 @@
 package com.ratger.acreative.core
 
+import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
@@ -67,7 +68,7 @@ class MessageManager(
             "ACTION_STOP" -> {
                 actionTasks[player.uniqueId]?.cancel()
                 actionTasks.remove(player.uniqueId)
-                player.sendActionBar(miniMessage.deserialize(" "))
+                player.sendActionBar(Component.empty())
             }
         }
     }
