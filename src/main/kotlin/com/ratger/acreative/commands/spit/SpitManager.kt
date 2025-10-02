@@ -37,6 +37,7 @@ class SpitManager(private val hooker: FunctionHooker) {
 
         val spit = player.world.spawn(spitLocation, LlamaSpit::class.java) { entity ->
             entity.velocity = direction.multiply(1.5)
+            entity.isPersistent = false
             if (hooker.utils.isGlowing(player)) entity.isGlowing = true
         }
 

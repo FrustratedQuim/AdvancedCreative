@@ -40,6 +40,7 @@ class EntityManager(
             stand.isSilent = true
             stand.isCollidable = false
             stand.isCustomNameVisible = false
+            stand.isPersistent = false
             stand.setRotation(yaw, 0f)
         }
     }
