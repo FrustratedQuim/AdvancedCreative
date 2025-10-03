@@ -13,6 +13,7 @@ import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.entity.EntityToggleSwimEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.entity.ProjectileLaunchEvent
 import org.bukkit.event.inventory.InventoryClickEvent
@@ -150,7 +151,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val player = event.player
         val block = event.block
 
-        if (utils.isFrozen(player) || utils.isBarrierAboveCrawlingPlayer(block)) {
+        if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
         }
@@ -197,6 +198,15 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.checkCrawlUncrawl(player)
         utils.checkLayingUnlay(player)
         utils.checkSitUnsit(player)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onEntityToggleSwim(event: EntityToggleSwimEvent) {
+        val player = event.entity as? Player ?: return
+        if (!event.isSwimming && utils.isCrawling(player)) {
+            event.isCancelled = true
+            if (!player.isSwimming) player.isSwimming = true
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH)

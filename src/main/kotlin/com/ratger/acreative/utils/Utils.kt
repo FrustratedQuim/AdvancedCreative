@@ -94,9 +94,6 @@ class Utils(
     fun checkCustomEffectsDisable(player: Player) = checkDisable(player, ::isCustomEffect, effectsManager::clearEffects)
     fun checkSlapUnslap(player: Player) = checkDisable(player, ::isSlapping, slapManager::unslapPlayer)
 
-    fun isBarrierAboveCrawlingPlayer(block: Block) =
-        crawlManager.crawlingPlayers.values.any { it.barrierBlock == block }
-
     fun isHiddenFromPlayer(hider: Player, target: Player) =
         hideManager.hiddenPlayers[hider.uniqueId]?.contains(target.uniqueId) ?: false
 
