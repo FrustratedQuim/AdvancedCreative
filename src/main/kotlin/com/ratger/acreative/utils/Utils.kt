@@ -101,6 +101,11 @@ class Utils(
         hideManager.hiddenPlayers.keys.mapNotNull(Bukkit::getPlayer).filter { it.isOnline }
 
     fun stopAllHides() {
+        // During shutdown, calling showPlayer/hidePlayer is illegal. Just clear state.
+        if (!hooker.plugin.isEnabled) {
+            hideManager.hiddenPlayers.clear()
+            return
+        }
         getPlayersWithHides().forEach { player ->
             hideManager.hiddenPlayers[player.uniqueId]?.forEach { targetId ->
                 Bukkit.getPlayer(targetId)?.let { target ->

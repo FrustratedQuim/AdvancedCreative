@@ -86,7 +86,21 @@ class PlayerStateManager(
     }
 
     fun refreshPlayerPose(player: Player) {
+        // Avoid scheduling or calling hide/show while the plugin is disabled (e.g., during shutdown)
+        if (!hooker.plugin.isEnabled) {
+            if (player.isOnline) {
+                // Minimal local refresh without invoking Bukkit hide/show APIs
+                player.isSneaking = false
+            }
+            return
+        }
+
+        if (!player.isOnline) return
+
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            // If the plugin has been disabled or player went offline meanwhile, do nothing
+            if (!hooker.plugin.isEnabled || !player.isOnline) return@Runnable
+
             player.isSneaking = false
             for (viewer in Bukkit.getOnlinePlayers()) {
                 viewer.hidePlayer(hooker.plugin, player)
