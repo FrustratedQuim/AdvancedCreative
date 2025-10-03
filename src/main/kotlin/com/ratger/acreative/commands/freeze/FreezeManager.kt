@@ -55,7 +55,6 @@ class FreezeManager(private val hooker: FunctionHooker) {
             unfreezePlayer(player)
             return
         }
-        player.freezeTicks = player.maxFreezeTicks
         val blocks = spawnFreezeBlocks(player)
         frozenPlayers[player] = blocks
 
@@ -76,7 +75,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
                 unfreezePlayer(player)
                 return@scheduleSyncRepeatingTask
             }
-            player.freezeTicks = player.maxFreezeTicks
+            player.freezeTicks = player.maxFreezeTicks * 2
         }, 0L, 20L)
         freezeTaskIds[player] = taskId
 
