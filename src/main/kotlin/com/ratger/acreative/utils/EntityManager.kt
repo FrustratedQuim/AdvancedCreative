@@ -1,5 +1,6 @@
 package com.ratger.acreative.utils
 
+import com.destroystokyo.paper.ClientOption
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.pose.EntityPose
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
@@ -22,6 +23,7 @@ import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
+import org.bukkit.inventory.MainHand
 import java.util.*
 import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 
@@ -53,6 +55,16 @@ class EntityManager(
 
         playerMeta.pose = EntityPose.SLEEPING
         playerMeta.isGlowing = isGlowing
+        player.getClientOption(ClientOption.SKIN_PARTS).let { clientOption ->
+            playerMeta.isCapeEnabled = clientOption.hasCapeEnabled()
+            playerMeta.isJacketEnabled = clientOption.hasJacketEnabled()
+            playerMeta.isLeftSleeveEnabled = clientOption.hasLeftSleeveEnabled()
+            playerMeta.isRightSleeveEnabled = clientOption.hasRightSleeveEnabled()
+            playerMeta.isLeftLegEnabled = clientOption.hasLeftPantsEnabled()
+            playerMeta.isRightLegEnabled = clientOption.hasRightPantsEnabled()
+            playerMeta.isHatEnabled = clientOption.hasHatsEnabled()
+        }
+        playerMeta.isRightHandMain = player.getClientOption(ClientOption.MAIN_HAND) == MainHand.RIGHT
 
         val craftPlayer = player as CraftPlayer
         val gameProfile = craftPlayer.profile
