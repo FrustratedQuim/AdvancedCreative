@@ -4,7 +4,7 @@ plugins {
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.18"
 }
 
-group = "org.acreative"
+group = "com.ratger.acreative"
 version = "1.1.1"
 
 repositories {
@@ -67,10 +67,8 @@ tasks {
     shadowJar {
         archiveFileName.set(shadowJarName)
         minimize()
-        relocate("kotlin", "${project.group}.kotlin")
-        relocate("io.papermc.lib", "${project.group}.paperlib")
-        relocate("org.jetbrains.annotations", "${project.group}.jetbrains.annotations")
-        relocate("org.intellij.lang.annotations", "${project.group}.intellij.lang.annotations")
+        relocate("kotlin", "${project.group}.lib.kotlin")
+        relocate("me.tofaa.entitylib", "${project.group}.lib.entitylib")
     }
 
     jar {
