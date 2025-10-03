@@ -21,12 +21,12 @@ messages:
 
   # Permissions
   permission-unknown: "<dark_red>▍ <#FF1500>У вас недостаточно прав!"
-  permission-rise: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#24B0B0>(<b>ʀɪѕᴇ</b>)"
-  permission-flare: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#21CF83>(<b>ꜰʟᴀʀᴇ</b>)"
-  permission-shine: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#9265FC>(<b>ѕʜɪɴᴇ</b>)"
-  permission-spark: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#CB55F9>(<b>ѕᴘᴀʀᴋ</b>)"
-  permission-sunny: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#FC7D32>(<b>ѕᴜɴɴʏ</b>)"
-  permission-horizon: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#FCFA00>(<b>ʜᴏʀɪᴢᴏɴ</b>)"
+  permission-rise: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#24b2b2><b>ʀɪѕᴇ"
+  permission-flare: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#21d185><b>ꜰʟᴀʀᴇ"
+  permission-shine: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#9466ff><b>ѕʜɪɴᴇ"
+  permission-spark: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#cd56fc><b>ѕᴘᴀʀᴋ"
+  permission-sunny: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#ff7e33><b>ѕᴜɴɴʏ"
+  permission-horizon: "<dark_red>▍ <#FF1500>Команда доступна с привилегии <#ffcc00><b>ʜᴏʀɪᴢᴏɴ"
 
   # General errors
   info-empty: ""
