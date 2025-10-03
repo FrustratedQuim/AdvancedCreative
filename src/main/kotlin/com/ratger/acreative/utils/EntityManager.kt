@@ -20,6 +20,7 @@ import net.minecraft.world.scores.Scoreboard
 import net.minecraft.world.scores.Team
 import org.bukkit.Bukkit
 import org.bukkit.Location
+import org.bukkit.attribute.Attribute
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.ArmorStand
 import org.bukkit.entity.Player
@@ -44,6 +45,7 @@ class EntityManager(
             stand.isCustomNameVisible = false
             stand.isPersistent = false
             stand.setRotation(yaw, 0f)
+            stand.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.baseValue = 1.0
         }
     }
 
