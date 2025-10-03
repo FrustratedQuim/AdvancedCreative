@@ -26,7 +26,10 @@ class CrawlManager(private val hooker: FunctionHooker) {
             if (!player.isOnline || player.isDead || player.isFlying ||
                 player.location.block.type == Material.WATER || player.location.block.type == Material.LAVA
             ) {
-                uncrawlPlayer(player)
+                // Do not modify crawlingPlayers here to avoid CME during iteration.
+                // Perform local cleanup and signal the manager to uncrawl after the loop.
+                removeBarrier()
+                removeShulker()
                 return false
             }
 
@@ -179,14 +182,24 @@ class CrawlManager(private val hooker: FunctionHooker) {
 
     fun startBarrierUpdater() {
         Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
-            val iterator = crawlingPlayers.entries.iterator()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                val crawler = entry.value
-                if (!crawler.updateBarrier()) {
-                    iterator.remove()
-                    continue
+            val toUncrawl = mutableListOf<Player>()
+            // Iterate over a snapshot to avoid ConcurrentModificationException
+            val snapshot = crawlingPlayers.values.toList()
+            for (crawler in snapshot) {
+                val keepCrawling = try {
+                    crawler.updateBarrier()
+                } catch (t: Throwable) {
+                    t.printStackTrace()
+                    false
                 }
+                if (!keepCrawling) {
+                    toUncrawl.add(crawler.player)
+                }
+            }
+
+            // Process uncrawl after iteration to avoid modifying the map during traversal
+            for (p in toUncrawl) {
+                uncrawlPlayer(p)
             }
         }, 0L, UPDATE_BARRIER_PERIOD_TICKS)
     }
