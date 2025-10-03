@@ -28,7 +28,6 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         "gravity" to "rise",
         "resize" to "flare",
         "freeze" to "flare",
-        "bind" to "flare",
         "glow" to "spark",
         "disguise" to "spark",
         "sithead" to "sunny",
@@ -77,7 +76,6 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             "strength" -> completeFromList(args, listOf("0","5","10","100","500","basic"))
             "health" -> completeFromList(args, listOf("1","10","50","100","basic"))
             "freeze" -> if (sender.hasPermission("advancedcreative.freeze.other")) completeOnlinePlayers(args) else emptyList()
-            "bind" -> if (args.size == 1) completeFromList(args, listOf("set","reset","resetall")) else emptyList()
             "disguise" -> completeDisguise(sender, args)
             "effects" -> completeEffects(sender, args)
             else -> emptyList()
@@ -133,7 +131,6 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
             "strength" -> functionHooker.strengthManager.applyEffect(player, args.firstOrNull())
             "health" -> functionHooker.healthManager.applyEffect(player, args.firstOrNull())
             "freeze" -> functionHooker.freezeManager.prepareToFreezePlayer(player, args.firstOrNull())
-            "bind" -> functionHooker.bindManager.prepareToBindCommand(player, args.firstOrNull(), args.drop(1).toTypedArray())
             "glow" -> functionHooker.glowManager.glowPlayer(player)
             "spit" -> functionHooker.spitManager.spitPlayer(player)
             "piss" -> functionHooker.pissManager.pissPlayer(player)

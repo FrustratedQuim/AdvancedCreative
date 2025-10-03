@@ -1,6 +1,5 @@
 package com.ratger.acreative.utils
 
-import com.ratger.acreative.commands.bind.BindManager
 import com.ratger.acreative.commands.crawl.CrawlManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager
@@ -33,7 +32,6 @@ class Utils(
     private val strengthManager: StrengthManager,
     private val healthManager: HealthManager,
     private val freezeManager: FreezeManager,
-    private val bindManager: BindManager,
     private val glowManager: GlowManager,
     private val pissManager: PissManager,
     private val disguiseManager: DisguiseManager,
@@ -58,7 +56,6 @@ class Utils(
     fun isCustomStrength(player: Player) = strengthManager.strengthPlayers.containsKey(player)
     fun isCustomHealth(player: Player) = healthManager.healthPlayers.containsKey(player)
     fun isFrozen(player: Player) = freezeManager.frozenPlayers.containsKey(player)
-    fun isBound(player: Player) = bindManager.binds.containsKey(player.uniqueId)
     fun isGlowing(player: Player) = glowManager.glowingPlayers.contains(player)
     fun isPissing(player: Player) = pissManager.pissingPlayers.containsKey(player)
     fun isDisguised(player: Player) = disguiseManager.disguisedPlayers.containsKey(player)
@@ -87,7 +84,6 @@ class Utils(
     fun checkCustomStrengthDisable(player: Player) = checkDisable(player, ::isCustomStrength, strengthManager::removeEffect)
     fun checkCustomHealthDisable(player: Player) = checkDisable(player, ::isCustomHealth, healthManager::removeEffect)
     fun checkFreezeUnfreeze(player: Player) = checkDisable(player, ::isFrozen, freezeManager::unfreezePlayer)
-    fun checkBindClear(player: Player) = checkDisable(player, ::isBound, bindManager::clearBinds)
     fun checkGlowDisable(player: Player) = checkDisable(player, ::isGlowing, glowManager::removeGlow)
     fun checkPissStop(player: Player) = checkDisable(player, ::isPissing, pissManager::stopPiss)
     fun checkDisguiseDisable(player: Player) = checkDisable(player, ::isDisguised, disguiseManager::undisguisePlayer)
@@ -125,10 +121,6 @@ class Utils(
                 effectsManager.removeEffect(player, effectType)
             }
         }
-    }
-
-    fun stopAllBinds() {
-        bindManager.binds.keys.mapNotNull(Bukkit::getPlayer).forEach { bindManager.clearBinds(it) }
     }
 
     fun checkAndRemovePose(player: Player): Boolean {

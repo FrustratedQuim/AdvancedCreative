@@ -47,9 +47,6 @@ commands:
   freeze:
     description: Freezes the player
     usage: /freeze
-  bind:
-    description: Bind a command to item
-    usage: /bind <type> <command>
   glow:
     description: Toggles glowing effect
     usage: /glow
@@ -125,9 +122,6 @@ permissions:
     default: op
   advancedcreative.freeze.other:
     description: Allows using /freeze <player>
-    default: op
-  advancedcreative.bind:
-    description: Allows using /bind
     default: op
   advancedcreative.glow:
     description: Allows using /glow

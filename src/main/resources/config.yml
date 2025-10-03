@@ -1,6 +1,5 @@
 cooldowns: # В миллисекундах
   help:       150
-  bind:       150
   glide:      150
   gravity:    150
   resize:     150

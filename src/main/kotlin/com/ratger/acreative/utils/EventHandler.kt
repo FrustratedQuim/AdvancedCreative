@@ -28,14 +28,12 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     private val sitManager = hooker.sitManager
     private val layManager = hooker.layManager
     private val hideManager = hooker.hideManager
-    private val bindManager = hooker.bindManager
 
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
-        utils.checkBindClear(player)
         utils.checkGlowDisable(player)
         utils.checkPissStop(player)
         utils.checkDisguiseDisable(player)
@@ -125,10 +123,6 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
-
-        if (event.action.isClickAction()) {
-            bindManager.executeBind(player)
-        }
 
         if (utils.isFrozen(player)) {
             event.isCancelled = true
@@ -297,10 +291,5 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         if (handled) {
             event.isCancelled = true
         }
-    }
-
-    private fun Action.isClickAction(): Boolean {
-        return this == Action.LEFT_CLICK_AIR || this == Action.LEFT_CLICK_BLOCK ||
-                this == Action.RIGHT_CLICK_AIR || this == Action.RIGHT_CLICK_BLOCK
     }
 }

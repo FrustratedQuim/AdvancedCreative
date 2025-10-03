@@ -13,7 +13,6 @@ messages:
     <#FFE68A>/gravity <значение> <#EDC800>- <#FFF3E0>Изменить свою гравитацию
     <#FFE68A>/resize <значение> <#EDC800>- <#FFF3E0>Изменить размер персонажа
     <#FFE68A>/freeze <#EDC800>- <#FFF3E0>Замёрзнуть? Буквально
-    <#FFE68A>/bind <тип> <команда> <#EDC800>- <#FFF3E0>Забиндить команду на предмет
     <#FFE68A>/disguise <существо> <#EDC800>- <#FFF3E0>Превратиться в что-то
     <#FFE68A>/glow <#EDC800>- <#FFF3E0>Включить свечение
     <#FFE68A>/spit <#EDC800>- <#FFF3E0>Плюнуть, агрессивно
@@ -97,16 +96,6 @@ messages:
   # Freeze
   success-freeze: "<dark_green>▍ <#00FF40>Игрок %target% был заморожен!"
   success-freeze-self: "<dark_green>▍ <#00FF40>Вы заморозили себя!"
-
-  # Bind
-  usage-bind: "<dark_red>▍ <#FF1500>Используйте /bind <тип> <команда>"
-  error-bind-type: "<dark_red>▍ <#FF1500>Неизвестный тип бинда."
-  error-bind-no-command: "<dark_red>▍ <#FF1500>Укажите команду для бинда."
-  success-bind-item: "<dark_green>▍ <#00FF40>Команда успешно наложена на предмет!"
-  success-bind-hand: "<dark_green>▍ <#00FF40>Команда успешно наложена на пустую руку!"
-  success-bind-reset-item: "<dark_red>▍ <#FF1500>Бинд снят с предмета."
-  success-bind-reset-hand: "<dark_red>▍ <#FF1500>Бинд снят с пустой руки."
-  success-bind-reset-all: "<dark_red>▍ <#FF1500>Все бинды сброшены."
 
   # Glow
   info-glow-on: "<dark_green>▍ <#00FF40>Свечение включено."

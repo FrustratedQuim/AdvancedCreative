@@ -2,7 +2,6 @@ package com.ratger.acreative.core
 
 import com.ratger.acreative.AdvancedCreative
 import com.ratger.acreative.commands.CommandManager
-import com.ratger.acreative.commands.bind.BindManager
 import com.ratger.acreative.commands.crawl.CrawlManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager
@@ -64,8 +63,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var freezeManager: FreezeManager
         private set
-    lateinit var bindManager: BindManager
-        private set
     lateinit var glowManager: GlowManager
         private set
     lateinit var spitManager: SpitManager
@@ -104,7 +101,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         strengthManager = StrengthManager(this)
         healthManager = HealthManager(this)
         freezeManager = FreezeManager(this)
-        bindManager = BindManager(this)
         glowManager = GlowManager(this)
         spitManager = SpitManager(this)
         pissManager = PissManager(this)
@@ -126,7 +122,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             strengthManager,
             healthManager,
             freezeManager,
-            bindManager,
             glowManager,
             pissManager,
             disguiseManager,
@@ -148,7 +143,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             "strength",
             "health",
             "freeze",
-            "bind",
             "glow",
             "spit",
             "piss",
@@ -181,7 +175,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         utils.stopAllCustomStrength()
         utils.stopAllCustomHealth()
         utils.stopAllFreezes()
-        utils.stopAllBinds()
         utils.stopAllGlows()
         utils.stopAllPiss()
         utils.stopAllDisguises()
