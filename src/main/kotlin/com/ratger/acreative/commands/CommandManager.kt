@@ -13,38 +13,11 @@ import java.util.*
 
 class CommandManager(private val functionHooker: FunctionHooker) : CommandExecutor, TabCompleter {
 
-    private val commandPermissions = mapOf(
-        "ahelp" to "player",
-        "sit" to "player",
-        "lay" to "player",
-        "crawl" to "player",
-        "hide" to "player",
-        "strength" to "player",
-        "health" to "player",
-        "effects" to "player",
-        "itemdb" to "player",
-        "sneeze" to "rise",
-        "glide" to "rise",
-        "gravity" to "rise",
-        "resize" to "flare",
-        "freeze" to "flare",
-        "glow" to "spark",
-        "disguise" to "spark",
-        "sithead" to "sunny",
-        "spit" to "horizon",
-        "piss" to "horizon",
-        "slap" to "admin",
-    )
-
-    private val permissionMessages = mapOf(
-        "player" to "permission-unknown",
-        "rise" to "permission-rise",
-        "flare" to "permission-flare",
-        "shine" to "permission-shine",
-        "spark" to "permission-spark",
-        "sunny" to "permission-sunny",
-        "horizon" to "permission-horizon",
-        "admin" to "permission-unknown"
+    private val handledCommands = setOf(
+        "ahelp", "sit", "lay", "crawl", "hide",
+        "strength", "health", "effects", "itemdb",
+        "sneeze", "glide", "gravity", "resize", "freeze",
+        "glow", "disguise", "sithead", "spit", "piss", "slap"
     )
 
     private val playerCooldowns = mutableMapOf<UUID, MutableMap<String, Long>>()
@@ -53,7 +26,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         if (sender !is Player) return false
 
         val commandName = command.name.lowercase()
-        if (commandName !in commandPermissions) return false
+        if (commandName !in handledCommands) return false
         if (!hasPermission(sender, commandName)) {
             sendPermissionMessage(sender, commandName)
             return true
@@ -82,7 +55,10 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         }
     }
 
-    private fun hasPermission(player: Player, command: String) = player.hasPermission("advancedcreative.$command")
+    private fun hasPermission(player: Player, command: String): Boolean {
+        val node = functionHooker.permissionManager.getPermissionNodeForCommand(command)
+        return player.hasPermission(node)
+    }
 
     private fun getCooldownMillis(command: String): Long {
         val key = if (command == "ahelp") "help" else command
@@ -112,9 +88,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
     }
 
     private fun sendPermissionMessage(player: Player, command: String) {
-        val permissionType = commandPermissions[command] ?: "player"
-        val messageKey = permissionMessages[permissionType] ?: "permission-unknown"
-        functionHooker.messageManager.sendMiniMessage(player, key = messageKey)
+        functionHooker.permissionManager.sendPermissionDenied(player, command)
     }
 
     private fun executePlayerCommand(player: Player, command: String, args: Array<out String>) {

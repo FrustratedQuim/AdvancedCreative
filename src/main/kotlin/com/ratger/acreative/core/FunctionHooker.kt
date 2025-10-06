@@ -21,10 +21,10 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
-import com.ratger.acreative.utils.EntityManager
 import com.ratger.acreative.utils.EventHandler
 import com.ratger.acreative.utils.PacketHandler
 import com.ratger.acreative.utils.PlayerStateManager
+import com.ratger.acreative.utils.EntityManager
 import com.ratger.acreative.utils.Utils
 
 class FunctionHooker(val plugin: AdvancedCreative) {
@@ -32,6 +32,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     lateinit var configManager: ConfigManager
         private set
     lateinit var messageManager: MessageManager
+        private set
+    lateinit var permissionManager: PermissionManager
         private set
     lateinit var commandManager: CommandManager
         private set
@@ -87,6 +89,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         configManager.initConfigs()
 
         messageManager = MessageManager(this, configManager)
+        permissionManager = PermissionManager(this)
         playerStateManager = PlayerStateManager(this)
         entityManager = EntityManager(this)
         sitManager = SitManager(this)

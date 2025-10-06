@@ -22,6 +22,32 @@ cooldowns: # В миллисекундах
   piss:       30000
   hideState:  1800000 # 30 минут
 
+permissions:
+  message-key: permission-required
+  roles:
+    rise:
+      display: "<#24b2b2><b>ʀɪѕᴇ"
+    flare:
+      display: "<#21d185><b>ꜰʟᴀʀᴇ"
+    shine:
+      display: "<#9466ff><b>ѕʜɪɴᴇ"
+    spark:
+      display: "<#cd56fc><b>ѕᴘᴀʀᴋ"
+    sunny:
+      display: "<#ff7e33><b>ѕᴜɴɴʏ"
+    horizon:
+      display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ"
+  commands:
+    sneeze: rise
+    glide: rise
+    gravity: rise
+    resize: flare
+    freeze: flare
+    glow: spark
+    disguise: spark
+    sithead: sunny
+    spit: horizon
+    piss: horizon
 blocked-disguises:
   - ARROW
   - BLOCK_DISPLAY
