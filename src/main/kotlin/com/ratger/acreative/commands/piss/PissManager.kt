@@ -30,7 +30,7 @@ data class ScorePoint(
 
 class PissManager(private val hooker: FunctionHooker) {
 
-    val scorePoints = mutableListOf<ScorePoint>()
+    val scorePoints = Collections.synchronizedList(mutableListOf<ScorePoint>())
     val pissingPlayers = mutableMapOf<Player, BukkitRunnable>()
     val hiddenPuddleDisplays = ConcurrentHashMap<UUID, MutableMap<UUID, MutableList<WrapperEntity>>>()
 
