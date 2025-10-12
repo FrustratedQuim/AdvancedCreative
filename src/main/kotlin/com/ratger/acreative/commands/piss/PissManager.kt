@@ -56,13 +56,13 @@ class PissManager(private val hooker: FunctionHooker) {
             private var tickCounter = 0
 
             override fun run() {
-                if (tickCounter >= 120) {
+                if (tickCounter >= 60) {
                     cancel()
                     stopPiss(player)
                     return
                 }
                 spawnStream(player)
-                tickCounter += 2
+                tickCounter += 1
             }
         }
         streamTask.runTaskTimerAsynchronously(hooker.plugin, 0L, 2L)
