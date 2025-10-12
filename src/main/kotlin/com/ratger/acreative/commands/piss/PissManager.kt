@@ -10,6 +10,8 @@ import me.tofaa.entitylib.meta.display.AbstractDisplayMeta
 import me.tofaa.entitylib.meta.display.BlockDisplayMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
+import org.bukkit.Sound
+import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 import java.util.*
@@ -62,6 +64,19 @@ class PissManager(private val hooker: FunctionHooker) {
                     return
                 }
                 spawnStream(player)
+                if (tickCounter % 15 == 0) {
+                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
+                        if (player.isOnline) {
+                            player.world.playSound(
+                                player,
+                                Sound.BLOCK_WATER_AMBIENT,
+                                SoundCategory.PLAYERS,
+                                Random.nextFloat() * 0.25f + 0.75f,
+                                Random.nextFloat() + 0.5f,
+                            )
+                        }
+                    })
+                }
                 tickCounter += 1
             }
         }
