@@ -1,8 +1,7 @@
-package com.ratger.acreative.commands.handlers
+package com.ratger.acreative.commands
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
 import org.bukkit.Registry
 import org.bukkit.command.CommandSender
@@ -22,7 +21,7 @@ private fun completeOnlinePlayers(args: Array<out String>): List<String> {
 }
 
 class AhelpCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.AHELP) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.messageManager.sendChat(player, com.ratger.acreative.core.MessageKey.AHELP)
+    override fun handle(player: Player, args: Array<out String>) = hooker.messageManager.sendChat(player, MessageKey.AHELP)
 }
 
 class SitCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SIT) {

@@ -25,7 +25,7 @@ abstract class ExecutableCommand(
                 hooker.messageManager.sendActionBar(
                     player,
                     MessageKey.ACTION_COOLDOWN,
-                    variables = mapOf("time" to remainingSeconds)
+                    mapOf("time" to remainingSeconds)
                 )
                 return true
             }
