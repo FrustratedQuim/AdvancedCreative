@@ -10,16 +10,9 @@ version = "1.1.1"
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
-
-    // FancyNPC & FancyHolograms
-//    maven("https://repo.fancyinnovations.com/releases")
-
-    // PacketEvents
-    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
-    maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
-
-    // EntityLib
-    maven(url = "https://maven.evokegames.gg/snapshots")
+    maven("https://repo.codemc.io/repository/maven-releases/")
+    maven("https://repo.codemc.io/repository/maven-snapshots/")
+    maven("https://maven.evokegames.gg/snapshots")
 }
 
 dependencies {
@@ -27,10 +20,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.10")
     implementation("com.github.Tofaa2.EntityLib:spigot:master-6fba8ea5fdc7880d1c62c3428f562fea2745b58b") // 2.4.11
-
-//    compileOnly("de.oliver:FancyNpcs:2.7.0")
-//    compileOnly("de.oliver:FancyHolograms:2.7.0")
-//    compileOnly("net.dmulloy2:ProtocolLib:5.4.0")
     compileOnly("com.github.retrooper:packetevents-spigot:2.9.4")
 }
 
