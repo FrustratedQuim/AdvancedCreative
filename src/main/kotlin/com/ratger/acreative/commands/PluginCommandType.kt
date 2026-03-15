@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.framework
+package com.ratger.acreative.commands
 
 enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     AHELP("ahelp", "help"),

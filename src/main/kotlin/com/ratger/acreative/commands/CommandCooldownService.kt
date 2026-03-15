@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.framework
+package com.ratger.acreative.commands
 
 import com.ratger.acreative.core.ConfigManager
 import java.util.UUID

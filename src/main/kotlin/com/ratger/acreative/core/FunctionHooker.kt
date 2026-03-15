@@ -2,7 +2,7 @@ package com.ratger.acreative.core
 
 import com.ratger.acreative.AdvancedCreative
 import com.ratger.acreative.commands.CommandManager
-import com.ratger.acreative.commands.framework.PluginCommandType
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.commands.crawl.CrawlManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager

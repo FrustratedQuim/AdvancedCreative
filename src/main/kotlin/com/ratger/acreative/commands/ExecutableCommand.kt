@@ -1,6 +1,7 @@
-package com.ratger.acreative.commands.framework
+package com.ratger.acreative.commands
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -23,7 +24,7 @@ abstract class ExecutableCommand(
                 val remainingSeconds = String.format("%.1f", remainingMillis / 1000.0)
                 hooker.messageManager.sendActionBar(
                     player,
-                    com.ratger.acreative.core.MessageKey.ACTION_COOLDOWN,
+                    MessageKey.ACTION_COOLDOWN,
                     variables = mapOf("time" to remainingSeconds)
                 )
                 return true
