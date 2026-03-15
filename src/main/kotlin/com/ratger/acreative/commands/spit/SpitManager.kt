@@ -14,7 +14,7 @@ class SpitManager(private val hooker: FunctionHooker) {
         return base * scale
     }
 
-    fun spitPlayer(player: Player): Boolean {
+    fun spitPlayer(player: Player) {
         val isLaying = hooker.utils.isLaying(player)
         val pitch = if (isLaying) -90f else player.location.pitch.coerceIn(-90f, 90f)
 
@@ -50,7 +50,5 @@ class SpitManager(private val hooker: FunctionHooker) {
             }
             viewer.playSound(spitLocation, Sound.ENTITY_LLAMA_SPIT, 2.0f, 1.0f)
         }
-
-        return true
     }
 }

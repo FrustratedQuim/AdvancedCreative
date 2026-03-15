@@ -2,6 +2,7 @@ package com.ratger.acreative.core
 
 import com.ratger.acreative.AdvancedCreative
 import com.ratger.acreative.commands.CommandManager
+import com.ratger.acreative.commands.framework.PluginCommandType
 import com.ratger.acreative.commands.crawl.CrawlManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager
@@ -133,30 +134,11 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         )
 
         commandManager = CommandManager(this)
-        val commands = listOf(
-            "ahelp",
-            "sit",
-            "lay",
-            "crawl",
-            "hide",
-            "sneeze",
-            "glide",
-            "gravity",
-            "resize",
-            "strength",
-            "health",
-            "freeze",
-            "glow",
-            "spit",
-            "piss",
-            "disguise",
-            "effects",
-            "slap",
-            "sithead",
-            "itemdb"
-        )
-        for (cmd in commands) {
-            plugin.getCommand(cmd)?.setExecutor(commandManager)
+        for (commandType in PluginCommandType.entries) {
+            plugin.getCommand(commandType.id)?.apply {
+                setExecutor(commandManager)
+                tabCompleter = commandManager
+            }
         }
 
         plugin.server.pluginManager.registerEvents(EventHandler(this), plugin)

@@ -14,7 +14,7 @@ class SneezeManager(private val hooker: FunctionHooker) {
         return base * scale
     }
 
-    fun sneezePlayer(player: Player): Boolean {
+    fun sneezePlayer(player: Player) {
         val location = player.location
         val isLaying = hooker.utils.isLaying(player)
         val pitch = if (isLaying) -90f else player.location.pitch.coerceIn(-90f, 90f)
@@ -42,7 +42,7 @@ class SneezeManager(private val hooker: FunctionHooker) {
         val particleSpread = scaleValue(baseParticleSpread, player)
         val baseParticleSpeed = 0.05
         val particleSpeed = scaleValue(baseParticleSpeed, player)
-        val nearbyPlayers = location.world?.players?.filter { it.isOnline } ?: return false
+        val nearbyPlayers = location.world?.players?.filter { it.isOnline } ?: return
 
         for (viewer in nearbyPlayers) {
             if (viewer != player && hooker.utils.isHiddenFromPlayer(viewer, player)) {
@@ -60,7 +60,5 @@ class SneezeManager(private val hooker: FunctionHooker) {
                 particleSpeed
             )
         }
-
-        return true
     }
 }
