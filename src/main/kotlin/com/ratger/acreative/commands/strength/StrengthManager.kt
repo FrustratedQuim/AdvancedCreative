@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.strength
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
@@ -22,13 +23,13 @@ class StrengthManager(private val hooker: FunctionHooker) {
             if (strengthPlayers.containsKey(player)) {
                 removeEffect(player)
             } else {
-                hooker.messageManager.sendMiniMessage(player, key = "usage-strength")
+                hooker.messageManager.sendChat(player, MessageKey.USAGE_STRENGTH)
             }
             return
         }
 
         val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendMiniMessage(player, key = "error-unknown-value")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             return
         }
 
@@ -43,9 +44,9 @@ class StrengthManager(private val hooker: FunctionHooker) {
         } else {
             String.format(Locale.US, "%.0f", value)
         }
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             player,
-            key = "success-strength-set",
+            MessageKey.SUCCESS_STRENGTH_SET,
             variables = mapOf("value" to formattedValue)
         )
     }
@@ -69,7 +70,7 @@ class StrengthManager(private val hooker: FunctionHooker) {
         if (!strengthPlayers.containsKey(player)) return
         removeStrengthAttribute(player)
         strengthPlayers.remove(player)
-        hooker.messageManager.sendMiniMessage(player, key = "success-strength-reset")
+        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_STRENGTH_RESET)
     }
 
     private fun parseValue(arg: String): Double? {

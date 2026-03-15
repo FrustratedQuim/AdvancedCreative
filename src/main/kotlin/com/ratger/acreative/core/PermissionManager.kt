@@ -9,7 +9,7 @@ class PermissionManager(private val hooker: FunctionHooker) {
     private val commandToRole = mutableMapOf<String, String>()
     private val commandToNode = mutableMapOf<String, String>()
     private val roles = mutableMapOf<String, Role>()
-    private var messageKey: String = "permission-required"
+    private var messageKey: MessageKey = MessageKey.PERMISSION_REQUIRED
 
     init {
         reload()
@@ -23,7 +23,7 @@ class PermissionManager(private val hooker: FunctionHooker) {
         val root = hooker.configManager.config
         val permissions = root.getConfigurationSection("permissions")
 
-        messageKey = permissions?.getString("message-key", "permission-required") ?: "permission-required"
+        messageKey = MessageKey.PERMISSION_REQUIRED
 
         val rolesSec = permissions?.getConfigurationSection("roles")
         rolesSec?.let { sec ->
@@ -63,13 +63,13 @@ class PermissionManager(private val hooker: FunctionHooker) {
     fun sendPermissionDenied(player: Player, command: String) {
         val role = getRequiredRoleForCommand(command)
         if (role != null) {
-            hooker.messageManager.sendMiniMessage(
+            hooker.messageManager.sendChat(
                 player,
-                key = messageKey,
+                messageKey,
                 variables = mapOf("role_display" to role.display)
             )
         } else {
-            hooker.messageManager.sendMiniMessage(player, key = "permission-unknown")
+            hooker.messageManager.sendChat(player, MessageKey.PERMISSION_UNKNOWN)
         }
     }
 

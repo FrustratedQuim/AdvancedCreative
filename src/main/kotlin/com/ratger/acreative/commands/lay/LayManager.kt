@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.lay
 
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.Equipment
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot
@@ -60,7 +62,7 @@ class LayManager(private val hooker: FunctionHooker) {
 
     fun layPlayer(player: Player) {
         if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-disguised")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
             return
         }
         if (hooker.utils.isPissing(player)) {
@@ -70,7 +72,7 @@ class LayManager(private val hooker: FunctionHooker) {
             return
         }
         if (!canLay(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-lay-in-air")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_LAY_IN_AIR)
             return
         }
         val location = player.location.clone()
@@ -231,7 +233,7 @@ class LayManager(private val hooker: FunctionHooker) {
         player.isCollidable = false
         player.isSilent = true
 
-        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+        hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
     }
 
     fun unlayPlayer(player: Player, shouldUnsit: Boolean = true) {
@@ -273,7 +275,7 @@ class LayManager(private val hooker: FunctionHooker) {
             player.isInvulnerable = false
             player.isCollidable = true
             player.isSilent = false
-            hooker.messageManager.sendMiniMessage(player, "ACTION_STOP")
+            hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
             hooker.playerStateManager.refreshPlayerPose(player)
         }
     }

@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.glow
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.entity.Player
 
@@ -27,7 +28,7 @@ class GlowManager(private val hooker: FunctionHooker) {
         }
 
         hooker.freezeManager.updateIceGlowing(player, isGlowing = true)
-        hooker.messageManager.sendMiniMessage(player, key = "info-glow-on")
+        hooker.messageManager.sendChat(player, MessageKey.INFO_GLOW_ON)
     }
 
     fun removeGlow(player: Player) {
@@ -41,7 +42,7 @@ class GlowManager(private val hooker: FunctionHooker) {
 
         player.isGlowing = false
         hooker.freezeManager.updateIceGlowing(player, isGlowing = false)
-        hooker.messageManager.sendMiniMessage(player, key = "info-glow-off")
+        hooker.messageManager.sendChat(player, MessageKey.INFO_GLOW_OFF)
     }
 
     fun refreshGlow(player: Player) {

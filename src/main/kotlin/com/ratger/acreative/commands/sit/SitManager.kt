@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.sit
 
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
@@ -39,14 +41,14 @@ class SitManager(private val hooker: FunctionHooker) {
 
     fun sitPlayer(player: Player) {
         if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-disguised")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
             return
         }
         if (!hooker.utils.checkAndRemovePose(player)) {
             return
         }
         if (!canSit(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-sit-in-air")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_SIT_IN_AIR)
             return
         }
         val location = player.location.clone()
@@ -56,12 +58,12 @@ class SitManager(private val hooker: FunctionHooker) {
 
     fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: String = "basic", block: Block? = null) {
         if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-disguised")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
             return
         }
         val targetLocation = location.clone().apply { this.yaw = yaw }
         val armorStand = hooker.entityManager.createArmorStand(targetLocation, yaw)
-        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+        hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
         sittingMap[player] = SitData(armorStand.uniqueId, block, style)
         armorStand.addPassenger(player)
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
@@ -97,7 +99,7 @@ class SitManager(private val hooker: FunctionHooker) {
         }
 
         if (hooker.utils.isHiddenFromPlayer(finalTarget, player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "sithead-hidden-self")
+            hooker.messageManager.sendChat(player, MessageKey.SITHEAD_HIDDEN_SELF)
             return
         }
 
@@ -110,7 +112,7 @@ class SitManager(private val hooker: FunctionHooker) {
             baseCheckedPlayers.add(baseTarget)
             if (baseTarget == player) return
             if (hooker.utils.isHiddenFromPlayer(baseTarget, player)) {
-                hooker.messageManager.sendMiniMessage(sender ?: player, key = "sithead-hidden-by-one")
+                hooker.messageManager.sendChat(sender ?: player, MessageKey.SITHEAD_HIDDEN_BY_ONE)
                 return
             }
             val sitData = sittingMap[baseTarget]
@@ -130,7 +132,7 @@ class SitManager(private val hooker: FunctionHooker) {
             if (currentTarget in checkedPlayers) return
             checkedPlayers.add(currentTarget)
             if (hooker.utils.isHiddenFromPlayer(player, currentTarget)) {
-                hooker.messageManager.sendMiniMessage(player, key = "sithead-you-hide-one")
+                hooker.messageManager.sendChat(player, MessageKey.SITHEAD_YOU_HIDE_ONE)
                 return
             }
             currentTarget = getHeadPassenger(currentTarget)
@@ -145,7 +147,7 @@ class SitManager(private val hooker: FunctionHooker) {
             if (baseTarget in checkedPlayers) return
             checkedPlayers.add(baseTarget)
             if (hooker.utils.isHiddenFromPlayer(player, baseTarget)) {
-                hooker.messageManager.sendMiniMessage(player, key = "sithead-you-hide-one")
+                hooker.messageManager.sendChat(player, MessageKey.SITHEAD_YOU_HIDE_ONE)
                 return
             }
             val sitData = sittingMap[baseTarget]
@@ -167,7 +169,7 @@ class SitManager(private val hooker: FunctionHooker) {
         sittingMap[player] = SitData(armorStand.uniqueId, null, "head")
         armorStand.addPassenger(player)
         finalTarget.addPassenger(armorStand)
-        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+        hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
 
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
@@ -242,7 +244,7 @@ class SitManager(private val hooker: FunctionHooker) {
         sittingMap.remove(player)
 
         if (!caller.contains("HideManager.hidePlayer") && !caller.contains("SitManager.sitOnHead")) {
-            hooker.messageManager.sendMiniMessage(player, "ACTION_STOP", "info-empty")
+            hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
         }
 
         if (player.isOnline && hooker.plugin.isEnabled) hooker.playerStateManager.refreshPlayerPose(player)

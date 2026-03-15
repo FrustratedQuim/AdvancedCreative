@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.itemdb
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.entity.Player
 
@@ -11,9 +12,9 @@ class ItemdbManager(private val functionHooker: FunctionHooker) {
         val itemName = material.name
         val numericId = functionHooker.configManager.getNumericId(itemName)
 
-        functionHooker.messageManager.sendMiniMessage(
+        functionHooker.messageManager.sendChat(
             player,
-            key = "itemdb-info",
+            MessageKey.ITEMDB_INFO,
             variables = mapOf(
                 "item_name" to itemName,
                 "numeric_id" to numericId

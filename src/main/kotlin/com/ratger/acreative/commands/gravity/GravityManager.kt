@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.gravity
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
@@ -23,12 +24,12 @@ class GravityManager(private val hooker: FunctionHooker) {
 
     fun applyEffect(player: Player, arg: String?) {
         if (arg == null) {
-            hooker.messageManager.sendMiniMessage(player, key = "usage-gravity")
+            hooker.messageManager.sendChat(player, MessageKey.USAGE_GRAVITY)
             return
         }
 
         val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendMiniMessage(player, key = "error-unknown-value")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             return
         }
 
@@ -43,9 +44,9 @@ class GravityManager(private val hooker: FunctionHooker) {
         } else {
             String.format(Locale.US, "%.1f", value)
         }
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             player,
-            key = "success-gravity-set",
+            MessageKey.SUCCESS_GRAVITY_SET,
             variables = mapOf("value" to formattedValue)
         )
     }
@@ -70,7 +71,7 @@ class GravityManager(private val hooker: FunctionHooker) {
         if (!gravityPlayers.containsKey(player)) return
         removeGravityAttribute(player)
         gravityPlayers.remove(player)
-        hooker.messageManager.sendMiniMessage(player, key = "success-gravity-reset")
+        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_GRAVITY_RESET)
     }
 
     private fun parseValue(arg: String): Double? {

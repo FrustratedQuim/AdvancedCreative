@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.resize
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
@@ -22,13 +23,13 @@ class ResizeManager(private val hooker: FunctionHooker) {
             if (scaledPlayers.containsKey(player) && scaledPlayers[player] != DEFAULT_SCALE_VALUE) {
                 removeEffect(player)
             } else {
-                hooker.messageManager.sendMiniMessage(player, key = "usage-resize")
+                hooker.messageManager.sendChat(player, MessageKey.USAGE_RESIZE)
             }
             return
         }
 
         val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendMiniMessage(player, key = "error-unknown-value")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             return
         }
 
@@ -39,9 +40,9 @@ class ResizeManager(private val hooker: FunctionHooker) {
 
         setScaleToPlayer(player, value)
         val df = DecimalFormat("#.##", DecimalFormatSymbols(Locale.US))
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             player,
-            key = "success-resize-set",
+            MessageKey.SUCCESS_RESIZE_SET,
             variables = mapOf("value" to df.format(value))
         )
     }
@@ -70,7 +71,7 @@ class ResizeManager(private val hooker: FunctionHooker) {
     fun removeEffect(player: Player) {
         scaledPlayers.remove(player)
         resetAttributes(player)
-        hooker.messageManager.sendMiniMessage(player, key = "success-resize-reset")
+        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_RESIZE_RESET)
         hooker.playerStateManager.refreshPlayerPose(player)
     }
 

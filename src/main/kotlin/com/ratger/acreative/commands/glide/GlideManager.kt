@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.glide
 
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.entity.Player
 
@@ -30,8 +32,8 @@ class GlideManager(private val hooker: FunctionHooker) {
         player.isGliding = true
         player.allowFlight = false
         player.isFlying = false
-        hooker.messageManager.sendMiniMessage(player, key = "info-glide-on")
-        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+        hooker.messageManager.sendChat(player, MessageKey.INFO_GLIDE_ON)
+        hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
     }
 
     fun unglidePlayer(player: Player) {
@@ -42,8 +44,8 @@ class GlideManager(private val hooker: FunctionHooker) {
             player.isFlying = state.isFlying
         }
         player.isGliding = false
-        hooker.messageManager.sendMiniMessage(player, key = "info-glide-off")
-        hooker.messageManager.sendMiniMessage(player, "ACTION_STOP")
+        hooker.messageManager.sendChat(player, MessageKey.INFO_GLIDE_OFF)
+        hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
         hooker.playerStateManager.refreshPlayerPose(player)
     }
 }

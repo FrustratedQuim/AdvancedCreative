@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.crawl
 
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.ratger.acreative.core.FunctionHooker
 import me.tofaa.entitylib.wrapper.WrapperEntity
@@ -146,11 +148,11 @@ class CrawlManager(private val hooker: FunctionHooker) {
 
     fun crawlPlayer(player: Player) {
         if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-disguised")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
             return
         }
         if (!canCrawl(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-crawl-in-air")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CRAWL_IN_AIR)
             return
         }
         if (!hooker.utils.checkAndRemovePose(player)) {
@@ -163,8 +165,8 @@ class CrawlManager(private val hooker: FunctionHooker) {
         player.isSwimming = true
         crawling.updateBarrier()
 
-        hooker.messageManager.sendMiniMessage(player, key = "info-crawl-on")
-        hooker.messageManager.sendMiniMessage(player, "ACTION", "action-pose-unset", repeatable = true)
+        hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_ON)
+        hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
     }
 
     fun uncrawlPlayer(player: Player) {
@@ -174,8 +176,8 @@ class CrawlManager(private val hooker: FunctionHooker) {
             it.removeShulker()
         }
 
-        hooker.messageManager.sendMiniMessage(player, key = "info-crawl-off")
-        hooker.messageManager.sendMiniMessage(player, "ACTION_STOP")
+        hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_OFF)
+        hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
         if (player.isOnline) player.isSwimming = false
         hooker.playerStateManager.refreshPlayerPose(player)
     }

@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.slap
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.Particle
@@ -25,13 +26,13 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
             unslapPlayer(player)
         } else {
             slappingPlayers.add(player)
-            hooker.messageManager.sendMiniMessage(player, key = "info-slap-on")
+            hooker.messageManager.sendChat(player, MessageKey.INFO_SLAP_ON)
         }
     }
 
     fun unslapPlayer(player: Player) {
         slappingPlayers.remove(player)
-        hooker.messageManager.sendMiniMessage(player, key = "info-slap-off")
+        hooker.messageManager.sendChat(player, MessageKey.INFO_SLAP_OFF)
     }
 
     fun applySlap(attacker: Player, target: Player) {

@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.effects
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
@@ -28,13 +29,13 @@ class EffectsManager(private val hooker: FunctionHooker) {
 
         val effectType = Registry.EFFECT.get(NamespacedKey.minecraft(effectName.lowercase()))
         if (effectType == null) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-effect-unknown")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_EFFECT_UNKNOWN)
             return
         }
 
         val target = if (targetName != null && player.hasPermission("advancedcreative.effects.other")) {
             Bukkit.getPlayer(targetName) ?: run {
-                hooker.messageManager.sendMiniMessage(player, key = "error-unknown-player")
+                hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
                 return
             }
         } else {
@@ -47,9 +48,9 @@ class EffectsManager(private val hooker: FunctionHooker) {
         if (playerEffects.containsKey(effectType)) {
             if (playerEffects[effectType] == levelInt) {
                 removeEffect(target, effectType)
-                hooker.messageManager.sendMiniMessage(
+                hooker.messageManager.sendChat(
                     player,
-                    key = if (target == player) "success-effect-removed" else "success-effect-removed-target",
+                    if (target == player) MessageKey.SUCCESS_EFFECT_REMOVED else MessageKey.SUCCESS_EFFECT_REMOVED_TARGET,
                     variables = mapOf("player" to target.name)
                 )
                 return
@@ -57,9 +58,9 @@ class EffectsManager(private val hooker: FunctionHooker) {
                 playerEffects[effectType] = levelInt
                 applyEffectToPlayer(target, effectType, levelInt)
                 startEffectTask(target, effectType, levelInt)
-                hooker.messageManager.sendMiniMessage(
+                hooker.messageManager.sendChat(
                     player,
-                    key = if (target == player) "success-effect" else "success-effect-target",
+                    if (target == player) MessageKey.SUCCESS_EFFECT else MessageKey.SUCCESS_EFFECT_TARGET,
                     variables = mapOf("player" to target.name)
                 )
                 return
@@ -69,9 +70,9 @@ class EffectsManager(private val hooker: FunctionHooker) {
         playerEffects[effectType] = levelInt
         applyEffectToPlayer(target, effectType, levelInt)
 
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             player,
-            key = if (target == player) "success-effect" else "success-effect-target",
+            if (target == player) MessageKey.SUCCESS_EFFECT else MessageKey.SUCCESS_EFFECT_TARGET,
             variables = mapOf("player" to target.name)
         )
 
@@ -81,14 +82,14 @@ class EffectsManager(private val hooker: FunctionHooker) {
     private fun handleNoEffectSpecified(player: Player) {
         val playerEffects = activeEffects[player.uniqueId]
         if (playerEffects.isNullOrEmpty()) {
-            hooker.messageManager.sendMiniMessage(player, key = "usage-effects")
+            hooker.messageManager.sendChat(player, MessageKey.USAGE_EFFECTS)
             return
         }
 
         if (playerEffects.size == 1) {
             val effectType = playerEffects.keys.first()
             removeEffect(player, effectType)
-            hooker.messageManager.sendMiniMessage(player, key = "success-effect-removed")
+            hooker.messageManager.sendChat(player, MessageKey.SUCCESS_EFFECT_REMOVED)
         } else {
             clearEffects(player, sendMessage = true)
         }
@@ -99,7 +100,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
         playerEffects.keys.toList().forEach { removeEffect(player, it) }
         activeEffects.remove(player.uniqueId)
         if (sendMessage) {
-            hooker.messageManager.sendMiniMessage(player, key = "success-effects-cleared")
+            hooker.messageManager.sendChat(player, MessageKey.SUCCESS_EFFECTS_CLEARED)
         }
     }
 

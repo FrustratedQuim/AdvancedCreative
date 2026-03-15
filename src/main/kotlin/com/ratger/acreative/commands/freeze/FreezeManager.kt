@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.freeze
 
+import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.protocol.world.Location
@@ -37,7 +38,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
         val target = Bukkit.getPlayer(targetName)
         if (target == null) {
-            hooker.messageManager.sendMiniMessage(initiator, key = "error-unknown-player")
+            hooker.messageManager.sendChat(initiator, MessageKey.ERROR_UNKNOWN_PLAYER)
             return
         }
 
@@ -80,11 +81,11 @@ class FreezeManager(private val hooker: FunctionHooker) {
         freezeTaskIds[player] = taskId
 
         if (initiator == null || initiator == player) {
-            hooker.messageManager.sendMiniMessage(player, key = "success-freeze-self")
+            hooker.messageManager.sendChat(player, MessageKey.SUCCESS_FREEZE_SELF)
         } else {
-            hooker.messageManager.sendMiniMessage(
+            hooker.messageManager.sendChat(
                 initiator,
-                key = "success-freeze",
+                MessageKey.SUCCESS_FREEZE,
                 variables = mapOf("target" to player.name)
             )
         }

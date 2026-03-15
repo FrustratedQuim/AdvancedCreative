@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.health
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
@@ -22,13 +23,13 @@ class HealthManager(private val hooker: FunctionHooker) {
             if (healthPlayers.containsKey(player)) {
                 removeEffect(player)
             } else {
-                hooker.messageManager.sendMiniMessage(player, key = "usage-health")
+                hooker.messageManager.sendChat(player, MessageKey.USAGE_HEALTH)
             }
             return
         }
 
         val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendMiniMessage(player, key = "error-unknown-value")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             return
         }
 
@@ -43,9 +44,9 @@ class HealthManager(private val hooker: FunctionHooker) {
         } else {
             String.format(Locale.US, "%.0f", value)
         }
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             player,
-            key = "success-health-set",
+            MessageKey.SUCCESS_HEALTH_SET,
             variables = mapOf("value" to formattedValue)
         )
     }
@@ -71,7 +72,7 @@ class HealthManager(private val hooker: FunctionHooker) {
         removeHealthAttribute(player)
         healthPlayers.remove(player)
         player.health = DEFAULT_HEALTH_VALUE
-        hooker.messageManager.sendMiniMessage(player, key = "success-health-reset")
+        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_HEALTH_RESET)
     }
 
     private fun parseValue(arg: String): Double? {

@@ -2,90 +2,170 @@ package com.ratger.acreative.core
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
-import org.bukkit.scheduler.BukkitTask
-import java.util.*
+import java.util.UUID
 
 class MessageManager(
-    private val hooker: FunctionHooker,
-    private val configManager: ConfigManager
+    private val hooker: FunctionHooker
 ) {
 
+    private data class AudienceTask(
+        val audienceId: UUID,
+        val channel: MessageChannel,
+        val key: MessageKey,
+        val variables: Map<String, String>,
+        val frequencyTicks: Long,
+        var state: MessageTaskState = MessageTaskState.PENDING,
+        var nextRunTick: Long = 0L
+    )
+
     private val miniMessage = MiniMessage.miniMessage()
+    private val repeatTasks = mutableMapOf<Pair<UUID, MessageChannel>, AudienceTask>()
 
-    private val chatTasks = mutableMapOf<UUID, BukkitTask>()
-    private val actionTasks = mutableMapOf<UUID, BukkitTask>()
+    private var tickerTaskId: Int? = null
+    private var virtualTick: Long = 0L
 
-    fun sendMiniMessage(
-        player: Player,
-        type: String? = "CHAT",
-        key: String? = "info-empty",
-        variables: Map<String, String>? = null,
-        repeatable: Boolean = false,
-        repeatFrequency: Long = 20L
-    ) {
-        val msgType = type ?: "CHAT"
-        val msgKey = key ?: "info-empty"
+    init {
+        startTicker()
+    }
 
-        if (msgType == "CHAT" && msgKey == "info-empty") return
+    fun sendChat(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap()) {
+        send(player, MessageChannel.CHAT, key, variables)
+    }
 
-        val rawMessage = configManager.messages.getString("messages.$msgKey")
-            ?: configManager.messages.getString("messages.info-empty")
-            ?: ""
-        val processedMessage = replaceVariables(rawMessage, variables)
-        val finalResult = miniMessage.deserialize(processedMessage)
+    fun sendActionBar(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap()) {
+        send(player, MessageChannel.ACTION_BAR, key, variables)
+    }
 
-        when (msgType.uppercase()) {
-            "CHAT" -> {
-                if (repeatable) {
-                    chatTasks[player.uniqueId]?.cancel()
-                    chatTasks[player.uniqueId] = object : BukkitRunnable() {
-                        override fun run() {
-                            player.sendMessage(finalResult)
-                        }
-                    }.runTaskTimer(hooker.plugin, 0L, repeatFrequency)
-                } else {
-                    player.sendMessage(finalResult)
+    fun sendChatToPlayers(players: Collection<Player>, key: MessageKey, variables: Map<String, String> = emptyMap()) {
+        players.forEach { sendChat(it, key, variables) }
+    }
+
+    fun sendChatToUuids(uuids: Collection<UUID>, key: MessageKey, variables: Map<String, String> = emptyMap()) {
+        resolvePlayers(uuids = uuids).forEach { sendChat(it, key, variables) }
+    }
+
+    fun sendActionBarToPlayers(players: Collection<Player>, key: MessageKey, variables: Map<String, String> = emptyMap()) {
+        players.forEach { sendActionBar(it, key, variables) }
+    }
+
+    fun startRepeatingActionBar(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap(), repeatFrequency: Long = 20L) {
+        startRepeating(player, MessageChannel.ACTION_BAR, key, variables, repeatFrequency)
+    }
+
+    fun startRepeatingChat(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap(), repeatFrequency: Long = 20L) {
+        startRepeating(player, MessageChannel.CHAT, key, variables, repeatFrequency)
+    }
+
+    fun stopRepeating(player: Player, channel: MessageChannel) {
+        stopRepeating(player.uniqueId, channel)
+        if (channel == MessageChannel.ACTION_BAR) {
+            player.sendActionBar(Component.empty())
+        }
+    }
+
+    fun pauseRepeating(player: Player, channel: MessageChannel) {
+        repeatTasks[player.uniqueId to channel]?.state = MessageTaskState.PAUSED
+    }
+
+    fun resumeRepeating(player: Player, channel: MessageChannel) {
+        repeatTasks[player.uniqueId to channel]?.let {
+            it.state = MessageTaskState.ACTIVE
+            it.nextRunTick = virtualTick
+        }
+    }
+
+    fun clearAllTasks() {
+        repeatTasks.values.forEach { it.state = MessageTaskState.CANCELLED }
+        repeatTasks.clear()
+        tickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
+        tickerTaskId = null
+    }
+
+    private fun startTicker() {
+        if (tickerTaskId != null) return
+        tickerTaskId = object : BukkitRunnable() {
+            override fun run() {
+                virtualTick++
+                processRepeatingTasks()
+            }
+        }.runTaskTimer(hooker.plugin, 1L, 1L).taskId
+    }
+
+    private fun processRepeatingTasks() {
+        val iterator = repeatTasks.iterator()
+        while (iterator.hasNext()) {
+            val task = iterator.next().value
+            when (task.state) {
+                MessageTaskState.PENDING -> {
+                    task.state = MessageTaskState.ACTIVE
+                    task.nextRunTick = virtualTick
                 }
-            }
-            "CHAT_STOP" -> {
-                chatTasks[player.uniqueId]?.cancel()
-                chatTasks.remove(player.uniqueId)
-            }
-            "ACTION" -> {
-                if (repeatable) {
-                    actionTasks[player.uniqueId]?.cancel()
-                    actionTasks[player.uniqueId] = object : BukkitRunnable() {
-                        override fun run() {
-                            player.sendActionBar(finalResult)
-                        }
-                    }.runTaskTimer(hooker.plugin, 0L, repeatFrequency)
-                } else {
-                    player.sendActionBar(finalResult)
+
+                MessageTaskState.ACTIVE -> {
+                    if (virtualTick >= task.nextRunTick) {
+                        send(task.audienceId, task.channel, task.key, task.variables)
+                        task.nextRunTick = virtualTick + task.frequencyTicks
+                    }
                 }
-            }
-            "ACTION_STOP" -> {
-                actionTasks[player.uniqueId]?.cancel()
-                actionTasks.remove(player.uniqueId)
-                player.sendActionBar(Component.empty())
+
+                MessageTaskState.PAUSED -> Unit
+                MessageTaskState.CANCELLED -> iterator.remove()
             }
         }
     }
 
-    private fun replaceVariables(message: String, variables: Map<String, String>?): String {
-        if (variables == null) return message.trimEnd()
+    private fun startRepeating(
+        player: Player,
+        channel: MessageChannel,
+        key: MessageKey,
+        variables: Map<String, String>,
+        repeatFrequency: Long
+    ) {
+        val frequency = repeatFrequency.coerceAtLeast(1L)
+        repeatTasks[player.uniqueId to channel] = AudienceTask(
+            player.uniqueId,
+            channel,
+            key,
+            variables,
+            frequency
+        )
+    }
+
+    private fun stopRepeating(audienceId: UUID, channel: MessageChannel) {
+        repeatTasks.remove(audienceId to channel)
+    }
+
+    private fun send(player: Player, channel: MessageChannel, key: MessageKey, variables: Map<String, String>) {
+        val finalResult = renderComponent(key, variables)
+        when (channel) {
+            MessageChannel.CHAT -> player.sendMessage(finalResult)
+            MessageChannel.ACTION_BAR -> player.sendActionBar(finalResult)
+        }
+    }
+
+    private fun send(audienceId: UUID, channel: MessageChannel, key: MessageKey, variables: Map<String, String>) {
+        val player = Bukkit.getPlayer(audienceId) ?: return
+        send(player, channel, key, variables)
+    }
+
+    private fun renderComponent(key: MessageKey, variables: Map<String, String>): Component {
+        val rawMessage = MessageCatalog.templates[key] ?: MessageCatalog.templates[MessageKey.INFO_EMPTY].orEmpty()
+        return miniMessage.deserialize(replaceVariables(rawMessage, variables))
+    }
+
+    private fun resolvePlayers(players: Collection<Player> = emptyList(), uuids: Collection<UUID> = emptyList()): Set<Player> {
+        val resolvedByUuid = uuids.mapNotNull { Bukkit.getPlayer(it) }
+        return (players + resolvedByUuid).toSet()
+    }
+
+    private fun replaceVariables(message: String, variables: Map<String, String>): String {
         var result = message
         for ((key, value) in variables) {
             result = result.replace("%$key%", value)
         }
         return result.trimEnd()
-    }
-
-    fun clearAllTasks() {
-        chatTasks.values.forEach { it.cancel() }
-        chatTasks.clear()
-        actionTasks.values.forEach { it.cancel() }
-        actionTasks.clear()
     }
 }

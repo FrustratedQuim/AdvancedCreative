@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.piss
 
+import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
@@ -38,16 +39,16 @@ class PissManager(private val hooker: FunctionHooker) {
 
     fun pissPlayer(player: Player) {
         if (hooker.utils.isLaying(player)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-cannot-lay")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_LAY)
             return
         }
         val scale = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE)?.baseValue ?: 1.0
         if (scale < 1.0) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-too-small")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_TOO_SMALL)
             return
         }
         if (scale > 1.0) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-too-large")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_TOO_LARGE)
             return
         }
         if (pissingPlayers.containsKey(player)) {

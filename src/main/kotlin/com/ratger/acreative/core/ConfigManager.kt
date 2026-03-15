@@ -9,30 +9,23 @@ class ConfigManager(private val hooker: FunctionHooker) {
 
     private val pluginFolder = hooker.plugin.dataFolder
     private val configFile = File(pluginFolder, "config.yml")
-    private val messagesFile = File(pluginFolder, "messages.yml")
     private val stringToNumericIds = HashMap<String, String>()
 
     lateinit var config: YamlConfiguration
-        private set
-    lateinit var messages: YamlConfiguration
         private set
 
     fun initConfigs() {
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
 
         if (!configFile.exists()) hooker.plugin.saveResource("config.yml", false)
-        if (!messagesFile.exists()) hooker.plugin.saveResource("messages.yml", false)
 
         config = YamlConfiguration.loadConfiguration(configFile)
-        messages = YamlConfiguration.loadConfiguration(messagesFile)
 
         fixEmptyValues(config, "config.yml")
-        fixEmptyValues(messages, "messages.yml")
 
         initStringToNumericIds()
 
         config.save(configFile)
-        messages.save(messagesFile)
     }
 
     fun getBlockedDisguises(): Set<EntityType> {

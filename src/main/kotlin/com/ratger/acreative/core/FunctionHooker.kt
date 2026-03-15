@@ -88,7 +88,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         configManager = ConfigManager(this)
         configManager.initConfigs()
 
-        messageManager = MessageManager(this, configManager)
+        messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
         playerStateManager = PlayerStateManager(this)
         entityManager = EntityManager(this)

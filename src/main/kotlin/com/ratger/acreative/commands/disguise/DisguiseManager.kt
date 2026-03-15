@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.disguise
 
+import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
@@ -91,7 +92,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                 undisguisePlayer(player)
                 return
             }
-            hooker.messageManager.sendMiniMessage(player, key = "usage-disguise")
+            hooker.messageManager.sendChat(player, MessageKey.USAGE_DISGUISE)
             return
         }
 
@@ -102,7 +103,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
         val entityType = getEntityType(type)
         if (entityType == null) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-type")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_DISGUISE_TYPE)
             return
         }
 
@@ -117,12 +118,12 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         }
 
         if (!player.hasPermission("advancedcreative.disguise.full") && entityType in restrictedEntities) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-type")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_DISGUISE_TYPE)
             return
         }
 
         if (hooker.configManager.getBlockedDisguises().contains(entityType)) {
-            hooker.messageManager.sendMiniMessage(player, key = "error-disguise-blocked")
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_DISGUISE_BLOCKED)
             return
         }
 
@@ -189,7 +190,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         disguisedPlayers[player] = data
         player.isGlowing = false
         scheduleUpdateTask(player)
-        hooker.messageManager.sendMiniMessage(player, key = "success-disguise")
+        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_DISGUISE)
     }
 
     fun undisguisePlayer(player: Player, silent: Boolean = false) {
@@ -204,7 +205,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             lastCustomName.remove(player)
             lastGlowingState.remove(player)
             if (!silent) {
-                hooker.messageManager.sendMiniMessage(player, key = "success-disguise-removed")
+                hooker.messageManager.sendChat(player, MessageKey.SUCCESS_DISGUISE_REMOVED)
             }
         }
     }

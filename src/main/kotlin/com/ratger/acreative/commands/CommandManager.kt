@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.Registry
@@ -71,10 +72,9 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
         val currentTime = System.currentTimeMillis()
         if (currentTime < expiresAt) {
             val remainingTime = String.format("%.1f", (expiresAt - currentTime) / 1000.0)
-            functionHooker.messageManager.sendMiniMessage(
+            functionHooker.messageManager.sendActionBar(
                 player,
-                type = "ACTION",
-                key = "action-cooldown",
+                MessageKey.ACTION_COOLDOWN,
                 variables = mapOf("time" to remainingTime)
             )
             return false
@@ -93,7 +93,7 @@ class CommandManager(private val functionHooker: FunctionHooker) : CommandExecut
 
     private fun executePlayerCommand(player: Player, command: String, args: Array<out String>) {
         when (command) {
-            "ahelp" -> functionHooker.messageManager.sendMiniMessage(player, key = "ahelp")
+            "ahelp" -> functionHooker.messageManager.sendChat(player, MessageKey.AHELP)
             "sit" -> functionHooker.sitManager.sitPlayer(player)
             "lay" -> functionHooker.layManager.layPlayer(player)
             "glide" -> functionHooker.glideManager.glidePlayer(player)

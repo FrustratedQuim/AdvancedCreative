@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.sit
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
@@ -13,9 +14,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
     fun prepareToSithead(sender: Player, targetName: String?, playerName: String?) {
         if (targetName == null) {
             if (sender.hasPermission("advancedcreative.sithead.other")) {
-                hooker.messageManager.sendMiniMessage(sender, key = "usage-sithead-other")
+                hooker.messageManager.sendChat(sender, MessageKey.USAGE_SITHEAD_OTHER)
             } else {
-                hooker.messageManager.sendMiniMessage(sender, key = "usage-sithead")
+                hooker.messageManager.sendChat(sender, MessageKey.USAGE_SITHEAD)
             }
             return
         }
@@ -23,29 +24,29 @@ class SitheadManager(private val hooker: FunctionHooker) {
         if (targetName == "toggle" && sender.hasPermission("advancedcreative.sithead")) {
             if (blockInteractPlayers.contains(sender.uniqueId)) {
                 blockInteractPlayers.remove(sender.uniqueId)
-                hooker.messageManager.sendMiniMessage(sender, key = "sithead-unblock-interact")
+                hooker.messageManager.sendChat(sender, MessageKey.SITHEAD_UNBLOCK_INTERACT)
             } else {
                 blockInteractPlayers.add(sender.uniqueId)
-                hooker.messageManager.sendMiniMessage(sender, key = "sithead-block-interact")
+                hooker.messageManager.sendChat(sender, MessageKey.SITHEAD_BLOCK_INTERACT)
             }
             return
         }
 
         if (!sender.hasPermission("advancedcreative.sithead.other")) {
-            hooker.messageManager.sendMiniMessage(sender, key = "permission-unknown")
+            hooker.messageManager.sendChat(sender, MessageKey.PERMISSION_UNKNOWN)
             return
         }
 
         val target = Bukkit.getPlayer(targetName)
         if (target == null) {
-            hooker.messageManager.sendMiniMessage(sender, key = "error-unknown-player")
+            hooker.messageManager.sendChat(sender, MessageKey.ERROR_UNKNOWN_PLAYER)
             return
         }
 
         val playerToSit = if (playerName != null) {
             val player = Bukkit.getPlayer(playerName)
             if (player == null) {
-                hooker.messageManager.sendMiniMessage(sender, key = "error-unknown-player")
+                hooker.messageManager.sendChat(sender, MessageKey.ERROR_UNKNOWN_PLAYER)
                 return
             }
             player
@@ -57,9 +58,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
         if (hooker.sitManager.sittingMap.containsKey(playerToSit)) return
 
         if (hooker.utils.isHiddenFromPlayer(target, playerToSit)) {
-            val messageKey = if (playerToSit == sender) "sithead-hidden-self" else "sithead-hidden-self-target"
+            val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_HIDDEN_SELF else MessageKey.SITHEAD_HIDDEN_SELF_TARGET
             val variables = if (playerToSit != sender) mapOf("player" to playerToSit.name) else null
-            hooker.messageManager.sendMiniMessage(sender, key = messageKey, variables = variables)
+            hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
             return
         }
 
@@ -72,9 +73,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
             if (currentTarget in checkedPlayers) return
             checkedPlayers.add(currentTarget)
             if (hooker.utils.isHiddenFromPlayer(currentTarget, playerToSit)) {
-                val messageKey = if (playerToSit == sender) "sithead-hidden-by-one" else "sithead-hidden-by-one-target"
+                val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_HIDDEN_BY_ONE else MessageKey.SITHEAD_HIDDEN_BY_ONE_TARGET
                 val variables = if (playerToSit != sender) mapOf("player" to playerToSit.name) else null
-                hooker.messageManager.sendMiniMessage(sender, key = messageKey, variables = variables)
+                hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
                 return
             }
 
@@ -93,9 +94,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
             baseCheckedPlayers.add(baseTarget)
             if (baseTarget == playerToSit) return
             if (hooker.utils.isHiddenFromPlayer(baseTarget, playerToSit)) {
-                val messageKey = if (playerToSit == sender) "sithead-hidden-by-one" else "sithead-hidden-by-one-target"
+                val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_HIDDEN_BY_ONE else MessageKey.SITHEAD_HIDDEN_BY_ONE_TARGET
                 val variables = if (playerToSit != sender) mapOf("player" to playerToSit.name) else null
-                hooker.messageManager.sendMiniMessage(sender, key = messageKey, variables = variables)
+                hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
                 return
             }
 
@@ -114,9 +115,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
             if (currentTarget in checkedPlayers) return
             checkedPlayers.add(currentTarget)
             if (hooker.utils.isHiddenFromPlayer(playerToSit, currentTarget)) {
-                val messageKey = if (playerToSit == sender) "sithead-you-hide-one" else "sithead-one-hidden-by-player"
+                val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_YOU_HIDE_ONE else MessageKey.SITHEAD_ONE_HIDDEN_BY_PLAYER
                 val variables = if (playerToSit != sender) mapOf("player" to playerToSit.name) else null
-                hooker.messageManager.sendMiniMessage(sender, key = messageKey, variables = variables)
+                hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
                 return
             }
             currentTarget = hooker.sitManager.getHeadPassenger(currentTarget)
@@ -130,9 +131,9 @@ class SitheadManager(private val hooker: FunctionHooker) {
             if (baseTarget in checkedPlayers) return
             checkedPlayers.add(baseTarget)
             if (hooker.utils.isHiddenFromPlayer(playerToSit, baseTarget)) {
-                val messageKey = if (playerToSit == sender) "sithead-you-hide-one" else "sithead-one-hidden-by-player"
+                val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_YOU_HIDE_ONE else MessageKey.SITHEAD_ONE_HIDDEN_BY_PLAYER
                 val variables = if (playerToSit != sender) mapOf("player" to playerToSit.name) else null
-                hooker.messageManager.sendMiniMessage(sender, key = messageKey, variables = variables)
+                hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
                 return
             }
             val sitData = hooker.sitManager.sittingMap[baseTarget]

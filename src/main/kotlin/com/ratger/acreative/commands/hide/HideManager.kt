@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.hide
 
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Entity
@@ -18,12 +19,12 @@ class HideManager(private val hooker: FunctionHooker) {
 
     fun prepareToHidePlayer(hider: Player, targetName: String?) {
         if (targetName == null) {
-            hooker.messageManager.sendMiniMessage(hider, key = "usage-hide")
+            hooker.messageManager.sendChat(hider, MessageKey.USAGE_HIDE)
             return
         }
         val target = Bukkit.getPlayer(targetName)
         if (target == null) {
-            hooker.messageManager.sendMiniMessage(hider, key = "error-unknown-player")
+            hooker.messageManager.sendChat(hider, MessageKey.ERROR_UNKNOWN_PLAYER)
             return
         }
         hidePlayer(hider, target)
@@ -31,11 +32,11 @@ class HideManager(private val hooker: FunctionHooker) {
 
     fun hidePlayer(hider: Player, target: Player) {
         if (hider == target) {
-            hooker.messageManager.sendMiniMessage(hider, key = "error-hide-self")
+            hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_SELF)
             return
         }
         if (target.hasPermission("advancedcreative.hide.bypass")) {
-            hooker.messageManager.sendMiniMessage(hider, key = "error-hide-bypass")
+            hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_BYPASS)
             return
         }
 
@@ -67,7 +68,7 @@ class HideManager(private val hooker: FunctionHooker) {
         val maxDepth = 10
         while (depth < maxDepth) {
             if (current in checkedPlayers) {
-                hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+                hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_FAILED)
                 return
             }
             checkedPlayers.add(current)
@@ -78,7 +79,7 @@ class HideManager(private val hooker: FunctionHooker) {
             depth++
         }
         if (depth >= maxDepth) {
-            hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+            hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_FAILED)
             return
         }
 
@@ -87,7 +88,7 @@ class HideManager(private val hooker: FunctionHooker) {
         depth = 0
         while (depth < maxDepth) {
             if (basePlayer in baseCheckedPlayers) {
-                hooker.messageManager.sendMiniMessage(hider, key = "error-hide-failed")
+                hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_FAILED)
                 return
             }
             baseCheckedPlayers.add(basePlayer)
@@ -139,16 +140,16 @@ class HideManager(private val hooker: FunctionHooker) {
             }
         }
 
-        hooker.messageManager.sendMiniMessage(
+        hooker.messageManager.sendChat(
             hider,
-            key = "success-hide",
+            MessageKey.SUCCESS_HIDE,
             variables = mapOf("target" to target.name)
         )
 
         if (notificationCooldowns.getOrDefault(targetId, 0L) + notifyCooldown < System.currentTimeMillis()) {
-            hooker.messageManager.sendMiniMessage(
+            hooker.messageManager.sendChat(
                 target,
-                key = "notify-hide",
+                MessageKey.NOTIFY_HIDE,
                 variables = mapOf("hider" to hider.name)
             )
             notificationCooldowns[targetId] = System.currentTimeMillis()
@@ -272,9 +273,9 @@ class HideManager(private val hooker: FunctionHooker) {
                 }
             }
 
-            hooker.messageManager.sendMiniMessage(
+            hooker.messageManager.sendChat(
                 hider,
-                key = "success-hide-removed",
+                MessageKey.SUCCESS_HIDE_REMOVED,
                 variables = mapOf("target" to target.name)
             )
             if (hiddenSet.isEmpty()) {
