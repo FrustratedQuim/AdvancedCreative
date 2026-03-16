@@ -1,16 +1,19 @@
 package com.ratger.acreative.commands.gravity
 
-import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.NumericAttributeManager
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
 
-class GravityManager(private val hooker: FunctionHooker) {
+class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     companion object {
         private const val MIN_GRAVITY_VALUE = 0.1
@@ -18,86 +21,54 @@ class GravityManager(private val hooker: FunctionHooker) {
         private const val DEFAULT_GRAVITY_VALUE = 1.0
         private const val MAX_GRAVITY_MODIFIER = -0.075
         private const val MIN_GRAVITY_MODIFIER = 0.0
+        private val GRAVITY_SUGGESTIONS = listOf("0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "basic")
     }
 
-    val gravityPlayers = mutableMapOf<Player, Double>()
+    override val minValue: Double = MIN_GRAVITY_VALUE
+    override val maxValue: Double = MAX_GRAVITY_VALUE
+    override val defaultValue: Double = DEFAULT_GRAVITY_VALUE
+    override val usageMessageKey: MessageKey = MessageKey.USAGE_GRAVITY
+    override val successSetMessageKey: MessageKey = MessageKey.SUCCESS_GRAVITY_SET
+    override val successResetMessageKey: MessageKey = MessageKey.SUCCESS_GRAVITY_RESET
+    override val trackedPlayers: MutableMap<Player, Double> = mutableMapOf()
+    val gravityPlayers: MutableMap<Player, Double> get() = trackedPlayers
 
-    fun applyEffect(player: Player, arg: String?) {
-        if (arg == null) {
-            hooker.messageManager.sendChat(player, MessageKey.USAGE_GRAVITY)
-            return
-        }
-
-        val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
-            return
-        }
-
-        if (value == DEFAULT_GRAVITY_VALUE) {
-            removeEffect(player)
-            return
-        }
-
-        setGravityToPlayer(player, value)
-        val formattedValue = if (((value * 100).toInt() % 10) != 0) {
-            String.format(Locale.US, "%.2f", value)
-        } else {
-            String.format(Locale.US, "%.1f", value)
-        }
-        hooker.messageManager.sendChat(
-            player,
-            MessageKey.SUCCESS_GRAVITY_SET,
-            variables = mapOf("value" to formattedValue)
-        )
-    }
-
-    private fun setGravityToPlayer(player: Player, value: Double) {
-        removeGravityAttribute(player)
-        gravityPlayers[player] = value
+    override fun applyAttribute(player: Player, value: Double) {
+        removeAttribute(player)
         val modifierValue = calculateModifier(value)
-        val attribute = player.getAttribute(Attribute.GENERIC_GRAVITY)
-        if (attribute != null) {
-            val key = NamespacedKey(hooker.plugin, "gravity_mod")
-            val modifier = AttributeModifier(
-                key,
+        player.getAttribute(Attribute.GENERIC_GRAVITY)?.addModifier(
+            AttributeModifier(
+                NamespacedKey(hooker.plugin, "gravity_mod"),
                 modifierValue,
                 AttributeModifier.Operation.ADD_NUMBER
             )
-            attribute.addModifier(modifier)
-        }
+        )
     }
 
-    fun removeEffect(player: Player) {
-        if (!gravityPlayers.containsKey(player)) return
-        removeGravityAttribute(player)
-        gravityPlayers.remove(player)
-        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_GRAVITY_RESET)
+    override fun removeAttribute(player: Player) {
+        val modifierKey = NamespacedKey(hooker.plugin, "gravity_mod")
+        player.getAttribute(Attribute.GENERIC_GRAVITY)
+            ?.modifiers
+            ?.find { it.key == modifierKey }
+            ?.let { player.getAttribute(Attribute.GENERIC_GRAVITY)?.removeModifier(it) }
     }
 
-    private fun parseValue(arg: String): Double? {
-        if (arg.equals("basic", ignoreCase = true)) return DEFAULT_GRAVITY_VALUE
-        if (arg.startsWith("-")) return MIN_GRAVITY_VALUE
-
-        val cleanedArg = arg.replace(",", ".").trim()
-
-        val numericStr = when {
-            cleanedArg.matches(Regex("^\\d+$")) -> {
-                if (cleanedArg.startsWith("0") && cleanedArg.length > 1) {
-                    "0.${cleanedArg.trimStart('0')}"
-                } else {
-                    "$cleanedArg.0"
-                }
-            }
-            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
-            else -> return null
-        }
-
-        val value = numericStr.toDoubleOrNull() ?: return null
+    override fun normalizeParsedValue(value: Double): Double {
         return when {
-            value > MAX_GRAVITY_VALUE -> MAX_GRAVITY_VALUE
-            value < MIN_GRAVITY_VALUE && value != 0.0 -> MIN_GRAVITY_VALUE
-            value == 0.0 || value == 1.0 -> DEFAULT_GRAVITY_VALUE
+            value > maxValue -> maxValue
+            value < minValue && value != 0.0 -> minValue
+            value == 0.0 || value == defaultValue -> defaultValue
             else -> value
+        }
+    }
+
+    override fun normalizeNegativeInput(): Double = minValue
+
+    fun tabCompletions(args: Array<out String>): List<String> {
+        return if (args.size == 1) {
+            GRAVITY_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
+        } else {
+            emptyList()
         }
     }
 
@@ -107,13 +78,12 @@ class GravityManager(private val hooker: FunctionHooker) {
         return MAX_GRAVITY_MODIFIER + (MIN_GRAVITY_MODIFIER - MAX_GRAVITY_MODIFIER) * normalized
     }
 
-    private fun removeGravityAttribute(player: Player) {
-        val attribute = player.getAttribute(Attribute.GENERIC_GRAVITY)
-        if (attribute != null) {
-            val modifier = attribute.modifiers.find { it.key == NamespacedKey(hooker.plugin, "gravity_mod") }
-            if (modifier != null) {
-                attribute.removeModifier(modifier)
-            }
-        }
+}
+
+class GravityCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GRAVITY) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.gravityManager.applyEffect(player, args.firstOrNull())
+
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
+        return hooker.gravityManager.tabCompletions(args)
     }
 }

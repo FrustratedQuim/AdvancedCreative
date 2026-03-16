@@ -56,16 +56,6 @@ class GlideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, boostOptions)
 }
 
-class GravityCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GRAVITY) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.gravityManager.applyEffect(player, args.firstOrNull())
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, listOf("0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "basic"))
-}
-
-class ResizeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.RESIZE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.resizeManager.applyEffect(player, args.firstOrNull())
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, listOf("0.1", "0.5", "1.0", "1.5", "5.0", "10.0", "15.0", "basic"))
-}
-
 class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.FREEZE) {
     override fun handle(player: Player, args: Array<out String>) = hooker.freezeManager.prepareToFreezePlayer(player, args.firstOrNull())
 

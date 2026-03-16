@@ -1,63 +1,54 @@
 package com.ratger.acreative.commands.resize
 
-import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.NumericAttributeManager
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
-import org.bukkit.attribute.Attribute
-import org.bukkit.entity.Player
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
+import org.bukkit.attribute.Attribute
+import org.bukkit.command.CommandSender
+import org.bukkit.entity.Player
 
-class ResizeManager(private val hooker: FunctionHooker) {
+class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     companion object {
-        private const val MIN_SCALE_VALUE = 0.1f
-        private const val MAX_SCALE_VALUE = 15.0f
-        private const val DEFAULT_SCALE_VALUE = 1.0f
+        private const val MIN_SCALE_VALUE = 0.1
+        private const val MAX_SCALE_VALUE = 15.0
+        private const val DEFAULT_SCALE_VALUE = 1.0
+        private const val RESIZE_THRESHOLD = 3.0
+        private val RESIZE_SUGGESTIONS = listOf("0.1", "0.5", "1.0", "1.5", "5.0", "10.0", "15.0", "basic")
     }
 
-    val scaledPlayers = mutableMapOf<Player, Float>()
+    override val minValue: Double = MIN_SCALE_VALUE
+    override val maxValue: Double = MAX_SCALE_VALUE
+    override val defaultValue: Double = DEFAULT_SCALE_VALUE
+    override val usageMessageKey: MessageKey = MessageKey.USAGE_RESIZE
+    override val successSetMessageKey: MessageKey = MessageKey.SUCCESS_RESIZE_SET
+    override val successResetMessageKey: MessageKey = MessageKey.SUCCESS_RESIZE_RESET
+    override val trackedPlayers: MutableMap<Player, Double> = mutableMapOf()
+    val scaledPlayers: MutableMap<Player, Double> get() = trackedPlayers
+    override val playerStateType: PlayerStateType = PlayerStateType.CUSTOM_SIZE
 
-    fun applyEffect(player: Player, arg: String?) {
-        if (arg == null) {
-            if (scaledPlayers.containsKey(player) && scaledPlayers[player] != DEFAULT_SCALE_VALUE) {
-                removeEffect(player)
-            } else {
-                hooker.messageManager.sendChat(player, MessageKey.USAGE_RESIZE)
-            }
-            return
+    override fun normalizeParsedValue(value: Double): Double {
+        return when {
+            value > maxValue -> maxValue
+            value < minValue && value != 0.0 -> minValue
+            value == 0.0 || value == defaultValue -> defaultValue
+            else -> value
         }
-
-        val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
-            return
-        }
-
-        if (value == DEFAULT_SCALE_VALUE) {
-            removeEffect(player)
-            return
-        }
-
-        hooker.playerStateManager.activateState(player, PlayerStateType.CUSTOM_SIZE)
-        setScaleToPlayer(player, value)
-        val df = DecimalFormat("#.##", DecimalFormatSymbols(Locale.US))
-        hooker.messageManager.sendChat(
-            player,
-            MessageKey.SUCCESS_RESIZE_SET,
-            variables = mapOf("value" to df.format(value))
-        )
     }
 
-    private fun setScaleToPlayer(player: Player, value: Float) {
+    override fun normalizeNegativeInput(): Double = minValue
+
+    override fun applyAttribute(player: Player, value: Double) {
         hooker.utils.checkCrawlUncrawl(player)
 
         resetAttributes(player)
 
-        scaledPlayers[player] = value
-        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = value.toDouble()
+        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = value
 
-        if (value >= 3.0f) {
+        if (value >= RESIZE_THRESHOLD) {
             val interactDistance = calculateInteractDistance(value)
             player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE)?.baseValue = 4.5 + interactDistance
             player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE)?.baseValue = 3.0 + interactDistance
@@ -70,69 +61,53 @@ class ResizeManager(private val hooker: FunctionHooker) {
         }
     }
 
-    fun removeEffect(player: Player) {
-        if (!scaledPlayers.containsKey(player)) {
-            hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_SIZE)
-            return
-        }
-
-        scaledPlayers.remove(player)
+    override fun removeAttribute(player: Player) {
         resetAttributes(player)
-        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_SIZE)
-        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_RESIZE_RESET)
+    }
+
+    override fun onAfterEffectRemoved(player: Player) {
         hooker.playerStateManager.refreshPlayerPose(player)
     }
 
+    fun tabCompletions(args: Array<out String>): List<String> {
+        return if (args.size == 1) {
+            RESIZE_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
+        } else {
+            emptyList()
+        }
+    }
+
     private fun resetAttributes(player: Player) {
-        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = 1.0
+        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = DEFAULT_SCALE_VALUE
         player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE)?.baseValue = 4.5
         player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE)?.baseValue = 3.0
         player.getAttribute(Attribute.GENERIC_STEP_HEIGHT)?.baseValue = 0.6
         player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.1
     }
 
-    private fun parseValue(arg: String): Float? {
-        if (arg.equals("basic", ignoreCase = true)) return DEFAULT_SCALE_VALUE
-        if (arg.startsWith("-")) return MIN_SCALE_VALUE
-
-        val cleanedArg = arg.replace(",", ".").trim()
-
-        val numericStr = when {
-            cleanedArg.matches(Regex("^\\d+$")) -> {
-                if (cleanedArg.startsWith("0") && cleanedArg.length > 1) {
-                    "0.${cleanedArg.trimStart('0')}"
-                } else {
-                    "$cleanedArg.0"
-                }
-            }
-            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
-            else -> return null
-        }
-
-        val value = numericStr.toFloatOrNull() ?: return null
-        return when {
-            value > MAX_SCALE_VALUE -> MAX_SCALE_VALUE
-            value < MIN_SCALE_VALUE && value != 0.0f -> MIN_SCALE_VALUE
-            value == 0.0f || value == 1.0f -> DEFAULT_SCALE_VALUE
-            else -> value
-        }
-    }
-
-    private fun calculateInteractDistance(scale: Float): Double {
-        return if (scale >= 3.0f) {
-            1.0 + (scale - 3.0f) * (25.0 - 1.0) / (15.0 - 3.0)
+    private fun calculateInteractDistance(scale: Double): Double {
+        return if (scale >= RESIZE_THRESHOLD) {
+            1.0 + (scale - RESIZE_THRESHOLD) * (25.0 - 1.0) / (15.0 - RESIZE_THRESHOLD)
         } else 0.0
     }
 
-    private fun calculateStepHeight(scale: Float): Double {
-        return if (scale >= 3.0f) {
-            2.0 + (scale - 3.0f) * (8.0 - 2.0) / (15.0 - 3.0)
+    private fun calculateStepHeight(scale: Double): Double {
+        return if (scale >= RESIZE_THRESHOLD) {
+            2.0 + (scale - RESIZE_THRESHOLD) * (8.0 - 2.0) / (15.0 - RESIZE_THRESHOLD)
         } else 0.0
     }
 
-    private fun calculateSpeed(scale: Float): Double {
-        return if (scale >= 3.0f) {
-            0.04 + (scale - 3.0f) * (0.15 - 0.04) / (15.0 - 3.0)
+    private fun calculateSpeed(scale: Double): Double {
+        return if (scale >= RESIZE_THRESHOLD) {
+            0.04 + (scale - RESIZE_THRESHOLD) * (0.15 - 0.04) / (15.0 - RESIZE_THRESHOLD)
         } else 0.0
+    }
+}
+
+class ResizeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.RESIZE) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.resizeManager.applyEffect(player, args.firstOrNull())
+
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
+        return hooker.resizeManager.tabCompletions(args)
     }
 }

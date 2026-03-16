@@ -1,6 +1,8 @@
 package com.ratger.acreative.commands
 
+import com.ratger.acreative.commands.gravity.GravityCommand
 import com.ratger.acreative.commands.health.HealthCommand
+import com.ratger.acreative.commands.resize.ResizeCommand
 import com.ratger.acreative.commands.strength.StrengthCommand
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.command.Command
