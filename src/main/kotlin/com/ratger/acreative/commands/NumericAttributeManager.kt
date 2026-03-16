@@ -4,7 +4,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.entity.Player
-import java.util.Locale
+import java.math.BigDecimal
 
 abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
 
@@ -88,10 +88,8 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
     }
 
     private fun formatValue(value: Double): String {
-        return if (((value * 100).toInt() % 10) != 0) {
-            String.format(Locale.US, "%.2f", value)
-        } else {
-            String.format(Locale.US, "%.0f", value)
-        }
+        return BigDecimal.valueOf(value)
+            .stripTrailingZeros()
+            .toPlainString()
     }
 }
