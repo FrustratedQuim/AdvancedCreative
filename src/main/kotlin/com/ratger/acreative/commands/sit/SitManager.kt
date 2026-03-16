@@ -9,6 +9,7 @@ import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.util.Vector
 import org.bukkit.block.data.type.Slab
 import org.bukkit.block.data.type.Stairs
@@ -40,27 +41,17 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun sitPlayer(player: Player) {
-        if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
-            return
-        }
-        if (!hooker.utils.checkAndRemovePose(player)) {
-            return
-        }
         if (!canSit(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_SIT_IN_AIR)
             return
         }
         val location = player.location.clone()
         val yaw = player.location.yaw
+        hooker.playerStateManager.activateState(player, PlayerStateType.SITTING)
         sitPlayerAt(player, location, yaw, "basic")
     }
 
     fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: String = "basic", block: Block? = null) {
-        if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
-            return
-        }
         val targetLocation = location.clone().apply { this.yaw = yaw }
         val armorStand = hooker.entityManager.createArmorStand(targetLocation, yaw)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
@@ -81,8 +72,6 @@ class SitManager(private val hooker: FunctionHooker) {
         val currentTime = System.currentTimeMillis()
         if (currentTime - (lastInteract[player.uniqueId] ?: 0L) < INTERACT_DELAY_MS) return
         lastInteract[player.uniqueId] = currentTime
-
-        if (!hooker.utils.checkAndRemovePose(player)) return
 
         var finalTarget = target ?: return
         var currentTarget: Player? = target
@@ -213,13 +202,17 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun unsitPlayer(player: Player, saveHeadPassenger: Boolean = false) {
-        val sitData = sittingMap[player] ?: return
+        val sitData = sittingMap[player] ?: run {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
+            return
+        }
         val stackTrace = Thread.currentThread().stackTrace
         val caller = stackTrace.getOrNull(2)?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
 
         val armorStand = player.world.getEntity(sitData.armorStandId)
         if (armorStand == null) {
             sittingMap.remove(player)
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
             return
         }
 
@@ -247,6 +240,7 @@ class SitManager(private val hooker: FunctionHooker) {
             hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
         }
 
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
         if (player.isOnline && hooker.plugin.isEnabled) hooker.playerStateManager.refreshPlayerPose(player)
     }
 

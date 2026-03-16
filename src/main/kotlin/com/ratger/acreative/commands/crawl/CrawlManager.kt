@@ -10,6 +10,7 @@ import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 
 class CrawlManager(private val hooker: FunctionHooker) {
@@ -147,19 +148,16 @@ class CrawlManager(private val hooker: FunctionHooker) {
     }
 
     fun crawlPlayer(player: Player) {
-        if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
-            return
-        }
         if (!canCrawl(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_CRAWL_IN_AIR)
             return
         }
-        if (!hooker.utils.checkAndRemovePose(player)) {
+        hooker.playerStateManager.activateState(player, PlayerStateType.CRAWLING)
+        hooker.utils.checkCustomSizeDisable(player)
+        if (crawlingPlayers.containsKey(player)) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
             return
         }
-        hooker.utils.checkCustomSizeDisable(player)
-        if (crawlingPlayers.containsKey(player)) return
         val crawling = CrawlingPlayer(player)
         crawlingPlayers[player] = crawling
         player.isSwimming = true
@@ -170,7 +168,10 @@ class CrawlManager(private val hooker: FunctionHooker) {
     }
 
     fun uncrawlPlayer(player: Player) {
-        if (!crawlingPlayers.containsKey(player)) return
+        if (!crawlingPlayers.containsKey(player)) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
+            return
+        }
         crawlingPlayers.remove(player)?.let {
             it.removeBarrier()
             it.removeShulker()
@@ -179,6 +180,7 @@ class CrawlManager(private val hooker: FunctionHooker) {
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_OFF)
         hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
         if (player.isOnline) player.isSwimming = false
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
         hooker.playerStateManager.refreshPlayerPose(player)
     }
 

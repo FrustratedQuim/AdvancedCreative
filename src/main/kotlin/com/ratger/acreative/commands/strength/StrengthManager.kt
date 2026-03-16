@@ -6,6 +6,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import java.util.Locale
 
 class StrengthManager(private val hooker: FunctionHooker) {
@@ -39,6 +40,7 @@ class StrengthManager(private val hooker: FunctionHooker) {
         }
 
         setStrengthToPlayer(player, value)
+        hooker.playerStateManager.activateState(player, PlayerStateType.CUSTOM_DAMAGE)
         val formattedValue = if (((value * 100).toInt() % 10) != 0) {
             String.format(Locale.US, "%.2f", value)
         } else {
@@ -70,6 +72,7 @@ class StrengthManager(private val hooker: FunctionHooker) {
         if (!strengthPlayers.containsKey(player)) return
         removeStrengthAttribute(player)
         strengthPlayers.remove(player)
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_DAMAGE)
         hooker.messageManager.sendChat(player, MessageKey.SUCCESS_STRENGTH_RESET)
     }
 

@@ -22,6 +22,7 @@ import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
@@ -61,15 +62,8 @@ class LayManager(private val hooker: FunctionHooker) {
     }
 
     fun layPlayer(player: Player) {
-        if (hooker.utils.isDisguised(player)) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_DISGUISED)
-            return
-        }
         if (hooker.utils.isPissing(player)) {
             hooker.pissManager.stopPiss(player)
-        }
-        if (!hooker.utils.checkAndRemovePose(player)) {
-            return
         }
         if (!canLay(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_LAY_IN_AIR)
@@ -77,6 +71,7 @@ class LayManager(private val hooker: FunctionHooker) {
         }
         val location = player.location.clone()
         val yaw = player.location.yaw
+        hooker.playerStateManager.activateState(player, PlayerStateType.LAYING)
         layPlayerAt(player, location, yaw, null)
     }
 
@@ -122,7 +117,7 @@ class LayManager(private val hooker: FunctionHooker) {
         lastInteract[player.uniqueId] = currentTime
 
         if (canLay(player)) {
-            hooker.utils.checkAndRemovePose(player)
+            hooker.playerStateManager.activateState(player, PlayerStateType.LAYING)
             val headBlock = findBedHeadBlock(block)
             if (headBlock != null) {
                 val location = headBlock.location.clone().add(0.5, 0.5625, 0.5)
@@ -237,6 +232,11 @@ class LayManager(private val hooker: FunctionHooker) {
     }
 
     fun unlayPlayer(player: Player, shouldUnsit: Boolean = true) {
+        if (!layingMap.containsKey(player)) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.LAYING)
+            return
+        }
+
         if (shouldUnsit && hooker.utils.isSitting(player)) {
             hooker.sitManager.unsitPlayer(player)
         }
@@ -276,6 +276,7 @@ class LayManager(private val hooker: FunctionHooker) {
             player.isCollidable = true
             player.isSilent = false
             hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.LAYING)
             hooker.playerStateManager.refreshPlayerPose(player)
         }
     }

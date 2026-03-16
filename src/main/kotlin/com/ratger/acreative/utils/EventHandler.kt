@@ -39,6 +39,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.checkDisguiseDisable(player)
         utils.checkCustomEffectsDisable(player)
         utils.checkSlapUnslap(player)
+        hooker.playerStateManager.clearPlayerStates(player)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)

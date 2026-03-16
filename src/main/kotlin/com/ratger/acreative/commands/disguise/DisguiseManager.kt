@@ -16,6 +16,7 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.inventory.ItemStack
 import java.util.concurrent.ConcurrentHashMap
 import com.github.retrooper.packetevents.protocol.player.Equipment as PacketEquipment
@@ -127,7 +128,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             return
         }
 
-        hooker.utils.checkAndRemovePose(player)
+        hooker.playerStateManager.activateState(player, PlayerStateType.DISGUISED)
         hooker.utils.unsetAllStates(player)
         hooker.playerStateManager.savePlayerInventory(player)
 

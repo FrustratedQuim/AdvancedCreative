@@ -123,25 +123,6 @@ class Utils(
         }
     }
 
-    fun checkAndRemovePose(player: Player): Boolean {
-        val actions: List<Pair<(Player) -> Boolean, (Player) -> Unit>> = listOf(
-            { p: Player -> isSitting(p) } to { p: Player -> sitManager.unsitPlayer(p) },
-            { p: Player -> isGliding(p) } to { p: Player -> glideManager.unglidePlayer(p) },
-            { p: Player -> isCrawling(p) } to { p: Player -> crawlManager.uncrawlPlayer(p) },
-            { p: Player -> isLaying(p) } to { p: Player -> layManager.unlayPlayer(p) },
-            { p: Player -> isFrozen(p) } to { p: Player -> freezeManager.unfreezePlayer(p) },
-            { p: Player -> isPissing(p) } to { p: Player -> pissManager.stopPiss(p) }
-        )
-
-        for ((check, disable) in actions) {
-            if (check(player)) {
-                disable(player)
-                return false
-            }
-        }
-        return true
-    }
-
     fun stopAllSits() {
         val playersToUnsit = mutableListOf<Player>()
         val processed = mutableSetOf<Player>()

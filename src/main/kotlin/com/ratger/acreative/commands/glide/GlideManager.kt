@@ -5,6 +5,7 @@ import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 
 class GlideManager(private val hooker: FunctionHooker) {
 
@@ -33,9 +34,7 @@ class GlideManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (!hooker.utils.checkAndRemovePose(player)) {
-            return
-        }
+        hooker.playerStateManager.activateState(player, PlayerStateType.GLIDING)
         if (!canGlide(player)) {
             return
         }
@@ -52,7 +51,10 @@ class GlideManager(private val hooker: FunctionHooker) {
     }
 
     fun unglidePlayer(player: Player) {
-        if (!glidingPlayers.contains(player)) return
+        if (!glidingPlayers.contains(player)) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.GLIDING)
+            return
+        }
         glidingPlayers.remove(player)
         glideBoostByPlayer.remove(player)
         cleanupBoostTaskIfNeeded()
@@ -63,6 +65,7 @@ class GlideManager(private val hooker: FunctionHooker) {
         player.isGliding = false
         hooker.messageManager.sendChat(player, MessageKey.INFO_GLIDE_OFF)
         hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.GLIDING)
         hooker.playerStateManager.refreshPlayerPose(player)
     }
 

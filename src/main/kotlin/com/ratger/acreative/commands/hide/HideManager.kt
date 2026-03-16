@@ -5,6 +5,7 @@ import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.entity.Projectile
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -118,6 +119,8 @@ class HideManager(private val hooker: FunctionHooker) {
         }
 
         hiddenSet.add(targetId)
+        hooker.playerStateManager.activateState(hider, PlayerStateType.HIDING_SOMEONE)
+        hooker.playerStateManager.activateState(target, PlayerStateType.HIDDEN_BY_SOMEONE)
         Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
             if (hider.isOnline && target.isOnline) {
                 hider.hidePlayer(hooker.plugin, target)
@@ -280,6 +283,11 @@ class HideManager(private val hooker: FunctionHooker) {
             )
             if (hiddenSet.isEmpty()) {
                 hiddenPlayers.remove(hiderId)
+                hooker.playerStateManager.deactivateState(hider, PlayerStateType.HIDING_SOMEONE)
+            }
+            val stillHidden = hiddenPlayers.values.any { targetId in it }
+            if (!stillHidden) {
+                hooker.playerStateManager.deactivateState(target, PlayerStateType.HIDDEN_BY_SOMEONE)
             }
         }
     }

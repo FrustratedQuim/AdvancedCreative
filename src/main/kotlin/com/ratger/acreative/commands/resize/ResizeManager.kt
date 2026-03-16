@@ -4,6 +4,7 @@ import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -38,6 +39,7 @@ class ResizeManager(private val hooker: FunctionHooker) {
             return
         }
 
+        hooker.playerStateManager.activateState(player, PlayerStateType.CUSTOM_SIZE)
         setScaleToPlayer(player, value)
         val df = DecimalFormat("#.##", DecimalFormatSymbols(Locale.US))
         hooker.messageManager.sendChat(
@@ -69,8 +71,14 @@ class ResizeManager(private val hooker: FunctionHooker) {
     }
 
     fun removeEffect(player: Player) {
+        if (!scaledPlayers.containsKey(player)) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_SIZE)
+            return
+        }
+
         scaledPlayers.remove(player)
         resetAttributes(player)
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_SIZE)
         hooker.messageManager.sendChat(player, MessageKey.SUCCESS_RESIZE_RESET)
         hooker.playerStateManager.refreshPlayerPose(player)
     }

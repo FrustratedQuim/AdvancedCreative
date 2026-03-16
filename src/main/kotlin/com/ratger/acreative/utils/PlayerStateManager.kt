@@ -10,8 +10,77 @@ class PlayerStateManager(
     private val hooker: FunctionHooker
 ) {
 
+    enum class PlayerStateType {
+        CRAWLING,
+        DISGUISED,
+        CUSTOM_EFFECT,
+        FROZEN,
+        GLIDING,
+        CUSTOM_HEALTH,
+        CUSTOM_DAMAGE,
+        CUSTOM_SIZE,
+        HIDDEN_BY_SOMEONE,
+        HIDING_SOMEONE,
+        LAYING,
+        SITTING;
+
+        fun conflicts(): Set<PlayerStateType> = when (this) {
+            CRAWLING -> setOf(DISGUISED, FROZEN, GLIDING, LAYING, SITTING)
+            DISGUISED -> setOf(CRAWLING, FROZEN, LAYING, SITTING)
+            FROZEN -> setOf(DISGUISED, LAYING, SITTING)
+            GLIDING -> setOf(CRAWLING, FROZEN, LAYING, SITTING)
+            LAYING -> setOf(CRAWLING, FROZEN, DISGUISED, GLIDING, SITTING)
+            SITTING -> setOf(CRAWLING, FROZEN, DISGUISED, GLIDING, LAYING)
+            CUSTOM_SIZE -> setOf(CRAWLING, DISGUISED, LAYING, SITTING)
+            CUSTOM_EFFECT,
+            CUSTOM_HEALTH,
+            CUSTOM_DAMAGE,
+            HIDDEN_BY_SOMEONE,
+            HIDING_SOMEONE -> emptySet()
+        }
+    }
+
+    private val playerStates = mutableMapOf<UUID, MutableSet<PlayerStateType>>()
+    private val deactivators = mutableMapOf<PlayerStateType, (Player) -> Unit>()
+
     val savedItems = mutableMapOf<UUID, PlayerInventoryState>()
     val monitoredPlayers = mutableSetOf<Player>()
+
+    fun registerDeactivator(state: PlayerStateType, deactivator: (Player) -> Unit) {
+        deactivators[state] = deactivator
+    }
+
+    fun hasState(player: Player, state: PlayerStateType): Boolean {
+        return playerStates[player.uniqueId]?.contains(state) == true
+    }
+
+    fun getStates(player: Player): Set<PlayerStateType> {
+        return playerStates[player.uniqueId]?.toSet() ?: emptySet()
+    }
+
+    fun activateState(player: Player, state: PlayerStateType) {
+        val stateSet = playerStates.computeIfAbsent(player.uniqueId) { mutableSetOf() }
+        if (stateSet.contains(state)) return
+
+        val conflicts = stateSet.filter { it in state.conflicts() || state in it.conflicts() }
+        conflicts.forEach { conflictingState ->
+            deactivators[conflictingState]?.invoke(player)
+            playerStates[player.uniqueId]?.remove(conflictingState)
+        }
+
+        playerStates.computeIfAbsent(player.uniqueId) { mutableSetOf() }.add(state)
+    }
+
+    fun deactivateState(player: Player, state: PlayerStateType) {
+        playerStates[player.uniqueId]?.remove(state)
+        if (playerStates[player.uniqueId].isNullOrEmpty()) {
+            playerStates.remove(player.uniqueId)
+        }
+    }
+
+    fun clearPlayerStates(player: Player) {
+        playerStates.remove(player.uniqueId)
+    }
 
     data class PlayerInventoryState(
         val armor: Array<ItemStack?>,

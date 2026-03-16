@@ -14,6 +14,7 @@ import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.cos
@@ -29,9 +30,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun prepareToFreezePlayer(initiator: Player, targetName: String?) {
         if (targetName == null || !initiator.hasPermission("advancedcreative.freeze.other")) {
-            if (!hooker.utils.checkAndRemovePose(initiator)) {
-                return
-            }
+            hooker.playerStateManager.activateState(initiator, PlayerStateType.FROZEN)
             freezePlayer(initiator, initiator)
             return
         }
@@ -42,14 +41,13 @@ class FreezeManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (!hooker.utils.checkAndRemovePose(target)) {
-            return
-        }
+        hooker.playerStateManager.activateState(target, PlayerStateType.FROZEN)
         freezePlayer(target, initiator)
     }
 
     fun freezePlayer(player: Player, initiator: Player? = null) {
-        if (hooker.utils.isDisguised(player) || player.gameMode == GameMode.SPECTATOR) {
+        if (player.gameMode == GameMode.SPECTATOR) {
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.FROZEN)
             return
         }
         if (frozenPlayers.containsKey(player)) {
@@ -120,6 +118,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
             Bukkit.getScheduler().cancelTask(taskId)
             freezeTaskIds.remove(player)
         }
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.FROZEN)
     }
 
     private fun spawnFreezeBlocks(player: Player): MutableList<WrapperEntity> {

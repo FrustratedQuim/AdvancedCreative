@@ -6,6 +6,7 @@ import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.entity.Player
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import java.util.UUID
@@ -69,6 +70,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
 
         playerEffects[effectType] = levelInt
         applyEffectToPlayer(target, effectType, levelInt)
+        hooker.playerStateManager.activateState(target, PlayerStateType.CUSTOM_EFFECT)
 
         hooker.messageManager.sendChat(
             player,
@@ -99,6 +101,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
         val playerEffects = activeEffects[player.uniqueId] ?: return
         playerEffects.keys.toList().forEach { removeEffect(player, it) }
         activeEffects.remove(player.uniqueId)
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_EFFECT)
         if (sendMessage) {
             hooker.messageManager.sendChat(player, MessageKey.SUCCESS_EFFECTS_CLEARED)
         }
@@ -131,6 +134,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
         playerEffects.remove(effectType)
         if (playerEffects.isEmpty()) {
             activeEffects.remove(player.uniqueId)
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_EFFECT)
         }
 
         val playerTasks = effectTasks[player.uniqueId]

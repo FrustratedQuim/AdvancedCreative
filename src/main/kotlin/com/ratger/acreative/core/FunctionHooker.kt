@@ -114,6 +114,14 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         itemdbManager = ItemdbManager(this)
         packetHandler = PacketHandler(this)
 
+
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.FROZEN) { freezeManager.unfreezePlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GLIDING) { glideManager.unglidePlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.LAYING) { layManager.unlayPlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
+
         utils = Utils(
             this,
             sitManager,
