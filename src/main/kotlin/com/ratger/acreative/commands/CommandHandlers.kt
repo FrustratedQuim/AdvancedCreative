@@ -46,7 +46,14 @@ class SneezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
 }
 
 class GlideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GLIDE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.glideManager.glidePlayer(player)
+    private val boostOptions = listOf("0", "0.1", "0.3", "0.5", "0.7", "1.0")
+
+    override fun handle(player: Player, args: Array<out String>) {
+        val boost = args.firstOrNull()?.toDoubleOrNull()?.takeIf { it in 0.0..1.0 } ?: 0.0
+        hooker.glideManager.glidePlayer(player, boost)
+    }
+
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, boostOptions)
 }
 
 class GravityCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GRAVITY) {
