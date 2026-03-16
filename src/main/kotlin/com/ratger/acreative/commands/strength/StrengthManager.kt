@@ -1,109 +1,78 @@
 package com.ratger.acreative.commands.strength
 
-import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.NumericAttributeManager
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import java.util.Locale
 
-class StrengthManager(private val hooker: FunctionHooker) {
+class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     companion object {
         private const val MIN_STRENGTH_VALUE = 0.0
         private const val MAX_STRENGTH_VALUE = 1000.0
         private const val DEFAULT_STRENGTH_VALUE = 0.0
+        private val STRENGTH_SUGGESTIONS = listOf("0", "5", "10", "100", "500", "basic")
     }
 
-    val strengthPlayers = mutableMapOf<Player, Double>()
+    override val minValue: Double = MIN_STRENGTH_VALUE
+    override val maxValue: Double = MAX_STRENGTH_VALUE
+    override val defaultValue: Double = DEFAULT_STRENGTH_VALUE
+    override val usageMessageKey: MessageKey = MessageKey.USAGE_STRENGTH
+    override val successSetMessageKey: MessageKey = MessageKey.SUCCESS_STRENGTH_SET
+    override val successResetMessageKey: MessageKey = MessageKey.SUCCESS_STRENGTH_RESET
+    override val trackedPlayers: MutableMap<Player, Double> = mutableMapOf()
+    val strengthPlayers: MutableMap<Player, Double> get() = trackedPlayers
+    override val playerStateType: PlayerStateType = PlayerStateType.CUSTOM_DAMAGE
 
-    fun applyEffect(player: Player, arg: String?) {
-        if (arg == null) {
-            if (strengthPlayers.containsKey(player)) {
-                removeEffect(player)
-            } else {
-                hooker.messageManager.sendChat(player, MessageKey.USAGE_STRENGTH)
-            }
-            return
-        }
-
-        val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
-            return
-        }
-
-        if (value == DEFAULT_STRENGTH_VALUE) {
-            removeEffect(player)
-            return
-        }
-
-        setStrengthToPlayer(player, value)
-        hooker.playerStateManager.activateState(player, PlayerStateType.CUSTOM_DAMAGE)
-        val formattedValue = if (((value * 100).toInt() % 10) != 0) {
-            String.format(Locale.US, "%.2f", value)
-        } else {
-            String.format(Locale.US, "%.0f", value)
-        }
-        hooker.messageManager.sendChat(
-            player,
-            MessageKey.SUCCESS_STRENGTH_SET,
-            variables = mapOf("value" to formattedValue)
-        )
-    }
-
-    private fun setStrengthToPlayer(player: Player, value: Double) {
-        removeStrengthAttribute(player)
-        strengthPlayers[player] = value
-        val attribute = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)
-        if (attribute != null) {
-            val key = NamespacedKey(hooker.plugin, "strength_mod")
-            val modifier = AttributeModifier(
-                key,
-                value,
-                AttributeModifier.Operation.ADD_NUMBER
-            )
-            attribute.addModifier(modifier)
-        }
-    }
-
-    fun removeEffect(player: Player) {
-        if (!strengthPlayers.containsKey(player)) return
-        removeStrengthAttribute(player)
-        strengthPlayers.remove(player)
-        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_DAMAGE)
-        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_STRENGTH_RESET)
-    }
-
-    private fun parseValue(arg: String): Double? {
-        if (arg.equals("basic", ignoreCase = true)) return DEFAULT_STRENGTH_VALUE
-        if (arg.startsWith("-")) return DEFAULT_STRENGTH_VALUE
-
-        val cleanedArg = arg.replace(",", ".").trim()
-
-        val numericStr = when {
-            cleanedArg.matches(Regex("^\\d+$")) -> cleanedArg
-            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
-            else -> return null
-        }
-
-        val value = numericStr.toDoubleOrNull() ?: return null
+    override fun normalizeParsedValue(value: Double): Double {
         return when {
-            value > MAX_STRENGTH_VALUE -> MAX_STRENGTH_VALUE
-            value < MIN_STRENGTH_VALUE -> DEFAULT_STRENGTH_VALUE
-            value == 0.0 -> DEFAULT_STRENGTH_VALUE
+            value > maxValue -> maxValue
+            value < minValue -> defaultValue
+            value == 0.0 -> defaultValue
             else -> value
         }
     }
 
-    private fun removeStrengthAttribute(player: Player) {
-        val attribute = player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)
-        if (attribute != null) {
-            val modifier = attribute.modifiers.find { it.key == NamespacedKey(hooker.plugin, "strength_mod") }
-            if (modifier != null) {
-                attribute.removeModifier(modifier)
-            }
+    override fun applyAttribute(player: Player, value: Double) {
+        removeAttribute(player)
+
+        player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.addModifier(
+            AttributeModifier(
+                NamespacedKey(hooker.plugin, "strength_mod"),
+                value,
+                AttributeModifier.Operation.ADD_NUMBER
+            )
+        )
+    }
+
+    override fun removeAttribute(player: Player) {
+        val modifierKey = NamespacedKey(hooker.plugin, "strength_mod")
+        player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)
+            ?.modifiers
+            ?.find { it.key == modifierKey }
+            ?.let { player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.removeModifier(it) }
+    }
+
+    fun tabCompletions(args: Array<out String>): List<String> {
+        return if (args.size == 1) {
+            STRENGTH_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
+        } else {
+            emptyList()
         }
+    }
+}
+
+class StrengthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.STRENGTH) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.strengthManager.applyEffect(player, args.firstOrNull())
+
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
+        return hooker.strengthManager.tabCompletions(args)
     }
 }

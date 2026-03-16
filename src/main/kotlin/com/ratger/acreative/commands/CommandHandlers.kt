@@ -66,16 +66,6 @@ class ResizeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, listOf("0.1", "0.5", "1.0", "1.5", "5.0", "10.0", "15.0", "basic"))
 }
 
-class StrengthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.STRENGTH) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.strengthManager.applyEffect(player, args.firstOrNull())
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, listOf("0", "5", "10", "100", "500", "basic"))
-}
-
-class HealthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HEALTH) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.healthManager.applyEffect(player, args.firstOrNull())
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, listOf("1", "10", "50", "100", "basic"))
-}
-
 class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.FREEZE) {
     override fun handle(player: Player, args: Array<out String>) = hooker.freezeManager.prepareToFreezePlayer(player, args.firstOrNull())
 

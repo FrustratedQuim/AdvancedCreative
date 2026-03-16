@@ -1,110 +1,74 @@
 package com.ratger.acreative.commands.health
 
-import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.NumericAttributeManager
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import java.util.Locale
 
-class HealthManager(private val hooker: FunctionHooker) {
+class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     companion object {
         private const val MIN_HEALTH_VALUE = 1.0
         private const val MAX_HEALTH_VALUE = 1000.0
         private const val DEFAULT_HEALTH_VALUE = 20.0
+        private val HEALTH_SUGGESTIONS = listOf("1", "10", "50", "100", "basic")
     }
 
-    val healthPlayers = mutableMapOf<Player, Double>()
+    override val minValue: Double = MIN_HEALTH_VALUE
+    override val maxValue: Double = MAX_HEALTH_VALUE
+    override val defaultValue: Double = DEFAULT_HEALTH_VALUE
+    override val usageMessageKey: MessageKey = MessageKey.USAGE_HEALTH
+    override val successSetMessageKey: MessageKey = MessageKey.SUCCESS_HEALTH_SET
+    override val successResetMessageKey: MessageKey = MessageKey.SUCCESS_HEALTH_RESET
+    override val trackedPlayers: MutableMap<Player, Double> = mutableMapOf()
+    val healthPlayers: MutableMap<Player, Double> get() = trackedPlayers
+    override val playerStateType: PlayerStateType = PlayerStateType.CUSTOM_HEALTH
 
-    fun applyEffect(player: Player, arg: String?) {
-        if (arg == null) {
-            if (healthPlayers.containsKey(player)) {
-                removeEffect(player)
-            } else {
-                hooker.messageManager.sendChat(player, MessageKey.USAGE_HEALTH)
-            }
-            return
-        }
+    override fun applyAttribute(player: Player, value: Double) {
+        removeAttribute(player)
 
-        val value = parseValue(arg) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
-            return
-        }
-
-        if (value == DEFAULT_HEALTH_VALUE) {
-            removeEffect(player)
-            return
-        }
-
-        setHealthToPlayer(player, value)
-        hooker.playerStateManager.activateState(player, PlayerStateType.CUSTOM_HEALTH)
-        val formattedValue = if (((value * 100).toInt() % 10) != 0) {
-            String.format(Locale.US, "%.2f", value)
-        } else {
-            String.format(Locale.US, "%.0f", value)
-        }
-        hooker.messageManager.sendChat(
-            player,
-            MessageKey.SUCCESS_HEALTH_SET,
-            variables = mapOf("value" to formattedValue)
-        )
-    }
-
-    private fun setHealthToPlayer(player: Player, value: Double) {
-        removeHealthAttribute(player)
-        healthPlayers[player] = value
-        val attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH)
-        if (attribute != null) {
-            val key = NamespacedKey(hooker.plugin, "health_mod")
-            val modifier = AttributeModifier(
-                key,
-                value - DEFAULT_HEALTH_VALUE,
+        player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.addModifier(
+            AttributeModifier(
+                NamespacedKey(hooker.plugin, "health_mod"),
+                value - defaultValue,
                 AttributeModifier.Operation.ADD_NUMBER
             )
-            attribute.addModifier(modifier)
-            player.health = value
-        }
+        )
+        player.health = value
     }
 
-    fun removeEffect(player: Player) {
-        if (!healthPlayers.containsKey(player)) return
-        removeHealthAttribute(player)
-        healthPlayers.remove(player)
-        hooker.playerStateManager.deactivateState(player, PlayerStateType.CUSTOM_HEALTH)
-        player.health = DEFAULT_HEALTH_VALUE
-        hooker.messageManager.sendChat(player, MessageKey.SUCCESS_HEALTH_RESET)
+    override fun removeAttribute(player: Player) {
+        val modifierKey = NamespacedKey(hooker.plugin, "health_mod")
+        player.getAttribute(Attribute.GENERIC_MAX_HEALTH)
+            ?.modifiers
+            ?.find { it.key == modifierKey }
+            ?.let { player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.removeModifier(it) }
     }
 
-    private fun parseValue(arg: String): Double? {
-        if (arg.equals("basic", ignoreCase = true)) return DEFAULT_HEALTH_VALUE
-        if (arg.startsWith("-")) return DEFAULT_HEALTH_VALUE
-
-        val cleanedArg = arg.replace(",", ".").trim()
-
-        val numericStr = when {
-            cleanedArg.matches(Regex("^\\d+$")) -> cleanedArg
-            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
-            else -> return null
-        }
-
-        val value = numericStr.toDoubleOrNull() ?: return null
-        return when {
-            value > MAX_HEALTH_VALUE -> MAX_HEALTH_VALUE
-            value < MIN_HEALTH_VALUE -> DEFAULT_HEALTH_VALUE
-            else -> value
-        }
+    override fun onAfterEffectRemoved(player: Player) {
+        player.health = defaultValue
     }
 
-    private fun removeHealthAttribute(player: Player) {
-        val attribute = player.getAttribute(Attribute.GENERIC_MAX_HEALTH)
-        if (attribute != null) {
-            val modifier = attribute.modifiers.find { it.key == NamespacedKey(hooker.plugin, "health_mod") }
-            if (modifier != null) {
-                attribute.removeModifier(modifier)
-            }
+    fun tabCompletions(args: Array<out String>): List<String> {
+        return if (args.size == 1) {
+            HEALTH_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
+        } else {
+            emptyList()
         }
+    }
+}
+
+class HealthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HEALTH) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.healthManager.applyEffect(player, args.firstOrNull())
+
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
+        return hooker.healthManager.tabCompletions(args)
     }
 }
