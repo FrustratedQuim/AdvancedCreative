@@ -21,6 +21,7 @@ class PlayerStateManager(
         CUSTOM_SIZE,
         HIDDEN_BY_SOMEONE,
         HIDING_SOMEONE,
+        PISSING,
         LAYING,
         SITTING;
 
@@ -29,6 +30,7 @@ class PlayerStateManager(
             DISGUISED -> setOf(CRAWLING, FROZEN, LAYING, SITTING)
             FROZEN -> setOf(DISGUISED, LAYING, SITTING)
             GLIDING -> setOf(CRAWLING, FROZEN, LAYING, SITTING)
+            PISSING -> setOf(FROZEN)
             LAYING -> setOf(CRAWLING, FROZEN, DISGUISED, GLIDING, SITTING)
             SITTING -> setOf(CRAWLING, FROZEN, DISGUISED, GLIDING, LAYING)
             CUSTOM_SIZE -> setOf(CRAWLING, DISGUISED, LAYING, SITTING)

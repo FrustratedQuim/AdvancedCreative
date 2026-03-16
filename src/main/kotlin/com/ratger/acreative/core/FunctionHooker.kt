@@ -119,6 +119,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.FROZEN) { freezeManager.unfreezePlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GLIDING) { glideManager.unglidePlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.PISSING) { pissManager.stopPiss(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.LAYING) { layManager.unlayPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
 

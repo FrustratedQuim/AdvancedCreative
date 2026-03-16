@@ -23,17 +23,6 @@ class EffectsManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (effectName.equals("clear", ignoreCase = true)) {
-            clearEffects(player)
-            return
-        }
-
-        val effectType = Registry.EFFECT.get(NamespacedKey.minecraft(effectName.lowercase()))
-        if (effectType == null) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_EFFECT_UNKNOWN)
-            return
-        }
-
         val target = if (targetName != null && player.hasPermission("advancedcreative.effects.other")) {
             Bukkit.getPlayer(targetName) ?: run {
                 hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
@@ -41,6 +30,24 @@ class EffectsManager(private val hooker: FunctionHooker) {
             }
         } else {
             player
+        }
+
+        if (effectName.equals("clear", ignoreCase = true)) {
+            clearEffects(target)
+            if (target != player) {
+                hooker.messageManager.sendChat(
+                    player,
+                    MessageKey.SUCCESS_EFFECTS_CLEARED,
+                    variables = mapOf("player" to target.name)
+                )
+            }
+            return
+        }
+
+        val effectType = Registry.EFFECT.get(NamespacedKey.minecraft(effectName.lowercase()))
+        if (effectType == null) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_EFFECT_UNKNOWN)
+            return
         }
 
         val levelInt = level?.toIntOrNull()?.coerceIn(1, 255) ?: 1

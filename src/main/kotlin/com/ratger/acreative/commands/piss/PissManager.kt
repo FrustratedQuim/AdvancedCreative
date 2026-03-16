@@ -15,6 +15,7 @@ import org.bukkit.Sound
 import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
@@ -51,10 +52,14 @@ class PissManager(private val hooker: FunctionHooker) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_TOO_LARGE)
             return
         }
+        if (hooker.utils.isFrozen(player)) {
+            return
+        }
         if (pissingPlayers.containsKey(player)) {
             stopPiss(player)
             return
         }
+        hooker.playerStateManager.activateState(player, PlayerStateType.PISSING)
         val streamTask = object : BukkitRunnable() {
             private var tickCounter = 0
 
@@ -301,5 +306,6 @@ class PissManager(private val hooker: FunctionHooker) {
     fun stopPiss(player: Player) {
         pissingPlayers[player]?.cancel()
         pissingPlayers.remove(player)
+        hooker.playerStateManager.deactivateState(player, PlayerStateType.PISSING)
     }
 }

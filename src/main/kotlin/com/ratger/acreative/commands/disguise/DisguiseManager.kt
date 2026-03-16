@@ -200,6 +200,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             player.isInvisible = false
             if (hooker.utils.isGlowing(player)) player.isGlowing = true
             hooker.playerStateManager.restorePlayerInventory(player)
+            hooker.playerStateManager.deactivateState(player, PlayerStateType.DISGUISED)
             disguisedPlayers.remove(player)
             tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
             lastViewers.remove(player)
