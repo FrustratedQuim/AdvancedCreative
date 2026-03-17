@@ -7,10 +7,6 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 
-private fun completeFromList(args: Array<out String>, options: List<String>): List<String> {
-    return if (args.size == 1) options.filter { it.startsWith(args[0], ignoreCase = true) } else emptyList()
-}
-
 private fun completeOnlinePlayers(args: Array<out String>): List<String> {
     return if (args.size == 1 || args.size == 2) {
         Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
@@ -21,26 +17,6 @@ private fun completeOnlinePlayers(args: Array<out String>): List<String> {
 
 class AhelpCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.AHELP) {
     override fun handle(player: Player, args: Array<out String>) = hooker.messageManager.sendChat(player, MessageKey.AHELP)
-}
-
-class HideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HIDE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.hideManager.prepareToHidePlayer(player, args.firstOrNull())
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeOnlinePlayers(args)
-}
-
-class SneezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SNEEZE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.sneezeManager.sneezePlayer(player)
-}
-
-class GlideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GLIDE) {
-    private val boostOptions = listOf("0", "0.1", "0.3", "0.5", "0.7", "1.0")
-
-    override fun handle(player: Player, args: Array<out String>) {
-        val boost = args.firstOrNull()?.toDoubleOrNull()?.takeIf { it in 0.0..1.0 } ?: 0.0
-        hooker.glideManager.glidePlayer(player, boost)
-    }
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeFromList(args, boostOptions)
 }
 
 class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.FREEZE) {
