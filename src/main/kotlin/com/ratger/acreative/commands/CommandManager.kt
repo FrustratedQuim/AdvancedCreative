@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands
 
+import com.ratger.acreative.commands.effects.EffectsCommand
+import com.ratger.acreative.commands.glow.GlowCommand
 import com.ratger.acreative.commands.gravity.GravityCommand
 import com.ratger.acreative.commands.health.HealthCommand
 import com.ratger.acreative.commands.resize.ResizeCommand
