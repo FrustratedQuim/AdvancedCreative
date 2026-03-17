@@ -19,22 +19,6 @@ class AhelpCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     override fun handle(player: Player, args: Array<out String>) = hooker.messageManager.sendChat(player, MessageKey.AHELP)
 }
 
-class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.FREEZE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.freezeManager.prepareToFreezePlayer(player, args.firstOrNull())
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return if (sender.hasPermission("advancedcreative.freeze.other")) completeOnlinePlayers(args) else emptyList()
-    }
-}
-
-class SpitCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SPIT) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.spitManager.spitPlayer(player)
-}
-
-class PissCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.PISS) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.pissManager.pissPlayer(player)
-}
-
 class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.DISGUISE) {
     private val allFlags = listOf("-self", "-noself", "-withnick", "-nonick")
 
@@ -69,10 +53,6 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
     }
 }
 
-class SlapCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SLAP) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.slapManager.slapPlayer(player)
-}
-
 class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SITHEAD) {
     override fun handle(player: Player, args: Array<out String>) = hooker.sitheadManager.prepareToSithead(player, args.getOrNull(0), args.getOrNull(1))
 
@@ -90,8 +70,4 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
         if (args.size < 2) return listOf("toggle")
         return emptyList()
     }
-}
-
-class ItemdbCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.ITEMDB) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.itemdbManager.showItemInfo(player)
 }

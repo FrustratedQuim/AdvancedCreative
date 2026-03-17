@@ -2,15 +2,20 @@ package com.ratger.acreative.commands
 
 import com.ratger.acreative.commands.crawl.CrawlCommand
 import com.ratger.acreative.commands.effects.EffectsCommand
+import com.ratger.acreative.commands.freeze.FreezeCommand
 import com.ratger.acreative.commands.glide.GlideCommand
 import com.ratger.acreative.commands.glow.GlowCommand
 import com.ratger.acreative.commands.gravity.GravityCommand
 import com.ratger.acreative.commands.health.HealthCommand
 import com.ratger.acreative.commands.hide.HideCommand
+import com.ratger.acreative.commands.itemdb.ItemdbCommand
 import com.ratger.acreative.commands.lay.LayCommand
+import com.ratger.acreative.commands.piss.PissCommand
 import com.ratger.acreative.commands.resize.ResizeCommand
 import com.ratger.acreative.commands.sit.SitCommand
+import com.ratger.acreative.commands.slap.SlapCommand
 import com.ratger.acreative.commands.sneeze.SneezeCommand
+import com.ratger.acreative.commands.spit.SpitCommand
 import com.ratger.acreative.commands.strength.StrengthCommand
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.command.Command

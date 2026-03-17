@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.piss
 
+import com.ratger.acreative.commands.PluginCommandType
+import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
@@ -297,4 +299,9 @@ class PissManager(private val hooker: FunctionHooker) {
         pissingPlayers.remove(player)?.let(hooker.tickScheduler::cancel)
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PISSING)
     }
+}
+
+
+class PissCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.PISS) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.pissManager.pissPlayer(player)
 }
