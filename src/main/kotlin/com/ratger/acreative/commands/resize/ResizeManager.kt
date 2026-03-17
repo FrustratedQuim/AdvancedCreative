@@ -9,6 +9,7 @@ import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.attribute.Attribute
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import java.math.BigDecimal
 import kotlin.math.abs
 
 class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -54,6 +55,37 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         resetAttributes(player)
     }
 
+    fun applyEffectFromCommand(player: Player, arg: String?) {
+        if (arg == null) {
+            if (trackedPlayers.containsKey(player)) {
+                removeEffectSmooth(player)
+            } else {
+                hooker.messageManager.sendChat(player, usageMessageKey)
+            }
+            return
+        }
+
+        val value = parseResizeValue(arg) ?: run {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+            return
+        }
+
+        if (value == defaultValue) {
+            removeEffectSmooth(player)
+            return
+        }
+
+        applyAttribute(player, value)
+        trackedPlayers[player] = value
+        playerStateType.let { hooker.playerStateManager.activateState(player, it) }
+
+        hooker.messageManager.sendChat(
+            player,
+            successSetMessageKey,
+            variables = mapOf("value" to formatResizeValue(value))
+        )
+    }
+
     override fun onAfterEffectRemoved(player: Player) {
         hooker.playerStateManager.refreshPlayerPose(player)
     }
@@ -68,6 +100,16 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     private fun resetAttributes(player: Player) {
         applyScaleAttributes(player, DEFAULT_SCALE_VALUE)
+    }
+
+    private fun removeEffectSmooth(player: Player) {
+        if (!trackedPlayers.containsKey(player)) return
+
+        startSmoothResize(player, DEFAULT_SCALE_VALUE)
+        trackedPlayers.remove(player)
+        hooker.playerStateManager.deactivateState(player, playerStateType)
+        onAfterEffectRemoved(player)
+        hooker.messageManager.sendChat(player, successResetMessageKey)
     }
 
     private fun applyScaleAttributes(player: Player, value: Double) {
@@ -148,10 +190,31 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             0.04 + (scale - RESIZE_THRESHOLD) * (0.15 - 0.04) / (15.0 - RESIZE_THRESHOLD)
         } else 0.0
     }
+
+    private fun parseResizeValue(arg: String): Double? {
+        if (arg.equals("basic", ignoreCase = true)) return defaultValue
+        if (arg.startsWith("-")) return normalizeNegativeInput()
+
+        val cleanedArg = arg.replace(",", ".").trim()
+        val numericStr = when {
+            cleanedArg.matches(Regex("^\\d+$")) -> cleanedArg
+            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
+            else -> return null
+        }
+
+        val value = numericStr.toDoubleOrNull() ?: return null
+        return normalizeParsedValue(value)
+    }
+
+    private fun formatResizeValue(value: Double): String {
+        return BigDecimal.valueOf(value)
+            .stripTrailingZeros()
+            .toPlainString()
+    }
 }
 
 class ResizeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.RESIZE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.resizeManager.applyEffect(player, args.firstOrNull())
+    override fun handle(player: Player, args: Array<out String>) = hooker.resizeManager.applyEffectFromCommand(player, args.firstOrNull())
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         return hooker.resizeManager.tabCompletions(args)
