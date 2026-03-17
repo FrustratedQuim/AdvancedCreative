@@ -23,18 +23,6 @@ class AhelpCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     override fun handle(player: Player, args: Array<out String>) = hooker.messageManager.sendChat(player, MessageKey.AHELP)
 }
 
-class SitCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SIT) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.sitManager.sitPlayer(player)
-}
-
-class LayCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.LAY) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.layManager.layPlayer(player)
-}
-
-class CrawlCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.CRAWL) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.crawlManager.crawlPlayer(player)
-}
-
 class HideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HIDE) {
     override fun handle(player: Player, args: Array<out String>) = hooker.hideManager.prepareToHidePlayer(player, args.firstOrNull())
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = completeOnlinePlayers(args)

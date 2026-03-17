@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.lay
 
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
@@ -389,4 +391,9 @@ class LayManager(private val hooker: FunctionHooker) {
             layingMap[player] = data.copy(equipment = newEquipment)
         }
     }
+}
+
+
+class LayCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.LAY) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.layManager.layPlayer(player)
 }

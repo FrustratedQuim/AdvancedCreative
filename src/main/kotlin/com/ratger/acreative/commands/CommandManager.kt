@@ -1,5 +1,8 @@
 package com.ratger.acreative.commands
 
+import com.ratger.acreative.commands.crawl.CrawlCommand
+import com.ratger.acreative.commands.lay.LayCommand
+import com.ratger.acreative.commands.sit.SitCommand
 import com.ratger.acreative.commands.effects.EffectsCommand
 import com.ratger.acreative.commands.glow.GlowCommand
 import com.ratger.acreative.commands.gravity.GravityCommand

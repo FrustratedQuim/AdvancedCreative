@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.crawl
 
+import com.ratger.acreative.commands.ExecutableCommand
+import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
@@ -206,4 +208,8 @@ class CrawlManager(private val hooker: FunctionHooker) {
             }
         }
     }
+}
+
+class CrawlCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.CRAWL) {
+    override fun handle(player: Player, args: Array<out String>) = hooker.crawlManager.crawlPlayer(player)
 }
