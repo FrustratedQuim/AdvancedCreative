@@ -138,6 +138,9 @@ permissions:
   advancedcreative.disguise.full:
     description: Allows using /disguise & all types
     default: op
+  advancedcreative.disguise.nick:
+    description: Allows using /disguise with nickname visibility flags
+    default: op
   advancedcreative.effects:
     description: Allows using /effects
     default: op

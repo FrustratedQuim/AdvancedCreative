@@ -45,6 +45,7 @@ permissions:
     freeze: flare
     glow: spark
     disguise: spark
+    disguise.nick: spark
     sithead: sunny
     spit: horizon
     piss: horizon

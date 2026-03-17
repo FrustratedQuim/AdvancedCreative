@@ -26,6 +26,7 @@ data class DisguiseData(
     val entity: WrapperEntity,
     val type: EntityType,
     val showSelf: Boolean,
+    val showNick: Boolean,
     val equipment: List<PacketEquipment> = emptyList()
 )
 
@@ -87,7 +88,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         }
     }
 
-    fun disguisePlayer(player: Player, type: String?, flag: String?) {
+    fun disguisePlayer(player: Player, type: String?, flags: List<String>) {
         if (type == null) {
             if (disguisedPlayers.containsKey(player)) {
                 undisguisePlayer(player)
@@ -108,10 +109,17 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             return
         }
 
-        val newShowSelf = flag != "-noself"
+        val parsedFlags = DisguiseFlags.parse(flags)
+        if (parsedFlags.requiresNickPermission && !player.hasPermission("advancedcreative.disguise.nick")) {
+            hooker.permissionManager.sendPermissionDenied(player, "disguise.nick")
+            return
+        }
+
+        val newShowSelf = parsedFlags.showSelf
+        val newShowNick = parsedFlags.showNick
         if (disguisedPlayers.containsKey(player)) {
             val currentDisguise = disguisedPlayers[player]!!
-            if (currentDisguise.type == entityType && currentDisguise.showSelf == newShowSelf) {
+            if (currentDisguise.type == entityType && currentDisguise.showSelf == newShowSelf && currentDisguise.showNick == newShowNick) {
                 undisguisePlayer(player)
                 return
             }
@@ -163,14 +171,19 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
         val entity = WrapperEntity(entityType.toPacketEventsType())
         val meta = entity.entityMeta
-        meta.customName = getDisplayName(player)
-        meta.isCustomNameVisible = true
+        if (newShowNick) {
+            meta.customName = getDisplayName(player)
+            meta.isCustomNameVisible = true
+        } else {
+            meta.customName = null
+            meta.isCustomNameVisible = false
+        }
         if (hooker.utils.isGlowing(player)) {
             meta.isGlowing = true
         }
 
         val showSelf = newShowSelf
-        val data = DisguiseData(entity, entityType, showSelf, equipmentList)
+        val data = DisguiseData(entity, entityType, showSelf, newShowNick, equipmentList)
 
         val playerLoc = player.location
         val loc = com.github.retrooper.packetevents.protocol.world.Location(
@@ -221,8 +234,13 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             )
             data.entity.addViewer(viewer.uniqueId)
             data.entity.teleport(loc)
-            data.entity.entityMeta.customName = getDisplayName(disguisedPlayer)
-            data.entity.entityMeta.isCustomNameVisible = true
+            if (data.showNick) {
+                data.entity.entityMeta.customName = getDisplayName(disguisedPlayer)
+                data.entity.entityMeta.isCustomNameVisible = true
+            } else {
+                data.entity.entityMeta.customName = null
+                data.entity.entityMeta.isCustomNameVisible = false
+            }
             if (hooker.utils.isGlowing(disguisedPlayer)) {
                 data.entity.entityMeta.isGlowing = true
             }
@@ -291,7 +309,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
 
         // Replace data in map with updated equipment list
-        disguisedPlayers[player] = DisguiseData(data.entity, data.type, data.showSelf, newEquipment)
+        disguisedPlayers[player] = DisguiseData(data.entity, data.type, data.showSelf, data.showNick, newEquipment)
 
         val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, newEquipment)
         val viewerIds = lastViewers[player] ?: getNearbyPlayers(player, player.location, data.showSelf)
@@ -318,11 +336,16 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             currentData.entity.teleport(loc)
 
             // Update meta only on change
-            val newName = getDisplayName(player)
-            if (lastCustomName[player] != newName) {
-                currentData.entity.entityMeta.customName = newName
-                currentData.entity.entityMeta.isCustomNameVisible = true
-                lastCustomName[player] = newName
+            if (currentData.showNick) {
+                val newName = getDisplayName(player)
+                if (lastCustomName[player] != newName) {
+                    currentData.entity.entityMeta.customName = newName
+                    currentData.entity.entityMeta.isCustomNameVisible = true
+                    lastCustomName[player] = newName
+                }
+            } else if (lastCustomName.remove(player) != null || currentData.entity.entityMeta.isCustomNameVisible) {
+                currentData.entity.entityMeta.customName = null
+                currentData.entity.entityMeta.isCustomNameVisible = false
             }
             val newGlow = hooker.utils.isGlowing(player)
             if (lastGlowingState[player] != newGlow) {
@@ -354,6 +377,43 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             lastViewers[player] = currentSet
         }, 0L, 2L).taskId
         tasks[player] = taskId
+    }
+
+
+
+    private data class DisguiseFlags(
+        val showSelf: Boolean,
+        val showNick: Boolean,
+        val requiresNickPermission: Boolean
+    ) {
+        companion object {
+            fun parse(flags: List<String>): DisguiseFlags {
+                var showSelf: Boolean? = null
+                var showNick: Boolean? = null
+                var requiresNickPermission = false
+
+                flags.forEach { rawFlag ->
+                    when (rawFlag.lowercase()) {
+                        "-self" -> if (showSelf == null) showSelf = true
+                        "-noself" -> if (showSelf == null) showSelf = false
+                        "-withnick" -> {
+                            if (showNick == null) showNick = true
+                            requiresNickPermission = true
+                        }
+                        "-nonick" -> {
+                            if (showNick == null) showNick = false
+                            requiresNickPermission = true
+                        }
+                    }
+                }
+
+                return DisguiseFlags(
+                    showSelf = showSelf ?: true,
+                    showNick = showNick ?: true,
+                    requiresNickPermission = requiresNickPermission
+                )
+            }
+        }
     }
 
     private fun EntityType.toPacketEventsType(): com.github.retrooper.packetevents.protocol.entity.type.EntityType {

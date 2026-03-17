@@ -72,7 +72,13 @@ class PissCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
 }
 
 class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.DISGUISE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.disguiseManager.disguisePlayer(player, args.firstOrNull(), args.getOrNull(1))
+    private val allFlags = listOf("-self", "-noself", "-withnick", "-nonick")
+
+    override fun handle(player: Player, args: Array<out String>) {
+        val type = args.firstOrNull { !it.startsWith("-") }
+        val flags = args.filter { it.startsWith("-") }
+        hooker.disguiseManager.disguisePlayer(player, type, flags)
+    }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         if (args.isEmpty()) return emptyList()
@@ -87,8 +93,12 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
             return types.filter { it.startsWith(args[0], ignoreCase = true) }
         }
 
-        if (args.size == 2) {
-            return listOf("-self", "-noself").filter { it.startsWith(args[1], ignoreCase = true) }
+        if (args.size == 2 || args.size == 3) {
+            return allFlags
+                .asSequence()
+                .distinct()
+                .filter { it.startsWith(args.last(), ignoreCase = true) }
+                .toList()
         }
 
         return emptyList()
