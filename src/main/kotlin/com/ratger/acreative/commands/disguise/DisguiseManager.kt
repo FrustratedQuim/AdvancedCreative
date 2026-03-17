@@ -1,12 +1,13 @@
 package com.ratger.acreative.commands.disguise
 
-import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
@@ -16,8 +17,8 @@ import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.inventory.ItemStack
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import com.github.retrooper.packetevents.protocol.player.Equipment as PacketEquipment
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot as PacketEquipmentSlot
@@ -34,9 +35,13 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
     val disguisedPlayers = ConcurrentHashMap<Player, DisguiseData>()
     private val tasks = ConcurrentHashMap<Player, Int>()
-    private val lastViewers = ConcurrentHashMap<Player, MutableSet<java.util.UUID>>()
+    private val activeViewers = ConcurrentHashMap<Player, MutableSet<UUID>>()
+    private val queuedInitViewers = ConcurrentHashMap<Player, MutableSet<UUID>>()
+    private val viewerPendingUntilTick = ConcurrentHashMap<UUID, Long>()
     private val lastCustomName = ConcurrentHashMap<Player, Component>()
     private val lastGlowingState = ConcurrentHashMap<Player, Boolean>()
+
+    private val pendingInitDelayTicks = 10L
 
     val restrictedEntities = setOf(
         EntityType.WITHER,
@@ -86,6 +91,85 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         } catch (_: IllegalArgumentException) {
             null
         }
+    }
+
+    private fun getCurrentTick(): Long = Bukkit.getCurrentTick().toLong()
+
+    private fun isViewerPending(viewerId: UUID): Boolean {
+        val untilTick = viewerPendingUntilTick[viewerId] ?: return false
+        return untilTick > getCurrentTick()
+    }
+
+    private fun markViewerPending(viewerId: UUID, ticks: Long = pendingInitDelayTicks) {
+        viewerPendingUntilTick[viewerId] = getCurrentTick() + ticks
+    }
+
+    fun onViewerJoin(viewer: Player) {
+        cleanupViewerFromAllDisguises(viewer.uniqueId)
+        markViewerPending(viewer.uniqueId)
+    }
+
+    fun onViewerDisconnect(viewerId: UUID) {
+        viewerPendingUntilTick.remove(viewerId)
+        cleanupViewerFromAllDisguises(viewerId)
+    }
+
+    fun onViewerWorldOrRespawn(viewer: Player) {
+        cleanupViewerFromAllDisguises(viewer.uniqueId)
+        markViewerPending(viewer.uniqueId)
+    }
+
+    private fun shouldViewerSeeDisguise(owner: Player, viewer: Player, showSelf: Boolean): Boolean {
+        if (!viewer.isOnline || !owner.isOnline) return false
+        if (owner.world != viewer.world) return false
+        if (!showSelf && viewer.uniqueId == owner.uniqueId) return false
+        if (hooker.utils.isHiddenFromPlayer(viewer, owner)) return false
+        if (owner.location.distanceSquared(viewer.location) > 100.0 * 100.0) return false
+        return true
+    }
+
+    private fun cleanupViewerForDisguise(owner: Player, data: DisguiseData, viewerId: UUID) {
+        activeViewers[owner]?.remove(viewerId)
+        queuedInitViewers[owner]?.remove(viewerId)
+        data.entity.removeViewer(viewerId)
+    }
+
+    private fun cleanupViewerFromAllDisguises(viewerId: UUID) {
+        disguisedPlayers.forEach { (owner, data) ->
+            cleanupViewerForDisguise(owner, data, viewerId)
+        }
+    }
+
+    private fun queueViewerInit(owner: Player, viewerId: UUID) {
+        queuedInitViewers.computeIfAbsent(owner) { mutableSetOf() }.add(viewerId)
+    }
+
+    private fun initializeViewer(owner: Player, data: DisguiseData, viewer: Player): Boolean {
+        if (!shouldViewerSeeDisguise(owner, viewer, data.showSelf)) return false
+        if (isViewerPending(viewer.uniqueId)) return false
+
+        data.entity.addViewer(viewer.uniqueId)
+
+        if (data.showNick) {
+            data.entity.entityMeta.customName = getDisplayName(owner)
+            data.entity.entityMeta.isCustomNameVisible = true
+        } else {
+            data.entity.entityMeta.customName = null
+            data.entity.entityMeta.isCustomNameVisible = false
+        }
+        data.entity.entityMeta.isGlowing = hooker.utils.isGlowing(owner)
+
+        if (data.equipment.isNotEmpty()) {
+            val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
+            PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+        }
+
+        val headLookPacket = WrapperPlayServerEntityHeadLook(data.entity.entityId, owner.location.yaw)
+        PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+
+        activeViewers.computeIfAbsent(owner) { mutableSetOf() }.add(viewer.uniqueId)
+        queuedInitViewers[owner]?.remove(viewer.uniqueId)
+        return true
     }
 
     fun disguisePlayer(player: Player, type: String?, flags: List<String>) {
@@ -178,31 +262,24 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             meta.customName = null
             meta.isCustomNameVisible = false
         }
-        if (hooker.utils.isGlowing(player)) {
-            meta.isGlowing = true
-        }
+        meta.isGlowing = hooker.utils.isGlowing(player)
 
-        val showSelf = newShowSelf
-        val data = DisguiseData(entity, entityType, showSelf, newShowNick, equipmentList)
+        val data = DisguiseData(entity, entityType, newShowSelf, newShowNick, equipmentList)
 
         val playerLoc = player.location
         val loc = com.github.retrooper.packetevents.protocol.world.Location(
             playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
         )
 
-        val viewers = getNearbyPlayers(player, playerLoc, showSelf)
-        viewers.forEach { entity.addViewer(it.uniqueId) }
         entity.spawn(loc)
-        if (equipmentList.isNotEmpty()) {
-            val equipPacket = WrapperPlayServerEntityEquipment(entity.entityId, equipmentList)
-            viewers.forEach { viewer ->
-                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
-            }
-        }
 
         player.isInvisible = true
-        disguisedPlayers[player] = data
         player.isGlowing = false
+        disguisedPlayers[player] = data
+        activeViewers[player] = mutableSetOf()
+        queuedInitViewers[player] = mutableSetOf()
+        getNearbyPlayers(player, playerLoc, data.showSelf).forEach { queueViewerInit(player, it.uniqueId) }
+
         scheduleUpdateTask(player)
         hooker.messageManager.sendChat(player, MessageKey.SUCCESS_DISGUISE)
     }
@@ -216,7 +293,8 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.DISGUISED)
             disguisedPlayers.remove(player)
             tasks.remove(player)?.let { hooker.tickScheduler.cancel(it) }
-            lastViewers.remove(player)
+            activeViewers.remove(player)
+            queuedInitViewers.remove(player)
             lastCustomName.remove(player)
             lastGlowingState.remove(player)
             if (!silent) {
@@ -226,39 +304,18 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     }
 
     fun updateDisguiseForPlayer(disguisedPlayer: Player, viewer: Player) {
-        disguisedPlayers[disguisedPlayer]?.let { data ->
-            if (!data.showSelf && viewer == disguisedPlayer) return
-            val playerLoc = disguisedPlayer.location
-            val loc = com.github.retrooper.packetevents.protocol.world.Location(
-                playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
-            )
-            data.entity.addViewer(viewer.uniqueId)
-            data.entity.teleport(loc)
-            if (data.showNick) {
-                data.entity.entityMeta.customName = getDisplayName(disguisedPlayer)
-                data.entity.entityMeta.isCustomNameVisible = true
-            } else {
-                data.entity.entityMeta.customName = null
-                data.entity.entityMeta.isCustomNameVisible = false
-            }
-            if (hooker.utils.isGlowing(disguisedPlayer)) {
-                data.entity.entityMeta.isGlowing = true
-            }
-            if (data.equipment.isNotEmpty()) {
-                val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
-                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
-            }
-            // track as known viewer
-            lastViewers.computeIfAbsent(disguisedPlayer) { mutableSetOf() }.add(viewer.uniqueId)
+        val data = disguisedPlayers[disguisedPlayer] ?: return
+        if (!shouldViewerSeeDisguise(disguisedPlayer, viewer, data.showSelf)) {
+            cleanupViewerForDisguise(disguisedPlayer, data, viewer.uniqueId)
+            return
         }
+        queueViewerInit(disguisedPlayer, viewer.uniqueId)
     }
 
     fun updateEntityGlowing(player: Player, isGlowing: Boolean) {
-        disguisedPlayers[player]?.let { data ->
-            data.entity.entityMeta.isGlowing = isGlowing
-            val viewers = getNearbyPlayers(player, player.location, data.showSelf)
-            viewers.forEach { data.entity.addViewer(it.uniqueId) }
-        }
+        val data = disguisedPlayers[player] ?: return
+        data.entity.entityMeta.isGlowing = isGlowing
+        lastGlowingState[player] = isGlowing
     }
 
     fun sendSwingAnimation(player: Player) {
@@ -268,34 +325,52 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             data.entity.entityId,
             WrapperPlayServerEntityAnimation.EntityAnimationType.SWING_MAIN_ARM
         )
-        val viewers = getNearbyPlayers(player, player.location, data.showSelf)
-        viewers.forEach { viewer ->
-            PacketEvents.getAPI().playerManager.sendPacket(viewer, packet)
+        val viewerIds = activeViewers[player] ?: emptySet()
+        viewerIds.forEach { viewerId ->
+            Bukkit.getPlayer(viewerId)?.let { viewer ->
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, packet)
+            }
         }
     }
 
     fun recreateDisguise(player: Player, to: Location?) {
         val data = disguisedPlayers[player] ?: return
         val targetLoc = to ?: player.location
+
+        val desiredViewers = getNearbyPlayers(player, targetLoc, data.showSelf)
+        val desiredIds = desiredViewers.map { it.uniqueId }.toSet()
+        val active = activeViewers.computeIfAbsent(player) { mutableSetOf() }
+        val queued = queuedInitViewers.computeIfAbsent(player) { mutableSetOf() }
+
+        val stale = (active + queued).filter { it !in desiredIds }
+        stale.forEach { cleanupViewerForDisguise(player, data, it) }
+
+        desiredViewers.forEach { viewer ->
+            if (viewer.uniqueId !in active && viewer.uniqueId !in queued) {
+                queueViewerInit(player, viewer.uniqueId)
+            }
+        }
+
+        queued.toSet().forEach { viewerId ->
+            val viewer = Bukkit.getPlayer(viewerId) ?: return@forEach
+            initializeViewer(player, data, viewer)
+        }
+
         val loc = com.github.retrooper.packetevents.protocol.world.Location(
             targetLoc.x, targetLoc.y, targetLoc.z, targetLoc.yaw, targetLoc.pitch
         )
-        data.entity.teleport(loc)
-        val viewers = getNearbyPlayers(player, targetLoc, data.showSelf)
-        viewers.forEach { data.entity.addViewer(it.uniqueId) }
-        // Re-send head look to keep rotation in sync
-        val headLookPacket = WrapperPlayServerEntityHeadLook(data.entity.entityId, targetLoc.yaw)
-        viewers.forEach { viewer ->
-            PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
-        }
-        // Ensure equipment visible after teleport
-        if (data.equipment.isNotEmpty()) {
-            val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
-            viewers.forEach { viewer ->
-                PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+        if (active.isNotEmpty()) {
+            data.entity.teleport(loc)
+            val headLookPacket = WrapperPlayServerEntityHeadLook(data.entity.entityId, targetLoc.yaw)
+            active.forEach { viewerId ->
+                val viewer = Bukkit.getPlayer(viewerId) ?: return@forEach
+                PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+                if (data.equipment.isNotEmpty()) {
+                    val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, data.equipment)
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
+                }
             }
         }
-        lastViewers[player] = viewers.map { it.uniqueId }.toMutableSet()
     }
 
     fun updateMainHandEquipment(player: Player) {
@@ -308,12 +383,10 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()
         newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
 
-        // Replace data in map with updated equipment list
         disguisedPlayers[player] = DisguiseData(data.entity, data.type, data.showSelf, data.showNick, newEquipment)
 
         val equipPacket = WrapperPlayServerEntityEquipment(data.entity.entityId, newEquipment)
-        val viewerIds = lastViewers[player] ?: getNearbyPlayers(player, player.location, data.showSelf)
-            .map { it.uniqueId }.toMutableSet().also { lastViewers[player] = it }
+        val viewerIds = activeViewers[player] ?: emptySet()
         viewerIds.forEach { uid ->
             Bukkit.getPlayer(uid)?.let { v ->
                 PacketEvents.getAPI().playerManager.sendPacket(v, equipPacket)
@@ -329,10 +402,6 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             }
             val currentData = disguisedPlayers[player] ?: return@runRepeating
             val playerLoc = player.location
-            val loc = com.github.retrooper.packetevents.protocol.world.Location(
-                playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
-            )
-            currentData.entity.teleport(loc)
 
             if (currentData.showNick) {
                 val newName = getDisplayName(player)
@@ -351,29 +420,46 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                 lastGlowingState[player] = newGlow
             }
 
-            val viewers = getNearbyPlayers(player, player.location, currentData.showSelf)
-            val known = lastViewers.computeIfAbsent(player) { mutableSetOf() }
-            val currentSet = viewers.map { it.uniqueId }.toMutableSet()
-            viewers.forEach { currentData.entity.addViewer(it.uniqueId) }
-            if (currentData.equipment.isNotEmpty()) {
-                val newViewers = currentSet.filter { it !in known }
-                if (newViewers.isNotEmpty()) {
-                    val equipPacket = WrapperPlayServerEntityEquipment(currentData.entity.entityId, currentData.equipment)
-                    newViewers.forEach { uid ->
-                        val v = Bukkit.getPlayer(uid) ?: return@forEach
-                        PacketEvents.getAPI().playerManager.sendPacket(v, equipPacket)
-                    }
+            val desiredViewers = getNearbyPlayers(player, playerLoc, currentData.showSelf)
+            val desiredIds = desiredViewers.map { it.uniqueId }.toSet()
+            val active = activeViewers.computeIfAbsent(player) { mutableSetOf() }
+            val queued = queuedInitViewers.computeIfAbsent(player) { mutableSetOf() }
+
+            val toRemove = (active + queued).filter { it !in desiredIds }
+            toRemove.forEach { cleanupViewerForDisguise(player, currentData, it) }
+
+            desiredViewers.forEach { viewer ->
+                if (viewer.uniqueId !in active && viewer.uniqueId !in queued) {
+                    queueViewerInit(player, viewer.uniqueId)
                 }
             }
-            val headLookPacket = WrapperPlayServerEntityHeadLook(currentData.entity.entityId, playerLoc.yaw)
-            viewers.forEach { viewer ->
-                PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+
+            queued.toSet().forEach { viewerId ->
+                val viewer = Bukkit.getPlayer(viewerId) ?: run {
+                    cleanupViewerForDisguise(player, currentData, viewerId)
+                    return@forEach
+                }
+                if (!shouldViewerSeeDisguise(player, viewer, currentData.showSelf)) {
+                    cleanupViewerForDisguise(player, currentData, viewerId)
+                    return@forEach
+                }
+                initializeViewer(player, currentData, viewer)
             }
-            lastViewers[player] = currentSet
+
+            val loc = com.github.retrooper.packetevents.protocol.world.Location(
+                playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
+            )
+            if (active.isNotEmpty()) {
+                currentData.entity.teleport(loc)
+                val headLookPacket = WrapperPlayServerEntityHeadLook(currentData.entity.entityId, playerLoc.yaw)
+                active.forEach { viewerId ->
+                    val viewer = Bukkit.getPlayer(viewerId) ?: return@forEach
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
+                }
+            }
         }
         tasks[player] = taskId
     }
-
 
     private data class DisguiseFlags(
         val showSelf: Boolean,

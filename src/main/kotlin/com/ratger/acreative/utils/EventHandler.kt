@@ -32,6 +32,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
+        hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkGlowDisable(player)
@@ -234,7 +235,18 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val joiningPlayer = event.player
+        hooker.disguiseManager.onViewerJoin(joiningPlayer)
         hideManager.reapplyAllHides(joiningPlayer)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerKick(event: PlayerKickEvent) {
+        hooker.disguiseManager.onViewerDisconnect(event.player.uniqueId)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
+        hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -265,6 +277,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
+        hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
         hooker.glowManager.refreshGlow(event.player)
     }
 
