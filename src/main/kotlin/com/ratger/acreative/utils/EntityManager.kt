@@ -165,14 +165,14 @@ class EntityManager(
             }
         }
 
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(1L) {
             val subEquipPacket = WrapperPlayServerEntityEquipment(entity.entityId, equipment)
             Bukkit.getOnlinePlayers().forEach { viewer ->
                 if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
                     PacketEvents.getAPI().playerManager.sendPacket(viewer, subEquipPacket)
                 }
             }
-        }, 1L)
+        }
 
         entity.spawn(PacketLocation(location.x, location.y, location.z, yaw, 0f))
 

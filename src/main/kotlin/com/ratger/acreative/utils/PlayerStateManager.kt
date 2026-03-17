@@ -168,9 +168,9 @@ class PlayerStateManager(
 
         if (!player.isOnline) return
 
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(1L) {
             // If the plugin has been disabled or player went offline meanwhile, do nothing
-            if (!hooker.plugin.isEnabled || !player.isOnline) return@Runnable
+            if (!hooker.plugin.isEnabled || !player.isOnline) return@runLater
 
             player.isSneaking = false
             for (viewer in Bukkit.getOnlinePlayers()) {
@@ -179,6 +179,6 @@ class PlayerStateManager(
                     viewer.showPlayer(hooker.plugin, player)
                 }
             }
-        }, 1L)
+        }
     }
 }

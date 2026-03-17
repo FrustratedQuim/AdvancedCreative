@@ -69,13 +69,13 @@ class FreezeManager(private val hooker: FunctionHooker) {
             }
         }
 
-        val taskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(hooker.plugin, {
+        val taskId = hooker.tickScheduler.runRepeating(0L, 20L) {
             if (!frozenPlayers.containsKey(player) || !player.isOnline) {
                 unfreezePlayer(player)
-                return@scheduleSyncRepeatingTask
+                return@runRepeating
             }
             player.freezeTicks = player.maxFreezeTicks * 2
-        }, 0L, 20L)
+        }
         freezeTaskIds[player] = taskId
 
         if (initiator == null || initiator == player) {
@@ -115,7 +115,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
         }
 
         freezeTaskIds[player]?.let { taskId ->
-            Bukkit.getScheduler().cancelTask(taskId)
+            hooker.tickScheduler.cancel(taskId)
             freezeTaskIds.remove(player)
         }
         hooker.playerStateManager.deactivateState(player, PlayerStateType.FROZEN)

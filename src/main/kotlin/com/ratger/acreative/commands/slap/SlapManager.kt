@@ -2,7 +2,6 @@ package com.ratger.acreative.commands.slap
 
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
-import org.bukkit.Bukkit
 import org.bukkit.Particle
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
@@ -44,7 +43,7 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
         hooker.utils.unsetAllPoses(target)
         target.leaveVehicle()
 
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(2L) {
             val location = target.location.clone().add(0.0, 1.5, 0.0)
             target.world.spawnParticle(Particle.FLASH, location, 1)
 
@@ -65,13 +64,13 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
             // Protect from fall damage for a short duration after slap
             fallProtectedPlayers.add(target.uniqueId)
 
-            Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            hooker.tickScheduler.runLater(100L) {
                 fallProtectedPlayers.remove(target.uniqueId)
-            }, 100L)
+            }
 
-            Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+            hooker.tickScheduler.runLater(20L) {
                 cooldownPlayers.remove(target.uniqueId)
-            }, 20L)
-        }, 2L)
+            }
+        }
     }
 }

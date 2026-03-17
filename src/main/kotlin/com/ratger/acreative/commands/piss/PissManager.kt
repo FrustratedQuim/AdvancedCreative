@@ -14,7 +14,6 @@ import org.bukkit.Bukkit
 import org.bukkit.Sound
 import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
-import org.bukkit.scheduler.BukkitRunnable
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -35,7 +34,7 @@ data class ScorePoint(
 class PissManager(private val hooker: FunctionHooker) {
 
     val scorePoints = Collections.synchronizedList(mutableListOf<ScorePoint>())
-    val pissingPlayers = mutableMapOf<Player, BukkitRunnable>()
+    val pissingPlayers = mutableMapOf<Player, Int>()
     val hiddenPuddleDisplays = ConcurrentHashMap<UUID, MutableMap<UUID, MutableList<WrapperEntity>>>()
 
     fun pissPlayer(player: Player) {
@@ -60,34 +59,31 @@ class PissManager(private val hooker: FunctionHooker) {
             return
         }
         hooker.playerStateManager.activateState(player, PlayerStateType.PISSING)
-        val streamTask = object : BukkitRunnable() {
-            private var tickCounter = 0
 
-            override fun run() {
-                if (tickCounter >= 60) {
-                    cancel()
-                    stopPiss(player)
-                    return
-                }
-                spawnStream(player)
-                if (tickCounter % 15 == 0) {
-                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
-                        if (player.isOnline) {
-                            player.world.playSound(
-                                player,
-                                Sound.BLOCK_WATER_AMBIENT,
-                                SoundCategory.PLAYERS,
-                                Random.nextFloat() * 0.25f + 0.75f,
-                                Random.nextFloat() + 0.5f,
-                            )
-                        }
-                    })
-                }
-                tickCounter += 1
+        var tickCounter = 0
+        var streamTaskId = 0
+        streamTaskId = hooker.tickScheduler.runRepeating(0L, 2L) {
+            if (tickCounter >= 60 || !player.isOnline) {
+                hooker.tickScheduler.cancel(streamTaskId)
+                stopPiss(player)
+                return@runRepeating
             }
+
+            spawnStream(player)
+            if (tickCounter % 15 == 0) {
+                if (player.isOnline) {
+                    player.world.playSound(
+                        player,
+                        Sound.BLOCK_WATER_AMBIENT,
+                        SoundCategory.PLAYERS,
+                        Random.nextFloat() * 0.25f + 0.75f,
+                        Random.nextFloat() + 0.5f,
+                    )
+                }
+            }
+            tickCounter += 1
         }
-        streamTask.runTaskTimerAsynchronously(hooker.plugin, 0L, 2L)
-        pissingPlayers[player] = streamTask
+        pissingPlayers[player] = streamTaskId
     }
 
     fun spawnStream(player: Player) {
@@ -145,40 +141,36 @@ class PissManager(private val hooker: FunctionHooker) {
 
         entity.addViewer(player.uniqueId)
 
-        val viewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
-            getNearbyPlayers(player, initialLocation)
-        }.get()
+        val viewers = getNearbyPlayers(player, initialLocation)
         viewers.forEach { entity.addViewer(it.uniqueId) }
         entity.spawn(packetLoc)
 
-        object : BukkitRunnable() {
-            private var index = 1
-
-            override fun run() {
-                if (index >= spawnPositions.size) {
-                    if (entity.isSpawned) {
-                        entity.remove()
-                    }
-                    cancel()
-                    return
+        var index = 1
+        var movementTaskId = 0
+        movementTaskId = hooker.tickScheduler.runRepeating(1L, 1L) {
+            if (index >= spawnPositions.size) {
+                if (entity.isSpawned) {
+                    entity.remove()
                 }
-
-                val nextLocation = spawnPositions[index]
-                val nextPacketLoc = PacketLocation(
-                    nextLocation.x,
-                    nextLocation.y,
-                    nextLocation.z,
-                    nextLocation.yaw,
-                    nextLocation.pitch
-                )
-                (entity.entityMeta as AbstractDisplayMeta).let { meta ->
-                    meta.interpolationDelay = 0
-                    entity.sendPacketsToViewersIfSpawned(meta.createPacket())
-                }
-                entity.teleport(nextPacketLoc)
-                index++
+                hooker.tickScheduler.cancel(movementTaskId)
+                return@runRepeating
             }
-        }.runTaskTimerAsynchronously(hooker.plugin, 1L, 1L)
+
+            val nextLocation = spawnPositions[index]
+            val nextPacketLoc = PacketLocation(
+                nextLocation.x,
+                nextLocation.y,
+                nextLocation.z,
+                nextLocation.yaw,
+                nextLocation.pitch
+            )
+            (entity.entityMeta as AbstractDisplayMeta).let { meta ->
+                meta.interpolationDelay = 0
+                entity.sendPacketsToViewersIfSpawned(meta.createPacket())
+            }
+            entity.teleport(nextPacketLoc)
+            index++
+        }
     }
 
     private fun handleCollision(player: Player, location: BukkitLocation) {
@@ -220,9 +212,7 @@ class PissManager(private val hooker: FunctionHooker) {
                         spawnLocation.pitch
                     )
 
-                    val viewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
-                        getNearbyPlayers(player, spawnLocation)
-                    }.get()
+                    val viewers = getNearbyPlayers(player, spawnLocation)
                     viewers.forEach { entity.addViewer(it.uniqueId) }
                     entity.spawn(packetLoc)
 
@@ -230,10 +220,8 @@ class PissManager(private val hooker: FunctionHooker) {
                     scorePoints.remove(existing)
                     scorePoints.add(point)
 
-                    val hiddenViewers = Bukkit.getScheduler().callSyncMethod(hooker.plugin) {
-                        location.getNearbyPlayers(50.0)
-                            .filter { hooker.utils.isHiddenFromPlayer(it, player) }
-                    }.get()
+                    val hiddenViewers = location.getNearbyPlayers(50.0)
+                        .filter { hooker.utils.isHiddenFromPlayer(it, player) }
                     if (hiddenViewers.isNotEmpty()) {
                         for (onlinePlayer in hiddenViewers) {
                             val hiddenMap = hiddenPuddleDisplays.computeIfAbsent(onlinePlayer.uniqueId) { ConcurrentHashMap() }
@@ -263,39 +251,41 @@ class PissManager(private val hooker: FunctionHooker) {
         }
     }
 
-        private fun scheduleDecay(point: ScorePoint) {
-        object : BukkitRunnable() {
-            override fun run() {
-                val display = point.display ?: return cancel()
-                val blockMeta = display.entityMeta as BlockDisplayMeta
-                val current = blockMeta.scale
-                if (current.x <= 0.25f || current.z <= 0.25f) {
-                    if (display.isSpawned) {
-                        display.remove()
-                        scorePoints.remove(point)
-                        for (entry in hiddenPuddleDisplays.entries) {
-                            for (inner in entry.value.entries) {
-                                inner.value.removeIf { it == display }
-                                if (inner.value.isEmpty()) {
-                                    entry.value.remove(inner.key)
-                                }
-                            }
-                            if (entry.value.isEmpty()) {
-                                hiddenPuddleDisplays.remove(entry.key)
+    private fun scheduleDecay(point: ScorePoint) {
+        var decayTaskId = 0
+        decayTaskId = hooker.tickScheduler.runRepeating(15 * 20L, 5L) {
+            val display = point.display ?: run {
+                hooker.tickScheduler.cancel(decayTaskId)
+                return@runRepeating
+            }
+            val blockMeta = display.entityMeta as BlockDisplayMeta
+            val current = blockMeta.scale
+            if (current.x <= 0.25f || current.z <= 0.25f) {
+                if (display.isSpawned) {
+                    display.remove()
+                    scorePoints.remove(point)
+                    for (entry in hiddenPuddleDisplays.entries) {
+                        for (inner in entry.value.entries) {
+                            inner.value.removeIf { it == display }
+                            if (inner.value.isEmpty()) {
+                                entry.value.remove(inner.key)
                             }
                         }
+                        if (entry.value.isEmpty()) {
+                            hiddenPuddleDisplays.remove(entry.key)
+                        }
                     }
-                    cancel()
-                    return
                 }
-                val newSize = (current.x - 0.25f).coerceAtLeast(0.25f)
-                val translationX = -newSize / 2 + point.offsetX.toFloat()
-                val translationZ = -newSize / 2 + point.offsetZ.toFloat()
-                val translationY = point.offsetY.toFloat()
-                blockMeta.scale = Vector3f(newSize, 0.025f, newSize)
-                blockMeta.translation = Vector3f(translationX, translationY, translationZ)
+                hooker.tickScheduler.cancel(decayTaskId)
+                return@runRepeating
             }
-        }.runTaskTimerAsynchronously(hooker.plugin, 15 * 20L, 5L)
+            val newSize = (current.x - 0.25f).coerceAtLeast(0.25f)
+            val translationX = -newSize / 2 + point.offsetX.toFloat()
+            val translationZ = -newSize / 2 + point.offsetZ.toFloat()
+            val translationY = point.offsetY.toFloat()
+            blockMeta.scale = Vector3f(newSize, 0.025f, newSize)
+            blockMeta.translation = Vector3f(translationX, translationY, translationZ)
+        }
     }
 
     private fun getNearbyPlayers(player: Player, location: BukkitLocation): List<Player> {
@@ -304,8 +294,7 @@ class PissManager(private val hooker: FunctionHooker) {
     }
 
     fun stopPiss(player: Player) {
-        pissingPlayers[player]?.cancel()
-        pissingPlayers.remove(player)
+        pissingPlayers.remove(player)?.let(hooker.tickScheduler::cancel)
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PISSING)
     }
 }

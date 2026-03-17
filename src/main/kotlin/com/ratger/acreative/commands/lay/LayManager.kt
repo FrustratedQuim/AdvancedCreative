@@ -24,7 +24,6 @@ import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.Player
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.inventory.ItemStack
-import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.util.Vector
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
@@ -181,40 +180,38 @@ class LayManager(private val hooker: FunctionHooker) {
         if (!hooker.utils.isSitting(player)) {
             armorStand.addPassenger(player)
         }
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(ARMORSTAND_REATTACH_DELAY_TICKS) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
             }
-        }, ARMORSTAND_REATTACH_DELAY_TICKS)
+        }
 
-        val headRotationTask = object : BukkitRunnable() {
-            override fun run() {
-                if (!player.isOnline || !entity.isSpawned) {
-                    cancel()
-                    return
-                }
+        var taskId = 0
+        taskId = hooker.tickScheduler.runRepeating(0L, 2L) {
+            if (!player.isOnline || !entity.isSpawned) {
+                hooker.tickScheduler.cancel(taskId)
+                return@runRepeating
+            }
 
-                fun normalizeYawDiff(diff: Int): Int {
-                    var d = (diff + 540) % 360 - 180
-                    if (d > 90) d = 90
-                    if (d < -90) d = -90
-                    return d
-                }
+            fun normalizeYawDiff(diff: Int): Int {
+                var d = (diff + 540) % 360 - 180
+                if (d > 90) d = 90
+                if (d < -90) d = -90
+                return d
+            }
 
-                val finalYaw = when (y) {
-                    -90, 180, -180, 90, 0 -> npcYaw + normalizeYawDiff(y - player.location.yaw.toInt()) * -1
-                    else -> 0f
-                }
+            val finalYaw = when (y) {
+                -90, 180, -180, 90, 0 -> npcYaw + normalizeYawDiff(y - player.location.yaw.toInt()) * -1
+                else -> 0f
+            }
 
-                val headLookPacket = WrapperPlayServerEntityHeadLook(entity.entityId, finalYaw)
-                Bukkit.getOnlinePlayers().forEach { viewer ->
-                    if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
-                        PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
-                    }
+            val headLookPacket = WrapperPlayServerEntityHeadLook(entity.entityId, finalYaw)
+            Bukkit.getOnlinePlayers().forEach { viewer ->
+                if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
+                    PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
                 }
             }
         }
-        val taskId = headRotationTask.runTaskTimer(hooker.plugin, 0L, 2L).taskId
 
         layingMap[player] = LayData(entity, taskId, armorStand.uniqueId, bedLocation, equipment, y.toFloat(), teamName)
 
@@ -251,7 +248,7 @@ class LayManager(private val hooker: FunctionHooker) {
                 }
             }
 
-            Bukkit.getScheduler().cancelTask(data.headRotationTaskId)
+            hooker.tickScheduler.cancel(data.headRotationTaskId)
 
             val playerInfoRemove = WrapperPlayServerPlayerInfoRemove(listOf(data.npc.uuid))
             Bukkit.getOnlinePlayers().forEach { viewer ->
@@ -294,7 +291,7 @@ class LayManager(private val hooker: FunctionHooker) {
     }
 
     fun startArmorStandChecker() {
-        Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        hooker.tickScheduler.runRepeating(CHECK_TASK_PERIOD_TICKS, CHECK_TASK_PERIOD_TICKS) {
             val playersToUnlay = mutableListOf<Player>()
             for ((player, data) in layingMap) {
                 val entity = player.world.getEntity(data.armorStandId)
@@ -303,7 +300,7 @@ class LayManager(private val hooker: FunctionHooker) {
                 }
             }
             playersToUnlay.forEach { unlayPlayer(it) }
-        }, CHECK_TASK_PERIOD_TICKS, CHECK_TASK_PERIOD_TICKS)
+        }
     }
 
     fun updateNpcGlowing(player: Player, isGlowing: Boolean = true) {

@@ -125,16 +125,16 @@ class EffectsManager(private val hooker: FunctionHooker) {
     private fun startEffectTask(player: Player, effectType: PotionEffectType, level: Int) {
         val playerTasks = effectTasks.computeIfAbsent(player.uniqueId) { mutableMapOf() }
         if (playerTasks.containsKey(effectType)) {
-            Bukkit.getScheduler().cancelTask(playerTasks[effectType]!!)
+            hooker.tickScheduler.cancel(playerTasks[effectType]!!)
         }
 
-        val taskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        val taskId = hooker.tickScheduler.runRepeating(0L, 5 * 20L) {
             if (!player.isOnline || !activeEffects[player.uniqueId].orEmpty().containsKey(effectType)) {
                 removeEffect(player, effectType)
-                return@Runnable
+                return@runRepeating
             }
             applyEffectToPlayer(player, effectType, level)
-        }, 0L, 5 * 20L).taskId
+        }
 
         playerTasks[effectType] = taskId
     }
@@ -169,7 +169,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
 
         val playerTasks = effectTasks[player.uniqueId]
         playerTasks?.get(effectType)?.let { taskId ->
-            Bukkit.getScheduler().cancelTask(taskId)
+            hooker.tickScheduler.cancel(taskId)
             playerTasks.remove(effectType)
             if (playerTasks.isEmpty()) {
                 effectTasks.remove(player.uniqueId)

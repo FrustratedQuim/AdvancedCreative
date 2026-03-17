@@ -24,9 +24,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
                 when (type) {
                     PacketType.Play.Client.ANIMATION -> {
                         if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
-                        Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
+                        hooker.tickScheduler.runNow {
                             hooker.disguiseManager.sendSwingAnimation(player)
-                        })
+                        }
                     }
                     PacketType.Play.Client.INTERACT_ENTITY -> {
                         if (!hooker.utils.isSlapping(player)) return
@@ -35,9 +35,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
                         if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
                         val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
 
-                        Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
+                        hooker.tickScheduler.runNow {
                             hooker.slapManager.applySlap(player, target)
-                        })
+                        }
                     }
                 }
             }

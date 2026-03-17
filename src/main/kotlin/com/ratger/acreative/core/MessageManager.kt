@@ -4,7 +4,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.scheduler.BukkitRunnable
 import java.util.UUID
 
 class MessageManager(
@@ -80,18 +79,16 @@ class MessageManager(
     fun clearAllTasks() {
         repeatTasks.values.forEach { it.state = MessageTaskState.CANCELLED }
         repeatTasks.clear()
-        tickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
+        tickerTaskId?.let { hooker.tickScheduler.cancel(it) }
         tickerTaskId = null
     }
 
     private fun startTicker() {
         if (tickerTaskId != null) return
-        tickerTaskId = object : BukkitRunnable() {
-            override fun run() {
-                virtualTick++
-                processRepeatingTasks()
-            }
-        }.runTaskTimer(hooker.plugin, 1L, 1L).taskId
+        tickerTaskId = hooker.tickScheduler.runRepeating(1L, 1L) {
+            virtualTick++
+            processRepeatingTasks()
+        }
     }
 
     private fun processRepeatingTasks() {

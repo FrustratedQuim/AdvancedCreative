@@ -6,7 +6,6 @@ import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import org.bukkit.Bukkit
 import org.bukkit.attribute.Attribute
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -105,10 +104,10 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
         val stepDelta = (targetValue - startValue) / TRANSITION_STEPS
         var currentStep = 0
-        val taskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        val taskId = hooker.tickScheduler.runRepeating(0L, TRANSITION_PERIOD_TICKS) {
             if (!player.isOnline) {
                 cancelResizeTask(player)
-                return@Runnable
+                return@runRepeating
             }
 
             currentStep++
@@ -123,13 +122,13 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             if (currentStep >= TRANSITION_STEPS) {
                 cancelResizeTask(player)
             }
-        }, 0L, TRANSITION_PERIOD_TICKS).taskId
+        }
 
         activeResizeTasks[player] = taskId
     }
 
     private fun cancelResizeTask(player: Player) {
-        activeResizeTasks.remove(player)?.let(Bukkit.getScheduler()::cancelTask)
+        activeResizeTasks.remove(player)?.let(hooker.tickScheduler::cancel)
     }
 
     private fun calculateInteractDistance(scale: Double): Double {

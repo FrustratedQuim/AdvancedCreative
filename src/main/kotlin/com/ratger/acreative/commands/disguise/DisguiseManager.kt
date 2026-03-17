@@ -215,7 +215,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.restorePlayerInventory(player)
             hooker.playerStateManager.deactivateState(player, PlayerStateType.DISGUISED)
             disguisedPlayers.remove(player)
-            tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
+            tasks.remove(player)?.let { hooker.tickScheduler.cancel(it) }
             lastViewers.remove(player)
             lastCustomName.remove(player)
             lastGlowingState.remove(player)
@@ -322,20 +322,18 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     }
 
     private fun scheduleUpdateTask(player: Player) {
-        val taskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        val taskId = hooker.tickScheduler.runRepeating(0L, 2L) {
             if (!player.isOnline || !disguisedPlayers.containsKey(player)) {
-                tasks.remove(player)?.let { Bukkit.getScheduler().cancelTask(it) }
-                return@Runnable
+                tasks.remove(player)?.let { hooker.tickScheduler.cancel(it) }
+                return@runRepeating
             }
-            val currentData = disguisedPlayers[player] ?: return@Runnable
+            val currentData = disguisedPlayers[player] ?: return@runRepeating
             val playerLoc = player.location
             val loc = com.github.retrooper.packetevents.protocol.world.Location(
                 playerLoc.x, playerLoc.y, playerLoc.z, playerLoc.yaw, playerLoc.pitch
             )
-            // Always teleport entity to player's current position
             currentData.entity.teleport(loc)
 
-            // Update meta only on change
             if (currentData.showNick) {
                 val newName = getDisplayName(player)
                 if (lastCustomName[player] != newName) {
@@ -353,7 +351,6 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                 lastGlowingState[player] = newGlow
             }
 
-            // Viewers management
             val viewers = getNearbyPlayers(player, player.location, currentData.showSelf)
             val known = lastViewers.computeIfAbsent(player) { mutableSetOf() }
             val currentSet = viewers.map { it.uniqueId }.toMutableSet()
@@ -368,17 +365,14 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                     }
                 }
             }
-            // Update head look for all current viewers
             val headLookPacket = WrapperPlayServerEntityHeadLook(currentData.entity.entityId, playerLoc.yaw)
             viewers.forEach { viewer ->
                 PacketEvents.getAPI().playerManager.sendPacket(viewer, headLookPacket)
             }
-            // Save current viewers snapshot
             lastViewers[player] = currentSet
-        }, 0L, 2L).taskId
+        }
         tasks[player] = taskId
     }
-
 
 
     private data class DisguiseFlags(

@@ -22,6 +22,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
+import com.ratger.acreative.core.TickScheduler
 import com.ratger.acreative.utils.EventHandler
 import com.ratger.acreative.utils.PacketHandler
 import com.ratger.acreative.utils.PlayerStateManager
@@ -84,10 +85,15 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var packetHandler: PacketHandler
         private set
+    lateinit var tickScheduler: TickScheduler
+        private set
 
     fun init() {
         configManager = ConfigManager(this)
         configManager.initConfigs()
+
+        tickScheduler = TickScheduler(plugin)
+        tickScheduler.start()
 
         messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
@@ -175,6 +181,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         utils.stopAllCustomEffects()
         utils.stopAllSlaps()
         messageManager.clearAllTasks()
+        tickScheduler.shutdown()
         packetHandler.unregister()
     }
 }

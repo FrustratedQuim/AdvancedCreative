@@ -185,7 +185,7 @@ class CrawlManager(private val hooker: FunctionHooker) {
     }
 
     fun startBarrierUpdater() {
-        Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        hooker.tickScheduler.runRepeating(0L, UPDATE_BARRIER_PERIOD_TICKS) {
             val toUncrawl = mutableListOf<Player>()
             // Iterate over a snapshot to avoid ConcurrentModificationException
             val snapshot = crawlingPlayers.values.toList()
@@ -205,6 +205,6 @@ class CrawlManager(private val hooker: FunctionHooker) {
             for (p in toUncrawl) {
                 uncrawlPlayer(p)
             }
-        }, 0L, UPDATE_BARRIER_PERIOD_TICKS)
+        }
     }
 }

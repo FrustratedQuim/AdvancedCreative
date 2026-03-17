@@ -121,13 +121,13 @@ class HideManager(private val hooker: FunctionHooker) {
         hiddenSet.add(targetId)
         hooker.playerStateManager.activateState(hider, PlayerStateType.HIDING_SOMEONE)
         hooker.playerStateManager.activateState(target, PlayerStateType.HIDDEN_BY_SOMEONE)
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(1L) {
             if (hider.isOnline && target.isOnline) {
                 hider.hidePlayer(hooker.plugin, target)
                 hideFreezeBlocks(hider, target)
                 hidePuddleDisplays(hider, target)
             }
-        }, 1L)
+        }
 
         if (hooker.utils.isDisguised(target)) {
             hooker.disguiseManager.disguisedPlayers[target]?.entity?.removeViewer(hider.uniqueId)
@@ -158,12 +158,12 @@ class HideManager(private val hooker: FunctionHooker) {
             notificationCooldowns[targetId] = System.currentTimeMillis()
         }
 
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(hideDuration / 50L) {
             if (hiddenSet.contains(targetId) && hider.isOnline && target.isOnline) {
                 // Delegate full unhide flow (show entities, messages, data cleanup)
                 unhidePlayer(hider, target)
             }
-        }, hideDuration / 50L)
+        }
     }
 
     fun reapplyHide(hider: Player, target: Player) {
@@ -256,12 +256,12 @@ class HideManager(private val hooker: FunctionHooker) {
             showPuddleDisplays(hider, target)
 
             if (hooker.utils.isDisguised(target)) {
-                Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+                hooker.tickScheduler.runLater(3L) {
                     if (!hider.isOnline || !target.isOnline) {
-                        return@Runnable
+                        return@runLater
                     }
                     hooker.disguiseManager.updateDisguiseForPlayer(target, hider)
-                }, 3L)
+                }
             }
 
             if (hooker.utils.isLaying(target)) {

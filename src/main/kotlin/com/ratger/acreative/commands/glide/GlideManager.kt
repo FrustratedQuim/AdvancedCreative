@@ -3,7 +3,6 @@ package com.ratger.acreative.commands.glide
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
-import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 
@@ -71,7 +70,7 @@ class GlideManager(private val hooker: FunctionHooker) {
 
     private fun ensureBoostTaskRunning() {
         if (boostTaskId != null) return
-        boostTaskId = Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        boostTaskId = hooker.tickScheduler.runRepeating(0L, 2L) {
             val iterator = glidingPlayers.iterator()
             while (iterator.hasNext()) {
                 val player = iterator.next()
@@ -89,12 +88,12 @@ class GlideManager(private val hooker: FunctionHooker) {
                 player.velocity = player.velocity.add(lookDirection.multiply(boost))
             }
             cleanupBoostTaskIfNeeded()
-        }, 0L, 2L).taskId
+        }
     }
 
     private fun cleanupBoostTaskIfNeeded() {
         if (glidingPlayers.isNotEmpty()) return
-        boostTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
+        boostTaskId?.let { hooker.tickScheduler.cancel(it) }
         boostTaskId = null
     }
 }

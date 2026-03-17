@@ -57,14 +57,14 @@ class SitManager(private val hooker: FunctionHooker) {
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
         sittingMap[player] = SitData(armorStand.uniqueId, block, style)
         armorStand.addPassenger(player)
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(ARMORSTAND_REATTACH_DELAY_TICKS) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
                 armorStand.remove()
                 sittingMap.remove(player)
             }
-        }, ARMORSTAND_REATTACH_DELAY_TICKS)
+        }
     }
 
     fun sitOnHead(player: Player, target: Player?, sender: Player? = null) {
@@ -160,7 +160,7 @@ class SitManager(private val hooker: FunctionHooker) {
         finalTarget.addPassenger(armorStand)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
 
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(ARMORSTAND_REATTACH_DELAY_TICKS) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
@@ -170,7 +170,7 @@ class SitManager(private val hooker: FunctionHooker) {
             if (!finalTarget.passengers.contains(armorStand)) {
                 finalTarget.addPassenger(armorStand)
             }
-        }, ARMORSTAND_REATTACH_DELAY_TICKS)
+        }
 
     }
 
@@ -196,9 +196,9 @@ class SitManager(private val hooker: FunctionHooker) {
         direction.multiply(1.0)
 
         unsitPlayer(passenger, saveHeadPassenger = true)
-        Bukkit.getScheduler().runTaskLater(hooker.plugin, Runnable {
+        hooker.tickScheduler.runLater(1L) {
             if (passenger.isOnline) passenger.velocity = direction
-        }, 1L)
+        }
     }
 
     fun unsitPlayer(player: Player, saveHeadPassenger: Boolean = false) {
@@ -381,7 +381,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun startArmorStandChecker() {
-        Bukkit.getScheduler().runTaskTimer(hooker.plugin, Runnable {
+        hooker.tickScheduler.runRepeating(CHECK_TASK_PERIOD_TICKS, CHECK_TASK_PERIOD_TICKS) {
             val playersToUnsit = mutableListOf<Player>()
             for ((player, data) in sittingMap) {
                 val entity = player.world.getEntity(data.armorStandId)
@@ -390,6 +390,6 @@ class SitManager(private val hooker: FunctionHooker) {
                 }
             }
             playersToUnsit.forEach { unsitPlayer(it) }
-        }, CHECK_TASK_PERIOD_TICKS, CHECK_TASK_PERIOD_TICKS)
+        }
     }
 }
