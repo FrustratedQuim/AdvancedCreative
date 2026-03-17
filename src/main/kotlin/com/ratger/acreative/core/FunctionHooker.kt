@@ -128,6 +128,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.PISSING) { pissManager.stopPiss(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.LAYING) { layManager.unlayPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CUSTOM_SIZE) { resizeManager.removeEffect(it) }
 
         utils = Utils(
             this,

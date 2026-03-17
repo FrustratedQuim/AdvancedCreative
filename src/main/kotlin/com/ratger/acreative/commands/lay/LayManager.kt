@@ -112,7 +112,6 @@ class LayManager(private val hooker: FunctionHooker) {
             return false
         }
 
-        hooker.utils.checkGlideUnglide(player)
         lastInteract[player.uniqueId] = currentTime
 
         if (canLay(player)) {

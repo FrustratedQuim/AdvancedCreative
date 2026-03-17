@@ -75,9 +75,9 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             return
         }
 
+        playerStateType.let { hooker.playerStateManager.activateState(player, it) }
         applyAttribute(player, value)
         trackedPlayers[player] = value
-        playerStateType.let { hooker.playerStateManager.activateState(player, it) }
 
         hooker.messageManager.sendChat(
             player,
@@ -135,7 +135,6 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
     private fun startSmoothResize(player: Player, targetValue: Double) {
-        hooker.utils.checkCrawlUncrawl(player)
         cancelResizeTask(player)
 
         val startValue = player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue ?: DEFAULT_SCALE_VALUE

@@ -153,7 +153,6 @@ class CrawlManager(private val hooker: FunctionHooker) {
             return
         }
         hooker.playerStateManager.activateState(player, PlayerStateType.CRAWLING)
-        hooker.utils.checkCustomSizeDisable(player)
         if (crawlingPlayers.containsKey(player)) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
             return

@@ -47,11 +47,11 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         val location = player.location.clone()
         val yaw = player.location.yaw
-        hooker.playerStateManager.activateState(player, PlayerStateType.SITTING)
         sitPlayerAt(player, location, yaw, "basic")
     }
 
     fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: String = "basic", block: Block? = null) {
+        hooker.playerStateManager.activateState(player, PlayerStateType.SITTING)
         val targetLocation = location.clone().apply { this.yaw = yaw }
         val armorStand = hooker.entityManager.createArmorStand(targetLocation, yaw)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
@@ -266,8 +266,6 @@ class SitManager(private val hooker: FunctionHooker) {
         if (currentTime - (lastInteract[player.uniqueId] ?: 0) < INTERACT_DELAY_MS) {
             return false
         }
-
-        hooker.utils.checkGlideUnglide(player)
 
         lastInteract[player.uniqueId] = currentTime
         when (val data = block.blockData) {
