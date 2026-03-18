@@ -1,6 +1,7 @@
 package com.ratger.acreative.commands
 
 import com.ratger.acreative.commands.crawl.CrawlCommand
+import com.ratger.acreative.commands.disguise.DisguiseCommand
 import com.ratger.acreative.commands.effects.EffectsCommand
 import com.ratger.acreative.commands.freeze.FreezeCommand
 import com.ratger.acreative.commands.glide.GlideCommand
@@ -13,6 +14,7 @@ import com.ratger.acreative.commands.lay.LayCommand
 import com.ratger.acreative.commands.piss.PissCommand
 import com.ratger.acreative.commands.resize.ResizeCommand
 import com.ratger.acreative.commands.sit.SitCommand
+import com.ratger.acreative.commands.sit.SitheadCommand
 import com.ratger.acreative.commands.slap.SlapCommand
 import com.ratger.acreative.commands.sneeze.SneezeCommand
 import com.ratger.acreative.commands.spit.SpitCommand
