@@ -1,6 +1,6 @@
 package com.ratger.acreative.commands.strength
 
-import com.ratger.acreative.commands.NumericAttributeManager
+import com.ratger.acreative.commands.common.NumericAttributeManager
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType

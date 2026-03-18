@@ -1,8 +1,8 @@
-package com.ratger.acreative.commands
+package com.ratger.acreative.commands.common
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
+import com.ratger.acreative.utils.PlayerStateManager
 import org.bukkit.entity.Player
 import java.math.BigDecimal
 
@@ -15,7 +15,7 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
     protected abstract val successSetMessageKey: MessageKey
     protected abstract val successResetMessageKey: MessageKey
     protected abstract val trackedPlayers: MutableMap<Player, Double>
-    protected open val playerStateType: PlayerStateType? = null
+    protected open val playerStateType: PlayerStateManager.PlayerStateType? = null
 
     fun applyEffect(player: Player, arg: String?) {
         if (arg == null) {
