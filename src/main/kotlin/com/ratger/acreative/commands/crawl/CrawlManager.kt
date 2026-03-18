@@ -1,18 +1,15 @@
 package com.ratger.acreative.commands.crawl
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
-import com.ratger.acreative.core.MessageChannel
-import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import me.tofaa.entitylib.wrapper.WrapperEntity
-import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 
 class CrawlManager(private val hooker: FunctionHooker) {
@@ -50,7 +47,7 @@ class CrawlManager(private val hooker: FunctionHooker) {
                 // Remove shulker if present from previous state
                 removeShulker()
 
-                if (barrierLocation == null || !barrierLocation!!.equals(newLoc)) {
+                if (barrierLocation == null || barrierLocation!! != newLoc) {
                     // Revert previous fake barrier, if any
                     barrierLocation?.let { prev ->
                         if (player.isOnline) {

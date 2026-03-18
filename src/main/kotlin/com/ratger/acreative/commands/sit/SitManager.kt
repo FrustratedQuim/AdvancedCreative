@@ -1,21 +1,18 @@
 package com.ratger.acreative.commands.sit
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
+import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
-import com.ratger.acreative.core.FunctionHooker
-import org.bukkit.Bukkit
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
-import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import org.bukkit.util.Vector
+import org.bukkit.block.data.Bisected
 import org.bukkit.block.data.type.Slab
 import org.bukkit.block.data.type.Stairs
-import org.bukkit.block.data.Bisected
+import org.bukkit.entity.Player
+import org.bukkit.util.Vector
 import java.util.*
 import kotlin.math.atan2
 

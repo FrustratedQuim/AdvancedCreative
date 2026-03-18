@@ -1,14 +1,11 @@
 package com.ratger.acreative.commands.sit
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
-import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
-import java.util.UUID
+import java.util.*
 
 class SitheadManager(private val hooker: FunctionHooker) {
 

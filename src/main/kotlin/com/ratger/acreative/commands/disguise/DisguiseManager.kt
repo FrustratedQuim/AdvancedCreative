@@ -1,7 +1,5 @@
 package com.ratger.acreative.commands.disguise
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
@@ -15,13 +13,12 @@ import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
 import org.bukkit.Bukkit
-import org.bukkit.command.CommandSender
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import com.github.retrooper.packetevents.protocol.player.Equipment as PacketEquipment
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot as PacketEquipmentSlot

@@ -22,12 +22,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
-import com.ratger.acreative.core.TickScheduler
-import com.ratger.acreative.utils.EventHandler
-import com.ratger.acreative.utils.PacketHandler
-import com.ratger.acreative.utils.PlayerStateManager
-import com.ratger.acreative.utils.EntityManager
-import com.ratger.acreative.utils.Utils
+import com.ratger.acreative.utils.*
 
 class FunctionHooker(val plugin: AdvancedCreative) {
 

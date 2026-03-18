@@ -1,16 +1,14 @@
 package com.ratger.acreative.commands.slap
 
-import com.ratger.acreative.commands.PluginCommandType
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import org.bukkit.Particle
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.util.Vector
-import java.util.UUID
+import java.util.*
 
 class SlapManager(private val hooker: FunctionHooker) : Listener {
 

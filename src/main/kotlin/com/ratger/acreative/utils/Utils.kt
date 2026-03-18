@@ -17,7 +17,6 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
-import org.bukkit.block.Block
 import org.bukkit.entity.Player
 
 class Utils(

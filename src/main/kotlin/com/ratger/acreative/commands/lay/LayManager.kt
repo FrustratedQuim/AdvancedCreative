@@ -1,19 +1,18 @@
 package com.ratger.acreative.commands.lay
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
-import com.ratger.acreative.core.MessageChannel
-import com.ratger.acreative.core.MessageKey
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.player.Equipment
 import com.github.retrooper.packetevents.protocol.player.EquipmentSlot
 import com.github.retrooper.packetevents.protocol.player.TextureProperty
 import com.github.retrooper.packetevents.protocol.player.UserProfile
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoRemove
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageChannel
+import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
@@ -24,17 +23,15 @@ import net.minecraft.world.scores.PlayerTeam
 import net.minecraft.world.scores.Scoreboard
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.Block
 import org.bukkit.block.data.type.Bed
+import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
-import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
-import org.bukkit.Location
-import org.bukkit.craftbukkit.entity.CraftPlayer
 import java.util.*
-import kotlin.collections.iterator
 import kotlin.math.abs
 
 class LayManager(private val hooker: FunctionHooker) {
