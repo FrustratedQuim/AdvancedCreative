@@ -1,15 +1,12 @@
 package com.ratger.acreative.commands.health
 
-import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.NumericAttributeManager
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -18,7 +15,6 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         private const val MIN_HEALTH_VALUE = 1.0
         private const val MAX_HEALTH_VALUE = 1000.0
         private const val DEFAULT_HEALTH_VALUE = 20.0
-        private val HEALTH_SUGGESTIONS = listOf("1", "10", "50", "100", "basic")
     }
 
     override val minValue: Double = MIN_HEALTH_VALUE
@@ -56,11 +52,4 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         player.health = defaultValue
     }
 
-    fun tabCompletions(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            HEALTH_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
-    }
 }

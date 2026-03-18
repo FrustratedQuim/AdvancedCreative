@@ -1,15 +1,12 @@
 package com.ratger.acreative.commands.strength
 
-import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.NumericAttributeManager
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -18,7 +15,6 @@ class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) 
         private const val MIN_STRENGTH_VALUE = 0.0
         private const val MAX_STRENGTH_VALUE = 1000.0
         private const val DEFAULT_STRENGTH_VALUE = 0.0
-        private val STRENGTH_SUGGESTIONS = listOf("0", "5", "10", "100", "500", "basic")
     }
 
     override val minValue: Double = MIN_STRENGTH_VALUE
@@ -60,11 +56,4 @@ class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) 
             ?.let { player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.removeModifier(it) }
     }
 
-    fun tabCompletions(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            STRENGTH_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
-    }
 }

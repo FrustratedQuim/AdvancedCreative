@@ -1,14 +1,11 @@
 package com.ratger.acreative.commands.gravity
 
-import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.NumericAttributeManager
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import kotlin.math.max
 import kotlin.math.min
@@ -21,7 +18,6 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         private const val DEFAULT_GRAVITY_VALUE = 1.0
         private const val MAX_GRAVITY_MODIFIER = -0.075
         private const val MIN_GRAVITY_MODIFIER = 0.0
-        private val GRAVITY_SUGGESTIONS = listOf("0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1.0", "basic")
     }
 
     override val minValue: Double = MIN_GRAVITY_VALUE
@@ -63,14 +59,6 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
     override fun normalizeNegativeInput(): Double = minValue
-
-    fun tabCompletions(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            GRAVITY_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
-    }
 
     private fun calculateModifier(value: Double): Double {
         val clampedValue = min(MAX_GRAVITY_VALUE, max(MIN_GRAVITY_VALUE, value))

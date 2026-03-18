@@ -1,19 +1,12 @@
 package com.ratger.acreative.commands.glide
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import org.bukkit.entity.Player
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import org.bukkit.command.CommandSender
 
 class GlideManager(private val hooker: FunctionHooker) {
-
-    companion object {
-        private val BOOST_OPTIONS = listOf("0", "0.1", "0.3", "0.5", "0.7", "1.0")
-    }
 
     private data class PlayerFlightState(
         val allowFlight: Boolean,
@@ -27,14 +20,6 @@ class GlideManager(private val hooker: FunctionHooker) {
 
     fun parseBoost(arg: String?): Double {
         return arg?.toDoubleOrNull()?.takeIf { it in 0.0..1.0 } ?: 0.0
-    }
-
-    fun tabCompletions(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            BOOST_OPTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
     }
 
     fun canGlide(player: Player): Boolean {

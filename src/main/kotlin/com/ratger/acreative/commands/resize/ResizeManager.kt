@@ -1,13 +1,10 @@
 package com.ratger.acreative.commands.resize
 
-import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.NumericAttributeManager
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.attribute.Attribute
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import java.math.BigDecimal
 import kotlin.math.abs
@@ -21,7 +18,6 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         private const val RESIZE_THRESHOLD = 3.0
         private const val TRANSITION_STEPS = 5
         private const val TRANSITION_PERIOD_TICKS = 1L
-        private val RESIZE_SUGGESTIONS = listOf("0.1", "0.5", "1.0", "1.5", "5.0", "10.0", "15.0", "basic")
     }
 
     override val minValue: Double = MIN_SCALE_VALUE
@@ -88,14 +84,6 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     override fun onAfterEffectRemoved(player: Player) {
         hooker.playerStateManager.refreshPlayerPose(player)
-    }
-
-    fun tabCompletions(args: Array<out String>): List<String> {
-        return if (args.size == 1) {
-            RESIZE_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
     }
 
     private fun resetAttributes(player: Player) {

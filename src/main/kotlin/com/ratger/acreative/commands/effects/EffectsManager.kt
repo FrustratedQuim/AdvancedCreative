@@ -1,13 +1,10 @@
 package com.ratger.acreative.commands.effects
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.potion.PotionEffect
@@ -137,26 +134,6 @@ class EffectsManager(private val hooker: FunctionHooker) {
         }
 
         playerTasks[effectType] = taskId
-    }
-
-    fun tabCompletions(sender: CommandSender, args: Array<out String>): List<String> {
-        return when (args.size) {
-            1 -> (Registry.EFFECT.iterator().asSequence().map { it.key.key.lowercase() } + "clear")
-                .filter { it.startsWith(args[0], ignoreCase = true) }
-                .sorted()
-                .toList()
-
-            2 -> listOf("1", "2", "3", "5", "10").filter { it.startsWith(args[1], ignoreCase = true) }
-            3 -> {
-                if (sender.hasPermission("advancedcreative.effects.other")) {
-                    Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
-                } else {
-                    emptyList()
-                }
-            }
-
-            else -> emptyList()
-        }
     }
 
     fun removeEffect(player: Player, effectType: PotionEffectType) {

@@ -7,9 +7,17 @@ import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class StrengthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.STRENGTH) {
+    companion object {
+        private val STRENGTH_SUGGESTIONS = listOf("0", "5", "10", "100", "500", "basic")
+    }
+
     override fun handle(player: Player, args: Array<out String>) = hooker.strengthManager.applyEffect(player, args.firstOrNull())
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.strengthManager.tabCompletions(args)
+        return if (args.size == 1) {
+            STRENGTH_SUGGESTIONS.filter { it.startsWith(args[0], ignoreCase = true) }
+        } else {
+            emptyList()
+        }
     }
 }
