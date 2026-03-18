@@ -200,25 +200,11 @@ class HideManager(private val hooker: FunctionHooker) {
     }
 
     private fun hideFreezeBlocks(hider: Player, target: Player) {
-        val blocks = hooker.freezeManager.frozenPlayers[target]
-        if (blocks != null) {
-            blocks.forEach { it.removeViewer(hider.uniqueId) }
-            val hiddenBlocks = hooker.freezeManager.hiddenFreezeBlocks.computeIfAbsent(hider.uniqueId) { ConcurrentHashMap() }
-            hiddenBlocks[target.uniqueId] = blocks
-        }
+        hooker.freezeManager.hideFreezeBlocksForViewer(hider, target)
     }
 
     private fun showFreezeBlocks(hider: Player, target: Player) {
-        val blocks = hooker.freezeManager.frozenPlayers[target]
-        blocks?.forEach { block ->
-            if (block.isSpawned) {
-                block.addViewer(hider.uniqueId)
-            }
-        }
-        hooker.freezeManager.hiddenFreezeBlocks[hider.uniqueId]?.remove(target.uniqueId)
-        if (hooker.freezeManager.hiddenFreezeBlocks[hider.uniqueId]?.isEmpty() == true) {
-            hooker.freezeManager.hiddenFreezeBlocks.remove(hider.uniqueId)
-        }
+        hooker.freezeManager.showFreezeBlocksForViewer(hider, target)
     }
 
     private fun hidePuddleDisplays(hider: Player, target: Player) {
