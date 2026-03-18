@@ -83,12 +83,30 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     lateinit var tickScheduler: TickScheduler
         private set
 
+    fun sitManagerOrNull(): SitManager? = if (this::sitManager.isInitialized) sitManager else null
+    fun glideManagerOrNull(): GlideManager? = if (this::glideManager.isInitialized) glideManager else null
+    fun crawlManagerOrNull(): CrawlManager? = if (this::crawlManager.isInitialized) crawlManager else null
+    fun hideManagerOrNull(): HideManager? = if (this::hideManager.isInitialized) hideManager else null
+    fun layManagerOrNull(): LayManager? = if (this::layManager.isInitialized) layManager else null
+    fun gravityManagerOrNull(): GravityManager? = if (this::gravityManager.isInitialized) gravityManager else null
+    fun resizeManagerOrNull(): ResizeManager? = if (this::resizeManager.isInitialized) resizeManager else null
+    fun strengthManagerOrNull(): StrengthManager? = if (this::strengthManager.isInitialized) strengthManager else null
+    fun healthManagerOrNull(): HealthManager? = if (this::healthManager.isInitialized) healthManager else null
+    fun freezeManagerOrNull(): FreezeManager? = if (this::freezeManager.isInitialized) freezeManager else null
+    fun glowManagerOrNull(): GlowManager? = if (this::glowManager.isInitialized) glowManager else null
+    fun pissManagerOrNull(): PissManager? = if (this::pissManager.isInitialized) pissManager else null
+    fun disguiseManagerOrNull(): DisguiseManager? = if (this::disguiseManager.isInitialized) disguiseManager else null
+    fun effectsManagerOrNull(): EffectsManager? = if (this::effectsManager.isInitialized) effectsManager else null
+    fun slapManagerOrNull(): SlapManager? = if (this::slapManager.isInitialized) slapManager else null
+
     fun init() {
         configManager = ConfigManager(this)
         configManager.initConfigs()
 
         tickScheduler = TickScheduler(plugin)
         tickScheduler.start()
+
+        utils = Utils(this)
 
         messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
@@ -97,7 +115,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         sitManager = SitManager(this)
         sitheadManager = SitheadManager(this)
         glideManager = GlideManager(this)
-        sneezeManager = SneezeManager(this)
         crawlManager = CrawlManager(this)
         hideManager = HideManager(this)
         layManager = LayManager(this)
@@ -113,8 +130,6 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         effectsManager = EffectsManager(this)
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
-        packetHandler = PacketHandler(this)
-
 
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }
@@ -125,24 +140,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CUSTOM_SIZE) { resizeManager.removeEffect(it) }
 
-        utils = Utils(
-            this,
-            sitManager,
-            glideManager,
-            crawlManager,
-            hideManager,
-            layManager,
-            gravityManager,
-            resizeManager,
-            strengthManager,
-            healthManager,
-            freezeManager,
-            glowManager,
-            pissManager,
-            disguiseManager,
-            effectsManager,
-            slapManager
-        )
+        sneezeManager = SneezeManager(this)
+        packetHandler = PacketHandler(this)
 
         commandManager = CommandManager(this)
         for (commandType in PluginCommandType.entries) {
@@ -161,23 +160,31 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     }
 
     fun shutdown() {
-        utils.stopAllSits()
-        utils.stopAllGlides()
-        utils.stopAllCrawls()
-        utils.stopAllHides()
-        utils.stopAllLays()
-        utils.stopAllCustomGravity()
-        utils.stopAllCustomResize()
-        utils.stopAllCustomStrength()
-        utils.stopAllCustomHealth()
-        utils.stopAllFreezes()
-        utils.stopAllGlows()
-        utils.stopAllPiss()
-        utils.stopAllDisguises()
-        utils.stopAllCustomEffects()
-        utils.stopAllSlaps()
-        messageManager.clearAllTasks()
-        tickScheduler.shutdown()
-        packetHandler.unregister()
+        if (this::utils.isInitialized) {
+            utils.stopAllSits()
+            utils.stopAllGlides()
+            utils.stopAllCrawls()
+            utils.stopAllHides()
+            utils.stopAllLays()
+            utils.stopAllCustomGravity()
+            utils.stopAllCustomResize()
+            utils.stopAllCustomStrength()
+            utils.stopAllCustomHealth()
+            utils.stopAllFreezes()
+            utils.stopAllGlows()
+            utils.stopAllPiss()
+            utils.stopAllDisguises()
+            utils.stopAllCustomEffects()
+            utils.stopAllSlaps()
+        }
+        if (this::messageManager.isInitialized) {
+            messageManager.clearAllTasks()
+        }
+        if (this::tickScheduler.isInitialized) {
+            tickScheduler.shutdown()
+        }
+        if (this::packetHandler.isInitialized) {
+            packetHandler.unregister()
+        }
     }
 }

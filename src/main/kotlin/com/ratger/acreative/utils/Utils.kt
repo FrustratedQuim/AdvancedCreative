@@ -1,42 +1,10 @@
 package com.ratger.acreative.utils
 
-import com.ratger.acreative.commands.crawl.CrawlManager
-import com.ratger.acreative.commands.disguise.DisguiseManager
-import com.ratger.acreative.commands.effects.EffectsManager
-import com.ratger.acreative.commands.freeze.FreezeManager
-import com.ratger.acreative.commands.glide.GlideManager
-import com.ratger.acreative.commands.glow.GlowManager
-import com.ratger.acreative.commands.gravity.GravityManager
-import com.ratger.acreative.commands.health.HealthManager
-import com.ratger.acreative.commands.hide.HideManager
-import com.ratger.acreative.commands.lay.LayManager
-import com.ratger.acreative.commands.piss.PissManager
-import com.ratger.acreative.commands.resize.ResizeManager
-import com.ratger.acreative.commands.sit.SitManager
-import com.ratger.acreative.commands.slap.SlapManager
-import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 
-class Utils(
-    private val hooker: FunctionHooker,
-    private val sitManager: SitManager,
-    private val glideManager: GlideManager,
-    private val crawlManager: CrawlManager,
-    private val hideManager: HideManager,
-    private val layManager: LayManager,
-    private val gravityManager: GravityManager,
-    private val resizeManager: ResizeManager,
-    private val strengthManager: StrengthManager,
-    private val healthManager: HealthManager,
-    private val freezeManager: FreezeManager,
-    private val glowManager: GlowManager,
-    private val pissManager: PissManager,
-    private val disguiseManager: DisguiseManager,
-    private val effectsManager: EffectsManager,
-    private val slapManager: SlapManager
-) {
+class Utils(private val hooker: FunctionHooker) {
 
     private inline fun <T> stopAll(playersMap: Map<Player, T>, stopAction: (Player) -> Unit) {
         playersMap.keys.toList().forEach(stopAction)
@@ -46,57 +14,135 @@ class Utils(
         if (isActive(player)) disable(player)
     }
 
-    fun isSitting(player: Player) = sitManager.sittingMap.containsKey(player)
-    fun isGliding(player: Player) = glideManager.glidingPlayers.contains(player)
-    fun isCrawling(player: Player) = crawlManager.crawlingPlayers.containsKey(player)
-    fun isLaying(player: Player) = layManager.layingMap.containsKey(player)
-    fun isCustomGravity(player: Player) = gravityManager.gravityPlayers.containsKey(player)
-    fun isCustomSize(player: Player) = resizeManager.scaledPlayers.containsKey(player)
-    fun isCustomStrength(player: Player) = strengthManager.strengthPlayers.containsKey(player)
-    fun isCustomHealth(player: Player) = healthManager.healthPlayers.containsKey(player)
-    fun isFrozen(player: Player) = freezeManager.frozenPlayers.containsKey(player)
-    fun isGlowing(player: Player) = glowManager.glowingPlayers.contains(player)
-    fun isPissing(player: Player) = pissManager.pissingPlayers.containsKey(player)
-    fun isDisguised(player: Player) = disguiseManager.disguisedPlayers.containsKey(player)
-    fun isCustomEffect(player: Player) = effectsManager.activeEffects.containsKey(player.uniqueId)
-    fun isSlapping(player: Player) = slapManager.slappingPlayers.contains(player)
+    fun isSitting(player: Player) = hooker.sitManagerOrNull()?.sittingMap?.containsKey(player) ?: false
+    fun isGliding(player: Player) = hooker.glideManagerOrNull()?.glidingPlayers?.contains(player) ?: false
+    fun isCrawling(player: Player) = hooker.crawlManagerOrNull()?.crawlingPlayers?.containsKey(player) ?: false
+    fun isLaying(player: Player) = hooker.layManagerOrNull()?.layingMap?.containsKey(player) ?: false
+    fun isCustomGravity(player: Player) = hooker.gravityManagerOrNull()?.gravityPlayers?.containsKey(player) ?: false
+    fun isCustomSize(player: Player) = hooker.resizeManagerOrNull()?.scaledPlayers?.containsKey(player) ?: false
+    fun isCustomStrength(player: Player) = hooker.strengthManagerOrNull()?.strengthPlayers?.containsKey(player) ?: false
+    fun isCustomHealth(player: Player) = hooker.healthManagerOrNull()?.healthPlayers?.containsKey(player) ?: false
+    fun isFrozen(player: Player) = hooker.freezeManagerOrNull()?.frozenPlayers?.containsKey(player) ?: false
+    fun isGlowing(player: Player) = hooker.glowManagerOrNull()?.glowingPlayers?.contains(player) ?: false
+    fun isPissing(player: Player) = hooker.pissManagerOrNull()?.pissingPlayers?.containsKey(player) ?: false
+    fun isDisguised(player: Player) = hooker.disguiseManagerOrNull()?.disguisedPlayers?.containsKey(player) ?: false
+    fun isCustomEffect(player: Player) = hooker.effectsManagerOrNull()?.activeEffects?.containsKey(player.uniqueId) ?: false
+    fun isSlapping(player: Player) = hooker.slapManagerOrNull()?.slappingPlayers?.contains(player) ?: false
 
-    fun stopAllGlides() = stopAll(glideManager.glidingPlayers.associateWith { true }) { glideManager.unglidePlayer(it) }
-    fun stopAllCrawls() = stopAll(crawlManager.crawlingPlayers) { crawlManager.uncrawlPlayer(it) }
-    fun stopAllLays() = stopAll(layManager.layingMap) { layManager.unlayPlayer(it) }
-    fun stopAllCustomGravity() = stopAll(gravityManager.gravityPlayers) { gravityManager.removeEffect(it) }
-    fun stopAllCustomResize() = stopAll(resizeManager.scaledPlayers) { resizeManager.removeEffect(it) }
-    fun stopAllCustomStrength() = stopAll(strengthManager.strengthPlayers) { strengthManager.removeEffect(it) }
-    fun stopAllCustomHealth() = stopAll(healthManager.healthPlayers) { healthManager.removeEffect(it) }
-    fun stopAllFreezes() = stopAll(freezeManager.frozenPlayers) { freezeManager.unfreezePlayer(it) }
-    fun stopAllGlows() = stopAll(glowManager.glowingPlayers.associateWith { null }) { glowManager.removeGlow(it) }
-    fun stopAllPiss() = pissManager.pissingPlayers.keys.toList().forEach { pissManager.stopPiss(it) }
-    fun stopAllDisguises() = stopAll(disguiseManager.disguisedPlayers) { disguiseManager.undisguisePlayer(it) }
-    fun stopAllSlaps() = stopAll(slapManager.slappingPlayers.associateWith { true }) { slapManager.unslapPlayer(it) }
+    fun stopAllGlides() {
+        val glideManager = hooker.glideManagerOrNull() ?: return
+        stopAll(glideManager.glidingPlayers.associateWith { true }) { glideManager.unglidePlayer(it) }
+    }
 
-    fun checkSitUnsit(player: Player) = checkDisable(player, ::isSitting, sitManager::unsitPlayer)
-    fun checkGlideUnglide(player: Player) = checkDisable(player, ::isGliding, glideManager::unglidePlayer)
-    fun checkCrawlUncrawl(player: Player) = checkDisable(player, ::isCrawling, crawlManager::uncrawlPlayer)
-    fun checkLayingUnlay(player: Player) = checkDisable(player, ::isLaying, layManager::unlayPlayer)
-    fun checkCustomGravityDisable(player: Player) = checkDisable(player, ::isCustomGravity, gravityManager::removeEffect)
-    fun checkCustomSizeDisable(player: Player) = checkDisable(player, ::isCustomSize, resizeManager::removeEffect)
-    fun checkCustomStrengthDisable(player: Player) = checkDisable(player, ::isCustomStrength, strengthManager::removeEffect)
-    fun checkCustomHealthDisable(player: Player) = checkDisable(player, ::isCustomHealth, healthManager::removeEffect)
-    fun checkFreezeUnfreeze(player: Player) = checkDisable(player, ::isFrozen, freezeManager::unfreezePlayer)
-    fun checkGlowDisable(player: Player) = checkDisable(player, ::isGlowing, glowManager::removeGlow)
-    fun checkPissStop(player: Player) = checkDisable(player, ::isPissing, pissManager::stopPiss)
-    fun checkDisguiseDisable(player: Player) = checkDisable(player, ::isDisguised, disguiseManager::undisguisePlayer)
-    fun checkCustomEffectsDisable(player: Player) = checkDisable(player, ::isCustomEffect, effectsManager::clearEffects)
-    fun checkSlapUnslap(player: Player) = checkDisable(player, ::isSlapping, slapManager::unslapPlayer)
+    fun stopAllCrawls() {
+        val crawlManager = hooker.crawlManagerOrNull() ?: return
+        stopAll(crawlManager.crawlingPlayers) { crawlManager.uncrawlPlayer(it) }
+    }
 
-    fun isHiddenFromPlayer(hider: Player, target: Player) =
-        hideManager.hiddenPlayers[hider.uniqueId]?.contains(target.uniqueId) ?: false
+    fun stopAllLays() {
+        val layManager = hooker.layManagerOrNull() ?: return
+        stopAll(layManager.layingMap) { layManager.unlayPlayer(it) }
+    }
+
+    fun stopAllCustomGravity() {
+        val gravityManager = hooker.gravityManagerOrNull() ?: return
+        stopAll(gravityManager.gravityPlayers) { gravityManager.removeEffect(it) }
+    }
+
+    fun stopAllCustomResize() {
+        val resizeManager = hooker.resizeManagerOrNull() ?: return
+        stopAll(resizeManager.scaledPlayers) { resizeManager.removeEffect(it) }
+    }
+
+    fun stopAllCustomStrength() {
+        val strengthManager = hooker.strengthManagerOrNull() ?: return
+        stopAll(strengthManager.strengthPlayers) { strengthManager.removeEffect(it) }
+    }
+
+    fun stopAllCustomHealth() {
+        val healthManager = hooker.healthManagerOrNull() ?: return
+        stopAll(healthManager.healthPlayers) { healthManager.removeEffect(it) }
+    }
+
+    fun stopAllFreezes() {
+        val freezeManager = hooker.freezeManagerOrNull() ?: return
+        stopAll(freezeManager.frozenPlayers) { freezeManager.unfreezePlayer(it) }
+    }
+
+    fun stopAllGlows() {
+        val glowManager = hooker.glowManagerOrNull() ?: return
+        stopAll(glowManager.glowingPlayers.associateWith { null }) { glowManager.removeGlow(it) }
+    }
+
+    fun stopAllPiss() {
+        val pissManager = hooker.pissManagerOrNull() ?: return
+        pissManager.pissingPlayers.keys.toList().forEach { pissManager.stopPiss(it) }
+    }
+
+    fun stopAllDisguises() {
+        val disguiseManager = hooker.disguiseManagerOrNull() ?: return
+        stopAll(disguiseManager.disguisedPlayers) { disguiseManager.undisguisePlayer(it) }
+    }
+
+    fun stopAllSlaps() {
+        val slapManager = hooker.slapManagerOrNull() ?: return
+        stopAll(slapManager.slappingPlayers.associateWith { true }) { slapManager.unslapPlayer(it) }
+    }
+
+    fun checkSitUnsit(player: Player) {
+        hooker.sitManagerOrNull()?.let { checkDisable(player, ::isSitting, it::unsitPlayer) }
+    }
+    fun checkGlideUnglide(player: Player) {
+        hooker.glideManagerOrNull()?.let { checkDisable(player, ::isGliding, it::unglidePlayer) }
+    }
+    fun checkCrawlUncrawl(player: Player) {
+        hooker.crawlManagerOrNull()?.let { checkDisable(player, ::isCrawling, it::uncrawlPlayer) }
+    }
+    fun checkLayingUnlay(player: Player) {
+        hooker.layManagerOrNull()?.let { checkDisable(player, ::isLaying, it::unlayPlayer) }
+    }
+    fun checkCustomGravityDisable(player: Player) {
+        hooker.gravityManagerOrNull()?.let { checkDisable(player, ::isCustomGravity, it::removeEffect) }
+    }
+    fun checkCustomSizeDisable(player: Player) {
+        hooker.resizeManagerOrNull()?.let { checkDisable(player, ::isCustomSize, it::removeEffect) }
+    }
+    fun checkCustomStrengthDisable(player: Player) {
+        hooker.strengthManagerOrNull()?.let { checkDisable(player, ::isCustomStrength, it::removeEffect) }
+    }
+    fun checkCustomHealthDisable(player: Player) {
+        hooker.healthManagerOrNull()?.let { checkDisable(player, ::isCustomHealth, it::removeEffect) }
+    }
+    fun checkFreezeUnfreeze(player: Player) {
+        hooker.freezeManagerOrNull()?.let { checkDisable(player, ::isFrozen, it::unfreezePlayer) }
+    }
+    fun checkGlowDisable(player: Player) {
+        hooker.glowManagerOrNull()?.let { checkDisable(player, ::isGlowing, it::removeGlow) }
+    }
+    fun checkPissStop(player: Player) {
+        hooker.pissManagerOrNull()?.let { checkDisable(player, ::isPissing, it::stopPiss) }
+    }
+    fun checkDisguiseDisable(player: Player) {
+        hooker.disguiseManagerOrNull()?.let { checkDisable(player, ::isDisguised, it::undisguisePlayer) }
+    }
+    fun checkCustomEffectsDisable(player: Player) {
+        hooker.effectsManagerOrNull()?.let { checkDisable(player, ::isCustomEffect, it::clearEffects) }
+    }
+    fun checkSlapUnslap(player: Player) {
+        hooker.slapManagerOrNull()?.let { checkDisable(player, ::isSlapping, it::unslapPlayer) }
+    }
+
+    fun isHiddenFromPlayer(hider: Player, target: Player): Boolean {
+        val hideManager = hooker.hideManagerOrNull() ?: return false
+        return hideManager.hiddenPlayers[hider.uniqueId]?.contains(target.uniqueId) ?: false
+    }
 
     fun getPlayersWithHides() =
-        hideManager.hiddenPlayers.keys.mapNotNull(Bukkit::getPlayer).filter { it.isOnline }
+        hooker.hideManagerOrNull()?.hiddenPlayers?.keys?.mapNotNull(Bukkit::getPlayer)?.filter { it.isOnline } ?: emptyList()
 
     fun stopAllHides() {
         // During shutdown, calling showPlayer/hidePlayer is illegal. Just clear state.
+        val hideManager = hooker.hideManagerOrNull() ?: return
         if (!hooker.plugin.isEnabled) {
             hideManager.hiddenPlayers.clear()
             return
@@ -112,6 +158,7 @@ class Utils(
     }
 
     fun stopAllCustomEffects() {
+        val effectsManager = hooker.effectsManagerOrNull() ?: return
         val playerMap = effectsManager.activeEffects.keys
             .mapNotNull { Bukkit.getPlayer(it) }
             .associateWith { true }
@@ -123,6 +170,7 @@ class Utils(
     }
 
     fun stopAllSits() {
+        val sitManager = hooker.sitManagerOrNull() ?: return
         val playersToUnsit = mutableListOf<Player>()
         val processed = mutableSetOf<Player>()
         val maxDepth = 10
@@ -157,13 +205,13 @@ class Utils(
         checkPissStop(player)
 
         if (isSitting(player)) {
-            sitManager.unsitPlayer(player, !removeHeadPassengers)
+            hooker.sitManagerOrNull()?.unsitPlayer(player, !removeHeadPassengers)
         }
 
         if (removeHeadPassengers) {
-            val headPassenger = sitManager.getHeadPassenger(player)
+            val headPassenger = hooker.sitManagerOrNull()?.getHeadPassenger(player)
             if (headPassenger != null) {
-                sitManager.unsitPlayer(headPassenger, true)
+                hooker.sitManagerOrNull()?.unsitPlayer(headPassenger, true)
             }
         }
     }
