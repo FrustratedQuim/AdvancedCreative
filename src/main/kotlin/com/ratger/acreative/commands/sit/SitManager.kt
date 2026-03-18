@@ -26,10 +26,8 @@ class SitManager(private val hooker: FunctionHooker) {
         private const val EPSILON = 0.01
     }
 
-    val sittingMap: MutableMap<Player, SitData> = mutableMapOf()
+    private val sessionRegistry = SitSessionRegistry()
     private val lastInteract: MutableMap<UUID, Long> = mutableMapOf()
-
-    data class SitData(val armorStandId: UUID, val block: Block?, val style: String)
 
     fun canSit(player: Player): Boolean {
         val blockBelow = player.location.clone().add(0.0, -1.0, 0.0).block
@@ -46,22 +44,22 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         val location = player.location.clone()
         val yaw = player.location.yaw
-        sitPlayerAt(player, location, yaw, "basic")
+        sitPlayerAt(player, location, yaw, SitStyle.BASIC)
     }
 
-    fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: String = "basic", block: Block? = null) {
+    fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: SitStyle = SitStyle.BASIC, block: Block? = null) {
         hooker.playerStateManager.activateState(player, PlayerStateType.SITTING)
         val targetLocation = location.clone().apply { this.yaw = yaw }
         val armorStand = hooker.entityManager.createArmorStand(targetLocation, yaw)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
-        sittingMap[player] = SitData(armorStand.uniqueId, block, style)
+        sessionRegistry.set(player, SitSession(armorStand.uniqueId, block, style))
         armorStand.addPassenger(player)
         hooker.tickScheduler.runLater(ARMORSTAND_REATTACH_DELAY_TICKS) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
                 armorStand.remove()
-                sittingMap.remove(player)
+                sessionRegistry.remove(player)
             }
         }
     }
@@ -103,8 +101,8 @@ class SitManager(private val hooker: FunctionHooker) {
                 hooker.messageManager.sendChat(sender ?: player, MessageKey.SITHEAD_HIDDEN_BY_ONE)
                 return
             }
-            val sitData = sittingMap[baseTarget]
-            if (sitData == null || sitData.style != "head") {
+            val sitData = sessionRegistry.get(baseTarget)
+            if (sitData == null || sitData.style != SitStyle.HEAD) {
                 break
             }
             val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break
@@ -138,8 +136,8 @@ class SitManager(private val hooker: FunctionHooker) {
                 hooker.messageManager.sendChat(player, MessageKey.SITHEAD_YOU_HIDE_ONE)
                 return
             }
-            val sitData = sittingMap[baseTarget]
-            if (sitData == null || sitData.style != "head") {
+            val sitData = sessionRegistry.get(baseTarget)
+            if (sitData == null || sitData.style != SitStyle.HEAD) {
                 break
             }
             val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break
@@ -154,7 +152,7 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         val armorStand = hooker.entityManager.createArmorStand(location, finalTarget.location.yaw)
 
-        sittingMap[player] = SitData(armorStand.uniqueId, null, "head")
+        sessionRegistry.set(player, SitSession(armorStand.uniqueId, null, SitStyle.HEAD))
         armorStand.addPassenger(player)
         finalTarget.addPassenger(armorStand)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
@@ -164,7 +162,7 @@ class SitManager(private val hooker: FunctionHooker) {
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
                 armorStand.remove()
-                sittingMap.remove(player)
+                sessionRegistry.remove(player)
             }
             if (!finalTarget.passengers.contains(armorStand)) {
                 finalTarget.addPassenger(armorStand)
@@ -180,8 +178,8 @@ class SitManager(private val hooker: FunctionHooker) {
         val passenger = armorStand.passengers.firstOrNull { it is Player } as? Player
         if (
             passenger != null &&
-            sittingMap[passenger]?.style == "head" &&
-            sittingMap[passenger]?.armorStandId == armorStand.uniqueId
+            sessionRegistry.get(passenger)?.style == SitStyle.HEAD &&
+            sessionRegistry.get(passenger)?.armorStandId == armorStand.uniqueId
             ) {
             return passenger
         }
@@ -201,7 +199,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun unsitPlayer(player: Player, saveHeadPassenger: Boolean = false) {
-        val sitData = sittingMap[player] ?: run {
+        val sitData = sessionRegistry.get(player) ?: run {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
             return
         }
@@ -210,13 +208,13 @@ class SitManager(private val hooker: FunctionHooker) {
 
         val armorStand = player.world.getEntity(sitData.armorStandId)
         if (armorStand == null) {
-            sittingMap.remove(player)
+            sessionRegistry.remove(player)
             hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
             return
         }
 
         val location = player.location.clone()
-        if (sitData.style == "head") {
+        if (sitData.style == SitStyle.HEAD) {
             location.y = location.y - 0.2
             if (armorStand.vehicle != null) {
                 location.y = armorStand.vehicle?.location?.y ?: location.y
@@ -233,7 +231,7 @@ class SitManager(private val hooker: FunctionHooker) {
         armorStand.removePassenger(player)
         armorStand.remove()
         player.teleport(location)
-        sittingMap.remove(player)
+        sessionRegistry.remove(player)
 
         if (!caller.contains("HideManager.hidePlayer") && !caller.contains("SitManager.sitOnHead")) {
             hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
@@ -244,7 +242,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     private fun isLocationOccupied(location: Location, excluding: Player): Boolean {
-        for ((otherPlayer, sitData) in sittingMap) {
+        for ((otherPlayer, sitData) in sessionRegistry.entries()) {
             if (otherPlayer == excluding) continue
             val stand = excluding.world.getEntity(sitData.armorStandId) ?: continue
             if (stand.location.distanceSquared(location) < EPSILON) return true
@@ -253,7 +251,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun handleRightClickBlock(player: Player, block: Block): Boolean {
-        val sitData = sittingMap[player]
+        val sitData = sessionRegistry.get(player)
         if (sitData != null && sitData.block == block) {
             return true
         }
@@ -283,7 +281,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun handleBlockBreak(block: Block) {
-        sittingMap.filterValues { it.block == block }
+        sessionRegistry.byBlock(block)
             .keys
             .toList()
             .forEach { unsitPlayer(it) }
@@ -300,7 +298,7 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         val targetLocation = block.location.clone().add(0.5 + offsetX, 0.55, 0.5 + offsetZ)
         if (isLocationOccupied(targetLocation, player)) return
-        sitPlayerAt(player, targetLocation, yaw, "stairs", block)
+        sitPlayerAt(player, targetLocation, yaw, SitStyle.STAIRS, block)
     }
 
     fun sitOnSlab(player: Player, block: Block) {
@@ -327,7 +325,7 @@ class SitManager(private val hooker: FunctionHooker) {
                 closestIndex = i
             }
         }
-        val sittingHere = sittingMap.filterValues {
+        val sittingHere = sessionRegistry.entries().associate { it.key to it.value }.filterValues {
             val stand = player.world.getEntity(it.armorStandId) ?: return@filterValues false
             stand.location.block.location == block.location
         }
@@ -340,13 +338,13 @@ class SitManager(private val hooker: FunctionHooker) {
             val stand = player.world.getEntity(it.armorStandId) ?: return@any false
             stand.location.distanceSquared(centerLocation) < EPSILON
         }
-        sittingMap[player]?.let { sitData ->
+        sessionRegistry.get(player)?.let { sitData ->
             player.world.getEntity(sitData.armorStandId)?.remove()
-            sittingMap.remove(player)
+            sessionRegistry.remove(player)
         }
         if (sittingHere.isEmpty()) {
             val yaw = Math.toDegrees(atan2(-(player.location.direction.x), player.location.direction.z)).toFloat()
-            sitPlayerAt(player, centerLocation, yaw, "slab", block)
+            sitPlayerAt(player, centerLocation, yaw, SitStyle.SLAB, block)
             return
         }
         var targetIndexB = closestIndex
@@ -357,7 +355,7 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         if (attempts >= 4) return
         val targetLocationB = baseLocation.clone().add(slabOffsets[targetIndexB])
-        sitPlayerAt(player, targetLocationB, angleByIndex[targetIndexB], "slab", block)
+        sitPlayerAt(player, targetLocationB, angleByIndex[targetIndexB], SitStyle.SLAB, block)
         occupiedIndices.add(targetIndexB)
         if (isCenterOccupied) {
             val centerPlayerEntry = sittingHere.entries.firstOrNull { entry ->
@@ -370,7 +368,7 @@ class SitManager(private val hooker: FunctionHooker) {
                     val centerPlayer = centerPlayerEntry.key
                     unsitPlayer(centerPlayer)
                     val newLocation = baseLocation.clone().add(slabOffsets[freeIndex])
-                    sitPlayerAt(centerPlayer, newLocation, angleByIndex[freeIndex], "slab", block)
+                    sitPlayerAt(centerPlayer, newLocation, angleByIndex[freeIndex], SitStyle.SLAB, block)
                     occupiedIndices.add(freeIndex)
                 }
             }
@@ -380,7 +378,7 @@ class SitManager(private val hooker: FunctionHooker) {
     fun startArmorStandChecker() {
         hooker.tickScheduler.runRepeating(CHECK_TASK_PERIOD_TICKS, CHECK_TASK_PERIOD_TICKS) {
             val playersToUnsit = mutableListOf<Player>()
-            for ((player, data) in sittingMap) {
+            for ((player, data) in sessionRegistry.entries()) {
                 val entity = player.world.getEntity(data.armorStandId)
                 if (entity == null || !entity.isValid) {
                     playersToUnsit.add(player)
@@ -389,4 +387,10 @@ class SitManager(private val hooker: FunctionHooker) {
             playersToUnsit.forEach { unsitPlayer(it) }
         }
     }
+
+    fun isSitting(player: Player): Boolean = sessionRegistry.isSitting(player)
+
+    fun getSitSession(player: Player): SitSession? = sessionRegistry.get(player)
+
+    fun getSittingPlayers(): Set<Player> = sessionRegistry.players()
 }

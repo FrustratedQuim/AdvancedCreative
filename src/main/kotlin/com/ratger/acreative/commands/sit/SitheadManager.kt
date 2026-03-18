@@ -55,7 +55,7 @@ class SitheadManager(private val hooker: FunctionHooker) {
         }
 
         if (playerToSit.gameMode == GameMode.SPECTATOR) return
-        if (hooker.sitManager.sittingMap.containsKey(playerToSit)) return
+        if (hooker.sitManager.isSitting(playerToSit)) return
 
         if (hooker.utils.isHiddenFromPlayer(target, playerToSit)) {
             val messageKey = if (playerToSit == sender) MessageKey.SITHEAD_HIDDEN_SELF else MessageKey.SITHEAD_HIDDEN_SELF_TARGET
@@ -100,8 +100,8 @@ class SitheadManager(private val hooker: FunctionHooker) {
                 return
             }
 
-            val sitData = hooker.sitManager.sittingMap[baseTarget]
-            if (sitData == null || sitData.style != "head") break
+            val sitData = hooker.sitManager.getSitSession(baseTarget)
+            if (sitData == null || sitData.style != SitStyle.HEAD) break
             val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break
             baseTarget = baseStand.vehicle as? Player ?: break
             depth++
@@ -136,8 +136,8 @@ class SitheadManager(private val hooker: FunctionHooker) {
                 hooker.messageManager.sendChat(sender, messageKey, variables ?: emptyMap())
                 return
             }
-            val sitData = hooker.sitManager.sittingMap[baseTarget]
-            if (sitData == null || sitData.style != "head") {
+            val sitData = hooker.sitManager.getSitSession(baseTarget)
+            if (sitData == null || sitData.style != SitStyle.HEAD) {
                 break
             }
             val baseStand = baseTarget.world.getEntity(sitData.armorStandId) ?: break

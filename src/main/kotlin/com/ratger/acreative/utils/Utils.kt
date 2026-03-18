@@ -14,7 +14,7 @@ class Utils(private val hooker: FunctionHooker) {
         if (isActive(player)) disable(player)
     }
 
-    fun isSitting(player: Player) = hooker.sitManagerOrNull()?.sittingMap?.containsKey(player) ?: false
+    fun isSitting(player: Player) = hooker.sitManagerOrNull()?.isSitting(player) ?: false
     fun isGliding(player: Player) = hooker.glideManagerOrNull()?.glidingPlayers?.contains(player) ?: false
     fun isCrawling(player: Player) = hooker.crawlManagerOrNull()?.crawlingPlayers?.containsKey(player) ?: false
     fun isLaying(player: Player) = hooker.layManagerOrNull()?.layingMap?.containsKey(player) ?: false
@@ -175,7 +175,7 @@ class Utils(private val hooker: FunctionHooker) {
         val processed = mutableSetOf<Player>()
         val maxDepth = 10
 
-        for (player in sitManager.sittingMap.keys) {
+        for (player in sitManager.getSittingPlayers()) {
             if (player in processed) continue
             var current: Player? = player
             val stack = mutableListOf<Player>()
@@ -191,7 +191,7 @@ class Utils(private val hooker: FunctionHooker) {
         }
 
         playersToUnsit.forEach { player ->
-            if (sitManager.sittingMap.containsKey(player)) {
+            if (sitManager.isSitting(player)) {
                 sitManager.unsitPlayer(player)
             }
         }

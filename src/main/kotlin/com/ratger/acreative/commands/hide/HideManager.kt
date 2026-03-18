@@ -1,11 +1,9 @@
 package com.ratger.acreative.commands.hide
 
-import com.ratger.acreative.commands.ExecutableCommand
-import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.commands.sit.SitStyle
 import org.bukkit.Bukkit
-import org.bukkit.command.CommandSender
 import org.bukkit.entity.Entity
 import org.bukkit.entity.Player
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
@@ -104,8 +102,8 @@ class HideManager(private val hooker: FunctionHooker) {
                 }
                 break
             }
-            val sitData = hooker.sitManager.sittingMap[basePlayer]
-            if (sitData == null || sitData.style != "head") break
+            val sitData = hooker.sitManager.getSitSession(basePlayer)
+            if (sitData == null || sitData.style != SitStyle.HEAD) break
             val armorStand = basePlayer.world.getEntity(sitData.armorStandId) ?: break
             val vehicle = armorStand.vehicle as? Player ?: break
             basePlayer = vehicle

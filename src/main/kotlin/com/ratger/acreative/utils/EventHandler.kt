@@ -1,6 +1,7 @@
 package com.ratger.acreative.utils
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.commands.sit.SitStyle
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.block.data.type.Bed
@@ -59,8 +60,8 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             utils.unsetAllPoses(player, true)
             utils.checkPissStop(player)
             utils.checkDisguiseDisable(player)
-            val sitData = sitManager.sittingMap[player]
-            if (sitData != null && sitData.style == "head") {
+            val sitData = sitManager.getSitSession(player)
+            if (sitData != null && sitData.style == SitStyle.HEAD) {
                 sitManager.unsitPlayer(player)
             }
         }
@@ -78,7 +79,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val player = event.player
         val destination = event.to
         val world = destination.world ?: return
-        val occupiedPlayers = (sitManager.sittingMap.keys + layManager.layingMap.keys).distinct()
+        val occupiedPlayers = (sitManager.getSittingPlayers() + layManager.layingMap.keys).distinct()
 
         for (other in occupiedPlayers) {
             if (other.world == world && other.location.distanceSquared(destination) <= 1.0) {
