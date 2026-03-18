@@ -76,8 +76,3 @@ class SlapManager(private val hooker: FunctionHooker) : Listener {
         }
     }
 }
-
-
-class SlapCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SLAP) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.slapManager.slapPlayer(player)
-}

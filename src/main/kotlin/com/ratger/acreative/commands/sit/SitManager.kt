@@ -393,7 +393,3 @@ class SitManager(private val hooker: FunctionHooker) {
         }
     }
 }
-
-class SitCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SIT) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.sitManager.sitPlayer(player)
-}

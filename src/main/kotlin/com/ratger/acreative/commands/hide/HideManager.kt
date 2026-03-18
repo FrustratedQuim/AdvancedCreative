@@ -319,17 +319,3 @@ class HideManager(private val hooker: FunctionHooker) {
     }
 
 }
-
-class HideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HIDE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.hideManager.prepareToHidePlayer(player, args.firstOrNull())
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return if (args.size == 1 || args.size == 2) {
-            Bukkit.getOnlinePlayers()
-                .map { it.name }
-                .filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
-        } else {
-            emptyList()
-        }
-    }
-}

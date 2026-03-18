@@ -24,8 +24,3 @@ class ItemdbManager(private val functionHooker: FunctionHooker) {
         )
     }
 }
-
-
-class ItemdbCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.ITEMDB) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.itemdbManager.showItemInfo(player)
-}

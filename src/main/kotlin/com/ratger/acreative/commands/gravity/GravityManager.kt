@@ -79,11 +79,3 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
 }
-
-class GravityCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GRAVITY) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.gravityManager.applyEffect(player, args.firstOrNull())
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.gravityManager.tabCompletions(args)
-    }
-}

@@ -209,7 +209,3 @@ class CrawlManager(private val hooker: FunctionHooker) {
         }
     }
 }
-
-class CrawlCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.CRAWL) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.crawlManager.crawlPlayer(player)
-}

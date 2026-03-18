@@ -392,8 +392,3 @@ class LayManager(private val hooker: FunctionHooker) {
         }
     }
 }
-
-
-class LayCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.LAY) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.layManager.layPlayer(player)
-}

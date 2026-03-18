@@ -179,11 +179,3 @@ class EffectsManager(private val hooker: FunctionHooker) {
         player.removePotionEffect(effectType)
     }
 }
-
-class EffectsCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.EFFECTS) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.effectsManager.applyEffect(player, args.getOrNull(0), args.getOrNull(1), args.getOrNull(2))
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.effectsManager.tabCompletions(sender, args)
-    }
-}

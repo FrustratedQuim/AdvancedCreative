@@ -53,7 +53,3 @@ class GlowManager(private val hooker: FunctionHooker) {
         }
     }
 }
-
-class GlowCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GLOW) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.glowManager.glowPlayer(player)
-}

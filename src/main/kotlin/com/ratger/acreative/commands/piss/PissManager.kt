@@ -300,8 +300,3 @@ class PissManager(private val hooker: FunctionHooker) {
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PISSING)
     }
 }
-
-
-class PissCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.PISS) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.pissManager.pissPlayer(player)
-}

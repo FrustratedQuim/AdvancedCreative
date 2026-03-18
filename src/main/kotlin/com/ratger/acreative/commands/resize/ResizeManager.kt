@@ -211,11 +211,3 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             .toPlainString()
     }
 }
-
-class ResizeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.RESIZE) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.resizeManager.applyEffectFromCommand(player, args.firstOrNull())
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.resizeManager.tabCompletions(args)
-    }
-}

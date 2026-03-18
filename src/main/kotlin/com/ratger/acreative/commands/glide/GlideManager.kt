@@ -116,14 +116,3 @@ class GlideManager(private val hooker: FunctionHooker) {
         boostTaskId = null
     }
 }
-
-class GlideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.GLIDE) {
-    override fun handle(player: Player, args: Array<out String>) {
-        val boost = hooker.glideManager.parseBoost(args.firstOrNull())
-        hooker.glideManager.glidePlayer(player, boost)
-    }
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.glideManager.tabCompletions(args)
-    }
-}

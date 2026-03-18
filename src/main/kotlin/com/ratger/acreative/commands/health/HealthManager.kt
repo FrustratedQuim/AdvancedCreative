@@ -64,11 +64,3 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         }
     }
 }
-
-class HealthCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.HEALTH) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.healthManager.applyEffect(player, args.firstOrNull())
-
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return hooker.healthManager.tabCompletions(args)
-    }
-}

@@ -54,8 +54,3 @@ class SpitManager(private val hooker: FunctionHooker) {
         }
     }
 }
-
-
-class SpitCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.SPIT) {
-    override fun handle(player: Player, args: Array<out String>) = hooker.spitManager.spitPlayer(player)
-}
