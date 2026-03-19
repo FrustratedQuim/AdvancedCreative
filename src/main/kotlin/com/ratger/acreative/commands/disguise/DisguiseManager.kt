@@ -375,9 +375,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
     fun updateMainHandEquipment(player: Player) {
         val data = disguisedPlayers[player] ?: return
-        val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
-        val heldSlot = state.currentHotbarSlot
-        val bukkitItem: ItemStack = state.hotbarItems[heldSlot] ?: ItemStack(Material.AIR)
+        val bukkitItem: ItemStack = hooker.playerStateManager.getCurrentSavedMainHandItem(player) ?: ItemStack(Material.AIR)
         val packetItem = SpigotConversionUtil.fromBukkitItemStack(bukkitItem)
 
         val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()

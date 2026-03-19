@@ -44,9 +44,7 @@ class PlayerStateManager(
 
     private val playerStates = mutableMapOf<UUID, MutableSet<PlayerStateType>>()
     private val deactivators = mutableMapOf<PlayerStateType, (Player) -> Unit>()
-
-    val savedItems = mutableMapOf<UUID, PlayerInventoryState>()
-    val monitoredPlayers = mutableSetOf<Player>()
+    private val inventorySessions = mutableMapOf<UUID, PlayerInventorySession>()
 
     fun registerDeactivator(state: PlayerStateType, deactivator: (Player) -> Unit) {
         deactivators[state] = deactivator
@@ -82,77 +80,26 @@ class PlayerStateManager(
 
     fun clearPlayerStates(player: Player) {
         playerStates.remove(player.uniqueId)
-    }
-
-    data class PlayerInventoryState(
-        val armor: Array<ItemStack?>,
-        val offHand: ItemStack?,
-        val mainHand: ItemStack?,
-        var currentHotbarSlot: Int,
-        val hotbarItems: MutableMap<Int, ItemStack?>
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-            other as PlayerInventoryState
-            if (currentHotbarSlot != other.currentHotbarSlot) return false
-            if (!armor.contentEquals(other.armor)) return false
-            if (offHand != other.offHand) return false
-            if (hotbarItems != other.hotbarItems) return false
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = currentHotbarSlot
-            result = 31 * result + armor.contentHashCode()
-            result = 31 * result + (offHand?.hashCode() ?: 0)
-            result = 31 * result + hotbarItems.hashCode()
-            return result
-        }
+        inventorySessions.remove(player.uniqueId)
     }
 
     fun savePlayerInventory(player: Player) {
-        val inventory = player.inventory
-        val state = PlayerInventoryState(
-            armor = inventory.armorContents.clone(),
-            offHand = inventory.itemInOffHand.clone(),
-            mainHand = inventory.itemInMainHand.clone(),
-            currentHotbarSlot = inventory.heldItemSlot,
-            hotbarItems = mutableMapOf(inventory.heldItemSlot to inventory.getItem(inventory.heldItemSlot)?.clone())
-        )
-        savedItems[player.uniqueId] = state
-        monitoredPlayers.add(player)
+        inventorySessions[player.uniqueId] = PlayerInventorySession.capture(player)
     }
 
     fun restorePlayerInventory(player: Player) {
-        savedItems[player.uniqueId]?.let { state ->
-            player.inventory.armorContents = state.armor
-            player.inventory.setItemInOffHand(state.offHand)
-            state.hotbarItems.forEach { (slot, item) ->
-                player.inventory.setItem(slot, item)
-            }
-            savedItems.remove(player.uniqueId)
-        }
-        monitoredPlayers.remove(player)
+        inventorySessions.remove(player.uniqueId)?.restore(player)
+    }
+
+    fun getCurrentSavedMainHandItem(player: Player): ItemStack? {
+        return inventorySessions[player.uniqueId]?.getCurrentMainHandItem()
     }
 
     fun handleItemSwitch(player: Player, newSlot: Int) {
-        savedItems[player.uniqueId]?.let { state ->
-            val inventory = player.inventory
-            val previousSlot = state.currentHotbarSlot
+        inventorySessions[player.uniqueId]?.handleSlotSwitch(player, newSlot)
 
-            state.hotbarItems[previousSlot]?.let { item ->
-                inventory.setItem(previousSlot, item)
-            }
-
-            val newItem = inventory.getItem(newSlot)?.clone()
-            state.hotbarItems[newSlot] = newItem
-            inventory.setItem(newSlot, null)
-            state.currentHotbarSlot = newSlot
-
-            if (hooker.utils.isLaying(player)) {
-                hooker.layManager.updateMainHandEquipment(player)
-            }
+        if (hooker.utils.isLaying(player)) {
+            hooker.layManager.updateMainHandEquipment(player)
         }
     }
 
@@ -178,6 +125,70 @@ class PlayerStateManager(
                 if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
                     viewer.showPlayer(hooker.plugin, player)
                 }
+            }
+        }
+    }
+
+    private data class PlayerInventorySnapshot(
+        val armor: Array<ItemStack?>,
+        val offHand: ItemStack?
+    ) {
+        fun restore(player: Player) {
+            val inventory = player.inventory
+            inventory.armorContents = armor.map { it?.clone() }.toTypedArray()
+            inventory.setItemInOffHand(offHand?.clone())
+        }
+
+        companion object {
+            fun capture(player: Player): PlayerInventorySnapshot {
+                val inventory = player.inventory
+                return PlayerInventorySnapshot(
+                    armor = inventory.armorContents.map { it?.clone() }.toTypedArray(),
+                    offHand = inventory.itemInOffHand.clone()
+                )
+            }
+        }
+    }
+
+    private class PlayerInventorySession(
+        private val snapshot: PlayerInventorySnapshot,
+        private var currentHotbarSlot: Int,
+        private val hotbarItems: MutableMap<Int, ItemStack?>
+    ) {
+        fun restore(player: Player) {
+            val inventory = player.inventory
+            snapshot.restore(player)
+            hotbarItems.forEach { (slot, item) ->
+                inventory.setItem(slot, item?.clone())
+            }
+        }
+
+        fun getCurrentMainHandItem(): ItemStack? {
+            return hotbarItems[currentHotbarSlot]?.clone()
+        }
+
+        fun handleSlotSwitch(player: Player, newSlot: Int) {
+            val inventory = player.inventory
+            val previousSlot = currentHotbarSlot
+
+            hotbarItems[previousSlot]?.let { item ->
+                inventory.setItem(previousSlot, item.clone())
+            }
+
+            hotbarItems[newSlot] = inventory.getItem(newSlot)?.clone()
+            inventory.setItem(newSlot, null)
+            currentHotbarSlot = newSlot
+        }
+
+        companion object {
+            fun capture(player: Player): PlayerInventorySession {
+                val inventory = player.inventory
+                val currentSlot = inventory.heldItemSlot
+                return PlayerInventorySession(
+                    snapshot = PlayerInventorySnapshot.capture(player),
+                    currentHotbarSlot = currentSlot,
+                    hotbarItems = mutableMapOf(currentSlot to inventory.getItem(currentSlot)?.clone())
+                )
             }
         }
     }

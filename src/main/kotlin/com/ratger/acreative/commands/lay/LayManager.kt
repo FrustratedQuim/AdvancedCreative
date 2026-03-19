@@ -379,8 +379,7 @@ class LayManager(private val hooker: FunctionHooker) {
 
     fun updateMainHandEquipment(player: Player) {
         layingMap[player]?.let { data ->
-            val state = hooker.playerStateManager.savedItems[player.uniqueId] ?: return
-            val currentItem = state.hotbarItems[state.currentHotbarSlot]?.clone() ?: ItemStack(Material.AIR)
+            val currentItem = hooker.playerStateManager.getCurrentSavedMainHandItem(player)?.clone() ?: ItemStack(Material.AIR)
             val packetItem = SpigotConversionUtil.fromBukkitItemStack(currentItem)
             val newEquipment = data.equipment.filter { it.slot != EquipmentSlot.MAIN_HAND }.toMutableList()
             newEquipment.add(Equipment(EquipmentSlot.MAIN_HAND, packetItem))
