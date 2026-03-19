@@ -22,29 +22,37 @@ class PacketHandler(private val hooker: FunctionHooker) {
                 val player = event.getPlayer() as? Player ?: return
 
                 when (type) {
-                    PacketType.Play.Client.ANIMATION -> {
-                        if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
-                        hooker.tickScheduler.runNow {
-                            hooker.disguiseManager.sendSwingAnimation(player)
-                        }
-                    }
-                    PacketType.Play.Client.INTERACT_ENTITY -> {
-                        val packet = WrapperPlayClientInteractEntity(event)
-
-                        if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
-                        val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
-
-                        hooker.tickScheduler.runNow {
-                            val handledByGrab = hooker.grabManagerOrNull()?.handleHolderAttack(player, target) == true
-                            if (!handledByGrab && hooker.utils.isSlapping(player)) {
-                                hooker.slapManager.applySlap(player, target)
-                            }
-                        }
-                    }
+                    PacketType.Play.Client.ANIMATION -> handleAnimationPacket(player)
+                    PacketType.Play.Client.INTERACT_ENTITY -> handleInteractPacket(event, player)
                 }
             }
         }
         PacketEvents.getAPI().eventManager.registerListener(listener!!)
+    }
+
+    private fun handleAnimationPacket(player: Player) {
+        if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
+        hooker.tickScheduler.runNow {
+            hooker.disguiseManager.sendSwingAnimation(player)
+        }
+    }
+
+    private fun handleInteractPacket(event: PacketReceiveEvent, player: Player) {
+        val packet = WrapperPlayClientInteractEntity(event)
+        if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
+
+        val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
+
+        hooker.tickScheduler.runNow {
+            // Stage 1 (dependent): grab attack has priority and can "consume" the chain.
+            val handledByGrab = hooker.grabManagerOrNull()?.handleHolderAttack(player, target) == true
+            if (handledByGrab) return@runNow
+
+            // Stage 2 (dependent): slap executes only if stage 1 did not consume processing.
+            if (hooker.utils.isSlapping(player)) {
+                hooker.slapManager.applySlap(player, target)
+            }
+        }
     }
 
     fun unregister() {

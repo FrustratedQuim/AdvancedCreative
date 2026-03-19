@@ -13,6 +13,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.entity.EntityToggleSwimEvent
 import org.bukkit.event.entity.PlayerDeathEvent
@@ -33,6 +34,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
+        hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
@@ -47,6 +49,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.player
+        hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkPissStop(player)
@@ -98,11 +101,17 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {
         val player = event.player
 
+        // 1) Base restrictions that always have top priority.
+        if (hooker.grabManager.blockGrabbedEntityInteraction(player)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
         }
 
+        // 2) Pose/state dependent restrictions.
         if (utils.isSitting(player) || utils.isLaying(player) || utils.isDisguised(player)) {
             val entityType = event.rightClicked.type
             if (entityType != EntityType.ITEM_FRAME && entityType != EntityType.ARMOR_STAND) {
@@ -111,6 +120,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
+        // 3) Optional feature action (sithead).
         if (event.rightClicked is Player && player.inventory.itemInMainHand.type == Material.AIR) {
             val target = event.rightClicked as Player
             if (target.gameMode == GameMode.SPECTATOR) {
@@ -127,11 +137,17 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerInteract(event: PlayerInteractEvent) {
         val player = event.player
 
+        // 1) High priority state restrictions.
+        if (hooker.grabManager.blockGrabbedInteraction(player, event.action)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
         }
 
+        // 2) Dependent pose interactions.
         if (event.action == Action.LEFT_CLICK_AIR) {
             val headPassenger = sitManager.getHeadPassenger(player)
             if (headPassenger != null) {
@@ -140,6 +156,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
+        // 3) Lowest priority interaction features.
         handleRightClickBlock(event, player)
     }
 
@@ -148,6 +165,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val player = event.player
         val block = event.block
 
+        if (hooker.grabManager.blockGrabbedBlockBreak(player)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
@@ -186,12 +207,20 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
         val player = event.entity as? Player ?: return
+        if (hooker.grabManager.blockGrabbedGlide(player, event.isGliding)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isGliding(player) && !event.isGliding) event.isCancelled = true
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
         val player = event.player
+        if (hooker.grabManager.enforceGrabbedFlight(player)) {
+            event.isCancelled = true
+            return
+        }
         utils.checkCrawlUncrawl(player)
         utils.checkLayingUnlay(player)
         utils.checkSitUnsit(player)
@@ -265,10 +294,40 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerItemHeld(event: PlayerItemHeldEvent) {
         val player = event.player
+        hooker.grabManager.onHolderHotbarScroll(player, event.previousSlot, event.newSlot)
         if (utils.isLaying(player)) hooker.playerStateManager.handleItemSwitch(player, event.newSlot)
         if (utils.isDisguised(player)) {
             hooker.playerStateManager.handleItemSwitch(player, event.newSlot)
             hooker.disguiseManager.updateMainHandEquipment(player)
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onPlayerInteractAtEntity(event: PlayerInteractAtEntityEvent) {
+        if (hooker.grabManager.blockGrabbedInteractAtEntity(event.player)) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
+        if (hooker.grabManager.blockGrabbedCommand(event.player)) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        val damager = event.damager as? Player ?: return
+
+        val target = event.entity as? Player
+        if (target != null && hooker.grabManager.handleHolderAttack(damager, target)) {
+            event.isCancelled = true
+            return
+        }
+
+        if (hooker.grabManager.blockGrabbedDamage(damager)) {
+            event.isCancelled = true
         }
     }
 

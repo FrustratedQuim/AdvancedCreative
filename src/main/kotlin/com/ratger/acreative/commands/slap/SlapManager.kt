@@ -4,21 +4,16 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import org.bukkit.Particle
 import org.bukkit.entity.Player
-import org.bukkit.event.Listener
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.util.Vector
 import java.util.*
 
-class SlapManager(private val hooker: FunctionHooker) : Listener {
+class SlapManager(private val hooker: FunctionHooker) {
 
     val slappingPlayers = mutableSetOf<Player>()
     val fallProtectedPlayers = mutableSetOf<UUID>()
     private val cooldownPlayers = mutableSetOf<UUID>()
-
-    init {
-        hooker.plugin.server.pluginManager.registerEvents(this, hooker.plugin)
-    }
 
     fun slapPlayer(player: Player) {
         if (slappingPlayers.contains(player)) {

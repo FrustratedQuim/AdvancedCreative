@@ -6,27 +6,13 @@ import org.bukkit.Bukkit
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
-import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
-import org.bukkit.event.entity.EntityToggleGlideEvent
-import org.bukkit.event.entity.EntityDamageByEntityEvent
-import org.bukkit.event.entity.PlayerDeathEvent
-import org.bukkit.event.block.BlockBreakEvent
-import org.bukkit.event.player.PlayerCommandPreprocessEvent
-import org.bukkit.event.player.PlayerInteractAtEntityEvent
-import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.event.player.PlayerInteractEvent
-import org.bukkit.event.player.PlayerItemHeldEvent
-import org.bukkit.event.player.PlayerQuitEvent
-import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.util.Vector
 import java.util.UUID
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 
-class GrabManager(private val hooker: FunctionHooker) : Listener {
+class GrabManager(private val hooker: FunctionHooker) {
 
     private data class PlayerFlightState(
         val allowFlight: Boolean,
@@ -45,10 +31,6 @@ class GrabManager(private val hooker: FunctionHooker) : Listener {
 
     private val sessionByHolder = mutableMapOf<UUID, GrabSession>()
     private val holderByTarget = mutableMapOf<UUID, UUID>()
-
-    init {
-        hooker.plugin.server.pluginManager.registerEvents(this, hooker.plugin)
-    }
 
     fun handleGrabCommand(holder: Player, args: Array<out String>) {
         val targetName = args.getOrNull(0)
@@ -152,96 +134,47 @@ class GrabManager(private val hooker: FunctionHooker) : Listener {
         return true
     }
 
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
-    fun onPlayerItemHeld(event: PlayerItemHeldEvent) {
-        val session = sessionByHolder[event.player.uniqueId] ?: return
-        val delta = hotbarScrollDelta(event.previousSlot, event.newSlot)
+    fun onHolderHotbarScroll(holder: Player, previousSlot: Int, newSlot: Int) {
+        val session = sessionByHolder[holder.uniqueId] ?: return
+        val delta = hotbarScrollDelta(previousSlot, newSlot)
         if (delta != 0) {
             val scrollStep = dynamicScrollStep(session.distance)
             session.distance = (session.distance - (delta * scrollStep)).coerceIn(MIN_DISTANCE, MAX_DISTANCE)
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
-        if (!isGrabbedTarget(event.player.uniqueId)) return
-        event.isCancelled = true
-        event.player.allowFlight = true
-        event.player.isFlying = true
+    fun enforceGrabbedFlight(player: Player): Boolean {
+        if (!isGrabbedTarget(player.uniqueId)) return false
+        player.allowFlight = true
+        player.isFlying = true
+        return true
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onEntityToggleGlide(event: EntityToggleGlideEvent) {
-        val player = event.entity as? Player ?: return
-        if (!isGrabbedTarget(player.uniqueId)) return
-        if (event.isGliding) event.isCancelled = true
+    fun blockGrabbedGlide(player: Player, isTryingToGlide: Boolean): Boolean {
+        if (!isGrabbedTarget(player.uniqueId)) return false
         player.isGliding = false
+        return isTryingToGlide
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
-        if (!isGrabbedTarget(event.player.uniqueId)) return
-        event.isCancelled = true
+    fun blockGrabbedCommand(player: Player): Boolean = isGrabbedTarget(player.uniqueId)
+
+    fun blockGrabbedInteraction(player: Player, action: Action): Boolean {
+        if (!isGrabbedTarget(player.uniqueId)) return false
+        return action == Action.RIGHT_CLICK_AIR ||
+            action == Action.RIGHT_CLICK_BLOCK ||
+            action == Action.LEFT_CLICK_AIR ||
+            action == Action.LEFT_CLICK_BLOCK
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onPlayerInteract(event: PlayerInteractEvent) {
-        if (!isGrabbedTarget(event.player.uniqueId)) return
-        if (event.action == Action.RIGHT_CLICK_AIR ||
-            event.action == Action.RIGHT_CLICK_BLOCK ||
-            event.action == Action.LEFT_CLICK_AIR ||
-            event.action == Action.LEFT_CLICK_BLOCK
-        ) {
-            event.isCancelled = true
-        }
-    }
+    fun blockGrabbedEntityInteraction(player: Player): Boolean = isGrabbedTarget(player.uniqueId)
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {
-        if (isGrabbedTarget(event.player.uniqueId)) {
-            event.isCancelled = true
-        }
-    }
+    fun blockGrabbedInteractAtEntity(player: Player): Boolean = isGrabbedTarget(player.uniqueId)
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onPlayerInteractAtEntity(event: PlayerInteractAtEntityEvent) {
-        if (isGrabbedTarget(event.player.uniqueId)) {
-            event.isCancelled = true
-        }
-    }
+    fun blockGrabbedBlockBreak(player: Player): Boolean = isGrabbedTarget(player.uniqueId)
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onBlockBreak(event: BlockBreakEvent) {
-        if (isGrabbedTarget(event.player.uniqueId)) {
-            event.isCancelled = true
-        }
-    }
+    fun blockGrabbedDamage(player: Player): Boolean = isGrabbedTarget(player.uniqueId)
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
-        val damager = event.damager as? Player ?: return
-
-        val target = event.entity as? Player
-        if (target != null && handleHolderAttack(damager, target)) {
-            event.isCancelled = true
-            return
-        }
-
-        if (isGrabbedTarget(damager.uniqueId)) {
-            event.isCancelled = true
-        }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onPlayerQuit(event: PlayerQuitEvent) {
-        val playerId = event.player.uniqueId
-        releaseSession(playerId)
-        holderByTarget[playerId]?.let { releaseSession(it) }
-    }
-
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onPlayerDeath(event: PlayerDeathEvent) {
-        val playerId = event.player.uniqueId
+    fun cleanupSessionsForPlayer(playerId: UUID) {
         releaseSession(playerId)
         holderByTarget[playerId]?.let { releaseSession(it) }
     }
