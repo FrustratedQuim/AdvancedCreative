@@ -88,7 +88,6 @@ class GrabManager(private val hooker: FunctionHooker) {
             hooker.effectsManager.removeInternalEffect(GRAB_EFFECT_OWNER, it, PotionEffectType.DARKNESS)
             hooker.playerStateManager.deactivateState(it, PlayerStateType.GRABBED)
             restorePlayerState(it, session.targetFlightState)
-            hooker.playerStateManager.restorePlayerInventory(it)
             hooker.playerStateManager.refreshPlayerPose(it)
         }
 
@@ -189,10 +188,8 @@ class GrabManager(private val hooker: FunctionHooker) {
         hooker.playerStateManager.activateState(target, PlayerStateType.GRABBED)
 
         hooker.playerStateManager.savePlayerInventory(holder)
-        hooker.playerStateManager.savePlayerInventory(target)
 
         clearInventory(holder)
-        clearInventory(target)
 
         hooker.effectsManager.clearEffects(target, sendMessage = false)
 
