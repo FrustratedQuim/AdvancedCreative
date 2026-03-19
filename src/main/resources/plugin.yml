@@ -63,6 +63,9 @@ commands:
   effects:
     description: Applies an effect to player
     usage: /effects <effect> [level]
+  grab:
+    description: Grabs a player in front of you
+    usage: /grab <player>
   slap:
     description: Toggles slap mode
     usage: /slap
@@ -146,6 +149,9 @@ permissions:
     default: op
   advancedcreative.effects.other:
     description: Allows using /effects & target
+    default: op
+  advancedcreative.grab:
+    description: Allows using /grab
     default: op
   advancedcreative.slap:
     description: Allows using /slap

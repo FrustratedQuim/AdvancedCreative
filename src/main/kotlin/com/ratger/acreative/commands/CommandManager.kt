@@ -7,6 +7,7 @@ import com.ratger.acreative.commands.freeze.FreezeCommand
 import com.ratger.acreative.commands.glide.GlideCommand
 import com.ratger.acreative.commands.glow.GlowCommand
 import com.ratger.acreative.commands.gravity.GravityCommand
+import com.ratger.acreative.commands.grab.GrabCommand
 import com.ratger.acreative.commands.health.HealthCommand
 import com.ratger.acreative.commands.hide.HideCommand
 import com.ratger.acreative.commands.itemdb.ItemdbCommand
@@ -47,6 +48,7 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         PissCommand(functionHooker),
         DisguiseCommand(functionHooker),
         EffectsCommand(functionHooker),
+        GrabCommand(functionHooker),
         SlapCommand(functionHooker),
         SitheadCommand(functionHooker),
         ItemdbCommand(functionHooker)

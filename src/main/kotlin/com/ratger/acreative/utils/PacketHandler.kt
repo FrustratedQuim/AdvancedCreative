@@ -29,14 +29,16 @@ class PacketHandler(private val hooker: FunctionHooker) {
                         }
                     }
                     PacketType.Play.Client.INTERACT_ENTITY -> {
-                        if (!hooker.utils.isSlapping(player)) return
                         val packet = WrapperPlayClientInteractEntity(event)
 
                         if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
                         val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
 
                         hooker.tickScheduler.runNow {
-                            hooker.slapManager.applySlap(player, target)
+                            val handledByGrab = hooker.grabManagerOrNull()?.handleHolderAttack(player, target) == true
+                            if (!handledByGrab && hooker.utils.isSlapping(player)) {
+                                hooker.slapManager.applySlap(player, target)
+                            }
                         }
                     }
                 }

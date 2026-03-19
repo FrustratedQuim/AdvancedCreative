@@ -16,6 +16,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
 
     val activeEffects = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, Int>>()
     private val effectTasks = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, Int>>()
+    private val internalEffectOwners = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, MutableSet<String>>>()
 
     fun applyEffect(player: Player, effectName: String?, level: String? = "1", targetName: String? = null) {
         if (effectName == null) {
@@ -153,6 +154,47 @@ class EffectsManager(private val hooker: FunctionHooker) {
             }
         }
 
+        player.removePotionEffect(effectType)
+    }
+
+    fun applyInternalEffect(
+        owner: String,
+        player: Player,
+        effectType: PotionEffectType,
+        durationTicks: Int,
+        amplifier: Int = 0
+    ) {
+        val ownersByEffect = internalEffectOwners.computeIfAbsent(player.uniqueId) { mutableMapOf() }
+        ownersByEffect.computeIfAbsent(effectType) { mutableSetOf() }.add(owner)
+        player.addPotionEffect(
+            PotionEffect(
+                effectType,
+                durationTicks.coerceAtLeast(1),
+                amplifier.coerceAtLeast(0),
+                false,
+                false,
+                false
+            ),
+            true
+        )
+    }
+
+    fun removeInternalEffect(owner: String, player: Player, effectType: PotionEffectType) {
+        val ownersByEffect = internalEffectOwners[player.uniqueId] ?: return
+        val owners = ownersByEffect[effectType] ?: return
+        owners.remove(owner)
+        if (owners.isNotEmpty()) return
+
+        ownersByEffect.remove(effectType)
+        if (ownersByEffect.isEmpty()) {
+            internalEffectOwners.remove(player.uniqueId)
+        }
+
+        val commandLevel = activeEffects[player.uniqueId]?.get(effectType)
+        if (commandLevel != null) {
+            applyEffectToPlayer(player, effectType, commandLevel)
+            return
+        }
         player.removePotionEffect(effectType)
     }
 }

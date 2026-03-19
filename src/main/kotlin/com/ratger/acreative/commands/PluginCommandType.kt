@@ -18,6 +18,7 @@ enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     PISS("piss"),
     DISGUISE("disguise"),
     EFFECTS("effects"),
+    GRAB("grab"),
     SLAP("slap"),
     SITHEAD("sithead"),
     ITEMDB("itemdb");

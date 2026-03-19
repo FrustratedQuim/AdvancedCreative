@@ -13,6 +13,7 @@ cooldowns: # В миллисекундах
   glow:       500
   disguise:   500
   effects:    500
+  grab:       500
   slap:       500
   itemdb:     500
   id:         500
