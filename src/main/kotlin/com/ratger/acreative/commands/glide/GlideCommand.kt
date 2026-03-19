@@ -12,6 +12,10 @@ class GlideCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     }
 
     override fun handle(player: Player, args: Array<out String>) {
+        if (args.isEmpty() && hooker.glideManager.glidingPlayers.contains(player)) {
+            hooker.glideManager.unglidePlayer(player)
+            return
+        }
         val boost = hooker.glideManager.parseBoost(args.firstOrNull())
         hooker.glideManager.glidePlayer(player, boost)
     }
