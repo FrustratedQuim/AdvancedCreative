@@ -306,7 +306,7 @@ class JarManager(private val hooker: FunctionHooker) {
     private fun createJarItem(ownerUuid: UUID, targetUuid: UUID, targetName: String, constFlag: Boolean): ItemStack {
         val item = ItemStack(Material.DECORATED_POT)
         val meta = item.itemMeta
-        meta.displayName(miniMessage.deserialize("<gold>Банка с <green>$targetName"))
+        meta.displayName(miniMessage.deserialize("<!i><gradient:#FF02CD:#FFF000>Банка с</gradient> <#00FF40>$targetName"))
 
         val pdc = meta.persistentDataContainer
         pdc.set(keyMarker, PersistentDataType.INTEGER, 1)
