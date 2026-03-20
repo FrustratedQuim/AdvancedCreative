@@ -63,6 +63,9 @@ commands:
   effects:
     description: Applies an effect to player
     usage: /effects <effect> [level]
+  jar:
+    description: Gives a jar item for placing a jailed player
+    usage: /jar <player> [-const]
   grab:
     description: Grabs a player in front of you
     usage: /grab <player>
@@ -149,6 +152,9 @@ permissions:
     default: op
   advancedcreative.effects.other:
     description: Allows using /effects & target
+    default: op
+  advancedcreative.jar:
+    description: Allows using /jar
     default: op
   advancedcreative.grab:
     description: Allows using /grab

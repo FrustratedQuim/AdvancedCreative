@@ -14,6 +14,7 @@ import com.ratger.acreative.commands.grab.GrabManager
 import com.ratger.acreative.commands.health.HealthManager
 import com.ratger.acreative.commands.hide.HideManager
 import com.ratger.acreative.commands.itemdb.ItemdbManager
+import com.ratger.acreative.commands.jar.JarManager
 import com.ratger.acreative.commands.lay.LayManager
 import com.ratger.acreative.commands.piss.PissManager
 import com.ratger.acreative.commands.resize.ResizeManager
@@ -75,6 +76,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var grabManager: GrabManager
         private set
+    lateinit var jarManager: JarManager
+        private set
     lateinit var slapManager: SlapManager
         private set
     lateinit var itemdbManager: ItemdbManager
@@ -102,6 +105,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     fun effectsManagerOrNull(): EffectsManager? = if (this::effectsManager.isInitialized) effectsManager else null
     fun slapManagerOrNull(): SlapManager? = if (this::slapManager.isInitialized) slapManager else null
     fun grabManagerOrNull(): GrabManager? = if (this::grabManager.isInitialized) grabManager else null
+    fun jarManagerOrNull(): JarManager? = if (this::jarManager.isInitialized) jarManager else null
 
     fun init() {
         configManager = ConfigManager(this)
@@ -133,6 +137,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         disguiseManager = DisguiseManager(this)
         effectsManager = EffectsManager(this)
         grabManager = GrabManager(this)
+        jarManager = JarManager(this)
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
 
@@ -145,6 +150,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GRABBING) { grabManager.releaseForPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GRABBED) { grabManager.releaseForPlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.JARRED) { jarManager.releaseForPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CUSTOM_SIZE) { resizeManager.removeEffect(it) }
 
         sneezeManager = SneezeManager(this)
@@ -183,6 +189,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             utils.stopAllDisguises()
             utils.stopAllCustomEffects()
             utils.stopAllGrabs()
+            utils.stopAllJars()
             utils.stopAllSlaps()
         }
         if (this::messageManager.isInitialized) {

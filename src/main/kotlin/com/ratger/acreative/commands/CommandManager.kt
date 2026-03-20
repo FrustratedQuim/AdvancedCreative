@@ -11,6 +11,7 @@ import com.ratger.acreative.commands.grab.GrabCommand
 import com.ratger.acreative.commands.health.HealthCommand
 import com.ratger.acreative.commands.hide.HideCommand
 import com.ratger.acreative.commands.itemdb.ItemdbCommand
+import com.ratger.acreative.commands.jar.JarCommand
 import com.ratger.acreative.commands.lay.LayCommand
 import com.ratger.acreative.commands.piss.PissCommand
 import com.ratger.acreative.commands.resize.ResizeCommand
@@ -48,6 +49,7 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         PissCommand(functionHooker),
         DisguiseCommand(functionHooker),
         EffectsCommand(functionHooker),
+        JarCommand(functionHooker),
         GrabCommand(functionHooker),
         SlapCommand(functionHooker),
         SitheadCommand(functionHooker),

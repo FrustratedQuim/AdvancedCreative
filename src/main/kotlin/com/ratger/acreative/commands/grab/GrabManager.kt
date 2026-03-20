@@ -179,10 +179,9 @@ class GrabManager(private val hooker: FunctionHooker) {
     }
 
     private fun startSession(holder: Player, target: Player, forcePull: Boolean) {
-        val targetFlightState = capturePlayerState(target)
-
         clearGrabConflictingState(target)
         clearGrabConflictingState(holder)
+        val targetFlightState = capturePlayerState(target)
 
         hooker.playerStateManager.activateState(holder, PlayerStateType.GRABBING)
         hooker.playerStateManager.activateState(target, PlayerStateType.GRABBED)

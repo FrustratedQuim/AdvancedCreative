@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
@@ -35,6 +36,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
+        hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
@@ -50,6 +52,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.player
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
+        hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkPissStop(player)
@@ -106,6 +109,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
+        if (hooker.jarManager.blockJarredInteraction(player)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
@@ -142,6 +149,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
+        if (hooker.jarManager.blockJarredInteraction(player, event.action)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
@@ -169,6 +180,8 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
+        hooker.jarManager.handleSupportBreak(event)
+        if (event.isCancelled) return
         if (utils.isFrozen(player)) {
             event.isCancelled = true
             return
@@ -211,6 +224,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
+        if (hooker.jarManager.blockJarredGlide(player, event.isGliding)) {
+            event.isCancelled = true
+            return
+        }
         if (utils.isGliding(player) && !event.isGliding) event.isCancelled = true
     }
 
@@ -218,6 +235,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerToggleFlight(event: PlayerToggleFlightEvent) {
         val player = event.player
         if (hooker.grabManager.enforceGrabbedFlight(player)) {
+            event.isCancelled = true
+            return
+        }
+        if (hooker.jarManager.enforceJarredFlight(player)) {
             event.isCancelled = true
             return
         }
@@ -267,6 +288,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val joiningPlayer = event.player
         hooker.disguiseManager.onViewerJoin(joiningPlayer)
         hooker.layManager.onViewerJoin(joiningPlayer)
+        hooker.jarManager.onViewerJoin(joiningPlayer)
         hideManager.reapplyAllHides(joiningPlayer)
     }
 
@@ -306,12 +328,20 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerInteractAtEntity(event: PlayerInteractAtEntityEvent) {
         if (hooker.grabManager.blockGrabbedInteractAtEntity(event.player)) {
             event.isCancelled = true
+            return
+        }
+        if (hooker.jarManager.blockJarredInteraction(event.player)) {
+            event.isCancelled = true
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
         if (hooker.grabManager.blockGrabbedCommand(event.player)) {
+            event.isCancelled = true
+            return
+        }
+        if (hooker.jarManager.blockJarredCommand(event.player)) {
             event.isCancelled = true
         }
     }
@@ -328,13 +358,24 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
         if (hooker.grabManager.blockGrabbedDamage(damager)) {
             event.isCancelled = true
+            return
+        }
+
+        if (hooker.jarManager.blockJarredInteraction(damager)) {
+            event.isCancelled = true
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerMove(event: PlayerMoveEvent) {
         val player = event.player
-        if (utils.isFrozen(player) && event.from != event.to) event.isCancelled = true
+        if (utils.isFrozen(player) && hasPositionChanged(event)) event.isCancelled = true
+        if (hooker.jarManager.blockJarredMove(player) && hasPositionChanged(event)) event.isCancelled = true
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onBlockPlace(event: BlockPlaceEvent) {
+        hooker.jarManager.handleJarBlockPlace(event)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -368,5 +409,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         if (handled) {
             event.isCancelled = true
         }
+    }
+
+    private fun hasPositionChanged(event: PlayerMoveEvent): Boolean {
+        val to = event.to ?: return false
+        return event.from.x != to.x || event.from.y != to.y || event.from.z != to.z
     }
 }

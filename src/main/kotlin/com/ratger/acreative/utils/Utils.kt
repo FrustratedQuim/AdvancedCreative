@@ -28,6 +28,7 @@ class Utils(private val hooker: FunctionHooker) {
     fun isDisguised(player: Player) = hooker.disguiseManagerOrNull()?.disguisedPlayers?.containsKey(player) ?: false
     fun isCustomEffect(player: Player) = hooker.effectsManagerOrNull()?.activeEffects?.containsKey(player.uniqueId) ?: false
     fun isGrabbed(player: Player) = hooker.grabManagerOrNull()?.isGrabbed(player) ?: false
+    fun isJarred(player: Player) = hooker.jarManagerOrNull()?.isJarred(player) ?: false
     fun isSlapping(player: Player) = hooker.slapManagerOrNull()?.slappingPlayers?.contains(player) ?: false
 
     fun stopAllGlides() {
@@ -92,6 +93,10 @@ class Utils(private val hooker: FunctionHooker) {
 
     fun stopAllGrabs() {
         hooker.grabManagerOrNull()?.releaseAll()
+    }
+
+    fun stopAllJars() {
+        hooker.jarManagerOrNull()?.releaseAll()
     }
 
     fun checkSitUnsit(player: Player) {
