@@ -12,7 +12,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import org.joml.Matrix4f
 import java.nio.FloatBuffer
-import java.util.Base64
 import java.util.UUID
 
 internal class JarDisplayFactory(private val hooker: FunctionHooker) {
@@ -21,9 +20,11 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
         val target = Bukkit.getPlayer(targetUuid)
         val world = visualOrigin.world ?: return mutableListOf()
 
-        return JarDisplayDefinition.parts.map { part ->
+        return JarDisplayDefinition.parts.mapIndexed { index, part ->
+            hooker.plugin.logger.info("[JarDisplay] part #$index texture=${part.textureValue.take(24)}...")
+
             val display = world.spawnEntity(visualOrigin, EntityType.ITEM_DISPLAY) as ItemDisplay
-            display.setItemStack(createHead(part.textureUrl))
+            display.setItemStack(createHead(part.textureValue))
             display.itemDisplayTransform = ItemDisplay.ItemDisplayTransform.NONE
             display.billboard = Display.Billboard.FIXED
             display.interpolationDelay = 0
@@ -47,18 +48,13 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
         }.toMutableList()
     }
 
-    private fun createHead(textureUrl: String): ItemStack {
+    private fun createHead(textureValue: String): ItemStack {
         val head = ItemStack(Material.PLAYER_HEAD)
         val meta = head.itemMeta as? SkullMeta ?: return head
         val profile = Bukkit.createProfile(UUID.randomUUID(), "jar_head")
-        profile.setProperty(ProfileProperty("textures", encodeTexture(textureUrl)))
+        profile.setProperty(ProfileProperty("textures", textureValue))
         meta.playerProfile = profile
         head.itemMeta = meta
         return head
-    }
-
-    private fun encodeTexture(textureUrl: String): String {
-        val payload = """{"textures":{"SKIN":{"url":"$textureUrl"}}}"""
-        return Base64.getEncoder().encodeToString(payload.toByteArray(Charsets.UTF_8))
     }
 }

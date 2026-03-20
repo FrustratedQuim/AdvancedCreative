@@ -1,23 +1,23 @@
 package com.ratger.acreative.commands.jar
 
 internal data class JarDisplayPart(
-    val textureUrl: String,
+    val textureValue: String,
     val matrix: FloatArray
 )
 
 internal object JarDisplayDefinition {
-    const val TEXTURE_A = "http://textures.minecraft.net/texture/4f1882e506443fd8c43cfef7b4124c9897c9ebbb5c661f7fc76ac17be53930dee"
-    const val TEXTURE_B = "http://textures.minecraft.net/texture/4b6c0fc854cbb63f05438449bdf26d74dbce6d2c1c3ec0674dffb802bfe4dd90"
-    const val TEXTURE_C = "http://textures.minecraft.net/texture/a63756388de57a193ee9c56547417ee21b4c868bcdc56d503e0292c289b4158d"
-    const val TEXTURE_D = "http://textures.minecraft.net/texture/c28f07c485cfef2ba7ab6dbbb7e4825fad97fecebaf0e9dfd2f2fae25744caaae"
-    const val TEXTURE_E = "http://textures.minecraft.net/texture/1d537adf69a944b1d73e6f9f15194f58c0124f1a8c49c183adfb63a7259548d5"
-    const val TEXTURE_F = "http://textures.minecraft.net/texture/71e3e0dc06d7f3ae8cb656b121dbd83f2f35bb98721aa765235fa4cf36fb05ab"
-    const val TEXTURE_G = "http://textures.minecraft.net/texture/a4f3389ac6bafaad7201c541581811dd2c55ab2b70be2e33df218b235cfc4d4a"
-    const val TEXTURE_H = "http://textures.minecraft.net/texture/4bd0577fb84726e0b9c8dbadf712dc3b3eb105b969b6d0352801f85dc409c764"
-    const val TEXTURE_I = "http://textures.minecraft.net/texture/86910be3dbe6888af1198c94259268b3bc032f937eb402465fe0f600360a0abc"
-    const val TEXTURE_J = "http://textures.minecraft.net/texture/b26906526efceb8008ed343a74f025b44313a24ca2babbaf9b0fa1789561a0c9"
-    const val TEXTURE_K = "http://textures.minecraft.net/texture/91b36efd473341a5e15e71f824b03f938125bdb2b89477edb02fde6f6d7ae6c5"
-    const val TEXTURE_L = "http://textures.minecraft.net/texture/291873c66816f2eeaf63c2720eb3131057c1e4da5e4d454b0f819c3730aef942"
+    const val TEXTURE_A = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGYxODgyZTUwNjQ0M2ZkOGM0M2NmZWY3YjQxMjRjOTg5N2M5ZWJiYjVjNjYxZjdmYzc2YWMxN2JlNTM5MzBkZWUifX19"
+    const val TEXTURE_B = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGI2YzBmYzg1NGNiYjYzZjA1NDM4NDQ5YmRmMjZkNzRkYmNlNmQyYzFjM2VjMDY3NGRmZmI4MDJiZmU0ZGQ5MCJ9fX0="
+    const val TEXTURE_C = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTYzNzU2Mzg4ZGU1N2ExOTNlZTljNTY1NDc0MTdlZTIxYjRjODY4YmNkYzU2ZDUwM2UwMjkyYzI4OWI0MTU4ZCJ9fX0="
+    const val TEXTURE_D = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzI4ZjA3YzQ4NWNmZWYyYmE3YWI2ZGJiYjdlNDgyNWZhZDk3ZmVjZWJhZjBlOWRmZDJmMmZhZTI1NzQ0Y2FhYWUifX19"
+    const val TEXTURE_E = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMWQ1MzdhZGY2OWE5NDRiMWQ3M2U2ZjlmMTUxOTRmNThjMDEyNGYxYThjNDljMTgzYWRmYjYzYTcyNTk1NDhkNSJ9fX0="
+    const val TEXTURE_F = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzFlM2UwZGMwNmQ3ZjNhZThjYjY1NmIxMjFkYmQ4M2YyZjM1YmI5ODcyMWFhNzY1MjM1ZmE0Y2YzNmZiMDVhYiJ9fX0="
+    const val TEXTURE_G = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTRmMzM4OWFjNmJhZmFhZDcyMDFjNTQxNTgxODExZGQyYzU1YWIyYjcwYmUyZTMzZGYyMThiMjM1Y2ZjNGQ0YSJ9fX0="
+    const val TEXTURE_H = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGJkMDU3N2ZiODQ3MjZlMGI5YzhkYmFkZjcxMmRjM2IzZWIxMDViOTY5YjZkMDM1MjgwMWY4NWRjNDA5Yzc2NCJ9fX0="
+    const val TEXTURE_I = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODY5MTBiZTNkYmU2ODg4YWYxMTk4Yzk0MjU5MjY4YjNiYzAzMmY5MzdlYjQwMjQ2NWZlMGY2MDAzNjBhMGFiYyJ9fX0="
+    const val TEXTURE_J = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjI2OTA2NTI2ZWZjZWI4MDA4ZWQzNDNhNzRmMDI1YjQ0MzEzYTI0Y2EyYmFiYmFmOWIwZmExNzg5NTYxYTBjOSJ9fX0="
+    const val TEXTURE_K = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTFiMzZlZmQ0NzMzNDFhNWUxNWU3MWY4MjRiMDNmOTM4MTI1YmRiMmI4OTQ3N2VkYjAyZmRlNmY2ZDdhZTZjNSJ9fX0="
+    const val TEXTURE_L = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMjkxODczYzY2ODE2ZjJlZWFmNjNjMjcyMGViMzEzMTA1N2MxZTRkYTVlNGQ0NTRiMGY4MTljMzczMGFlZjk0MiJ9fX0="
 
     val parts: List<JarDisplayPart> = listOf(
         JarDisplayPart(TEXTURE_A, floatArrayOf(1.1765f, 0f, 0f, -1.06e-8f, 0f, 0f, -18824f, -5000.125f, 0f, 1.1765f, 0f, 0.29375f, 0f, 0f, 0f, 1f)),
