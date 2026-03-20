@@ -168,9 +168,17 @@ class JarManager(private val hooker: FunctionHooker) {
     fun onViewerJoin(viewer: Player) {
         sessions.allSessions().forEach { session ->
             val target = Bukkit.getPlayer(session.targetUuid)
-            if (target != null && hooker.utils.isHiddenFromPlayer(viewer, target)) return@forEach
             if (viewer.world != session.visualOrigin.world) return@forEach
-            session.wrapperEntities.filter { it.isSpawned }.forEach { it.addViewer(viewer.uniqueId) }
+
+            if (target != null && hooker.utils.isHiddenFromPlayer(viewer, target)) {
+                session.displayEntities
+                    .filter { it.isValid }
+                    .forEach { viewer.hideEntity(hooker.plugin, it) }
+            } else {
+                session.displayEntities
+                    .filter { it.isValid }
+                    .forEach { viewer.showEntity(hooker.plugin, it) }
+            }
         }
     }
 
@@ -187,7 +195,7 @@ class JarManager(private val hooker: FunctionHooker) {
         hooker.playerStateManager.activateState(target, PlayerStateType.JARRED)
 
         val savedState = capturePlayerState(target)
-        val wrappers = displayFactory.createDisplayParts(target.uniqueId, visualOrigin)
+        val displays = displayFactory.createDisplayParts(target.uniqueId, visualOrigin)
 
         val targetScale = target.getAttribute(Attribute.GENERIC_SCALE)
         target.allowFlight = true
@@ -231,7 +239,7 @@ class JarManager(private val hooker: FunctionHooker) {
                 plannedJarBlockLocation = plannedJarBlockLocation,
                 visualOrigin = visualOrigin,
                 jailedAnchor = jailedAnchor,
-                wrapperEntities = wrappers,
+                displayEntities = displays,
                 savedTargetState = savedState,
                 taskId = taskId
             )
@@ -244,7 +252,7 @@ class JarManager(private val hooker: FunctionHooker) {
     private fun releaseSession(targetUuid: UUID) {
         val session = sessions.removeByTarget(targetUuid) ?: return
         hooker.tickScheduler.cancel(session.taskId)
-        session.wrapperEntities.forEach { it.remove() }
+        session.displayEntities.forEach { it.remove() }
 
         val target = Bukkit.getPlayer(targetUuid)
         if (target != null) {

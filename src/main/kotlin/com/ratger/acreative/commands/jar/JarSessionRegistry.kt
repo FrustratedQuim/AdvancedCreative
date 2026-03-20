@@ -1,7 +1,7 @@
 package com.ratger.acreative.commands.jar
 
-import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Location
+import org.bukkit.entity.ItemDisplay
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -21,7 +21,7 @@ internal data class JarSession(
     val plannedJarBlockLocation: Location,
     val visualOrigin: Location,
     val jailedAnchor: Location,
-    val wrapperEntities: MutableList<WrapperEntity>,
+    val displayEntities: MutableList<ItemDisplay>,
     val savedTargetState: JarPlayerState,
     val taskId: Int
 )
