@@ -11,6 +11,7 @@ import org.bukkit.entity.ItemDisplay
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import org.joml.Matrix4f
+import java.nio.FloatBuffer
 import java.util.Base64
 import java.util.UUID
 
@@ -30,26 +31,8 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
             display.teleportDuration = 0
             display.isSilent = true
             display.setGravity(false)
-            display.setTransformationMatrix(
-                Matrix4f(
-                    decodeMatrixComponent(part.matrix[0]),
-                    decodeMatrixComponent(part.matrix[1]),
-                    decodeMatrixComponent(part.matrix[2]),
-                    decodeMatrixComponent(part.matrix[3]),
-                    decodeMatrixComponent(part.matrix[4]),
-                    decodeMatrixComponent(part.matrix[5]),
-                    decodeMatrixComponent(part.matrix[6]),
-                    decodeMatrixComponent(part.matrix[7]),
-                    decodeMatrixComponent(part.matrix[8]),
-                    decodeMatrixComponent(part.matrix[9]),
-                    decodeMatrixComponent(part.matrix[10]),
-                    decodeMatrixComponent(part.matrix[11]),
-                    decodeMatrixComponent(part.matrix[12]),
-                    decodeMatrixComponent(part.matrix[13]),
-                    decodeMatrixComponent(part.matrix[14]),
-                    decodeMatrixComponent(part.matrix[15])
-                )
-            )
+            val matrix = Matrix4f().setTransposed(FloatBuffer.wrap(part.matrix))
+            display.setTransformationMatrix(matrix)
 
             world.players.forEach { viewer ->
                 if (!viewer.isOnline || target == null) return@forEach
@@ -77,14 +60,5 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
     private fun encodeTexture(textureUrl: String): String {
         val payload = """{"textures":{"SKIN":{"url":"$textureUrl"}}}"""
         return Base64.getEncoder().encodeToString(payload.toByteArray(Charsets.UTF_8))
-    }
-
-    private fun decodeMatrixComponent(value: Float): Float {
-        return if (kotlin.math.abs(value) > FIXED_POINT_THRESHOLD) value / MATRIX_FIXED_POINT_SCALE else value
-    }
-
-    private companion object {
-        const val FIXED_POINT_THRESHOLD = 100f
-        const val MATRIX_FIXED_POINT_SCALE = 20000f
     }
 }
