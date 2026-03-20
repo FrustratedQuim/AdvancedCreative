@@ -171,10 +171,16 @@ class JarManager(private val hooker: FunctionHooker) {
             if (viewer.world != session.visualOrigin.world) return@forEach
 
             if (target != null && hooker.utils.isHiddenFromPlayer(viewer, target)) {
+                if (session.rootAnchorEntity.isValid) {
+                    viewer.hideEntity(hooker.plugin, session.rootAnchorEntity)
+                }
                 session.displayEntities
                     .filter { it.isValid }
                     .forEach { viewer.hideEntity(hooker.plugin, it) }
             } else {
+                if (session.rootAnchorEntity.isValid) {
+                    viewer.showEntity(hooker.plugin, session.rootAnchorEntity)
+                }
                 session.displayEntities
                     .filter { it.isValid }
                     .forEach { viewer.showEntity(hooker.plugin, it) }
@@ -195,7 +201,7 @@ class JarManager(private val hooker: FunctionHooker) {
         hooker.playerStateManager.activateState(target, PlayerStateType.JARRED)
 
         val savedState = capturePlayerState(target)
-        val displays = displayFactory.createDisplayParts(target.uniqueId, visualOrigin)
+        val displayGroup = displayFactory.createDisplayParts(target.uniqueId, visualOrigin)
 
         val targetScale = target.getAttribute(Attribute.GENERIC_SCALE)
         target.allowFlight = true
@@ -239,7 +245,8 @@ class JarManager(private val hooker: FunctionHooker) {
                 plannedJarBlockLocation = plannedJarBlockLocation,
                 visualOrigin = visualOrigin,
                 jailedAnchor = jailedAnchor,
-                displayEntities = displays,
+                rootAnchorEntity = displayGroup.rootAnchor,
+                displayEntities = displayGroup.parts,
                 savedTargetState = savedState,
                 taskId = taskId
             )
@@ -253,6 +260,7 @@ class JarManager(private val hooker: FunctionHooker) {
         val session = sessions.removeByTarget(targetUuid) ?: return
         hooker.tickScheduler.cancel(session.taskId)
         session.displayEntities.forEach { it.remove() }
+        session.rootAnchorEntity.remove()
 
         val target = Bukkit.getPlayer(targetUuid)
         if (target != null) {

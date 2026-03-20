@@ -1,6 +1,7 @@
 package com.ratger.acreative.commands.jar
 
 import org.bukkit.Location
+import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.ItemDisplay
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -21,6 +22,7 @@ internal data class JarSession(
     val plannedJarBlockLocation: Location,
     val visualOrigin: Location,
     val jailedAnchor: Location,
+    val rootAnchorEntity: BlockDisplay,
     val displayEntities: MutableList<ItemDisplay>,
     val savedTargetState: JarPlayerState,
     val taskId: Int

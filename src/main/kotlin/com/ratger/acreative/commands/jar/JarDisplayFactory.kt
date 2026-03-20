@@ -5,6 +5,7 @@ import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.entity.BlockDisplay
 import org.bukkit.entity.Display
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.ItemDisplay
@@ -16,11 +17,34 @@ import java.util.UUID
 
 internal class JarDisplayFactory(private val hooker: FunctionHooker) {
 
-    fun createDisplayParts(targetUuid: UUID, visualOrigin: Location): MutableList<ItemDisplay> {
-        val target = Bukkit.getPlayer(targetUuid)
-        val world = visualOrigin.world ?: return mutableListOf()
+    data class JarDisplayGroup(
+        val rootAnchor: BlockDisplay,
+        val parts: MutableList<ItemDisplay>
+    )
 
-        return JarDisplayDefinition.parts.mapIndexed { index, part ->
+    fun createDisplayParts(targetUuid: UUID, visualOrigin: Location): JarDisplayGroup {
+        val target = Bukkit.getPlayer(targetUuid)
+        val world = requireNotNull(visualOrigin.world) { "Jar visual origin must have world" }
+
+        val rootAnchor = world.spawnEntity(visualOrigin, EntityType.BLOCK_DISPLAY) as BlockDisplay
+        rootAnchor.setBlock(Material.AIR.createBlockData())
+        rootAnchor.billboard = Display.Billboard.FIXED
+        rootAnchor.interpolationDelay = 0
+        rootAnchor.interpolationDuration = 0
+        rootAnchor.teleportDuration = 0
+        rootAnchor.isSilent = true
+        rootAnchor.setGravity(false)
+
+        world.players.forEach { viewer ->
+            if (!viewer.isOnline || target == null) return@forEach
+            if (hooker.utils.isHiddenFromPlayer(viewer, target)) {
+                viewer.hideEntity(hooker.plugin, rootAnchor)
+            } else {
+                viewer.showEntity(hooker.plugin, rootAnchor)
+            }
+        }
+
+        val parts = JarDisplayDefinition.parts.mapIndexed { index, part ->
             hooker.plugin.logger.info("[JarDisplay] part #$index texture=${part.textureValue.take(24)}...")
 
             val display = world.spawnEntity(visualOrigin, EntityType.ITEM_DISPLAY) as ItemDisplay
@@ -34,6 +58,7 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
             display.setGravity(false)
             val matrix = Matrix4f().setTransposed(FloatBuffer.wrap(part.matrix))
             display.setTransformationMatrix(matrix)
+            rootAnchor.addPassenger(display)
 
             world.players.forEach { viewer ->
                 if (!viewer.isOnline || target == null) return@forEach
@@ -46,6 +71,8 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
 
             display
         }.toMutableList()
+
+        return JarDisplayGroup(rootAnchor = rootAnchor, parts = parts)
     }
 
     private fun createHead(textureValue: String): ItemStack {
