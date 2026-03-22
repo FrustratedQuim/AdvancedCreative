@@ -5,6 +5,8 @@ import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
+import org.bukkit.Particle
+import org.bukkit.Sound
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -27,7 +29,6 @@ class JarManager(private val hooker: FunctionHooker) {
     private val miniMessage = MiniMessage.miniMessage()
 
     private val keyMarker = NamespacedKey(hooker.plugin, "jar_marker")
-    private val keyOwnerUuid = NamespacedKey(hooker.plugin, "jar_owner_uuid")
     private val keyTargetUuid = NamespacedKey(hooker.plugin, "jar_target_uuid")
     private val keyTargetName = NamespacedKey(hooker.plugin, "jar_target_name")
     private val keyConst = NamespacedKey(hooker.plugin, "jar_const")
@@ -53,7 +54,7 @@ class JarManager(private val hooker: FunctionHooker) {
         val existing = sessions.getByTarget(target.uniqueId)
         if (existing != null) {
             if (existing.ownerUuid == owner.uniqueId) {
-                releaseSession(target.uniqueId, notifyOwner = true)
+                releaseSession(target.uniqueId)
             } else {
                 hooker.messageManager.sendChat(owner, MessageKey.ERROR_JAR_TARGET_BUSY)
             }
@@ -67,7 +68,7 @@ class JarManager(private val hooker: FunctionHooker) {
         }
 
         val constFlag = args.drop(1).any { it.equals("-const", ignoreCase = true) }
-        owner.inventory.setItem(freeHotbarSlot, createJarItem(owner.uniqueId, target.uniqueId, target.name, constFlag))
+        owner.inventory.setItem(freeHotbarSlot, createJarItem(target.uniqueId, target.name, constFlag))
         owner.inventory.heldItemSlot = freeHotbarSlot
         hooker.messageManager.sendChat(owner, MessageKey.INFO_JAR_ITEM_GIVEN, mapOf("target" to target.name))
     }
@@ -80,8 +81,8 @@ class JarManager(private val hooker: FunctionHooker) {
 
         event.isCancelled = true
 
-        if (player.uniqueId != data.ownerUuid) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_JAR_OWNER_MISMATCH)
+        if (!hasJarPermission(player)) {
+            hooker.permissionManager.sendPermissionDenied(player, "jar")
             return
         }
 
@@ -117,6 +118,8 @@ class JarManager(private val hooker: FunctionHooker) {
             visualOrigin = plannedJarBlock.location.toCenterLocation().add(0.0, -0.5, 0.0),
             jailedAnchor = plannedJarBlock.location.toCenterLocation().add(0.0, -0.5, 0.0)
         )
+
+        playJarPlacementEffects(plannedJarBlock.location)
     }
 
     fun handleSupportBreak(event: BlockBreakEvent) {
@@ -124,7 +127,7 @@ class JarManager(private val hooker: FunctionHooker) {
         if (session.constFlag) {
             return
         }
-        releaseSession(session.targetUuid)
+        releaseSession(session.targetUuid, cause = ReleaseCause.SUPPORT_BROKEN)
     }
 
     fun isJarred(player: Player): Boolean = sessions.hasTarget(player.uniqueId)
@@ -157,11 +160,11 @@ class JarManager(private val hooker: FunctionHooker) {
     fun blockJarredInteraction(player: Player): Boolean = isJarred(player)
 
     fun cleanupSessionsForPlayer(playerId: UUID) {
-        releaseSession(playerId)
+        releaseSession(playerId, cause = ReleaseCause.CLEANUP)
     }
 
     fun releaseForPlayer(player: Player) {
-        releaseSession(player.uniqueId)
+        releaseSession(player.uniqueId, cause = ReleaseCause.CONFLICTING_STATE)
     }
 
     fun releaseAll() {
@@ -259,25 +262,25 @@ class JarManager(private val hooker: FunctionHooker) {
         )
 
         hooker.messageManager.sendChat(owner, MessageKey.INFO_JAR_APPLIED, mapOf("target" to target.name))
-        hooker.messageManager.sendChat(target, MessageKey.INFO_JAR_TARGET_APPLIED)
     }
 
-    private fun releaseSession(targetUuid: UUID, notifyOwner: Boolean = false) {
+    private fun releaseSession(
+        targetUuid: UUID,
+        cause: ReleaseCause = ReleaseCause.GENERIC
+    ) {
         val session = sessions.removeByTarget(targetUuid) ?: return
         hooker.tickScheduler.cancel(session.taskId)
         session.displayEntities.forEach { it.remove() }
         session.rootAnchorEntity.remove()
+        playJarBreakEffects(session.plannedJarBlockLocation)
 
         val target = Bukkit.getPlayer(targetUuid)
         if (target != null) {
             restorePlayerState(target, session.savedTargetState)
             hooker.playerStateManager.deactivateState(target, PlayerStateType.JARRED)
-            hooker.messageManager.sendChat(target, MessageKey.INFO_JAR_TARGET_RELEASED)
-        }
-
-        Bukkit.getPlayer(session.ownerUuid)?.takeIf { notifyOwner }?.let { owner ->
-            val targetName = target?.name ?: session.targetUuid.toString()
-            hooker.messageManager.sendChat(owner, MessageKey.INFO_JAR_RELEASED, mapOf("target" to targetName))
+            if (cause.isLaunchAllowed) {
+                disableFlightAndLaunch(target)
+            }
         }
     }
 
@@ -309,14 +312,13 @@ class JarManager(private val hooker: FunctionHooker) {
         player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = state.scaleBase
     }
 
-    private fun createJarItem(ownerUuid: UUID, targetUuid: UUID, targetName: String, constFlag: Boolean): ItemStack {
+    private fun createJarItem(targetUuid: UUID, targetName: String, constFlag: Boolean): ItemStack {
         val item = ItemStack(Material.DECORATED_POT)
         val meta = item.itemMeta
         meta.displayName(miniMessage.deserialize("<!i><gradient:#FF02CD:#FFF000>Банка с</gradient> <#00FF40>$targetName"))
 
         val pdc = meta.persistentDataContainer
         pdc.set(keyMarker, PersistentDataType.INTEGER, 1)
-        pdc.set(keyOwnerUuid, PersistentDataType.STRING, ownerUuid.toString())
         pdc.set(keyTargetUuid, PersistentDataType.STRING, targetUuid.toString())
         pdc.set(keyTargetName, PersistentDataType.STRING, targetName)
         pdc.set(keyConst, PersistentDataType.STRING, constFlag.toString())
@@ -331,16 +333,13 @@ class JarManager(private val hooker: FunctionHooker) {
         val pdc = meta.persistentDataContainer
         if (pdc.get(keyMarker, PersistentDataType.INTEGER) != 1) return null
 
-        val owner = pdc.get(keyOwnerUuid, PersistentDataType.STRING)?.let {
-            runCatching { UUID.fromString(it) }.getOrNull()
-        } ?: return null
         val target = pdc.get(keyTargetUuid, PersistentDataType.STRING)?.let {
             runCatching { UUID.fromString(it) }.getOrNull()
         } ?: return null
         val targetName = pdc.get(keyTargetName, PersistentDataType.STRING) ?: return null
         val constFlag = pdc.get(keyConst, PersistentDataType.STRING)?.toBoolean() ?: false
 
-        return JarItemData(owner, target, targetName, constFlag)
+        return JarItemData(target, targetName, constFlag)
     }
 
     private fun consumeMainHandJar(player: Player): Boolean {
@@ -357,15 +356,82 @@ class JarManager(private val hooker: FunctionHooker) {
     }
 
     private data class JarItemData(
-        val ownerUuid: UUID,
         val targetUuid: UUID,
         val targetName: String,
         val constFlag: Boolean
     )
 
+    private enum class ReleaseCause(val isLaunchAllowed: Boolean) {
+        GENERIC(true),
+        SUPPORT_BROKEN(true),
+        CONFLICTING_STATE(false),
+        CLEANUP(false)
+    }
+
+    private fun hasJarPermission(player: Player): Boolean {
+        val permissionNode = hooker.permissionManager.getPermissionNodeForCommand("jar")
+        return player.hasPermission(permissionNode)
+    }
+
+    private fun disableFlightAndLaunch(player: Player) {
+        player.allowFlight = false
+        player.isFlying = false
+        if (!hasEnoughHeadroom(player.location, 5)) return
+
+        val velocity = player.velocity
+        player.velocity = Vector(velocity.x, LAUNCH_UP_VELOCITY, velocity.z)
+    }
+
+    private fun hasEnoughHeadroom(location: Location, requiredAirBlocks: Int): Boolean {
+        val world = location.world ?: return false
+        val baseX = location.blockX
+        val baseY = location.blockY
+        val baseZ = location.blockZ
+
+        for (offset in 1..requiredAirBlocks) {
+            if (!world.getBlockAt(baseX, baseY + offset, baseZ).isPassable) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private fun playJarPlacementEffects(plannedJarBlockLocation: Location) {
+        val world = plannedJarBlockLocation.world ?: return
+        val effectLocation = plannedJarBlockLocation.toCenterLocation()
+        world.playSound(effectLocation, Sound.BLOCK_AMETHYST_CLUSTER_PLACE, 1.0f, 1.0f)
+        world.spawnParticle(
+            Particle.ITEM,
+            effectLocation,
+            35,
+            0.3,
+            0.5,
+            0.3,
+            0.0,
+            ItemStack(Material.SNOWBALL)
+        )
+    }
+
+    private fun playJarBreakEffects(plannedJarBlockLocation: Location) {
+        val world = plannedJarBlockLocation.world ?: return
+        val effectLocation = plannedJarBlockLocation.toCenterLocation()
+        world.playSound(effectLocation, Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 1.0f, 1.0f)
+        world.spawnParticle(
+            Particle.ITEM,
+            effectLocation,
+            35,
+            0.3,
+            0.5,
+            0.3,
+            0.0,
+            ItemStack(Material.SNOWBALL)
+        )
+    }
+
     companion object {
         private const val SCALE_MULTIPLIER = 0.45
         private const val ANCHOR_EPSILON_SQUARED = 0.0004
+        private const val LAUNCH_UP_VELOCITY = 0.75
     }
 }
 
