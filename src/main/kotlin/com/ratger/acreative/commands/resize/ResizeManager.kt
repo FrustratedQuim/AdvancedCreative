@@ -100,6 +100,10 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         hooker.messageManager.sendChat(player, successResetMessageKey)
     }
 
+    fun smoothTransitionScale(player: Player, targetValue: Double, onComplete: (() -> Unit)? = null) {
+        startSmoothResize(player, targetValue, onComplete)
+    }
+
     private fun applyScaleAttributes(player: Player, value: Double) {
         player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = value
 
@@ -122,12 +126,17 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.1
     }
 
-    private fun startSmoothResize(player: Player, targetValue: Double) {
+    private fun startSmoothResize(
+        player: Player,
+        targetValue: Double,
+        onComplete: (() -> Unit)? = null
+    ) {
         cancelResizeTask(player)
 
         val startValue = player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue ?: DEFAULT_SCALE_VALUE
         if (abs(startValue - targetValue) < 0.0001) {
             applyScaleAttributes(player, targetValue)
+            onComplete?.invoke()
             return
         }
 
@@ -136,6 +145,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         val taskId = hooker.tickScheduler.runRepeating(0L, TRANSITION_PERIOD_TICKS) {
             if (!player.isOnline) {
                 cancelResizeTask(player)
+                onComplete?.invoke()
                 return@runRepeating
             }
 
@@ -150,6 +160,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
             if (currentStep >= TRANSITION_STEPS) {
                 cancelResizeTask(player)
+                onComplete?.invoke()
             }
         }
 

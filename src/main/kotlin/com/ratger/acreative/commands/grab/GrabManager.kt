@@ -255,6 +255,7 @@ class GrabManager(private val hooker: FunctionHooker) {
     }
 
     private fun clearGrabConflictingState(target: Player) {
+        hooker.jarManagerOrNull()?.releaseForPlayer(target, waitForScaleRestore = false)
         hooker.utils.unsetAllPoses(target, true)
         hooker.utils.unsetAllStates(target)
         hooker.utils.checkDisguiseDisable(target)

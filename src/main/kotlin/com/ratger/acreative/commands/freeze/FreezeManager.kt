@@ -21,8 +21,22 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun prepareToFreezePlayer(initiator: Player, targetName: String?) {
         val resolved = targetResolver.resolve(initiator, targetName) ?: return
-        hooker.playerStateManager.activateState(resolved.target, PlayerStateType.FROZEN)
-        freezePlayer(resolved.target, resolved.initiator)
+        val freezeAction = {
+            hooker.playerStateManager.activateState(resolved.target, PlayerStateType.FROZEN)
+            freezePlayer(resolved.target, resolved.initiator)
+        }
+
+        val jarManager = hooker.jarManagerOrNull()
+        if (jarManager != null && jarManager.isJarred(resolved.target)) {
+            jarManager.releaseForPlayer(
+                player = resolved.target,
+                waitForScaleRestore = true,
+                onReleased = freezeAction
+            )
+            return
+        }
+
+        freezeAction()
     }
 
     fun freezePlayer(player: Player, initiator: Player? = null) {

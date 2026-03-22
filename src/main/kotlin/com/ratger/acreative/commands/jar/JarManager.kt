@@ -32,6 +32,9 @@ class JarManager(private val hooker: FunctionHooker) {
     private val keyTargetUuid = NamespacedKey(hooker.plugin, "jar_target_uuid")
     private val keyTargetName = NamespacedKey(hooker.plugin, "jar_target_name")
     private val keyConst = NamespacedKey(hooker.plugin, "jar_const")
+    private val releaseInProgress = mutableSetOf<UUID>()
+    private val pendingReleaseCallbacks = mutableMapOf<UUID, MutableList<() -> Unit>>()
+    private val movementBypassTargets = mutableSetOf<UUID>()
 
     fun handleJarCommand(owner: Player, args: Array<out String>) {
         val targetName = args.getOrNull(0)
@@ -147,7 +150,10 @@ class JarManager(private val hooker: FunctionHooker) {
         return tryingGlide
     }
 
-    fun blockJarredMove(player: Player): Boolean = isJarred(player)
+    fun blockJarredMove(player: Player): Boolean {
+        if (!isJarred(player)) return false
+        return player.uniqueId !in movementBypassTargets
+    }
 
     fun blockJarredInteraction(player: Player, action: Action): Boolean {
         if (!isJarred(player)) return false
@@ -160,15 +166,26 @@ class JarManager(private val hooker: FunctionHooker) {
     fun blockJarredInteraction(player: Player): Boolean = isJarred(player)
 
     fun cleanupSessionsForPlayer(playerId: UUID) {
-        releaseSession(playerId, cause = ReleaseCause.CLEANUP)
+        releaseSession(playerId, cause = ReleaseCause.CLEANUP, waitForScaleRestore = false)
     }
 
-    fun releaseForPlayer(player: Player) {
-        releaseSession(player.uniqueId, cause = ReleaseCause.CONFLICTING_STATE)
+    fun releaseForPlayer(
+        player: Player,
+        waitForScaleRestore: Boolean = true,
+        onReleased: (() -> Unit)? = null
+    ) {
+        releaseSession(
+            targetUuid = player.uniqueId,
+            cause = ReleaseCause.CONFLICTING_STATE,
+            waitForScaleRestore = waitForScaleRestore,
+            onReleased = onReleased
+        )
     }
 
     fun releaseAll() {
-        sessions.allSessions().forEach { releaseSession(it.targetUuid) }
+        sessions.allSessions().forEach {
+            releaseSession(it.targetUuid, waitForScaleRestore = false)
+        }
     }
 
     fun onViewerJoin(viewer: Player) {
@@ -212,13 +229,12 @@ class JarManager(private val hooker: FunctionHooker) {
         val savedState = capturePlayerState(target)
         val displayGroup = displayFactory.createDisplayParts(target.uniqueId, visualOrigin)
 
-        val targetScale = target.getAttribute(Attribute.GENERIC_SCALE)
         target.allowFlight = true
         target.isFlying = true
         target.walkSpeed = 0f
         target.flySpeed = 0f
         target.fallDistance = 0f
-        targetScale?.baseValue = savedState.scaleBase * SCALE_MULTIPLIER
+        applyJarScaleSmooth(target, savedState.scaleBase)
         target.teleport(jailedAnchor)
 
         var taskId = 0
@@ -266,22 +282,65 @@ class JarManager(private val hooker: FunctionHooker) {
 
     private fun releaseSession(
         targetUuid: UUID,
-        cause: ReleaseCause = ReleaseCause.GENERIC
+        cause: ReleaseCause = ReleaseCause.GENERIC,
+        waitForScaleRestore: Boolean = true,
+        onReleased: (() -> Unit)? = null
     ) {
-        val session = sessions.removeByTarget(targetUuid) ?: return
+        if (!releaseInProgress.add(targetUuid)) {
+            if (onReleased != null) {
+                pendingReleaseCallbacks
+                    .computeIfAbsent(targetUuid) { mutableListOf() }
+                    .add(onReleased)
+            }
+            return
+        }
+        val session = sessions.getByTarget(targetUuid)
+        if (session == null) {
+            completeRelease(targetUuid, onReleased)
+            return
+        }
+
         hooker.tickScheduler.cancel(session.taskId)
         session.displayEntities.forEach { it.remove() }
         session.rootAnchorEntity.remove()
         playJarBreakEffects(session.plannedJarBlockLocation)
 
         val target = Bukkit.getPlayer(targetUuid)
-        if (target != null) {
-            restorePlayerState(target, session.savedTargetState)
+        if (target == null || !target.isOnline) {
+            sessions.removeByTarget(targetUuid)
+            completeRelease(targetUuid, onReleased)
+            return
+        }
+
+        if (!waitForScaleRestore) {
+            restorePlayerState(target, session.savedTargetState, restoreScale = true)
             hooker.playerStateManager.deactivateState(target, PlayerStateType.JARRED)
+            sessions.removeByTarget(targetUuid)
             if (cause.isLaunchAllowed) {
                 disableFlightAndLaunch(target)
             }
+            completeRelease(targetUuid, onReleased)
+            return
         }
+
+        restorePlayerState(target, session.savedTargetState, restoreScale = false)
+        if (cause.isLaunchAllowed) {
+            movementBypassTargets.add(targetUuid)
+            disableFlightAndLaunch(target)
+        }
+        applyScaleRestoreSmooth(target, session.savedTargetState.scaleBase) {
+            hooker.playerStateManager.deactivateState(target, PlayerStateType.JARRED)
+            sessions.removeByTarget(targetUuid)
+            completeRelease(targetUuid, onReleased)
+        }
+    }
+
+    private fun completeRelease(targetUuid: UUID, onReleased: (() -> Unit)?) {
+        releaseInProgress.remove(targetUuid)
+        movementBypassTargets.remove(targetUuid)
+        onReleased?.invoke()
+        val callbacks = pendingReleaseCallbacks.remove(targetUuid).orEmpty()
+        callbacks.forEach { it.invoke() }
     }
 
     private fun clearJarConflictingState(target: Player) {
@@ -303,13 +362,39 @@ class JarManager(private val hooker: FunctionHooker) {
         )
     }
 
-    private fun restorePlayerState(player: Player, state: JarPlayerState) {
+    private fun restorePlayerState(
+        player: Player,
+        state: JarPlayerState,
+        restoreScale: Boolean = true
+    ) {
         player.allowFlight = state.allowFlight
         player.isFlying = state.isFlying
         player.walkSpeed = state.walkSpeed
         player.flySpeed = state.flySpeed
         player.fallDistance = 0f
-        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = state.scaleBase
+        if (restoreScale) {
+            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = state.scaleBase
+        }
+    }
+
+    private fun applyJarScaleSmooth(player: Player, sourceScale: Double) {
+        val targetScale = sourceScale * SCALE_MULTIPLIER
+        val resizeManager = hooker.resizeManagerOrNull()
+        if (resizeManager == null) {
+            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = targetScale
+            return
+        }
+        resizeManager.smoothTransitionScale(player, targetScale)
+    }
+
+    private fun applyScaleRestoreSmooth(player: Player, targetScale: Double, onComplete: () -> Unit) {
+        val resizeManager = hooker.resizeManagerOrNull()
+        if (resizeManager == null) {
+            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = targetScale
+            onComplete()
+            return
+        }
+        resizeManager.smoothTransitionScale(player, targetScale, onComplete)
     }
 
     private fun createJarItem(targetUuid: UUID, targetName: String, constFlag: Boolean): ItemStack {
