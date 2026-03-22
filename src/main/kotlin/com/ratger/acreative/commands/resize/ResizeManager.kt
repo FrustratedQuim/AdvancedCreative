@@ -105,25 +105,25 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
     private fun applyScaleAttributes(player: Player, value: Double) {
-        player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = value
+        player.getAttribute(Attribute.SCALE)?.baseValue = value
 
         if (value >= RESIZE_THRESHOLD) {
             val interactDistance = calculateInteractDistance(value)
-            player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE)?.baseValue = 4.5 + interactDistance
-            player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE)?.baseValue = 3.0 + interactDistance
+            player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE)?.baseValue = 4.5 + interactDistance
+            player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE)?.baseValue = 3.0 + interactDistance
 
             val stepHeight = calculateStepHeight(value)
-            player.getAttribute(Attribute.GENERIC_STEP_HEIGHT)?.baseValue = 0.6 + stepHeight
+            player.getAttribute(Attribute.STEP_HEIGHT)?.baseValue = 0.6 + stepHeight
 
             val speed = calculateSpeed(value)
-            player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.1 + speed
+            player.getAttribute(Attribute.MOVEMENT_SPEED)?.baseValue = 0.1 + speed
             return
         }
 
-        player.getAttribute(Attribute.PLAYER_BLOCK_INTERACTION_RANGE)?.baseValue = 4.5
-        player.getAttribute(Attribute.PLAYER_ENTITY_INTERACTION_RANGE)?.baseValue = 3.0
-        player.getAttribute(Attribute.GENERIC_STEP_HEIGHT)?.baseValue = 0.6
-        player.getAttribute(Attribute.GENERIC_MOVEMENT_SPEED)?.baseValue = 0.1
+        player.getAttribute(Attribute.BLOCK_INTERACTION_RANGE)?.baseValue = 4.5
+        player.getAttribute(Attribute.ENTITY_INTERACTION_RANGE)?.baseValue = 3.0
+        player.getAttribute(Attribute.STEP_HEIGHT)?.baseValue = 0.6
+        player.getAttribute(Attribute.MOVEMENT_SPEED)?.baseValue = 0.1
     }
 
     private fun startSmoothResize(
@@ -133,7 +133,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     ) {
         cancelResizeTask(player)
 
-        val startValue = player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue ?: DEFAULT_SCALE_VALUE
+        val startValue = player.getAttribute(Attribute.SCALE)?.baseValue ?: DEFAULT_SCALE_VALUE
         if (abs(startValue - targetValue) < 0.0001) {
             applyScaleAttributes(player, targetValue)
             onComplete?.invoke()

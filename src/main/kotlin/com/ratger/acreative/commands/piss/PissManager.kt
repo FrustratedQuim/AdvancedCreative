@@ -41,7 +41,7 @@ class PissManager(private val hooker: FunctionHooker) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_CANNOT_LAY)
             return
         }
-        val scale = player.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE)?.baseValue ?: 1.0
+        val scale = player.getAttribute(org.bukkit.attribute.Attribute.SCALE)?.baseValue ?: 1.0
         if (scale < 1.0) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_TOO_SMALL)
             return

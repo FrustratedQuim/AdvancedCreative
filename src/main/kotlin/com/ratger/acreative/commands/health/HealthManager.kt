@@ -30,7 +30,7 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     override fun applyAttribute(player: Player, value: Double) {
         removeAttribute(player)
 
-        player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.addModifier(
+        player.getAttribute(Attribute.MAX_HEALTH)?.addModifier(
             AttributeModifier(
                 NamespacedKey(hooker.plugin, "health_mod"),
                 value - defaultValue,
@@ -42,10 +42,10 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     override fun removeAttribute(player: Player) {
         val modifierKey = NamespacedKey(hooker.plugin, "health_mod")
-        player.getAttribute(Attribute.GENERIC_MAX_HEALTH)
+        player.getAttribute(Attribute.MAX_HEALTH)
             ?.modifiers
             ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.removeModifier(it) }
+            ?.let { player.getAttribute(Attribute.MAX_HEALTH)?.removeModifier(it) }
     }
 
     override fun onAfterEffectRemoved(player: Player) {

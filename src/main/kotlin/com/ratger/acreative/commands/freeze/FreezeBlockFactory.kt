@@ -30,7 +30,7 @@ internal class FreezeBlockFactory(private val hooker: FunctionHooker) {
             viewer.playSound(location, Sound.BLOCK_ANVIL_LAND, 1f, Random.nextDouble(0.8, 1.2).toFloat())
         }
 
-        val scale = player.getAttribute(Attribute.GENERIC_SCALE)?.value ?: 1.0
+        val scale = player.getAttribute(Attribute.SCALE)?.value ?: 1.0
         val blockCount = 4
         val blockState = WrappedBlockState.getDefaultState(
             PacketEvents.getAPI().serverManager.version.toClientVersion(),

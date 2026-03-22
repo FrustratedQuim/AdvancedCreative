@@ -32,7 +32,7 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     override fun applyAttribute(player: Player, value: Double) {
         removeAttribute(player)
         val modifierValue = calculateModifier(value)
-        player.getAttribute(Attribute.GENERIC_GRAVITY)?.addModifier(
+        player.getAttribute(Attribute.GRAVITY)?.addModifier(
             AttributeModifier(
                 NamespacedKey(hooker.plugin, "gravity_mod"),
                 modifierValue,
@@ -43,10 +43,10 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     override fun removeAttribute(player: Player) {
         val modifierKey = NamespacedKey(hooker.plugin, "gravity_mod")
-        player.getAttribute(Attribute.GENERIC_GRAVITY)
+        player.getAttribute(Attribute.GRAVITY)
             ?.modifiers
             ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.GENERIC_GRAVITY)?.removeModifier(it) }
+            ?.let { player.getAttribute(Attribute.GRAVITY)?.removeModifier(it) }
     }
 
     override fun normalizeParsedValue(value: Double): Double {

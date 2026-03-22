@@ -16,7 +16,7 @@ import org.bukkit.util.Vector
     fun calculate(player: Player): EmissionContext {
         val isLaying = hooker.utils.isLaying(player)
         val pitch = if (isLaying) -90f else player.location.pitch.coerceIn(-90f, 90f)
-        val scale = player.getAttribute(Attribute.GENERIC_SCALE)?.value ?: 1.0
+        val scale = player.getAttribute(Attribute.SCALE)?.value ?: 1.0
 
         val yOffsetBase = if (isLaying) 1.2f else 1.9f - ((pitch + 90f) / 180f) * (1.9f - 1.2f)
         val yOffset = yOffsetBase * scale

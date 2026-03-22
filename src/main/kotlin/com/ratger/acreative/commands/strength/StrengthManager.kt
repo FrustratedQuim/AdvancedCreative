@@ -39,7 +39,7 @@ class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) 
     override fun applyAttribute(player: Player, value: Double) {
         removeAttribute(player)
 
-        player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.addModifier(
+        player.getAttribute(Attribute.ATTACK_DAMAGE)?.addModifier(
             AttributeModifier(
                 NamespacedKey(hooker.plugin, "strength_mod"),
                 value,
@@ -50,10 +50,10 @@ class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) 
 
     override fun removeAttribute(player: Player) {
         val modifierKey = NamespacedKey(hooker.plugin, "strength_mod")
-        player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)
+        player.getAttribute(Attribute.ATTACK_DAMAGE)
             ?.modifiers
             ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.GENERIC_ATTACK_DAMAGE)?.removeModifier(it) }
+            ?.let { player.getAttribute(Attribute.ATTACK_DAMAGE)?.removeModifier(it) }
     }
 
 }

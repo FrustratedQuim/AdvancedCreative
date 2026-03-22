@@ -352,7 +352,7 @@ class JarManager(private val hooker: FunctionHooker) {
     }
 
     private fun capturePlayerState(player: Player): JarPlayerState {
-        val scaleBase = player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue ?: 1.0
+        val scaleBase = player.getAttribute(Attribute.SCALE)?.baseValue ?: 1.0
         return JarPlayerState(
             allowFlight = player.allowFlight,
             isFlying = player.isFlying,
@@ -373,7 +373,7 @@ class JarManager(private val hooker: FunctionHooker) {
         player.flySpeed = state.flySpeed
         player.fallDistance = 0f
         if (restoreScale) {
-            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = state.scaleBase
+            player.getAttribute(Attribute.SCALE)?.baseValue = state.scaleBase
         }
     }
 
@@ -381,7 +381,7 @@ class JarManager(private val hooker: FunctionHooker) {
         val targetScale = sourceScale * SCALE_MULTIPLIER
         val resizeManager = hooker.resizeManagerOrNull()
         if (resizeManager == null) {
-            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = targetScale
+            player.getAttribute(Attribute.SCALE)?.baseValue = targetScale
             return
         }
         resizeManager.smoothTransitionScale(player, targetScale)
@@ -390,7 +390,7 @@ class JarManager(private val hooker: FunctionHooker) {
     private fun applyScaleRestoreSmooth(player: Player, targetScale: Double, onComplete: () -> Unit) {
         val resizeManager = hooker.resizeManagerOrNull()
         if (resizeManager == null) {
-            player.getAttribute(Attribute.GENERIC_SCALE)?.baseValue = targetScale
+            player.getAttribute(Attribute.SCALE)?.baseValue = targetScale
             onComplete()
             return
         }
@@ -399,23 +399,21 @@ class JarManager(private val hooker: FunctionHooker) {
 
     private fun createJarItem(targetUuid: UUID, targetName: String, constFlag: Boolean): ItemStack {
         val item = ItemStack(Material.DECORATED_POT)
-        val meta = item.itemMeta
-        meta.displayName(miniMessage.deserialize("<!i><gradient:#FF02CD:#FFF000>Банка с</gradient> <#00FF40>$targetName"))
-
-        val pdc = meta.persistentDataContainer
-        pdc.set(keyMarker, PersistentDataType.INTEGER, 1)
-        pdc.set(keyTargetUuid, PersistentDataType.STRING, targetUuid.toString())
-        pdc.set(keyTargetName, PersistentDataType.STRING, targetName)
-        pdc.set(keyConst, PersistentDataType.STRING, constFlag.toString())
-
-        item.itemMeta = meta
+        item.editMeta { meta ->
+            meta.displayName(miniMessage.deserialize("<!i><shadow:#000000:1><gradient:#FF02CD:#FFF000>Банка с</gradient> <#00FF40>$targetName</shadow>"))
+        }
+        item.editPersistentDataContainer { pdc ->
+            pdc.set(keyMarker, PersistentDataType.INTEGER, 1)
+            pdc.set(keyTargetUuid, PersistentDataType.STRING, targetUuid.toString())
+            pdc.set(keyTargetName, PersistentDataType.STRING, targetName)
+            pdc.set(keyConst, PersistentDataType.STRING, constFlag.toString())
+        }
         return item
     }
 
     private fun readJarData(item: ItemStack?): JarItemData? {
         if (item == null || item.type != Material.DECORATED_POT) return null
-        val meta = item.itemMeta ?: return null
-        val pdc = meta.persistentDataContainer
+        val pdc = item.persistentDataContainer
         if (pdc.get(keyMarker, PersistentDataType.INTEGER) != 1) return null
 
         val target = pdc.get(keyTargetUuid, PersistentDataType.STRING)?.let {

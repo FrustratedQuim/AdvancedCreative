@@ -51,8 +51,8 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     )
     private val noSwingAnimationEntities = setOf(
         EntityType.AREA_EFFECT_CLOUD,
-        EntityType.BOAT,
-        EntityType.CHEST_BOAT,
+        EntityType.OAK_BOAT,
+        EntityType.OAK_CHEST_BOAT,
         EntityType.MINECART,
         EntityType.SPAWNER_MINECART,
         EntityType.HOPPER_MINECART,

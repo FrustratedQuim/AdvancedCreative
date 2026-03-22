@@ -45,7 +45,7 @@ class EntityManager(
             stand.isCustomNameVisible = false
             stand.isPersistent = false
             stand.setRotation(yaw, 0f)
-            stand.getAttribute(Attribute.GENERIC_MAX_HEALTH)?.baseValue = 1.0
+            stand.getAttribute(Attribute.MAX_HEALTH)?.baseValue = 1.0
         }
     }
 
