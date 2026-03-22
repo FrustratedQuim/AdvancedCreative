@@ -27,8 +27,7 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun freezePlayer(player: Player, initiator: Player? = null) {
         if (player.gameMode == GameMode.SPECTATOR) {
-            hooker.playerStateManager.deactivateState(player, PlayerStateType.FROZEN)
-            return
+            player.gameMode = GameMode.CREATIVE
         }
 
         if (sessions.hasSession(player)) {

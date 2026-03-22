@@ -8,6 +8,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.GameMode
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
@@ -52,20 +53,22 @@ class JarManager(private val hooker: FunctionHooker) {
         val existing = sessions.getByTarget(target.uniqueId)
         if (existing != null) {
             if (existing.ownerUuid == owner.uniqueId) {
-                releaseSession(target.uniqueId)
+                releaseSession(target.uniqueId, notifyOwner = true)
             } else {
                 hooker.messageManager.sendChat(owner, MessageKey.ERROR_JAR_TARGET_BUSY)
             }
             return
         }
 
-        if (owner.inventory.itemInMainHand.type != Material.AIR) {
+        val freeHotbarSlot = owner.inventory.firstEmptyHotbarSlot()
+        if (freeHotbarSlot == null) {
             hooker.messageManager.sendChat(owner, MessageKey.ERROR_JAR_HAND_NOT_EMPTY)
             return
         }
 
         val constFlag = args.drop(1).any { it.equals("-const", ignoreCase = true) }
-        owner.inventory.setItemInMainHand(createJarItem(owner.uniqueId, target.uniqueId, target.name, constFlag))
+        owner.inventory.setItem(freeHotbarSlot, createJarItem(owner.uniqueId, target.uniqueId, target.name, constFlag))
+        owner.inventory.heldItemSlot = freeHotbarSlot
         hooker.messageManager.sendChat(owner, MessageKey.INFO_JAR_ITEM_GIVEN, mapOf("target" to target.name))
     }
 
@@ -198,6 +201,9 @@ class JarManager(private val hooker: FunctionHooker) {
         jailedAnchor: Location
     ) {
         clearJarConflictingState(target)
+        if (target.gameMode == GameMode.SPECTATOR) {
+            target.gameMode = GameMode.CREATIVE
+        }
         hooker.playerStateManager.activateState(target, PlayerStateType.JARRED)
 
         val savedState = capturePlayerState(target)
@@ -256,7 +262,7 @@ class JarManager(private val hooker: FunctionHooker) {
         hooker.messageManager.sendChat(target, MessageKey.INFO_JAR_TARGET_APPLIED)
     }
 
-    private fun releaseSession(targetUuid: UUID) {
+    private fun releaseSession(targetUuid: UUID, notifyOwner: Boolean = false) {
         val session = sessions.removeByTarget(targetUuid) ?: return
         hooker.tickScheduler.cancel(session.taskId)
         session.displayEntities.forEach { it.remove() }
@@ -269,7 +275,7 @@ class JarManager(private val hooker: FunctionHooker) {
             hooker.messageManager.sendChat(target, MessageKey.INFO_JAR_TARGET_RELEASED)
         }
 
-        Bukkit.getPlayer(session.ownerUuid)?.let { owner ->
+        Bukkit.getPlayer(session.ownerUuid)?.takeIf { notifyOwner }?.let { owner ->
             val targetName = target?.name ?: session.targetUuid.toString()
             hooker.messageManager.sendChat(owner, MessageKey.INFO_JAR_RELEASED, mapOf("target" to targetName))
         }
@@ -362,3 +368,12 @@ class JarManager(private val hooker: FunctionHooker) {
         private const val ANCHOR_EPSILON_SQUARED = 0.0004
     }
 }
+
+private fun org.bukkit.inventory.PlayerInventory.firstEmptyHotbarSlot(): Int? {
+    for (slot in 0..8) {
+        if (getItem(slot).isNullOrAir()) return slot
+    }
+    return null
+}
+
+private fun ItemStack?.isNullOrAir(): Boolean = this == null || this.type == Material.AIR

@@ -3,6 +3,7 @@ package com.ratger.acreative.commands.grab
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.Particle
 import org.bukkit.Sound
 import org.bukkit.entity.Player
@@ -181,10 +182,13 @@ class GrabManager(private val hooker: FunctionHooker) {
     private fun startSession(holder: Player, target: Player, forcePull: Boolean) {
         clearGrabConflictingState(target)
         clearGrabConflictingState(holder)
-        val targetFlightState = capturePlayerState(target)
+        if (target.gameMode == GameMode.SPECTATOR) {
+            target.gameMode = GameMode.CREATIVE
+        }
 
         hooker.playerStateManager.activateState(holder, PlayerStateType.GRABBING)
         hooker.playerStateManager.activateState(target, PlayerStateType.GRABBED)
+        val targetFlightState = capturePlayerState(target)
 
         hooker.playerStateManager.savePlayerInventory(holder)
 
