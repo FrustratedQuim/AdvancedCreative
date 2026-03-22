@@ -48,7 +48,11 @@ class PacketHandler(private val hooker: FunctionHooker) {
             val handledByGrab = hooker.grabManagerOrNull()?.handleHolderAttack(player, target) == true
             if (handledByGrab) return@runNow
 
-            // Stage 2 (dependent): slap executes only if stage 1 did not consume processing.
+            // Stage 2 (dependent): jar attack follows grab and can "consume" the chain.
+            val handledByJar = hooker.jarManagerOrNull()?.handleJarredAttack(player, target) == true
+            if (handledByJar) return@runNow
+
+            // Stage 3 (dependent): slap executes only if previous stages did not consume processing.
             if (hooker.utils.isSlapping(player)) {
                 hooker.slapManager.applySlap(player, target)
             }

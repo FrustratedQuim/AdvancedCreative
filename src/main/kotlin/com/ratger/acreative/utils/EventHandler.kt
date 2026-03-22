@@ -355,6 +355,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
+        if (target != null && hooker.jarManager.handleJarredAttack(damager, target)) {
+            event.isCancelled = true
+            return
+        }
 
         if (hooker.grabManager.blockGrabbedDamage(damager)) {
             event.isCancelled = true

@@ -165,6 +165,30 @@ class JarManager(private val hooker: FunctionHooker) {
 
     fun blockJarredInteraction(player: Player): Boolean = isJarred(player)
 
+    fun handleJarredAttack(attacker: Player, attackedPlayer: Player): Boolean {
+        if (!hasJarPermission(attacker)) return false
+        if (!sessions.hasTarget(attackedPlayer.uniqueId)) return false
+
+        val launchDirection = attacker.location.direction.clone().normalize().apply {
+            y += JAR_ATTACK_UPWARD_BOOST
+            multiply(1.0)
+        }
+
+        releaseSession(
+            targetUuid = attackedPlayer.uniqueId,
+            cause = ReleaseCause.JAR_ATTACK,
+            waitForScaleRestore = false
+        )
+
+        hooker.tickScheduler.runLater(1L) {
+            if (attackedPlayer.isOnline) {
+                attackedPlayer.velocity = launchDirection
+            }
+        }
+
+        return true
+    }
+
     fun cleanupSessionsForPlayer(playerId: UUID) {
         releaseSession(playerId, cause = ReleaseCause.CLEANUP, waitForScaleRestore = false)
     }
@@ -448,7 +472,8 @@ class JarManager(private val hooker: FunctionHooker) {
         GENERIC(true),
         SUPPORT_BROKEN(true),
         CONFLICTING_STATE(false),
-        CLEANUP(false)
+        CLEANUP(false),
+        JAR_ATTACK(false)
     }
 
     private fun hasJarPermission(player: Player): Boolean {
@@ -515,6 +540,7 @@ class JarManager(private val hooker: FunctionHooker) {
         private const val SCALE_MULTIPLIER = 0.45
         private const val ANCHOR_EPSILON_SQUARED = 0.0004
         private const val LAUNCH_UP_VELOCITY = 0.75
+        private const val JAR_ATTACK_UPWARD_BOOST = 1.0
     }
 }
 
