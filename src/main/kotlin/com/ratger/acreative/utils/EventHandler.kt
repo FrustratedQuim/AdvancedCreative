@@ -7,6 +7,7 @@ import org.bukkit.Material
 import org.bukkit.block.data.type.Bed
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -15,6 +16,7 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.entity.EntityToggleSwimEvent
 import org.bukkit.event.entity.PlayerDeathEvent
@@ -348,25 +350,41 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
-        val damager = event.damager as? Player ?: return
+        val damagerPlayer = resolveDamagerPlayer(event.damager)
+        val directDamager = event.damager as? Player
 
         val target = event.entity as? Player
-        if (target != null && hooker.grabManager.handleHolderAttack(damager, target)) {
+        if (target != null && directDamager != null && hooker.grabManager.handleHolderAttack(directDamager, target)) {
             event.isCancelled = true
             return
         }
-        if (target != null && hooker.jarManager.handleJarredAttack(damager, target)) {
-            event.isCancelled = true
-            return
-        }
-
-        if (hooker.grabManager.blockGrabbedDamage(damager)) {
+        if (target != null && damagerPlayer != null && hooker.jarManager.handleJarredAttack(damagerPlayer, target)) {
             event.isCancelled = true
             return
         }
 
-        if (hooker.jarManager.blockJarredInteraction(damager)) {
+        if (directDamager != null && hooker.grabManager.blockGrabbedDamage(directDamager)) {
             event.isCancelled = true
+            return
+        }
+
+        if (damagerPlayer != null && hooker.jarManager.blockJarredInteraction(damagerPlayer)) {
+            event.isCancelled = true
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onProjectileHit(event: ProjectileHitEvent) {
+        val shooter = event.entity.shooter as? Player ?: return
+        val target = event.hitEntity as? Player ?: return
+        hooker.jarManager.handleJarredAttack(shooter, target)
+    }
+
+    private fun resolveDamagerPlayer(damager: org.bukkit.entity.Entity): Player? {
+        return when (damager) {
+            is Player -> damager
+            is Projectile -> damager.shooter as? Player
+            else -> null
         }
     }
 

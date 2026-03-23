@@ -27,6 +27,7 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     private val sessionRegistry = SitSessionRegistry()
+    private val sitheadConflictPolicy = SitheadConflictPolicy(hooker)
     private val lastInteract: MutableMap<UUID, Long> = mutableMapOf()
 
     fun canSit(player: Player): Boolean {
@@ -71,6 +72,7 @@ class SitManager(private val hooker: FunctionHooker) {
         lastInteract[player.uniqueId] = currentTime
 
         var finalTarget = target ?: return
+        if (hasTargetStateConflict(player, finalTarget)) return
         var currentTarget: Player? = target
         val checkedPlayers = mutableSetOf<Player>()
         val maxDepth = 10
@@ -78,6 +80,7 @@ class SitManager(private val hooker: FunctionHooker) {
         while (currentTarget != null && depth < maxDepth) {
             if (currentTarget in checkedPlayers) return
             checkedPlayers.add(currentTarget)
+            if (hasTargetStateConflict(player, currentTarget)) return
             if (currentTarget == player) return
             finalTarget = currentTarget
             currentTarget = getHeadPassenger(currentTarget)
@@ -96,6 +99,7 @@ class SitManager(private val hooker: FunctionHooker) {
             if (baseTarget == null) break
             if (baseTarget in baseCheckedPlayers) return
             baseCheckedPlayers.add(baseTarget)
+            if (hasTargetStateConflict(player, baseTarget)) return
             if (baseTarget == player) return
             if (hooker.utils.isHiddenFromPlayer(baseTarget, player)) {
                 hooker.messageManager.sendChat(sender ?: player, MessageKey.SITHEAD_HIDDEN_BY_ONE)
@@ -248,6 +252,10 @@ class SitManager(private val hooker: FunctionHooker) {
             if (stand.location.distanceSquared(location) < EPSILON) return true
         }
         return false
+    }
+
+    private fun hasTargetStateConflict(player: Player, target: Player): Boolean {
+        return sitheadConflictPolicy.hasConflict(player, target)
     }
 
     fun handleRightClickBlock(player: Player, block: Block): Boolean {
