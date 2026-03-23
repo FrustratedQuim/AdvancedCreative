@@ -27,7 +27,7 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
         val world = requireNotNull(visualOrigin.world) { "Jar visual origin must have world" }
 
         val rootAnchor = world.spawnEntity(visualOrigin, EntityType.BLOCK_DISPLAY) as BlockDisplay
-        rootAnchor.setBlock(Material.AIR.createBlockData())
+        rootAnchor.block = Material.AIR.createBlockData()
         rootAnchor.billboard = Display.Billboard.FIXED
         rootAnchor.interpolationDelay = 0
         rootAnchor.interpolationDuration = 0
@@ -45,8 +45,6 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
         }
 
         val parts = JarDisplayDefinition.parts.mapIndexed { index, part ->
-            hooker.plugin.logger.info("[JarDisplay] part #$index texture=${part.textureValue.take(24)}...")
-
             val display = world.spawnEntity(visualOrigin, EntityType.ITEM_DISPLAY) as ItemDisplay
             display.setItemStack(createHead(part.textureValue))
             display.itemDisplayTransform = ItemDisplay.ItemDisplayTransform.NONE
