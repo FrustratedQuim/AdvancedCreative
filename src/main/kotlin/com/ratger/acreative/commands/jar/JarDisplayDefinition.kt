@@ -3,7 +3,25 @@ package com.ratger.acreative.commands.jar
 internal data class JarDisplayPart(
     val textureValue: String,
     val matrix: FloatArray
-)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as JarDisplayPart
+
+        if (textureValue != other.textureValue) return false
+        if (!matrix.contentEquals(other.matrix)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = textureValue.hashCode()
+        result = 31 * result + matrix.contentHashCode()
+        return result
+    }
+}
 
 internal object JarDisplayDefinition {
     const val TEXTURE_A = "ewogICJ0aW1lc3RhbXAiIDogMTc1MzI4MDU1ODQzNSwKICAicHJvZmlsZUlkIiA6ICJlNzM4MTYzZTYwM2M0MTFkOTg4MzNiYzkyZTI4Y2IyYSIsCiAgInByb2ZpbGVOYW1lIiA6ICJYZW5va3JhdGVzUml0dmEiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNGYxODgyZTUwNjQ0M2ZkOGM0M2NmZWY3YjQxMjRjOTg5N2M5ZWJiYjVjNjFmN2ZjNzZhYzE3YmU1MzkzMGRlZSIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9"
@@ -22,22 +40,22 @@ internal object JarDisplayDefinition {
     val parts: List<JarDisplayPart> = listOf(
         JarDisplayPart(TEXTURE_A, floatArrayOf(1.1765f, 0f, 0f, -1.06e-8f, 0f, 0f, -18824f, -5000.125f, 0f, 1.1765f, 0f, 0.29375f, 0f, 0f, 0f, 1f)),
         JarDisplayPart(TEXTURE_A, floatArrayOf(1.1765f, 0f, 0f, -1.06e-8f, 0f, 0f, -18824f, -4999.125f, 0f, 1.1765f, 0f, 0.29375f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_B, floatArrayOf(-0.9412f, 0f, 0f, 0.2500000085f, 0f, 0.9412f, 0f, 0.48530625f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_C, floatArrayOf(-0.9412f, 0f, 0f, -0.2499999915f, 0f, 0.9412f, 0f, 0.48530625f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_D, floatArrayOf(-0.9412f, 0f, 0f, -0.2499999915f, 0f, 0.9412f, 0f, 0.98530625f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_E, floatArrayOf(-0.9412f, 0f, 0f, 0.2500000085f, 0f, 0.9412f, 0f, 0.98530625f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_F, floatArrayOf(-0.9412f, 0f, 0f, 0.2500000085f, 0f, 0.9412f, 0f, 0.48530625f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_G, floatArrayOf(-0.9412f, 0f, 0f, -0.2499999915f, 0f, 0.9412f, 0f, 0.48530625f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_H, floatArrayOf(-0.9412f, 0f, 0f, -0.2499999915f, 0f, 0.9412f, 0f, 0.98530625f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_I, floatArrayOf(-0.9412f, 0f, 0f, 0.2500000085f, 0f, 0.9412f, 0f, 0.98530625f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_B, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.48530625f, -0.9412f, 0f, 0f, 0.2500000085f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_C, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.48530625f, -0.9412f, 0f, 0f, -0.2499999915f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_D, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.98530625f, -0.9412f, 0f, 0f, -0.2499999915f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_E, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.98530625f, -0.9412f, 0f, 0f, 0.2500000085f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_F, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.48530625f, -0.9412f, 0f, 0f, 0.2500000085f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_G, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.48530625f, -0.9412f, 0f, 0f, -0.2499999915f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_H, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.98530625f, -0.9412f, 0f, 0f, -0.2499999915f, 0f, 0f, 0f, 1f)),
-        JarDisplayPart(TEXTURE_I, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.98530625f, -0.9412f, 0f, 0f, 0.2500000085f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_B, floatArrayOf(-0.9412f, 0f, 0f, 0.25f, 0f, 0.9412f, 0f, 0.48530626f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_C, floatArrayOf(-0.9412f, 0f, 0f, -0.24999999f, 0f, 0.9412f, 0f, 0.48530626f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_D, floatArrayOf(-0.9412f, 0f, 0f, -0.24999999f, 0f, 0.9412f, 0f, 0.98530626f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_E, floatArrayOf(-0.9412f, 0f, 0f, 0.25f, 0f, 0.9412f, 0f, 0.98530626f, 0f, 0f, -18824f, -5000.4375f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_F, floatArrayOf(-0.9412f, 0f, 0f, 0.25f, 0f, 0.9412f, 0f, 0.48530626f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_G, floatArrayOf(-0.9412f, 0f, 0f, -0.24999999f, 0f, 0.9412f, 0f, 0.48530626f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_H, floatArrayOf(-0.9412f, 0f, 0f, -0.24999999f, 0f, 0.9412f, 0f, 0.98530626f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_I, floatArrayOf(-0.9412f, 0f, 0f, 0.25f, 0f, 0.9412f, 0f, 0.98530626f, 0f, 0f, -18824f, -4999.8125f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_B, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.48530626f, -0.9412f, 0f, 0f, 0.25f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_C, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.48530626f, -0.9412f, 0f, 0f, -0.24999999f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_D, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.98530626f, -0.9412f, 0f, 0f, -0.24999999f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_E, floatArrayOf(0f, 0f, 18824f, 5000.4375f, 0f, 0.9412f, 0f, 0.98530626f, -0.9412f, 0f, 0f, 0.25f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_F, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.48530626f, -0.9412f, 0f, 0f, 0.25f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_G, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.48530626f, -0.9412f, 0f, 0f, -0.24999999f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_H, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.98530626f, -0.9412f, 0f, 0f, -0.24999999f, 0f, 0f, 0f, 1f)),
+        JarDisplayPart(TEXTURE_I, floatArrayOf(0f, 0f, 18824f, 4999.8125f, 0f, 0.9412f, 0f, 0.98530626f, -0.9412f, 0f, 0f, 0.25f, 0f, 0f, 0f, 1f)),
         JarDisplayPart(TEXTURE_J, floatArrayOf(0.75f, 0f, 0f, 0f, 0f, 0.25f, 0f, 1.125f, 0f, 0f, 0.75f, 0f, 0f, 0f, 0f, 1f)),
         JarDisplayPart(TEXTURE_K, floatArrayOf(1f, 0f, 0f, 0f, 0f, 0.25f, 0f, 1.25f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)),
         JarDisplayPart(TEXTURE_L, floatArrayOf(0.75f, 0f, 0f, 0f, 0f, 0.125f, 0f, 1.3125f, 0f, 0f, 0.75f, 0f, 0f, 0f, 0f, 1f))
