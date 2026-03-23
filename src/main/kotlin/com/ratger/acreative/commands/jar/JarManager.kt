@@ -18,6 +18,7 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.PlayerInventory
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
 import java.util.UUID
@@ -135,8 +136,6 @@ class JarManager(private val hooker: FunctionHooker) {
 
     fun isJarred(player: Player): Boolean = sessions.hasTarget(player.uniqueId)
 
-    fun blockJarredCommand(player: Player): Boolean = isJarred(player)
-
     fun enforceJarredFlight(player: Player): Boolean {
         if (!isJarred(player)) return false
         player.allowFlight = true
@@ -162,8 +161,6 @@ class JarManager(private val hooker: FunctionHooker) {
             action == Action.LEFT_CLICK_AIR ||
             action == Action.LEFT_CLICK_BLOCK
     }
-
-    fun blockJarredInteraction(player: Player): Boolean = isJarred(player)
 
     fun handleJarredAttack(attacker: Player, attackedPlayer: Player): Boolean {
         if (!hasJarPermission(attacker)) return false
@@ -260,9 +257,7 @@ class JarManager(private val hooker: FunctionHooker) {
         target.fallDistance = 0f
         applyJarScaleSmooth(target, savedState.scaleBase)
         target.teleport(jailedAnchor)
-
-        var taskId = 0
-        taskId = hooker.tickScheduler.runRepeating(0L, 1L) {
+        val taskId: Int = hooker.tickScheduler.runRepeating(0L, 1L) {
             val liveTarget = Bukkit.getPlayer(target.uniqueId)
             if (liveTarget == null || !liveTarget.isOnline || liveTarget.isDead) {
                 releaseSession(target.uniqueId)
@@ -545,7 +540,7 @@ class JarManager(private val hooker: FunctionHooker) {
     }
 }
 
-private fun org.bukkit.inventory.PlayerInventory.firstEmptyHotbarSlot(): Int? {
+private fun PlayerInventory.firstEmptyHotbarSlot(): Int? {
     for (slot in 0..8) {
         if (getItem(slot).isNullOrAir()) return slot
     }

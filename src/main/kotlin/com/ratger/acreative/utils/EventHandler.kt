@@ -111,7 +111,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
-        if (hooker.jarManager.blockJarredInteraction(player)) {
+        if (hooker.jarManager.isJarred(player)) {
             event.isCancelled = true
             return
         }
@@ -332,7 +332,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
-        if (hooker.jarManager.blockJarredInteraction(event.player)) {
+        if (hooker.jarManager.isJarred(event.player)) {
             event.isCancelled = true
         }
     }
@@ -343,7 +343,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
-        if (hooker.jarManager.blockJarredCommand(event.player)) {
+        if (hooker.jarManager.isJarred(event.player)) {
             event.isCancelled = true
         }
     }
@@ -368,7 +368,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
 
-        if (damagerPlayer != null && hooker.jarManager.blockJarredInteraction(damagerPlayer)) {
+        if (damagerPlayer != null && hooker.jarManager.isJarred(damagerPlayer)) {
             event.isCancelled = true
         }
     }
