@@ -118,7 +118,7 @@ class JarManager(private val hooker: FunctionHooker) {
             constFlag = data.constFlag,
             supportBlockLocation = supportBlock.location,
             plannedJarBlockLocation = plannedJarBlock.location,
-            visualOrigin = plannedJarBlock.location.toCenterLocation().add(0.0, -0.5, 0.0),
+            visualOrigin = plannedJarBlock.location.toCenterLocation().add(0.0, JAR_MODEL_Y_OFFSET, 0.0),
             jailedAnchor = plannedJarBlock.location.toCenterLocation().add(0.0, -0.5, 0.0)
         )
 
@@ -541,6 +541,7 @@ class JarManager(private val hooker: FunctionHooker) {
         private const val ANCHOR_EPSILON_SQUARED = 0.0004
         private const val LAUNCH_UP_VELOCITY = 0.75
         private const val JAR_ATTACK_UPWARD_BOOST = 1.0
+        private const val JAR_MODEL_Y_OFFSET = -0.495
     }
 }
 
