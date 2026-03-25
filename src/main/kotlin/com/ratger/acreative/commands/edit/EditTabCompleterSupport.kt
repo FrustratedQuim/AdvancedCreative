@@ -24,6 +24,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "tooltip" -> listOf("enchantments", "attribute_modifiers", "unbreakable", "dyed_color", "can_break", "can_place_on", "trim", "jukebox_playable", "hide_additional_tooltip", "hide_tooltip")
                 "enchant" -> listOf("add", "remove", "clear", "glint", "tooltip")
                 "potion" -> listOf("color", "effect_add", "effect_remove", "effect_clear")
+                "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat")
                 "head" -> listOf("texture", "clear")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()
@@ -48,6 +49,15 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "potion" -> when (args[1].lowercase()) {
                     "color" -> listOf("#FF0000", "clear")
                     "effect_add", "effect_remove" -> parser.effectSuggestions(args[2])
+                    else -> emptyList()
+                }
+                "consumable" -> when (args[1].lowercase()) {
+                    "toggle", "particles", "can_always_eat" -> listOf("on", "off")
+                    "animation" -> listOf("none", "eat", "drink", "block", "bow", "crossbow", "spear", "spyglass", "toot_horn", "brush")
+                    "seconds" -> listOf("1.0", "0.8", "0.2")
+                    "sound" -> listOf("minecraft:entity.wither.spawn", "default")
+                    "nutrition" -> listOf("1", "5", "10")
+                    "saturation" -> listOf("0.1", "1.0", "5.0")
                     else -> emptyList()
                 }
 

@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.edit
 
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
+import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
@@ -37,6 +39,14 @@ sealed interface EditAction {
     data class SetCanPlaceOn(val keys: Set<NamespacedKey>) : EditAction
     data class SetCanBreak(val keys: Set<NamespacedKey>) : EditAction
     data class PotionColor(val rgb: Int?) : EditAction
+    data class ConsumableToggle(val enabled: Boolean) : EditAction
+    data class ConsumableAnimation(val animation: ItemUseAnimation) : EditAction
+    data class ConsumableHasParticles(val value: Boolean) : EditAction
+    data class ConsumableConsumeSeconds(val value: Float) : EditAction
+    data class ConsumableSound(val key: Key?) : EditAction
+    data class FoodNutrition(val value: Int) : EditAction
+    data class FoodSaturation(val value: Float) : EditAction
+    data class FoodCanAlwaysEat(val value: Boolean) : EditAction
     data class PotionEffectAdd(
         val type: PotionEffectType,
         val duration: Int,

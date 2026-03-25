@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.edit
 
+import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
+import net.kyori.adventure.key.Key
 import org.bukkit.Color
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -87,9 +89,50 @@ class EditParsers {
             "potion" -> parsePotion(args)
             "head" -> parseHead(args)
             "attribute" -> parseAttribute(args)
-            "consumable", "death_protection", "tool", "equippable", "remainder", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "consumable" -> parseConsumable(args)
+            "death_protection", "tool", "equippable", "remainder", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
             else -> null
         }
+    }
+
+    private fun parseConsumable(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "toggle" -> EditAction.ConsumableToggle(parseToggle(args.getOrNull(2)) ?: return null)
+            "animation" -> EditAction.ConsumableAnimation(consumableAnimation(args.getOrNull(2) ?: return null) ?: return null)
+            "particles" -> EditAction.ConsumableHasParticles(parseToggle(args.getOrNull(2)) ?: return null)
+            "seconds" -> EditAction.ConsumableConsumeSeconds(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "sound" -> parseConsumableSound(args.getOrNull(2) ?: return null)
+            "nutrition" -> EditAction.FoodNutrition(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "saturation" -> EditAction.FoodSaturation(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "can_always_eat" -> EditAction.FoodCanAlwaysEat(parseToggle(args.getOrNull(2)) ?: return null)
+            else -> null
+        }
+    }
+
+    private fun parseToggle(value: String?): Boolean? = when (value?.lowercase()) {
+        "on" -> true
+        "off" -> false
+        else -> null
+    }
+
+    private fun consumableAnimation(value: String): ItemUseAnimation? = when (value.lowercase()) {
+        "none" -> ItemUseAnimation.NONE
+        "eat" -> ItemUseAnimation.EAT
+        "drink" -> ItemUseAnimation.DRINK
+        "block" -> ItemUseAnimation.BLOCK
+        "bow" -> ItemUseAnimation.BOW
+        "crossbow" -> ItemUseAnimation.CROSSBOW
+        "spear" -> ItemUseAnimation.SPEAR
+        "spyglass" -> ItemUseAnimation.SPYGLASS
+        "toot_horn" -> ItemUseAnimation.TOOT_HORN
+        "brush" -> ItemUseAnimation.BRUSH
+        else -> null
+    }
+
+    private fun parseConsumableSound(value: String): EditAction? {
+        if (value.equals("default", true)) return EditAction.ConsumableSound(null)
+        val key = runCatching { Key.key(value.lowercase()) }.getOrNull() ?: return null
+        return EditAction.ConsumableSound(key)
     }
 
     private fun parseComponent(args: Array<out String>): EditAction? {

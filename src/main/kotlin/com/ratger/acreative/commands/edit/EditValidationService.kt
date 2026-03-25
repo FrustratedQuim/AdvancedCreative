@@ -53,6 +53,20 @@ class EditValidationService {
             is EditAction.PotionColor -> {
                 if (!context.snapshot.isPotion) return fail(player, "Цвет зелий доступен только для potion предметов")
             }
+            is EditAction.ConsumableConsumeSeconds -> {
+                if (!action.value.isFinite()) return fail(player, "consume_seconds должен быть конечным числом")
+                if (action.value <= 0f) return fail(player, "consume_seconds должен быть > 0")
+                if (action.value > 60f) return fail(player, "consume_seconds слишком большой")
+            }
+            is EditAction.FoodNutrition -> {
+                if (action.value < 0) return fail(player, "nutrition не может быть отрицательным")
+                if (action.value > 1000) return fail(player, "nutrition слишком большой")
+            }
+            is EditAction.FoodSaturation -> {
+                if (!action.value.isFinite()) return fail(player, "saturation должен быть конечным числом")
+                if (action.value < 0f) return fail(player, "saturation не может быть отрицательным")
+                if (action.value > 1000f) return fail(player, "saturation слишком большой")
+            }
 
             is EditAction.HeadTextureSet -> {
                 if (!context.snapshot.isHead) return fail(player, "Эта ветка только для player_head")

@@ -1,6 +1,9 @@
 package com.ratger.acreative.commands.edit
 
 import com.destroystokyo.paper.profile.ProfileProperty
+import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.Consumable
+import io.papermc.paper.datacomponent.item.FoodProperties
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
@@ -127,6 +130,68 @@ class EditService(
             is EditAction.TooltipToggle -> toggleFlag(meta, action)
             is EditAction.SetCanPlaceOn -> meta.setPlaceableKeys(action.keys)
             is EditAction.SetCanBreak -> meta.setDestroyableKeys(action.keys)
+            is EditAction.ConsumableToggle -> {
+                if (action.enabled) {
+                    val current = item.getData(DataComponentTypes.CONSUMABLE)
+                    if (current == null) {
+                        item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().build())
+                    }
+                } else {
+                    item.unsetData(DataComponentTypes.CONSUMABLE)
+                    item.unsetData(DataComponentTypes.FOOD)
+                }
+            }
+            is EditAction.ConsumableAnimation -> {
+                val builder = consumableBuilder(item)
+                builder.animation(action.animation)
+                item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            }
+            is EditAction.ConsumableHasParticles -> {
+                val builder = consumableBuilder(item)
+                builder.hasConsumeParticles(action.value)
+                item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            }
+            is EditAction.ConsumableConsumeSeconds -> {
+                val builder = consumableBuilder(item)
+                builder.consumeSeconds(action.value)
+                item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            }
+            is EditAction.ConsumableSound -> {
+                val builder = consumableBuilder(item)
+                if (action.key == null) {
+                    val defaultConsumable = item.type.getDefaultData(DataComponentTypes.CONSUMABLE)
+                    if (defaultConsumable != null) {
+                        builder.sound(defaultConsumable.sound())
+                    } else {
+                        return EditResult(
+                            false,
+                            listOf(mini.deserialize("<yellow>Для этого предмета нельзя восстановить default consumable sound, потому что у material нет prototype consumable.")),
+                            warning = true
+                        )
+                    }
+                } else {
+                    builder.sound(action.key)
+                }
+                item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            }
+            is EditAction.FoodNutrition -> {
+                ensureConsumableData(item)
+                val builder = foodBuilder(item)
+                builder.nutrition(action.value)
+                item.setData(DataComponentTypes.FOOD, builder.build())
+            }
+            is EditAction.FoodSaturation -> {
+                ensureConsumableData(item)
+                val builder = foodBuilder(item)
+                builder.saturation(action.value)
+                item.setData(DataComponentTypes.FOOD, builder.build())
+            }
+            is EditAction.FoodCanAlwaysEat -> {
+                ensureConsumableData(item)
+                val builder = foodBuilder(item)
+                builder.canAlwaysEat(action.value)
+                item.setData(DataComponentTypes.FOOD, builder.build())
+            }
             is EditAction.PotionColor -> {
                 val potionMeta = meta as? PotionMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не potion item")))
                 potionMeta.color = action.rgb?.let(Color::fromRGB)
@@ -216,5 +281,21 @@ class EditService(
 
     private fun withoutItalic(component: net.kyori.adventure.text.Component): net.kyori.adventure.text.Component {
         return component.decoration(TextDecoration.ITALIC, false)
+    }
+
+    private fun consumableBuilder(item: ItemStack): Consumable.Builder {
+        val current = item.getData(DataComponentTypes.CONSUMABLE)
+        return current?.toBuilder() ?: Consumable.consumable()
+    }
+
+    private fun ensureConsumableData(item: ItemStack) {
+        if (item.getData(DataComponentTypes.CONSUMABLE) == null) {
+            item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().build())
+        }
+    }
+
+    private fun foodBuilder(item: ItemStack): FoodProperties.Builder {
+        val current = item.getData(DataComponentTypes.FOOD)
+        return current?.toBuilder() ?: FoodProperties.food()
     }
 }

@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.edit
 
+import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -35,6 +36,20 @@ class EditShowService {
         out += mini.deserialize("<gray>tooltip_style: <white>${runCatching { meta?.tooltipStyle?.asString() ?: "basic" }.getOrDefault("basic")}")
         out += mini.deserialize("<gray>hide_tooltip: <white>${runCatching { meta?.isHideTooltip == true }.getOrDefault(false)}")
         out += mini.deserialize("<gray>enchantment_glint_override: <white>${runCatching { meta?.enchantmentGlintOverride?.toString() ?: "default" }.getOrDefault("default")}")
+        val consumable = item.getData(DataComponentTypes.CONSUMABLE)
+        if (consumable == null) {
+            out += mini.deserialize("<gray>consumable: <white><none>")
+        } else {
+            out += mini.deserialize(
+                "<gray>consumable: <white>seconds=${consumable.consumeSeconds()}, animation=${consumable.animation()}, particles=${consumable.hasConsumeParticles()}, sound=${consumable.sound() ?: "<default>"}"
+            )
+        }
+        val food = item.getData(DataComponentTypes.FOOD)
+        if (food == null) {
+            out += mini.deserialize("<gray>food: <white><none>")
+        } else {
+            out += mini.deserialize("<gray>food: <white>nutrition=${food.nutrition()}, saturation=${food.saturation()}, canAlwaysEat=${food.canAlwaysEat()}")
+        }
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")
