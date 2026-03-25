@@ -76,6 +76,9 @@ commands:
     description: Shows the item String/Numeric ID
     usage: /itemdb
     aliases: [id]
+  edit:
+    description: Edit item in main hand
+    usage: /edit <show|reset|...>
 
 permissions:
   advancedcreative.ahelp:
@@ -164,4 +167,8 @@ permissions:
     default: op
   advancedcreative.slap.bypass:
     description: Prevents slapping the player
+    default: op
+
+  advancedcreative.edit:
+    description: Allows using /edit
     default: op

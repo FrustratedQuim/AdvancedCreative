@@ -17,6 +17,7 @@ cooldowns: # В миллисекундах
   grab:       500
   slap:       500
   itemdb:     500
+  edit:       300
   id:         500
   freeze:     3500
   sneeze:     5000

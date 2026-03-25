@@ -22,7 +22,8 @@ enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     GRAB("grab"),
     SLAP("slap"),
     SITHEAD("sithead"),
-    ITEMDB("itemdb");
+    ITEMDB("itemdb"),
+    EDIT("edit");
 
     companion object {
         private val byId = entries.associateBy { it.id }
