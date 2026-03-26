@@ -28,6 +28,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat", "effect_add", "effect_remove", "effect_clear")
                 "death_protection" -> listOf("toggle", "effect_add", "effect_remove", "effect_clear")
                 "remainder" -> listOf("set", "clear")
+                "lock" -> listOf("set", "clear")
                 "equippable" -> listOf("slot", "clear", "dispensable", "swappable", "damage_on_hurt", "equip_sound", "camera_overlay", "asset_id")
                 "tool" -> listOf("speed", "damage_per_block", "clear")
                 "head" -> listOf("texture", "clear")

@@ -4,8 +4,10 @@ import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
+import org.bukkit.block.Lockable
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
+import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
@@ -76,6 +78,15 @@ class EditShowService {
             }
             out += mini.deserialize("<gray>remainder lore lines: <white>${remainderMeta?.lore()?.size ?: 0}")
             out += mini.deserialize("<gray>remainder enchants: <white>${remainderMeta?.enchants?.size ?: 0}")
+        }
+        val blockStateMeta = meta as? BlockStateMeta
+        val lockable = blockStateMeta?.blockState as? Lockable
+        if (lockable?.isLocked != true) {
+            out += mini.deserialize("<gray>lock: <white><none>")
+        } else {
+            val lockRaw = lockable.lock
+            val lockMaterial = lockRaw.substringBefore('[').takeIf { it.isNotBlank() } ?: "<unknown>"
+            out += mini.deserialize("<gray>lock: <white>material=$lockMaterial, amount=1")
         }
         val equippable = item.getData(DataComponentTypes.EQUIPPABLE)
         if (equippable == null) {

@@ -119,7 +119,15 @@ class EditParsers {
             "remainder" -> parseRemainder(args)
             "equippable" -> parseEquippable(args)
             "tool" -> parseTool(args)
-            "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "lock" -> parseLock(args)
+            else -> null
+        }
+    }
+
+    private fun parseLock(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "set" -> EditAction.LockSetFromOffhand
+            "clear" -> EditAction.LockClear
             else -> null
         }
     }

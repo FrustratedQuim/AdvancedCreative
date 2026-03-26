@@ -74,6 +74,8 @@ sealed interface EditAction {
     data class FoodCanAlwaysEat(val value: Boolean) : EditAction
     data object RemainderSetFromOffhand : EditAction
     data object RemainderClear : EditAction
+    data object LockSetFromOffhand : EditAction
+    data object LockClear : EditAction
 
     data class EquippableSetSlot(val slot: org.bukkit.inventory.EquipmentSlot) : EditAction
     data object EquippableClear : EditAction

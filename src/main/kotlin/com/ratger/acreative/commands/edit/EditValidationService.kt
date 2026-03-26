@@ -3,8 +3,10 @@ package com.ratger.acreative.commands.edit
 import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.block.Lockable
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 
 class EditValidationService {
@@ -151,6 +153,22 @@ class EditValidationService {
                 if (offhand.type == Material.AIR || offhand.amount <= 0) {
                     return fail(player, "Для remainder set держите предмет во второй руке.")
                 }
+            }
+            EditAction.LockSetFromOffhand -> {
+                if (!context.snapshot.isShulker) return fail(player, "Эта ветка только для shulker box item")
+                val offhand = player.inventory.itemInOffHand
+                if (offhand.type == Material.AIR || offhand.amount <= 0) {
+                    return fail(player, "Для lock set держите предмет-ключ во второй руке.")
+                }
+                val blockStateMeta = meta as? BlockStateMeta ?: return fail(player, "Item meta не поддерживает block state (BlockStateMeta)")
+                val state = blockStateMeta.blockState
+                if (state !is Lockable) return fail(player, "Block state этого shulker не поддерживает lock API")
+            }
+            EditAction.LockClear -> {
+                if (!context.snapshot.isShulker) return fail(player, "Эта ветка только для shulker box item")
+                val blockStateMeta = meta as? BlockStateMeta ?: return fail(player, "Item meta не поддерживает block state (BlockStateMeta)")
+                val state = blockStateMeta.blockState
+                if (state !is Lockable) return fail(player, "Block state этого shulker не поддерживает lock API")
             }
 
             else -> Unit

@@ -14,10 +14,12 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.Material
+import org.bukkit.block.Lockable
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.PotionMeta
@@ -75,6 +77,10 @@ class EditService(
 
         if (isDataComponentAction(action)) {
             return applyDataComponentAction(player, action, item)
+        }
+
+        if (action is EditAction.LockSetFromOffhand || action is EditAction.LockClear) {
+            return applyLockAction(player, action, item)
         }
 
         val meta = item.itemMeta ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет редактируемой meta")))
@@ -472,9 +478,34 @@ class EditService(
             is EditAction.ToolSetDamagePerBlock,
             EditAction.ToolClear,
             is EditAction.SetUseCooldown,
-            EditAction.ClearUseCooldown -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+            EditAction.ClearUseCooldown,
+            EditAction.LockSetFromOffhand,
+            EditAction.LockClear -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
 
+        return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
+    }
+
+    private fun applyLockAction(player: Player, action: EditAction, item: ItemStack): EditResult {
+        val meta = item.itemMeta as? BlockStateMeta
+            ?: return EditResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает block state (BlockStateMeta)")))
+        val state = meta.blockState
+        val lockable = state as? Lockable
+            ?: return EditResult(false, listOf(mini.deserialize("<red>Block state предмета не поддерживает lock API")))
+
+        when (action) {
+            EditAction.LockSetFromOffhand -> {
+                val offhandClone = player.inventory.itemInOffHand.clone()
+                lockable.setLockItem(offhandClone)
+            }
+            EditAction.LockClear -> {
+                lockable.setLockItem(null)
+            }
+            else -> return EditResult(false, listOf(mini.deserialize("<red>Некорректное lock действие")))
+        }
+
+        meta.setBlockState(state)
+        item.itemMeta = meta
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
     }
 
