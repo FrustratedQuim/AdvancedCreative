@@ -70,6 +70,8 @@ sealed interface EditAction {
     data class FoodNutrition(val value: Int) : EditAction
     data class FoodSaturation(val value: Float) : EditAction
     data class FoodCanAlwaysEat(val value: Boolean) : EditAction
+    data object RemainderSetFromOffhand : EditAction
+    data object RemainderClear : EditAction
     data class PotionEffectAdd(
         val type: PotionEffectType,
         val duration: Int,

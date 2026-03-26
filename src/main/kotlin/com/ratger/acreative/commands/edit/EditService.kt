@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
+import io.papermc.paper.datacomponent.item.UseRemainder
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
@@ -45,7 +46,7 @@ class EditService(
         validationService.validate(action, context, player)?.let { return it }
 
         val item = context.item.clone()
-        val result = apply(action, item)
+        val result = apply(player, action, item)
         if (!result.ok) return result
 
         targetResolver.markPluginState(item)
@@ -53,7 +54,7 @@ class EditService(
         return result
     }
 
-    private fun apply(action: EditAction, item: ItemStack): EditResult {
+    private fun apply(player: Player, action: EditAction, item: ItemStack): EditResult {
         if (action is EditAction.Reset) {
             return when (action.scope) {
                 "all" -> {
@@ -71,7 +72,7 @@ class EditService(
         }
 
         if (isDataComponentAction(action)) {
-            return applyDataComponentAction(action, item)
+            return applyDataComponentAction(player, action, item)
         }
 
         val meta = item.itemMeta ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет редактируемой meta")))
@@ -97,10 +98,12 @@ class EditService(
             action is EditAction.DeathProtectionEffectClear ||
             action is EditAction.FoodNutrition ||
             action is EditAction.FoodSaturation ||
-            action is EditAction.FoodCanAlwaysEat
+            action is EditAction.FoodCanAlwaysEat ||
+            action is EditAction.RemainderSetFromOffhand ||
+            action is EditAction.RemainderClear
     }
 
-    private fun applyDataComponentAction(action: EditAction, item: ItemStack): EditResult {
+    private fun applyDataComponentAction(player: Player, action: EditAction, item: ItemStack): EditResult {
         when (action) {
             is EditAction.ConsumableToggle -> {
                 if (action.enabled) {
@@ -214,6 +217,13 @@ class EditService(
                 val builder = foodBuilder(item)
                 builder.canAlwaysEat(action.value)
                 item.setData(DataComponentTypes.FOOD, builder.build())
+            }
+            EditAction.RemainderSetFromOffhand -> {
+                val offhandClone = player.inventory.itemInOffHand.clone()
+                item.setData(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(offhandClone))
+            }
+            EditAction.RemainderClear -> {
+                item.unsetData(DataComponentTypes.USE_REMAINDER)
             }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
@@ -344,6 +354,8 @@ class EditService(
             is EditAction.FoodNutrition,
             is EditAction.FoodSaturation,
             is EditAction.FoodCanAlwaysEat,
+            EditAction.RemainderSetFromOffhand,
+            EditAction.RemainderClear,
             is EditAction.ConsumableEffectAdd,
             is EditAction.ConsumableEffectRemove,
             EditAction.ConsumableEffectClear,

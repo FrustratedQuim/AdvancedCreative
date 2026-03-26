@@ -63,6 +63,20 @@ class EditShowService {
         } else {
             out += mini.deserialize("<gray>food: <white>nutrition=${food.nutrition()}, saturation=${food.saturation()}, canAlwaysEat=${food.canAlwaysEat()}")
         }
+        val remainder = item.getData(DataComponentTypes.USE_REMAINDER)
+        if (remainder == null) {
+            out += mini.deserialize("<gray>remainder: <white><none>")
+        } else {
+            val remainderItem = remainder.transformInto()
+            val remainderMeta = remainderItem.itemMeta
+            out += mini.deserialize("<gray>remainder: <white>${remainderItem.type.key} x${remainderItem.amount}")
+            val remainderName = remainderMeta?.displayName()?.let(plain::serialize)
+            if (!remainderName.isNullOrBlank()) {
+                out += mini.deserialize("<gray>remainder name: <white>$remainderName")
+            }
+            out += mini.deserialize("<gray>remainder lore lines: <white>${remainderMeta?.lore()?.size ?: 0}")
+            out += mini.deserialize("<gray>remainder enchants: <white>${remainderMeta?.enchants?.size ?: 0}")
+        }
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")

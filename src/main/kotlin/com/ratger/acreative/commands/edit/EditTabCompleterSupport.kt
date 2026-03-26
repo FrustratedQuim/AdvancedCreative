@@ -27,6 +27,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "potion" -> listOf("color", "effect_add", "effect_remove", "effect_clear")
                 "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat", "effect_add", "effect_remove", "effect_clear")
                 "death_protection" -> listOf("toggle", "effect_add", "effect_remove", "effect_clear")
+                "remainder" -> listOf("set", "clear")
                 "head" -> listOf("texture", "clear")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()

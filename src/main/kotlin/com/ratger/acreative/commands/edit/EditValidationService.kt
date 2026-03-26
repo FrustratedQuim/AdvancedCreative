@@ -2,6 +2,7 @@ package com.ratger.acreative.commands.edit
 
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.minimessage.MiniMessage
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.meta.Damageable
 
@@ -101,6 +102,12 @@ class EditValidationService {
             is EditAction.AttributeAdd, is EditAction.AttributeClear, is EditAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {
                     return fail(player, "attribute modifiers в этой команде доступны только для armor items")
+                }
+            }
+            EditAction.RemainderSetFromOffhand -> {
+                val offhand = player.inventory.itemInOffHand
+                if (offhand.type == Material.AIR || offhand.amount <= 0) {
+                    return fail(player, "Для remainder set держите предмет во второй руке.")
                 }
             }
 

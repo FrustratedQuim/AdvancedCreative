@@ -103,7 +103,16 @@ class EditParsers {
             "attribute" -> parseAttribute(args)
             "consumable" -> parseConsumable(args)
             "death_protection" -> parseDeathProtection(args)
-            "tool", "equippable", "remainder", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "remainder" -> parseRemainder(args)
+            "tool", "equippable", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            else -> null
+        }
+    }
+
+    private fun parseRemainder(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "set" -> EditAction.RemainderSetFromOffhand
+            "clear" -> EditAction.RemainderClear
             else -> null
         }
     }
