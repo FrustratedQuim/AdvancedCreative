@@ -9,6 +9,7 @@ import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.Player
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.potion.PotionEffectType
@@ -53,6 +54,17 @@ class EditParsers {
         "add_number" -> AttributeModifier.Operation.ADD_NUMBER
         "add_scalar", "add_multiplied_base" -> AttributeModifier.Operation.ADD_SCALAR
         "multiply_scalar_1", "add_multiplied_total" -> AttributeModifier.Operation.MULTIPLY_SCALAR_1
+        else -> null
+    }
+
+
+    fun equippableSlot(input: String): EquipmentSlot? = when (input.lowercase()) {
+        "head" -> EquipmentSlot.HEAD
+        "chest" -> EquipmentSlot.CHEST
+        "legs" -> EquipmentSlot.LEGS
+        "feet" -> EquipmentSlot.FEET
+        "mainhand" -> EquipmentSlot.HAND
+        "offhand" -> EquipmentSlot.OFF_HAND
         else -> null
     }
 
@@ -104,7 +116,44 @@ class EditParsers {
             "consumable" -> parseConsumable(args)
             "death_protection" -> parseDeathProtection(args)
             "remainder" -> parseRemainder(args)
-            "tool", "equippable", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "equippable" -> parseEquippable(args)
+            "tool", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            else -> null
+        }
+    }
+
+
+    private fun parseEquippable(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "slot" -> EditAction.EquippableSetSlot(equippableSlot(args.getOrNull(2) ?: return null) ?: return null)
+            "clear" -> EditAction.EquippableClear
+            "dispensable" -> EditAction.EquippableSetDispensable(parseToggle(args.getOrNull(2)) ?: return null)
+            "swappable" -> EditAction.EquippableSetSwappable(parseToggle(args.getOrNull(2)) ?: return null)
+            "damage_on_hurt" -> EditAction.EquippableSetDamageOnHurt(parseToggle(args.getOrNull(2)) ?: return null)
+            "equip_sound" -> {
+                val value = args.getOrNull(2) ?: return null
+                if (value.equals("default", true)) {
+                    EditAction.EquippableSetEquipSound(null)
+                } else {
+                    EditAction.EquippableSetEquipSound(parseAdventureKey(value) ?: return null)
+                }
+            }
+            "camera_overlay" -> {
+                val value = args.getOrNull(2) ?: return null
+                if (value.equals("clear", true)) {
+                    EditAction.EquippableSetCameraOverlay(null)
+                } else {
+                    EditAction.EquippableSetCameraOverlay(parseAdventureKey(value) ?: return null)
+                }
+            }
+            "asset_id" -> {
+                val value = args.getOrNull(2) ?: return null
+                if (value.equals("clear", true)) {
+                    EditAction.EquippableSetAssetId(null)
+                } else {
+                    EditAction.EquippableSetAssetId(parseAdventureKey(value) ?: return null)
+                }
+            }
             else -> null
         }
     }

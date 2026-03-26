@@ -28,6 +28,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat", "effect_add", "effect_remove", "effect_clear")
                 "death_protection" -> listOf("toggle", "effect_add", "effect_remove", "effect_clear")
                 "remainder" -> listOf("set", "clear")
+                "equippable" -> listOf("slot", "clear", "dispensable", "swappable", "damage_on_hurt", "equip_sound", "camera_overlay", "asset_id")
                 "head" -> listOf("texture", "clear")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()
@@ -69,6 +70,14 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "toggle" -> listOf("on", "off")
                     "effect_add" -> effectKinds()
                     "effect_remove" -> (item?.getData(DataComponentTypes.DEATH_PROTECTION)?.deathEffects()?.indices?.map(Int::toString) ?: emptyList())
+                    else -> emptyList()
+                }
+                "equippable" -> when (args[1].lowercase()) {
+                    "slot" -> listOf("head", "chest", "legs", "feet", "mainhand", "offhand")
+                    "dispensable", "swappable", "damage_on_hurt" -> listOf("on", "off")
+                    "equip_sound" -> listOf("minecraft:entity.wither.spawn", "minecraft:item.armor.equip_netherite", "default")
+                    "camera_overlay" -> listOf("minecraft:misc/spyglass_scope", "clear")
+                    "asset_id" -> listOf("minecraft:netherite", "minecraft:diamond", "clear")
                     else -> emptyList()
                 }
 

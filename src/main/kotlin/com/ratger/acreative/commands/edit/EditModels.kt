@@ -72,6 +72,15 @@ sealed interface EditAction {
     data class FoodCanAlwaysEat(val value: Boolean) : EditAction
     data object RemainderSetFromOffhand : EditAction
     data object RemainderClear : EditAction
+
+    data class EquippableSetSlot(val slot: org.bukkit.inventory.EquipmentSlot) : EditAction
+    data object EquippableClear : EditAction
+    data class EquippableSetDispensable(val value: Boolean) : EditAction
+    data class EquippableSetSwappable(val value: Boolean) : EditAction
+    data class EquippableSetDamageOnHurt(val value: Boolean) : EditAction
+    data class EquippableSetEquipSound(val keyOrDefault: net.kyori.adventure.key.Key?) : EditAction
+    data class EquippableSetCameraOverlay(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
+    data class EquippableSetAssetId(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
     data class PotionEffectAdd(
         val type: PotionEffectType,
         val duration: Int,

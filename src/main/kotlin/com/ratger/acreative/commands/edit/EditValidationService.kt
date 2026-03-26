@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.edit
 
+import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
@@ -102,6 +103,34 @@ class EditValidationService {
             is EditAction.AttributeAdd, is EditAction.AttributeClear, is EditAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {
                     return fail(player, "attribute modifiers в этой команде доступны только для armor items")
+                }
+            }
+            is EditAction.EquippableSetEquipSound -> {
+                val key = action.keyOrDefault
+                if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для equip_sound")
+                if (key == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                    return fail(player, "Для этого material нельзя восстановить default equip sound")
+                }
+            }
+            is EditAction.EquippableSetCameraOverlay -> {
+                val key = action.keyOrNull
+                if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для camera_overlay")
+                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                    return fail(player, "Сначала /edit equippable slot ...")
+                }
+            }
+            is EditAction.EquippableSetAssetId -> {
+                val key = action.keyOrNull
+                if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для asset_id")
+                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                    return fail(player, "Сначала /edit equippable slot ...")
+                }
+            }
+            is EditAction.EquippableSetDispensable,
+            is EditAction.EquippableSetSwappable,
+            is EditAction.EquippableSetDamageOnHurt -> {
+                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                    return fail(player, "Сначала /edit equippable slot ...")
                 }
             }
             EditAction.RemainderSetFromOffhand -> {

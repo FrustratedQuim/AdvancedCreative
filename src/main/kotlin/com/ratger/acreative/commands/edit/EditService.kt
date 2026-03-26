@@ -100,7 +100,15 @@ class EditService(
             action is EditAction.FoodSaturation ||
             action is EditAction.FoodCanAlwaysEat ||
             action is EditAction.RemainderSetFromOffhand ||
-            action is EditAction.RemainderClear
+            action is EditAction.RemainderClear ||
+            action is EditAction.EquippableSetSlot ||
+            action is EditAction.EquippableClear ||
+            action is EditAction.EquippableSetDispensable ||
+            action is EditAction.EquippableSetSwappable ||
+            action is EditAction.EquippableSetDamageOnHurt ||
+            action is EditAction.EquippableSetEquipSound ||
+            action is EditAction.EquippableSetCameraOverlay ||
+            action is EditAction.EquippableSetAssetId
     }
 
     private fun applyDataComponentAction(player: Player, action: EditAction, item: ItemStack): EditResult {
@@ -224,6 +232,67 @@ class EditService(
             }
             EditAction.RemainderClear -> {
                 item.unsetData(DataComponentTypes.USE_REMAINDER)
+            }
+            is EditAction.EquippableSetSlot -> {
+                val current = EditEquippableSupport.existingEquippable(item)
+                val next = if (current == null) {
+                    io.papermc.paper.datacomponent.item.Equippable.equippable(action.slot).build()
+                } else {
+                    EditEquippableSupport.rebuildEquippableWithSlot(current, action.slot)
+                }
+                item.setData(DataComponentTypes.EQUIPPABLE, next)
+            }
+            EditAction.EquippableClear -> {
+                item.unsetData(DataComponentTypes.EQUIPPABLE)
+            }
+            is EditAction.EquippableSetDispensable -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                builder.dispensable(action.value)
+                EditEquippableSupport.apply(item, builder)
+            }
+            is EditAction.EquippableSetSwappable -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                builder.swappable(action.value)
+                EditEquippableSupport.apply(item, builder)
+            }
+            is EditAction.EquippableSetDamageOnHurt -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                builder.damageOnHurt(action.value)
+                EditEquippableSupport.apply(item, builder)
+            }
+            is EditAction.EquippableSetEquipSound -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                if (action.keyOrDefault == null) {
+                    val defaultEquippable = item.type.getDefaultData(DataComponentTypes.EQUIPPABLE)
+                    if (defaultEquippable != null) {
+                        builder.equipSound(defaultEquippable.equipSound())
+                    } else {
+                        return EditResult(
+                            false,
+                            listOf(mini.deserialize("<yellow>Для этого предмета нельзя восстановить default equip sound, потому что у material нет prototype equippable.")),
+                            warning = true
+                        )
+                    }
+                } else {
+                    builder.equipSound(action.keyOrDefault)
+                }
+                EditEquippableSupport.apply(item, builder)
+            }
+            is EditAction.EquippableSetCameraOverlay -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                builder.cameraOverlay(action.keyOrNull)
+                EditEquippableSupport.apply(item, builder)
+            }
+            is EditAction.EquippableSetAssetId -> {
+                val builder = EditEquippableSupport.equippableBuilderOrPrototype(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                builder.assetId(action.keyOrNull)
+                EditEquippableSupport.apply(item, builder)
             }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
@@ -362,7 +431,15 @@ class EditService(
             is EditAction.DeathProtectionToggle,
             is EditAction.DeathProtectionEffectAdd,
             is EditAction.DeathProtectionEffectRemove,
-            EditAction.DeathProtectionEffectClear -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+            EditAction.DeathProtectionEffectClear,
+            is EditAction.EquippableSetSlot,
+            EditAction.EquippableClear,
+            is EditAction.EquippableSetDispensable,
+            is EditAction.EquippableSetSwappable,
+            is EditAction.EquippableSetDamageOnHurt,
+            is EditAction.EquippableSetEquipSound,
+            is EditAction.EquippableSetCameraOverlay,
+            is EditAction.EquippableSetAssetId -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
 
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))

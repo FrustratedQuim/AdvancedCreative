@@ -77,6 +77,17 @@ class EditShowService {
             out += mini.deserialize("<gray>remainder lore lines: <white>${remainderMeta?.lore()?.size ?: 0}")
             out += mini.deserialize("<gray>remainder enchants: <white>${remainderMeta?.enchants?.size ?: 0}")
         }
+        val equippable = item.getData(DataComponentTypes.EQUIPPABLE)
+        if (equippable == null) {
+            out += mini.deserialize("<gray>equippable: <white><none>")
+        } else {
+            out += mini.deserialize(
+                "<gray>equippable: <white>slot=${equippable.slot()}, dispensable=${equippable.dispensable()}, swappable=${equippable.swappable()}, damageOnHurt=${equippable.damageOnHurt()}"
+            )
+            out += mini.deserialize("<gray>equippable sound: <white>${equippable.equipSound()}")
+            out += mini.deserialize("<gray>equippable camera_overlay: <white>${equippable.cameraOverlay() ?: "<none>"}")
+            out += mini.deserialize("<gray>equippable asset_id: <white>${equippable.assetId() ?: "<none>"}")
+        }
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")
