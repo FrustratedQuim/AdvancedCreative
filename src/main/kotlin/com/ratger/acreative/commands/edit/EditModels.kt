@@ -45,6 +45,8 @@ sealed interface EditAction {
     data class SetMaxStackSize(val value: Int?) : EditAction
     data class SetRarity(val value: ItemRarity?) : EditAction
     data class SetTooltipStyle(val value: NamespacedKey?) : EditAction
+    data class SetUseCooldown(val seconds: Float, val cooldownGroup: Key?) : EditAction
+    data object ClearUseCooldown : EditAction
     data class SetHideTooltip(val value: Boolean) : EditAction
     data class SetHideAdditionalTooltip(val value: Boolean) : EditAction
     data class EnchantAdd(val enchantment: Enchantment, val level: Int) : EditAction

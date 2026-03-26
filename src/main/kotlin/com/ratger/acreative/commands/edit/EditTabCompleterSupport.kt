@@ -21,7 +21,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "reset" -> listOf("all", "plugin")
                 "name" -> listOf("set", "clear")
                 "lore" -> listOf("add", "set", "remove", "clear")
-                "component" -> listOf("item_model", "unbreakable", "glider", "max_damage", "damage", "max_stack_size", "rarity", "tooltip_style")
+                "component" -> listOf("item_model", "unbreakable", "glider", "max_damage", "damage", "max_stack_size", "rarity", "tooltip_style", "use_cooldown")
                 "tooltip" -> listOf("enchantments", "attribute_modifiers", "unbreakable", "dyed_color", "can_break", "can_place_on", "trim", "jukebox_playable", "hide_additional_tooltip", "hide_tooltip")
                 "enchant" -> listOf("add", "remove", "clear", "glint", "tooltip")
                 "potion" -> listOf("color", "effect_add", "effect_remove", "effect_clear")
@@ -40,6 +40,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "unbreakable", "glider" -> listOf("on", "off")
                     "rarity" -> listOf("common", "uncommon", "rare", "epic")
                     "tooltip_style" -> listOf("basic", "broken")
+                    "use_cooldown" -> listOf("clear", "0.2", "1.0", "5.0")
                     else -> emptyList()
                 }
 
@@ -100,6 +101,8 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 args[0].equals("enchant", true) && args[1].equals("add", true) -> listOf("1", "2", "3", "5", "10")
                 args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("1", "2", "5", "10")
                 args[0].equals("potion", true) && args[1].equals("effect_add", true) -> listOf("200", "600", "1200")
+                args[0].equals("component", true) && args[1].equals("use_cooldown", true) && args[2].toFloatOrNull() != null ->
+                    listOf("minecraft:test", "minecraft:ender_pearl", "minecraft:custom_group")
                 isEffectAddCommand(args) && args[2].equals("play_sound", true) -> listOf("minecraft:entity.wither.spawn")
                 isEffectAddCommand(args) && args[2].equals("remove_effects", true) -> parser.effectSuggestions(args[3])
                 isEffectAddCommand(args) && args[2].equals("teleport_randomly", true) -> listOf("5.0", "8.0", "16.0")

@@ -32,6 +32,7 @@ class EditParsers {
         return Registry.EFFECT.get(key)
     }
     fun parseAdventureKey(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
+    fun parseCooldownGroup(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
     fun parseBooleanStrict(input: String?): Boolean? = input?.lowercase()?.let {
         when (it) {
             "true" -> true
@@ -247,6 +248,15 @@ class EditParsers {
                     else -> return null
                 }
             )
+            "use_cooldown" -> {
+                if (arg.equals("clear", true)) {
+                    EditAction.ClearUseCooldown
+                } else {
+                    val seconds = arg?.toFloatOrNull() ?: return null
+                    val cooldownGroup = args.getOrNull(3)?.let { parseCooldownGroup(it) ?: return null }
+                    EditAction.SetUseCooldown(seconds, cooldownGroup)
+                }
+            }
             else -> null
         }
     }

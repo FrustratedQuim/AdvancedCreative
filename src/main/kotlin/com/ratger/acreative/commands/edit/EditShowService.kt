@@ -96,6 +96,12 @@ class EditShowService {
                 "<gray>tool: <white>speed=${tool.defaultMiningSpeed()}, damage_per_block=${tool.damagePerBlock()}, rules=${tool.rules().size}"
             )
         }
+        val useCooldown = item.getData(DataComponentTypes.USE_COOLDOWN)
+        if (useCooldown == null) {
+            out += mini.deserialize("<gray>use_cooldown: <white><none>")
+        } else {
+            out += mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
+        }
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")

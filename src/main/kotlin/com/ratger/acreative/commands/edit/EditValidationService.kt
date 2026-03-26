@@ -79,6 +79,12 @@ class EditValidationService {
             is EditAction.ToolSetDamagePerBlock -> {
                 if (action.value < 0) return fail(player, "tool damage_per_block не может быть отрицательным")
             }
+            is EditAction.SetUseCooldown -> {
+                if (!action.seconds.isFinite()) return fail(player, "use_cooldown seconds должен быть конечным числом")
+                if (action.seconds <= 0f) return fail(player, "use_cooldown seconds должен быть > 0")
+                val group = action.cooldownGroup
+                if (group != null && !isValidKey(group.asString())) return fail(player, "Некорректный namespaced key для use_cooldown group")
+            }
             is EditAction.ConsumableEffectAdd -> {
                 val message = EditEffectActionsSupport.validateSpec(action.spec, this)
                 if (message != null) return fail(player, message)

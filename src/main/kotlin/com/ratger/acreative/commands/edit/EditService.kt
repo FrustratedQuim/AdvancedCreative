@@ -6,6 +6,7 @@ import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
 import io.papermc.paper.datacomponent.item.Tool
+import io.papermc.paper.datacomponent.item.UseCooldown
 import io.papermc.paper.datacomponent.item.UseRemainder
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
 import net.kyori.adventure.text.format.TextDecoration
@@ -112,7 +113,9 @@ class EditService(
             action is EditAction.EquippableSetAssetId ||
             action is EditAction.ToolSetDefaultMiningSpeed ||
             action is EditAction.ToolSetDamagePerBlock ||
-            action is EditAction.ToolClear
+            action is EditAction.ToolClear ||
+            action is EditAction.SetUseCooldown ||
+            action is EditAction.ClearUseCooldown
     }
 
     private fun applyDataComponentAction(player: Player, action: EditAction, item: ItemStack): EditResult {
@@ -311,6 +314,14 @@ class EditService(
             EditAction.ToolClear -> {
                 item.unsetData(DataComponentTypes.TOOL)
             }
+            is EditAction.SetUseCooldown -> {
+                val builder = UseCooldown.useCooldown(action.seconds)
+                builder.cooldownGroup(action.cooldownGroup)
+                item.setData(DataComponentTypes.USE_COOLDOWN, builder.build())
+            }
+            EditAction.ClearUseCooldown -> {
+                item.unsetData(DataComponentTypes.USE_COOLDOWN)
+            }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
         }
@@ -459,7 +470,9 @@ class EditService(
             is EditAction.EquippableSetAssetId,
             is EditAction.ToolSetDefaultMiningSpeed,
             is EditAction.ToolSetDamagePerBlock,
-            EditAction.ToolClear -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+            EditAction.ToolClear,
+            is EditAction.SetUseCooldown,
+            EditAction.ClearUseCooldown -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
 
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
