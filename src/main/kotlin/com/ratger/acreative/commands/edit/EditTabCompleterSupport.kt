@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.edit
 
+import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -24,7 +25,8 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "tooltip" -> listOf("enchantments", "attribute_modifiers", "unbreakable", "dyed_color", "can_break", "can_place_on", "trim", "jukebox_playable", "hide_additional_tooltip", "hide_tooltip")
                 "enchant" -> listOf("add", "remove", "clear", "glint", "tooltip")
                 "potion" -> listOf("color", "effect_add", "effect_remove", "effect_clear")
-                "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat")
+                "consumable" -> listOf("toggle", "animation", "particles", "seconds", "sound", "nutrition", "saturation", "can_always_eat", "effect_add", "effect_remove", "effect_clear")
+                "death_protection" -> listOf("toggle", "effect_add", "effect_remove", "effect_clear")
                 "head" -> listOf("texture", "clear")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()
@@ -56,8 +58,16 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "animation" -> listOf("none", "eat", "drink", "block", "bow", "crossbow", "spear", "spyglass", "toot_horn", "brush")
                     "seconds" -> listOf("1.0", "0.8", "0.2")
                     "sound" -> listOf("minecraft:entity.wither.spawn", "default")
+                    "effect_add" -> effectKinds()
+                    "effect_remove" -> (item?.getData(DataComponentTypes.CONSUMABLE)?.consumeEffects()?.indices?.map(Int::toString) ?: emptyList())
                     "nutrition" -> listOf("1", "5", "10")
                     "saturation" -> listOf("0.1", "1.0", "5.0")
+                    else -> emptyList()
+                }
+                "death_protection" -> when (args[1].lowercase()) {
+                    "toggle" -> listOf("on", "off")
+                    "effect_add" -> effectKinds()
+                    "effect_remove" -> (item?.getData(DataComponentTypes.DEATH_PROTECTION)?.deathEffects()?.indices?.map(Int::toString) ?: emptyList())
                     else -> emptyList()
                 }
 
@@ -74,6 +84,10 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 args[0].equals("enchant", true) && args[1].equals("add", true) -> listOf("1", "2", "3", "5", "10")
                 args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("1", "2", "5", "10")
                 args[0].equals("potion", true) && args[1].equals("effect_add", true) -> listOf("200", "600", "1200")
+                isEffectAddCommand(args) && args[2].equals("play_sound", true) -> listOf("minecraft:entity.wither.spawn")
+                isEffectAddCommand(args) && args[2].equals("remove_effects", true) -> parser.effectSuggestions(args[3])
+                isEffectAddCommand(args) && args[2].equals("teleport_randomly", true) -> listOf("5.0", "8.0", "16.0")
+                isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("1.0", "0.5", "0.25")
                 else -> emptyList()
             }
 
@@ -81,14 +95,30 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 listOf("add_number", "add_scalar", "multiply_scalar_1")
             } else if (args[0].equals("potion", true) && args[1].equals("effect_add", true)) {
                 listOf("0", "1", "2")
+            } else if (isEffectAddCommand(args) && args[2].equals("apply_effects", true)) {
+                parser.effectSuggestions(args[4])
             } else emptyList()
 
-            6 -> if (args[0].equals("attribute", true) && args[1].equals("add", true)) {
-                listOf("mainhand", "offhand", "hand", "armor", "feet", "legs", "chest", "head", "body")
-            } else emptyList()
+            6 -> when {
+                args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("mainhand", "offhand", "hand", "armor", "feet", "legs", "chest", "head", "body")
+                isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("100", "200", "600")
+                else -> emptyList()
+            }
+
+            7 -> if (isEffectAddCommand(args) && args[2].equals("apply_effects", true)) listOf("0", "1", "2") else emptyList()
+            8, 9 -> if (isEffectAddCommand(args) && args[2].equals("apply_effects", true)) listOf("true", "false") else emptyList()
 
             else -> emptyList()
         }
+    }
+
+    private fun effectKinds(): List<String> = listOf("clear_all_effects", "play_sound", "remove_effects", "teleport_randomly", "apply_effects")
+
+    private fun isEffectAddCommand(args: Array<out String>): Boolean {
+        if (args.size < 3) return false
+        val root = args[0].lowercase()
+        if (root != "consumable" && root != "death_protection") return false
+        return args[1].equals("effect_add", true)
     }
 
     private fun rootsByItem(material: Material?): List<String> {

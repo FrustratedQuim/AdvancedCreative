@@ -26,6 +26,18 @@ class EditParsers {
 
     fun enchantment(input: String): Enchantment? = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(input.lowercase()))
     fun effect(input: String): PotionEffectType? = Registry.EFFECT.get(NamespacedKey.minecraft(input.lowercase()))
+    fun effectFromToken(input: String): PotionEffectType? {
+        val key = NamespacedKey.fromString(input.lowercase()) ?: NamespacedKey.minecraft(input.lowercase())
+        return Registry.EFFECT.get(key)
+    }
+    fun parseAdventureKey(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
+    fun parseBooleanStrict(input: String?): Boolean? = input?.lowercase()?.let {
+        when (it) {
+            "true" -> true
+            "false" -> false
+            else -> null
+        }
+    }
 
     fun rarity(input: String): ItemRarity? = when (input.lowercase()) {
         "common" -> ItemRarity.COMMON
@@ -90,7 +102,8 @@ class EditParsers {
             "head" -> parseHead(args)
             "attribute" -> parseAttribute(args)
             "consumable" -> parseConsumable(args)
-            "death_protection", "tool", "equippable", "remainder", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "death_protection" -> parseDeathProtection(args)
+            "tool", "equippable", "remainder", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
             else -> null
         }
     }
@@ -102,6 +115,9 @@ class EditParsers {
             "particles" -> EditAction.ConsumableHasParticles(parseToggle(args.getOrNull(2)) ?: return null)
             "seconds" -> EditAction.ConsumableConsumeSeconds(args.getOrNull(2)?.toFloatOrNull() ?: return null)
             "sound" -> parseConsumableSound(args.getOrNull(2) ?: return null)
+            "effect_add" -> EditAction.ConsumableEffectAdd(EditEffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
+            "effect_remove" -> EditAction.ConsumableEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "effect_clear" -> EditAction.ConsumableEffectClear
             "nutrition" -> EditAction.FoodNutrition(args.getOrNull(2)?.toIntOrNull() ?: return null)
             "saturation" -> EditAction.FoodSaturation(args.getOrNull(2)?.toFloatOrNull() ?: return null)
             "can_always_eat" -> EditAction.FoodCanAlwaysEat(parseToggle(args.getOrNull(2)) ?: return null)
@@ -131,8 +147,18 @@ class EditParsers {
 
     private fun parseConsumableSound(value: String): EditAction? {
         if (value.equals("default", true)) return EditAction.ConsumableSound(null)
-        val key = runCatching { Key.key(value.lowercase()) }.getOrNull() ?: return null
+        val key = parseAdventureKey(value) ?: return null
         return EditAction.ConsumableSound(key)
+    }
+
+    private fun parseDeathProtection(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "toggle" -> EditAction.DeathProtectionToggle(parseToggle(args.getOrNull(2)) ?: return null)
+            "effect_add" -> EditAction.DeathProtectionEffectAdd(EditEffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
+            "effect_remove" -> EditAction.DeathProtectionEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "effect_clear" -> EditAction.DeathProtectionEffectClear
+            else -> null
+        }
     }
 
     private fun parseComponent(args: Array<out String>): EditAction? {

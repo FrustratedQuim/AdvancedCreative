@@ -43,6 +43,19 @@ class EditShowService {
             out += mini.deserialize(
                 "<gray>consumable: <white>seconds=${consumable.consumeSeconds()}, animation=${consumable.animation()}, particles=${consumable.hasConsumeParticles()}, sound=${consumable.sound() ?: "<default>"}"
             )
+            out += mini.deserialize("<gray>consumable effects: <white>${consumable.consumeEffects().size}")
+            consumable.consumeEffects().forEachIndexed { index, effect ->
+                out += mini.deserialize("<gray>consumable[$index]: <white>${EditEffectActionsSupport.render(effect)}")
+            }
+        }
+        val deathProtection = item.getData(DataComponentTypes.DEATH_PROTECTION)
+        if (deathProtection == null) {
+            out += mini.deserialize("<gray>death_protection: <white><none>")
+        } else {
+            out += mini.deserialize("<gray>death_protection: <white>enabled, effects=${deathProtection.deathEffects().size}")
+            deathProtection.deathEffects().forEachIndexed { index, effect ->
+                out += mini.deserialize("<gray>death_protection[$index]: <white>${EditEffectActionsSupport.render(effect)}")
+            }
         }
         val food = item.getData(DataComponentTypes.FOOD)
         if (food == null) {

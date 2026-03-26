@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.edit
 
+import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
 import org.bukkit.inventory.meta.Damageable
@@ -10,6 +11,8 @@ class EditValidationService {
     fun fail(player: Player, message: String): EditResult {
         return EditResult(false, listOf(mini.deserialize("<red>$message")))
     }
+
+    fun isValidKey(raw: String): Boolean = runCatching { Key.key(raw) }.isSuccess
 
     fun validate(action: EditAction, context: EditContext, player: Player): EditResult? {
         val meta = context.item.itemMeta
@@ -66,6 +69,24 @@ class EditValidationService {
                 if (!action.value.isFinite()) return fail(player, "saturation должен быть конечным числом")
                 if (action.value < 0f) return fail(player, "saturation не может быть отрицательным")
                 if (action.value > 1000f) return fail(player, "saturation слишком большой")
+            }
+            is EditAction.ConsumableEffectAdd -> {
+                val message = EditEffectActionsSupport.validateSpec(action.spec, this)
+                if (message != null) return fail(player, message)
+            }
+            is EditAction.DeathProtectionEffectAdd -> {
+                val message = EditEffectActionsSupport.validateSpec(action.spec, this)
+                if (message != null) return fail(player, message)
+            }
+            is EditAction.ConsumableEffectRemove -> {
+                val consumable = context.item.getData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE)
+                    ?: return fail(player, "У предмета нет компонента consumable")
+                if (action.index !in consumable.consumeEffects().indices) return fail(player, "Некорректный индекс effect_remove")
+            }
+            is EditAction.DeathProtectionEffectRemove -> {
+                val dp = context.item.getData(io.papermc.paper.datacomponent.DataComponentTypes.DEATH_PROTECTION)
+                    ?: return fail(player, "У предмета нет компонента death_protection")
+                if (action.index !in dp.deathEffects().indices) return fail(player, "Некорректный индекс effect_remove")
             }
 
             is EditAction.HeadTextureSet -> {

@@ -3,7 +3,9 @@ package com.ratger.acreative.commands.edit
 import com.destroystokyo.paper.profile.ProfileProperty
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
+import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
+import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
@@ -86,6 +88,13 @@ class EditService(
             action is EditAction.ConsumableHasParticles ||
             action is EditAction.ConsumableConsumeSeconds ||
             action is EditAction.ConsumableSound ||
+            action is EditAction.ConsumableEffectAdd ||
+            action is EditAction.ConsumableEffectRemove ||
+            action is EditAction.ConsumableEffectClear ||
+            action is EditAction.DeathProtectionToggle ||
+            action is EditAction.DeathProtectionEffectAdd ||
+            action is EditAction.DeathProtectionEffectRemove ||
+            action is EditAction.DeathProtectionEffectClear ||
             action is EditAction.FoodNutrition ||
             action is EditAction.FoodSaturation ||
             action is EditAction.FoodCanAlwaysEat
@@ -140,6 +149,50 @@ class EditService(
                     builder.sound(action.key)
                 }
                 item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            }
+            is EditAction.ConsumableEffectAdd -> {
+                val consumable = item.getData(DataComponentTypes.CONSUMABLE) ?: Consumable.consumable().build()
+                val effects = consumable.consumeEffects().toMutableList()
+                effects += EditEffectActionsSupport.toConsumeEffect(action.spec)
+                item.setData(DataComponentTypes.CONSUMABLE, rebuildConsumable(consumable, effects))
+            }
+            is EditAction.ConsumableEffectRemove -> {
+                val consumable = item.getData(DataComponentTypes.CONSUMABLE) ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет компонента consumable")))
+                val next = EditEffectActionsSupport.removeByIndex(consumable.consumeEffects(), action.index)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Некорректный индекс effect_remove")))
+                item.setData(DataComponentTypes.CONSUMABLE, rebuildConsumable(consumable, next))
+            }
+            EditAction.ConsumableEffectClear -> {
+                val consumable = item.getData(DataComponentTypes.CONSUMABLE) ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет компонента consumable")))
+                item.setData(DataComponentTypes.CONSUMABLE, rebuildConsumable(consumable, EditEffectActionsSupport.clear()))
+            }
+            is EditAction.DeathProtectionToggle -> {
+                if (action.enabled) {
+                    val current = item.getData(DataComponentTypes.DEATH_PROTECTION)
+                    if (current == null) {
+                        item.setData(DataComponentTypes.DEATH_PROTECTION, DeathProtection.deathProtection().build())
+                    }
+                } else {
+                    item.unsetData(DataComponentTypes.DEATH_PROTECTION)
+                }
+            }
+            is EditAction.DeathProtectionEffectAdd -> {
+                val current = item.getData(DataComponentTypes.DEATH_PROTECTION) ?: DeathProtection.deathProtection().build()
+                val effects = current.deathEffects().toMutableList()
+                effects += EditEffectActionsSupport.toConsumeEffect(action.spec)
+                item.setData(DataComponentTypes.DEATH_PROTECTION, deathProtectionOf(effects))
+            }
+            is EditAction.DeathProtectionEffectRemove -> {
+                val current = item.getData(DataComponentTypes.DEATH_PROTECTION)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет компонента death_protection")))
+                val next = EditEffectActionsSupport.removeByIndex(current.deathEffects(), action.index)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Некорректный индекс effect_remove")))
+                item.setData(DataComponentTypes.DEATH_PROTECTION, deathProtectionOf(next))
+            }
+            EditAction.DeathProtectionEffectClear -> {
+                val current = item.getData(DataComponentTypes.DEATH_PROTECTION)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет компонента death_protection")))
+                item.setData(DataComponentTypes.DEATH_PROTECTION, deathProtectionOf(EditEffectActionsSupport.clear()))
             }
 
             is EditAction.FoodNutrition -> {
@@ -290,7 +343,14 @@ class EditService(
             is EditAction.ConsumableSound,
             is EditAction.FoodNutrition,
             is EditAction.FoodSaturation,
-            is EditAction.FoodCanAlwaysEat -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+            is EditAction.FoodCanAlwaysEat,
+            is EditAction.ConsumableEffectAdd,
+            is EditAction.ConsumableEffectRemove,
+            EditAction.ConsumableEffectClear,
+            is EditAction.DeathProtectionToggle,
+            is EditAction.DeathProtectionEffectAdd,
+            is EditAction.DeathProtectionEffectRemove,
+            EditAction.DeathProtectionEffectClear -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
 
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
@@ -344,5 +404,19 @@ class EditService(
     private fun foodBuilder(item: ItemStack): FoodProperties.Builder {
         val current = item.getData(DataComponentTypes.FOOD)
         return current?.toBuilder() ?: FoodProperties.food()
+    }
+
+    private fun rebuildConsumable(current: Consumable, effects: List<ConsumeEffect>): Consumable {
+        val builder = Consumable.consumable()
+            .consumeSeconds(current.consumeSeconds())
+            .animation(current.animation())
+            .hasConsumeParticles(current.hasConsumeParticles())
+            .sound(current.sound())
+            .addEffects(effects)
+        return builder.build()
+    }
+
+    private fun deathProtectionOf(effects: List<ConsumeEffect>): DeathProtection {
+        return DeathProtection.deathProtection().addEffects(effects).build()
     }
 }

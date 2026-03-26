@@ -12,6 +12,22 @@ import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffectType
 
+data class EffectApplyEntrySpec(
+    val type: PotionEffectType,
+    val duration: Int,
+    val amplifier: Int,
+    val showParticles: Boolean,
+    val showIcon: Boolean
+)
+
+sealed interface EffectActionSpec {
+    data object ClearAllEffects : EffectActionSpec
+    data class PlaySound(val key: Key) : EffectActionSpec
+    data class RemoveEffects(val effects: List<PotionEffectType>) : EffectActionSpec
+    data class TeleportRandomly(val diameter: Float) : EffectActionSpec
+    data class ApplyEffects(val probability: Float, val effects: List<EffectApplyEntrySpec>) : EffectActionSpec
+}
+
 sealed interface EditAction {
     data object Show : EditAction
     data class Reset(val scope: String) : EditAction
@@ -44,6 +60,13 @@ sealed interface EditAction {
     data class ConsumableHasParticles(val value: Boolean) : EditAction
     data class ConsumableConsumeSeconds(val value: Float) : EditAction
     data class ConsumableSound(val key: Key?) : EditAction
+    data class ConsumableEffectAdd(val spec: EffectActionSpec) : EditAction
+    data class ConsumableEffectRemove(val index: Int) : EditAction
+    data object ConsumableEffectClear : EditAction
+    data class DeathProtectionToggle(val enabled: Boolean) : EditAction
+    data class DeathProtectionEffectAdd(val spec: EffectActionSpec) : EditAction
+    data class DeathProtectionEffectRemove(val index: Int) : EditAction
+    data object DeathProtectionEffectClear : EditAction
     data class FoodNutrition(val value: Int) : EditAction
     data class FoodSaturation(val value: Float) : EditAction
     data class FoodCanAlwaysEat(val value: Boolean) : EditAction
