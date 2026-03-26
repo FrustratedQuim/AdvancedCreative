@@ -17,7 +17,7 @@ class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
     override fun handle(player: Player, args: Array<out String>) {
         val action = parser.parseAction(args)
         if (action == null) {
-            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all|plugin> | /edit name|lore|component|enchant|tooltip|potion|head|attribute|consumable|death_protection|equippable|remainder ...")
+            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all|plugin> | /edit name|lore|component|enchant|tooltip|potion|head|attribute|consumable|death_protection|equippable|remainder|tool ...")
             return
         }
 

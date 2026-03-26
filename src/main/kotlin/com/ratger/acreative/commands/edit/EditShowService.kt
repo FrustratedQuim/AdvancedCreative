@@ -88,6 +88,14 @@ class EditShowService {
             out += mini.deserialize("<gray>equippable camera_overlay: <white>${equippable.cameraOverlay() ?: "<none>"}")
             out += mini.deserialize("<gray>equippable asset_id: <white>${equippable.assetId() ?: "<none>"}")
         }
+        val tool = item.getData(DataComponentTypes.TOOL)
+        if (tool == null) {
+            out += mini.deserialize("<gray>tool: <white><none>")
+        } else {
+            out += mini.deserialize(
+                "<gray>tool: <white>speed=${tool.defaultMiningSpeed()}, damage_per_block=${tool.damagePerBlock()}, rules=${tool.rules().size}"
+            )
+        }
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")

@@ -81,6 +81,9 @@ sealed interface EditAction {
     data class EquippableSetEquipSound(val keyOrDefault: net.kyori.adventure.key.Key?) : EditAction
     data class EquippableSetCameraOverlay(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
     data class EquippableSetAssetId(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
+    data class ToolSetDefaultMiningSpeed(val value: Float) : EditAction
+    data class ToolSetDamagePerBlock(val value: Int) : EditAction
+    data object ToolClear : EditAction
     data class PotionEffectAdd(
         val type: PotionEffectType,
         val duration: Int,

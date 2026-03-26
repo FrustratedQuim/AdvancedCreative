@@ -29,6 +29,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "death_protection" -> listOf("toggle", "effect_add", "effect_remove", "effect_clear")
                 "remainder" -> listOf("set", "clear")
                 "equippable" -> listOf("slot", "clear", "dispensable", "swappable", "damage_on_hurt", "equip_sound", "camera_overlay", "asset_id")
+                "tool" -> listOf("speed", "damage_per_block", "clear")
                 "head" -> listOf("texture", "clear")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()
@@ -78,6 +79,11 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "equip_sound" -> listOf("minecraft:entity.wither.spawn", "minecraft:item.armor.equip_netherite", "default")
                     "camera_overlay" -> listOf("minecraft:misc/spyglass_scope", "clear")
                     "asset_id" -> listOf("minecraft:netherite", "minecraft:diamond", "clear")
+                    else -> emptyList()
+                }
+                "tool" -> when (args[1].lowercase()) {
+                    "speed" -> listOf("1.0", "5.0", "10.0")
+                    "damage_per_block" -> listOf("0", "1", "5")
                     else -> emptyList()
                 }
 

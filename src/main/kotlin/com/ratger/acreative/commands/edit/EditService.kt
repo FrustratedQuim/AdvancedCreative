@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
+import io.papermc.paper.datacomponent.item.Tool
 import io.papermc.paper.datacomponent.item.UseRemainder
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
 import net.kyori.adventure.text.format.TextDecoration
@@ -108,7 +109,10 @@ class EditService(
             action is EditAction.EquippableSetDamageOnHurt ||
             action is EditAction.EquippableSetEquipSound ||
             action is EditAction.EquippableSetCameraOverlay ||
-            action is EditAction.EquippableSetAssetId
+            action is EditAction.EquippableSetAssetId ||
+            action is EditAction.ToolSetDefaultMiningSpeed ||
+            action is EditAction.ToolSetDamagePerBlock ||
+            action is EditAction.ToolClear
     }
 
     private fun applyDataComponentAction(player: Player, action: EditAction, item: ItemStack): EditResult {
@@ -294,6 +298,19 @@ class EditService(
                 builder.assetId(action.keyOrNull)
                 EditEquippableSupport.apply(item, builder)
             }
+            is EditAction.ToolSetDefaultMiningSpeed -> {
+                val builder = toolBuilder(item)
+                builder.defaultMiningSpeed(action.value)
+                item.setData(DataComponentTypes.TOOL, builder.build())
+            }
+            is EditAction.ToolSetDamagePerBlock -> {
+                val builder = toolBuilder(item)
+                builder.damagePerBlock(action.value)
+                item.setData(DataComponentTypes.TOOL, builder.build())
+            }
+            EditAction.ToolClear -> {
+                item.unsetData(DataComponentTypes.TOOL)
+            }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
         }
@@ -439,7 +456,10 @@ class EditService(
             is EditAction.EquippableSetDamageOnHurt,
             is EditAction.EquippableSetEquipSound,
             is EditAction.EquippableSetCameraOverlay,
-            is EditAction.EquippableSetAssetId -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+            is EditAction.EquippableSetAssetId,
+            is EditAction.ToolSetDefaultMiningSpeed,
+            is EditAction.ToolSetDamagePerBlock,
+            EditAction.ToolClear -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
 
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
@@ -507,5 +527,16 @@ class EditService(
 
     private fun deathProtectionOf(effects: List<ConsumeEffect>): DeathProtection {
         return DeathProtection.deathProtection().addEffects(effects).build()
+    }
+
+    private fun toolBuilder(item: ItemStack): Tool.Builder {
+        val current = item.getData(DataComponentTypes.TOOL)
+        val builder = Tool.tool()
+        if (current != null) {
+            builder.defaultMiningSpeed(current.defaultMiningSpeed())
+            builder.damagePerBlock(current.damagePerBlock())
+            builder.addRules(current.rules())
+        }
+        return builder
     }
 }

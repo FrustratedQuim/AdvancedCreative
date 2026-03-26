@@ -72,6 +72,13 @@ class EditValidationService {
                 if (action.value < 0f) return fail(player, "saturation не может быть отрицательным")
                 if (action.value > 1000f) return fail(player, "saturation слишком большой")
             }
+            is EditAction.ToolSetDefaultMiningSpeed -> {
+                if (!action.value.isFinite()) return fail(player, "tool speed должен быть конечным числом")
+                if (action.value < 0f) return fail(player, "tool speed не может быть отрицательным")
+            }
+            is EditAction.ToolSetDamagePerBlock -> {
+                if (action.value < 0) return fail(player, "tool damage_per_block не может быть отрицательным")
+            }
             is EditAction.ConsumableEffectAdd -> {
                 val message = EditEffectActionsSupport.validateSpec(action.spec, this)
                 if (message != null) return fail(player, message)

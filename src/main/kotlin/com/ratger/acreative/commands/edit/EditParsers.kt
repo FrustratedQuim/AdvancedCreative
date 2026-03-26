@@ -117,7 +117,17 @@ class EditParsers {
             "death_protection" -> parseDeathProtection(args)
             "remainder" -> parseRemainder(args)
             "equippable" -> parseEquippable(args)
-            "tool", "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            "tool" -> parseTool(args)
+            "lock" -> EditAction.Reset("unsupported:${args[0].lowercase()}")
+            else -> null
+        }
+    }
+
+    private fun parseTool(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "speed" -> EditAction.ToolSetDefaultMiningSpeed(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "damage_per_block" -> EditAction.ToolSetDamagePerBlock(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "clear" -> EditAction.ToolClear
             else -> null
         }
     }
