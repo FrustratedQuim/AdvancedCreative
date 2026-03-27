@@ -115,15 +115,13 @@ class EditShowService {
         } else {
             out += mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
         }
-        val containerCapacity = EditContainerSupport.containerCapacity(item.type)
-        val container = item.getData(DataComponentTypes.CONTAINER)
+        val container = EditContainerSupport.readContainerContents(item)
         if (container == null) {
             out += mini.deserialize("<gray>container: <white><none>")
         } else {
-            val effectiveCapacity = containerCapacity ?: container.contents().size
-            val visible = container.contents().take(effectiveCapacity)
+            val visible = container.contents.take(container.capacity)
             val filled = visible.count { it.type != org.bukkit.Material.AIR && it.amount > 0 }
-            out += mini.deserialize("<gray>container: <white>capacity=$effectiveCapacity, filled=$filled")
+            out += mini.deserialize("<gray>container: <white>capacity=${container.capacity}, filled=$filled")
             visible.forEachIndexed { index, stack ->
                 if (stack.type == org.bukkit.Material.AIR || stack.amount <= 0) return@forEachIndexed
                 val stackMeta = stack.itemMeta

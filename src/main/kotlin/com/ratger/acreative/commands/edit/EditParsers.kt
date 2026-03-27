@@ -2,18 +2,16 @@ package com.ratger.acreative.commands.edit
 
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
 import net.kyori.adventure.key.Key
-import org.bukkit.Color
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.potion.PotionEffectType
-import org.bukkit.Material
 
 class EditParsers {
     fun namespacedKey(input: String): NamespacedKey? = NamespacedKey.fromString(input)

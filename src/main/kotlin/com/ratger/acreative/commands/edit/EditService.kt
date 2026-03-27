@@ -5,7 +5,6 @@ import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
-import io.papermc.paper.datacomponent.item.ItemContainerContents
 import io.papermc.paper.datacomponent.item.Tool
 import io.papermc.paper.datacomponent.item.UseCooldown
 import io.papermc.paper.datacomponent.item.UseRemainder
@@ -330,11 +329,12 @@ class EditService(
                 item.unsetData(DataComponentTypes.USE_COOLDOWN)
             }
             is EditAction.ContainerSetSlotFromOffhand -> {
-                val capacity = EditContainerSupport.containerCapacity(item.type)
-                    ?: return EditResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /edit container")))
-                val contents = EditContainerSupport.buildContainerContents(capacity, item.getData(DataComponentTypes.CONTAINER))
-                contents[action.index] = player.inventory.itemInOffHand.clone()
-                item.setData(DataComponentTypes.CONTAINER, ItemContainerContents.containerContents(contents))
+                val snapshot = EditContainerSupport.readContainerContents(item)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /edit container на стабильном BlockState API")))
+                snapshot.contents[action.index] = player.inventory.itemInOffHand.clone()
+                if (!EditContainerSupport.applyContainerContents(item, snapshot.contents)) {
+                    return EditResult(false, listOf(mini.deserialize("<red>Не удалось применить container через стабильный BlockState API")))
+                }
             }
             EditAction.PotClear -> {
                 if (!EditTrimPotSupport.applyDecorations(item, null, null, null, null)) {

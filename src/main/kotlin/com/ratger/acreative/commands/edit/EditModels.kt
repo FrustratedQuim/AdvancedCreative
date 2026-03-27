@@ -9,7 +9,6 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemRarity
-import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.Material
 import org.bukkit.inventory.meta.trim.TrimMaterial
@@ -93,9 +92,9 @@ sealed interface EditAction {
     data class EquippableSetDispensable(val value: Boolean) : EditAction
     data class EquippableSetSwappable(val value: Boolean) : EditAction
     data class EquippableSetDamageOnHurt(val value: Boolean) : EditAction
-    data class EquippableSetEquipSound(val keyOrDefault: net.kyori.adventure.key.Key?) : EditAction
-    data class EquippableSetCameraOverlay(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
-    data class EquippableSetAssetId(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
+    data class EquippableSetEquipSound(val keyOrDefault: Key?) : EditAction
+    data class EquippableSetCameraOverlay(val keyOrNull: Key?) : EditAction
+    data class EquippableSetAssetId(val keyOrNull: Key?) : EditAction
     data class ToolSetDefaultMiningSpeed(val value: Float, val scope: ToolSpeedScope) : EditAction
     data class ToolSetDamagePerBlock(val value: Int) : EditAction
     data object ToolClear : EditAction
@@ -151,5 +150,3 @@ data class EditStateSnapshot(
     val isHead: Boolean,
     val isShulker: Boolean
 )
-
-fun PotionMeta.isPotionItem(): Boolean = true
