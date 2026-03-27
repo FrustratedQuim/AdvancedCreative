@@ -53,7 +53,6 @@ class EditService(
         val result = apply(player, action, item)
         if (!result.ok) return result
 
-        targetResolver.markPluginState(item)
         targetResolver.save(player, item)
         return result
     }
@@ -66,12 +65,7 @@ class EditService(
                     EditResult(true, listOf(mini.deserialize("<green>Состояние предмета очищено (reset all).")))
                 }
 
-                "plugin" -> {
-                    targetResolver.clearPluginState(item)
-                    EditResult(true, listOf(mini.deserialize("<green>Служебное состояние плагина очищено.")))
-                }
-
-                else -> EditResult(false, listOf(mini.deserialize("<red>Использование: /edit reset <all|plugin>")))
+                else -> EditResult(false, listOf(mini.deserialize("<red>Использование: /edit reset <all>")))
             }
         }
 
@@ -511,7 +505,6 @@ class EditService(
         val clean = ItemStack(item.type, item.amount)
         if (item.type == Material.AIR) return
         item.itemMeta = clean.itemMeta
-        targetResolver.clearPluginState(item)
     }
 
     private fun toggleFlag(meta: ItemMeta, action: EditAction.TooltipToggle) {

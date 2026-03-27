@@ -118,8 +118,6 @@ class EditShowService {
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")
         out += mini.deserialize("<gray>flags: <white>${meta?.itemFlags?.joinToString { it.name } ?: "<none>"}")
-        out += mini.deserialize("<gray>plugin-state: <white>${context.snapshot.hasPluginState}")
-
         if (meta is PotionMeta) {
             out += mini.deserialize("<gray>potion color: <white>${meta.color?.asRGB() ?: "<none>"}")
             meta.customEffects.forEachIndexed { index, effect ->

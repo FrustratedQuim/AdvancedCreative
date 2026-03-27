@@ -137,8 +137,7 @@ data class EditStateSnapshot(
     val isPotion: Boolean,
     val isArmor: Boolean,
     val isHead: Boolean,
-    val isShulker: Boolean,
-    val hasPluginState: Boolean
+    val isShulker: Boolean
 )
 
 fun PotionMeta.isPotionItem(): Boolean = true

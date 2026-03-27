@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
 
 class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.EDIT) {
     private val parser = EditParsers()
-    private val resolver = EditTargetResolver(hooker)
+    private val resolver = EditTargetResolver()
     private val show = EditShowService()
     private val validation = EditValidationService()
     private val service = EditService(resolver, validation, show, parser, EditMiniMessage())
@@ -17,7 +17,7 @@ class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
     override fun handle(player: Player, args: Array<out String>) {
         val action = parser.parseAction(args)
         if (action == null) {
-            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all|plugin> | /edit name|lore|component|enchant|tooltip|potion|head|attribute|consumable|death_protection|equippable|remainder|tool|lock ...")
+            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all> | /edit name|lore|component|enchant|tooltip|potion|head|attribute|consumable|death_protection|equippable|remainder|tool|lock ...")
             return
         }
 

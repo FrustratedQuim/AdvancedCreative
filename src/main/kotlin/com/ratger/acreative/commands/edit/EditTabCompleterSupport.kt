@@ -18,7 +18,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
         return when (args.size) {
             1 -> rootsByItem(type).filter { it.startsWith(args[0], true) }
             2 -> when (args[0].lowercase()) {
-                "reset" -> listOf("all", "plugin")
+                "reset" -> listOf("all")
                 "name" -> listOf("set", "clear")
                 "lore" -> listOf("add", "set", "remove", "clear")
                 "component" -> listOf("item_model", "unbreakable", "glider", "max_damage", "damage", "max_stack_size", "rarity", "tooltip_style", "use_cooldown")
