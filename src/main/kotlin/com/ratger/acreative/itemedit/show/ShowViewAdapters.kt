@@ -1,7 +1,8 @@
 @file:Suppress("UnstableApiUsage", "DEPRECATION")
 
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.show
 
+import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
 import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Material
@@ -15,7 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 
-object EditShowViewAdapters {
+object ShowViewAdapters {
     private val plain = PlainTextComponentSerializer.plainText()
 
     data class ConsumableShowView(
@@ -83,15 +84,15 @@ object EditShowViewAdapters {
             consumeSeconds = consumable.consumeSeconds(),
             animation = consumable.animation().toString(),
             hasConsumeParticles = consumable.hasConsumeParticles(),
-            sound = consumable.sound()?.asString(),
-            effects = consumable.consumeEffects().map(EditConsumeEffectsAdapter::render)
+            sound = consumable.sound().asString(),
+            effects = consumable.consumeEffects().map(ConsumeEffectsAdapter::render)
         )
     }
 
     fun deathProtection(item: ItemStack): DeathProtectionShowView? {
         val deathProtection = item.getData(DataComponentTypes.DEATH_PROTECTION) ?: return null
         return DeathProtectionShowView(
-            effects = deathProtection.deathEffects().map(EditConsumeEffectsAdapter::render)
+            effects = deathProtection.deathEffects().map(ConsumeEffectsAdapter::render)
         )
     }
 

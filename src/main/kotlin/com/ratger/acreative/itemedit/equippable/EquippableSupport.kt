@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.equippable
 
 import net.kyori.adventure.key.Key
 import org.bukkit.NamespacedKey
@@ -10,7 +10,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.components.EquippableComponent
 
-object EditEquippableSupport {
+object EquippableSupport {
 
     data class EquippableView(
         val slot: EquipmentSlot,

@@ -1,11 +1,11 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.experimental
 
 import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.inventory.ItemStack
 
-object EditExperimentalEffectSupport {
+object EffectSupport {
     fun consumableEffectIndices(item: ItemStack): List<String> {
         return (consumableEffects(item) ?: emptyList()).indices.map(Int::toString)
     }

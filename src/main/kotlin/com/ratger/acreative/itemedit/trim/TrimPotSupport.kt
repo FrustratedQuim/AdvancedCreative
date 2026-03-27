@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.trim
 
 import org.bukkit.NamespacedKey
 import org.bukkit.Material
@@ -10,7 +10,7 @@ import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.trim.TrimMaterial
 import org.bukkit.inventory.meta.trim.TrimPattern
 
-object EditTrimPotSupport {
+object TrimPotSupport {
     val trimPatternByTemplateId: Map<String, TrimPattern> = linkedMapOf(
         "minecraft:sentry_armor_trim_smithing_template" to TrimPattern.SENTRY,
         "minecraft:vex_armor_trim_smithing_template" to TrimPattern.VEX,

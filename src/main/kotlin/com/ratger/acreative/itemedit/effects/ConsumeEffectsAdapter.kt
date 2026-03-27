@@ -4,8 +4,10 @@
  */
 
 @file:Suppress("UnstableApiUsage")
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.effects
 
+import com.ratger.acreative.itemedit.api.EffectActionSpec
+import com.ratger.acreative.itemedit.api.EffectApplyEntrySpec
 import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
@@ -14,7 +16,7 @@ import io.papermc.paper.registry.set.RegistrySet
 import org.bukkit.Registry
 import org.bukkit.potion.PotionEffect
 
-object EditConsumeEffectsAdapter {
+object ConsumeEffectsAdapter {
     fun addConsumableEffect(current: Consumable, spec: EffectActionSpec): Consumable {
         val effects = current.consumeEffects() + toConsumeEffect(spec)
         return rebuildConsumable(current, effects)
@@ -43,7 +45,7 @@ object EditConsumeEffectsAdapter {
     fun render(effect: ConsumeEffect): String {
         val spec = toEffectActionSpec(effect)
         return if (spec != null) {
-            EditEffectActionsSupport.render(spec)
+            EffectActionsSupport.render(spec)
         } else {
             "<unknown_effect:${effect::class.simpleName ?: "?"}>"
         }

@@ -1,5 +1,10 @@
 package com.ratger.acreative.commands.edit
 
+import com.ratger.acreative.itemedit.api.ItemAction
+import com.ratger.acreative.itemedit.api.ToolSpeedScope
+import com.ratger.acreative.itemedit.attributes.SlotGroupSpec
+import com.ratger.acreative.itemedit.effects.EffectActionsSupport
+import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
@@ -77,33 +82,33 @@ class EditParsers {
         else -> null
     }
 
-    fun slotGroup(input: String): EditSlotGroupSpec? = EditSlotGroupSpec.fromToken(input)
+    fun slotGroup(input: String): SlotGroupSpec? = SlotGroupSpec.fromToken(input)
 
     fun rawTail(args: Array<out String>, from: Int): String = if (args.size <= from) "" else args.copyOfRange(from, args.size).joinToString(" ")
 
-    fun parseAction(args: Array<out String>): EditAction? {
-        if (args.isEmpty()) return EditAction.Show
+    fun parseAction(args: Array<out String>): ItemAction? {
+        if (args.isEmpty()) return ItemAction.Show
         return when (args[0].lowercase()) {
-            "show" -> EditAction.Show
-            "reset" -> EditAction.Reset(args.getOrNull(1)?.lowercase() ?: "")
+            "show" -> ItemAction.Show
+            "reset" -> ItemAction.Reset(args.getOrNull(1)?.lowercase() ?: "")
             "name" -> when (args.getOrNull(1)?.lowercase()) {
-                "set" -> EditAction.NameSet(rawTail(args, 2))
-                "clear" -> EditAction.NameClear
+                "set" -> ItemAction.NameSet(rawTail(args, 2))
+                "clear" -> ItemAction.NameClear
                 else -> null
             }
 
             "lore" -> when (args.getOrNull(1)?.lowercase()) {
-                "add" -> EditAction.LoreAdd(rawTail(args, 2))
-                "set" -> EditAction.LoreSet(args.getOrNull(2)?.toIntOrNull() ?: return null, rawTail(args, 3))
-                "remove" -> EditAction.LoreRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
-                "clear" -> EditAction.LoreClear
+                "add" -> ItemAction.LoreAdd(rawTail(args, 2))
+                "set" -> ItemAction.LoreSet(args.getOrNull(2)?.toIntOrNull() ?: return null, rawTail(args, 3))
+                "remove" -> ItemAction.LoreRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+                "clear" -> ItemAction.LoreClear
                 else -> null
             }
 
             "component" -> parseComponent(args)
-            "id" -> EditAction.SetItemId(material(args.getOrNull(1) ?: return null) ?: return null)
+            "id" -> ItemAction.SetItemId(material(args.getOrNull(1) ?: return null) ?: return null)
             "enchant" -> parseEnchant(args)
-            "tooltip" -> EditAction.TooltipToggle(args.getOrNull(1) ?: return null, args.getOrNull(2)?.lowercase() == "hide")
+            "tooltip" -> ItemAction.TooltipToggle(args.getOrNull(1) ?: return null, args.getOrNull(2)?.lowercase() == "hide")
             "can_place_on" -> parseNamespacedSet(args, true)
             "can_break" -> parseNamespacedSet(args, false)
             "potion" -> parsePotion(args)
@@ -122,59 +127,59 @@ class EditParsers {
         }
     }
 
-    private fun parseContainer(args: Array<out String>): EditAction? {
+    private fun parseContainer(args: Array<out String>): ItemAction? {
         if (args.size != 2) return null
         val index = args.getOrNull(1)?.toIntOrNull() ?: return null
-        return EditAction.ContainerSetSlotFromOffhand(index)
+        return ItemAction.ContainerSetSlotFromOffhand(index)
     }
 
-    private fun parseTrim(args: Array<out String>): EditAction? {
+    private fun parseTrim(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
             "set" -> {
-                val pattern = EditTrimPotSupport.parseTrimPatternTemplateId(args.getOrNull(2) ?: return null) ?: return null
-                val material = EditTrimPotSupport.parseTrimMaterialItemId(args.getOrNull(3) ?: return null) ?: return null
-                EditAction.TrimSet(pattern, material)
+                val pattern = TrimPotSupport.parseTrimPatternTemplateId(args.getOrNull(2) ?: return null) ?: return null
+                val material = TrimPotSupport.parseTrimMaterialItemId(args.getOrNull(3) ?: return null) ?: return null
+                ItemAction.TrimSet(pattern, material)
             }
-            "clear" -> EditAction.TrimClear
+            "clear" -> ItemAction.TrimClear
             else -> null
         }
     }
 
-    private fun parsePot(args: Array<out String>): EditAction? {
+    private fun parsePot(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "clear" -> EditAction.PotClear
+            "clear" -> ItemAction.PotClear
             "set" -> {
-                val back = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(2) ?: return null) ?: return null
-                val left = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
-                val right = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(4) ?: return null) ?: return null
-                val front = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(5) ?: return null) ?: return null
-                EditAction.PotSet(back, left, right, front)
+                val back = TrimPotSupport.parsePotDecorationMaterial(args.getOrNull(2) ?: return null) ?: return null
+                val left = TrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
+                val right = TrimPotSupport.parsePotDecorationMaterial(args.getOrNull(4) ?: return null) ?: return null
+                val front = TrimPotSupport.parsePotDecorationMaterial(args.getOrNull(5) ?: return null) ?: return null
+                ItemAction.PotSet(back, left, right, front)
             }
             "side" -> {
-                val side = EditTrimPotSupport.parsePotSide(args.getOrNull(2) ?: return null) ?: return null
-                val material = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
-                EditAction.PotSetSide(side, material)
+                val side = TrimPotSupport.parsePotSide(args.getOrNull(2) ?: return null) ?: return null
+                val material = TrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
+                ItemAction.PotSetSide(side, material)
             }
             else -> null
         }
     }
 
-    private fun parseLock(args: Array<out String>): EditAction? {
+    private fun parseLock(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "set" -> EditAction.LockSetFromOffhand
-            "clear" -> EditAction.LockClear
+            "set" -> ItemAction.LockSetFromOffhand
+            "clear" -> ItemAction.LockClear
             else -> null
         }
     }
 
-    private fun parseTool(args: Array<out String>): EditAction? {
+    private fun parseTool(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "speed" -> EditAction.ToolSetDefaultMiningSpeed(
+            "speed" -> ItemAction.ToolSetDefaultMiningSpeed(
                 args.getOrNull(2)?.toFloatOrNull() ?: return null,
                 parseToolSpeedScope(args.getOrNull(3)) ?: return null
             )
-            "damage_per_block" -> EditAction.ToolSetDamagePerBlock(args.getOrNull(2)?.toIntOrNull() ?: return null)
-            "clear" -> EditAction.ToolClear
+            "damage_per_block" -> ItemAction.ToolSetDamagePerBlock(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "clear" -> ItemAction.ToolClear
             else -> null
         }
     }
@@ -189,62 +194,62 @@ class EditParsers {
     }
 
 
-    private fun parseEquippable(args: Array<out String>): EditAction? {
+    private fun parseEquippable(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "slot" -> EditAction.EquippableSetSlot(equippableSlot(args.getOrNull(2) ?: return null) ?: return null)
-            "clear" -> EditAction.EquippableClear
-            "dispensable" -> EditAction.EquippableSetDispensable(parseToggle(args.getOrNull(2)) ?: return null)
-            "swappable" -> EditAction.EquippableSetSwappable(parseToggle(args.getOrNull(2)) ?: return null)
-            "damage_on_hurt" -> EditAction.EquippableSetDamageOnHurt(parseToggle(args.getOrNull(2)) ?: return null)
+            "slot" -> ItemAction.EquippableSetSlot(equippableSlot(args.getOrNull(2) ?: return null) ?: return null)
+            "clear" -> ItemAction.EquippableClear
+            "dispensable" -> ItemAction.EquippableSetDispensable(parseToggle(args.getOrNull(2)) ?: return null)
+            "swappable" -> ItemAction.EquippableSetSwappable(parseToggle(args.getOrNull(2)) ?: return null)
+            "damage_on_hurt" -> ItemAction.EquippableSetDamageOnHurt(parseToggle(args.getOrNull(2)) ?: return null)
             "equip_sound" -> {
                 val value = args.getOrNull(2) ?: return null
                 if (value.equals("default", true)) {
-                    EditAction.EquippableSetEquipSound(null)
+                    ItemAction.EquippableSetEquipSound(null)
                 } else {
-                    EditAction.EquippableSetEquipSound(parseAdventureKey(value) ?: return null)
+                    ItemAction.EquippableSetEquipSound(parseAdventureKey(value) ?: return null)
                 }
             }
             "camera_overlay" -> {
                 val value = args.getOrNull(2) ?: return null
                 if (value.equals("clear", true)) {
-                    EditAction.EquippableSetCameraOverlay(null)
+                    ItemAction.EquippableSetCameraOverlay(null)
                 } else {
-                    EditAction.EquippableSetCameraOverlay(parseAdventureKey(value) ?: return null)
+                    ItemAction.EquippableSetCameraOverlay(parseAdventureKey(value) ?: return null)
                 }
             }
             "asset_id" -> {
                 val value = args.getOrNull(2) ?: return null
                 if (value.equals("clear", true)) {
-                    EditAction.EquippableSetAssetId(null)
+                    ItemAction.EquippableSetAssetId(null)
                 } else {
-                    EditAction.EquippableSetAssetId(parseAdventureKey(value) ?: return null)
+                    ItemAction.EquippableSetAssetId(parseAdventureKey(value) ?: return null)
                 }
             }
             else -> null
         }
     }
 
-    private fun parseRemainder(args: Array<out String>): EditAction? {
+    private fun parseRemainder(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "set" -> EditAction.RemainderSetFromOffhand
-            "clear" -> EditAction.RemainderClear
+            "set" -> ItemAction.RemainderSetFromOffhand
+            "clear" -> ItemAction.RemainderClear
             else -> null
         }
     }
 
-    private fun parseConsumable(args: Array<out String>): EditAction? {
+    private fun parseConsumable(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "toggle" -> EditAction.ConsumableToggle(parseToggle(args.getOrNull(2)) ?: return null)
-            "animation" -> EditAction.ConsumableAnimation(consumableAnimation(args.getOrNull(2) ?: return null) ?: return null)
-            "particles" -> EditAction.ConsumableHasParticles(parseToggle(args.getOrNull(2)) ?: return null)
-            "seconds" -> EditAction.ConsumableConsumeSeconds(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "toggle" -> ItemAction.ConsumableToggle(parseToggle(args.getOrNull(2)) ?: return null)
+            "animation" -> ItemAction.ConsumableAnimation(consumableAnimation(args.getOrNull(2) ?: return null) ?: return null)
+            "particles" -> ItemAction.ConsumableHasParticles(parseToggle(args.getOrNull(2)) ?: return null)
+            "seconds" -> ItemAction.ConsumableConsumeSeconds(args.getOrNull(2)?.toFloatOrNull() ?: return null)
             "sound" -> parseConsumableSound(args.getOrNull(2) ?: return null)
-            "effect_add" -> EditAction.ConsumableEffectAdd(EditEffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
-            "effect_remove" -> EditAction.ConsumableEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
-            "effect_clear" -> EditAction.ConsumableEffectClear
-            "nutrition" -> EditAction.FoodNutrition(args.getOrNull(2)?.toIntOrNull() ?: return null)
-            "saturation" -> EditAction.FoodSaturation(args.getOrNull(2)?.toFloatOrNull() ?: return null)
-            "can_always_eat" -> EditAction.FoodCanAlwaysEat(parseToggle(args.getOrNull(2)) ?: return null)
+            "effect_add" -> ItemAction.ConsumableEffectAdd(EffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
+            "effect_remove" -> ItemAction.ConsumableEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "effect_clear" -> ItemAction.ConsumableEffectClear
+            "nutrition" -> ItemAction.FoodNutrition(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "saturation" -> ItemAction.FoodSaturation(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "can_always_eat" -> ItemAction.FoodCanAlwaysEat(parseToggle(args.getOrNull(2)) ?: return null)
             else -> null
         }
     }
@@ -269,34 +274,34 @@ class EditParsers {
         else -> null
     }
 
-    private fun parseConsumableSound(value: String): EditAction? {
-        if (value.equals("default", true)) return EditAction.ConsumableSound(null)
+    private fun parseConsumableSound(value: String): ItemAction? {
+        if (value.equals("default", true)) return ItemAction.ConsumableSound(null)
         val key = parseAdventureKey(value) ?: return null
-        return EditAction.ConsumableSound(key)
+        return ItemAction.ConsumableSound(key)
     }
 
-    private fun parseDeathProtection(args: Array<out String>): EditAction? {
+    private fun parseDeathProtection(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "toggle" -> EditAction.DeathProtectionToggle(parseToggle(args.getOrNull(2)) ?: return null)
-            "effect_add" -> EditAction.DeathProtectionEffectAdd(EditEffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
-            "effect_remove" -> EditAction.DeathProtectionEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
-            "effect_clear" -> EditAction.DeathProtectionEffectClear
+            "toggle" -> ItemAction.DeathProtectionToggle(parseToggle(args.getOrNull(2)) ?: return null)
+            "effect_add" -> ItemAction.DeathProtectionEffectAdd(EffectActionsSupport.parseEffectSpec(this, args.drop(2)) ?: return null)
+            "effect_remove" -> ItemAction.DeathProtectionEffectRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "effect_clear" -> ItemAction.DeathProtectionEffectClear
             else -> null
         }
     }
 
-    private fun parseComponent(args: Array<out String>): EditAction? {
+    private fun parseComponent(args: Array<out String>): ItemAction? {
         val node = args.getOrNull(1)?.lowercase() ?: return null
         val arg = args.getOrNull(2)
         return when (node) {
-            "item_model" -> EditAction.SetItemModel(arg?.let { namespacedKey(it) })
-            "unbreakable" -> EditAction.SetUnbreakable(arg == "on")
-            "glider" -> EditAction.SetGlider(arg == "on")
-            "max_damage" -> EditAction.SetMaxDamage(arg?.toIntOrNull())
-            "damage" -> EditAction.SetDamage(arg?.toIntOrNull() ?: return null)
-            "max_stack_size" -> EditAction.SetMaxStackSize(arg?.toIntOrNull())
-            "rarity" -> EditAction.SetRarity(arg?.let { rarity(it) })
-            "tooltip_style" -> EditAction.SetTooltipStyle(
+            "item_model" -> ItemAction.SetItemModel(arg?.let { namespacedKey(it) })
+            "unbreakable" -> ItemAction.SetUnbreakable(arg == "on")
+            "glider" -> ItemAction.SetGlider(arg == "on")
+            "max_damage" -> ItemAction.SetMaxDamage(arg?.toIntOrNull())
+            "damage" -> ItemAction.SetDamage(arg?.toIntOrNull() ?: return null)
+            "max_stack_size" -> ItemAction.SetMaxStackSize(arg?.toIntOrNull())
+            "rarity" -> ItemAction.SetRarity(arg?.let { rarity(it) })
+            "tooltip_style" -> ItemAction.SetTooltipStyle(
                 when (arg?.lowercase()) {
                     "basic" -> null
                     "broken" -> NamespacedKey.minecraft("null")
@@ -305,23 +310,23 @@ class EditParsers {
             )
             "use_cooldown" -> {
                 if (arg.equals("clear", true)) {
-                    EditAction.ClearUseCooldown
+                    ItemAction.ClearUseCooldown
                 } else {
                     val seconds = arg?.toFloatOrNull() ?: return null
                     val cooldownGroup = args.getOrNull(3)?.let { parseCooldownGroup(it) ?: return null }
-                    EditAction.SetUseCooldown(seconds, cooldownGroup)
+                    ItemAction.SetUseCooldown(seconds, cooldownGroup)
                 }
             }
             else -> null
         }
     }
 
-    private fun parseEnchant(args: Array<out String>): EditAction? {
+    private fun parseEnchant(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "add" -> EditAction.EnchantAdd(enchantment(args.getOrNull(2) ?: return null) ?: return null, args.getOrNull(3)?.toIntOrNull() ?: return null)
-            "remove" -> EditAction.EnchantRemove(enchantment(args.getOrNull(2) ?: return null) ?: return null)
-            "clear" -> EditAction.EnchantClear
-            "glint" -> EditAction.SetEnchantmentGlint(
+            "add" -> ItemAction.EnchantAdd(enchantment(args.getOrNull(2) ?: return null) ?: return null, args.getOrNull(3)?.toIntOrNull() ?: return null)
+            "remove" -> ItemAction.EnchantRemove(enchantment(args.getOrNull(2) ?: return null) ?: return null)
+            "clear" -> ItemAction.EnchantClear
+            "glint" -> ItemAction.SetEnchantmentGlint(
                 when (args.getOrNull(2)?.lowercase()) {
                     "on" -> true
                     "off" -> false
@@ -330,20 +335,20 @@ class EditParsers {
                 }
             )
 
-            "tooltip" -> EditAction.TooltipToggle("enchantments", args.getOrNull(2)?.lowercase() == "hide")
+            "tooltip" -> ItemAction.TooltipToggle("enchantments", args.getOrNull(2)?.lowercase() == "hide")
             else -> null
         }
     }
 
-    private fun parseNamespacedSet(args: Array<out String>, place: Boolean): EditAction? {
+    private fun parseNamespacedSet(args: Array<out String>, place: Boolean): ItemAction? {
         val keys = args.drop(1).mapNotNull { namespacedKey(it) }.toSet()
-        return if (place) EditAction.SetCanPlaceOn(keys) else EditAction.SetCanBreak(keys)
+        return if (place) ItemAction.SetCanPlaceOn(keys) else ItemAction.SetCanBreak(keys)
     }
 
-    private fun parsePotion(args: Array<out String>): EditAction? {
+    private fun parsePotion(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "color" -> EditAction.PotionColor(args.getOrNull(2)?.takeUnless { it == "clear" }?.let { color(it) })
-            "effect_add" -> EditAction.PotionEffectAdd(
+            "color" -> ItemAction.PotionColor(args.getOrNull(2)?.takeUnless { it == "clear" }?.let { color(it) })
+            "effect_add" -> ItemAction.PotionEffectAdd(
                 effect(args.getOrNull(2) ?: return null) ?: return null,
                 args.getOrNull(3)?.toIntOrNull() ?: return null,
                 args.getOrNull(4)?.toIntOrNull() ?: return null,
@@ -352,39 +357,39 @@ class EditParsers {
                 args.getOrNull(7)?.toBooleanStrictOrNull() ?: true
             )
 
-            "effect_remove" -> EditAction.PotionEffectRemove(effect(args.getOrNull(2) ?: return null) ?: return null)
-            "effect_clear" -> EditAction.PotionEffectClear
+            "effect_remove" -> ItemAction.PotionEffectRemove(effect(args.getOrNull(2) ?: return null) ?: return null)
+            "effect_clear" -> ItemAction.PotionEffectClear
             else -> null
         }
     }
 
-    private fun parseHead(args: Array<out String>): EditAction? {
+    private fun parseHead(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "clear" -> EditAction.HeadClear
-            "from_texture" -> EditAction.HeadSetFromTexture(rawTail(args, 2))
+            "clear" -> ItemAction.HeadClear
+            "from_texture" -> ItemAction.HeadSetFromTexture(rawTail(args, 2))
             "from_name" -> {
                 val name = args.getOrNull(2) ?: return null
-                EditAction.HeadSetFromName(name)
+                ItemAction.HeadSetFromName(name)
             }
             "from_online" -> {
                 val name = args.getOrNull(2) ?: return null
-                EditAction.HeadSetFromOnline(name)
+                ItemAction.HeadSetFromOnline(name)
             }
             else -> null
         }
     }
 
-    private fun parseAttribute(args: Array<out String>): EditAction? {
+    private fun parseAttribute(args: Array<out String>): ItemAction? {
         return when (args.getOrNull(1)?.lowercase()) {
             "add" -> {
                 val attribute = attribute(args.getOrNull(2) ?: return null) ?: return null
                 val amount = args.getOrNull(3)?.toDoubleOrNull() ?: return null
                 val operation = attributeOperation(args.getOrNull(4) ?: return null) ?: return null
-                EditAction.AttributeAdd(attribute, amount, operation, args.getOrNull(5))
+                ItemAction.AttributeAdd(attribute, amount, operation, args.getOrNull(5))
             }
 
-            "remove" -> EditAction.AttributeRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
-            "clear" -> EditAction.AttributeClear
+            "remove" -> ItemAction.AttributeRemove(args.getOrNull(2)?.toIntOrNull() ?: return null)
+            "clear" -> ItemAction.AttributeClear
             else -> null
         }
     }

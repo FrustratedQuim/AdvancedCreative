@@ -1,6 +1,11 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.effects
 
-object EditEffectActionsSupport {
+import com.ratger.acreative.commands.edit.EditParsers
+import com.ratger.acreative.itemedit.api.EffectActionSpec
+import com.ratger.acreative.itemedit.api.EffectApplyEntrySpec
+import com.ratger.acreative.itemedit.validation.ValidationService
+
+object EffectActionsSupport {
     fun parseEffectSpec(parsers: EditParsers, args: List<String>): EffectActionSpec? {
         val kind = args.firstOrNull()?.lowercase() ?: return null
         return when (kind) {
@@ -52,7 +57,7 @@ object EditEffectActionsSupport {
         }
     }
 
-    fun validateSpec(spec: EffectActionSpec, validation: EditValidationService): String? {
+    fun validateSpec(spec: EffectActionSpec, validation: ValidationService): String? {
         return when (spec) {
             EffectActionSpec.ClearAllEffects -> null
             is EffectActionSpec.PlaySound -> if (!validation.isValidKey(spec.key.asString())) "Некорректный sound key" else null

@@ -1,5 +1,8 @@
 package com.ratger.acreative.commands.edit
 
+import com.ratger.acreative.itemedit.container.ContainerSupport
+import com.ratger.acreative.itemedit.experimental.EffectSupport
+import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -36,7 +39,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "trim" -> listOf("set", "clear")
                 "pot" -> listOf("clear", "set", "side")
                 "container" -> {
-                    val capacity = type?.let { EditContainerSupport.containerCapacity(it) }
+                    val capacity = type?.let { ContainerSupport.containerCapacity(it) }
                     if (capacity == null) emptyList() else (0 until capacity).map(Int::toString)
                 }
                 else -> emptyList()
@@ -70,7 +73,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "seconds" -> listOf("1.0", "0.8", "0.2")
                     "sound" -> listOf("minecraft:entity.wither.spawn", "default")
                     "effect_add" -> effectKinds()
-                    "effect_remove" -> item?.let(EditExperimentalEffectSupport::consumableEffectIndices) ?: emptyList()
+                    "effect_remove" -> item?.let(EffectSupport::consumableEffectIndices) ?: emptyList()
                     "nutrition" -> listOf("1", "5", "10")
                     "saturation" -> listOf("0.1", "1.0", "5.0")
                     else -> emptyList()
@@ -78,7 +81,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "death_protection" -> when (args[1].lowercase()) {
                     "toggle" -> listOf("on", "off")
                     "effect_add" -> effectKinds()
-                    "effect_remove" -> item?.let(EditExperimentalEffectSupport::deathProtectionEffectIndices) ?: emptyList()
+                    "effect_remove" -> item?.let(EffectSupport::deathProtectionEffectIndices) ?: emptyList()
                     else -> emptyList()
                 }
                 "equippable" -> when (args[1].lowercase()) {
@@ -105,12 +108,12 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     else -> emptyList()
                 }
                 "trim" -> when (args[1].lowercase()) {
-                    "set" -> EditTrimPotSupport.trimPatternIds()
+                    "set" -> TrimPotSupport.trimPatternIds()
                     else -> emptyList()
                 }
                 "pot" -> when (args[1].lowercase()) {
-                    "set" -> EditTrimPotSupport.potDecorationMaterialIds
-                    "side" -> EditTrimPotSupport.sideOptions()
+                    "set" -> TrimPotSupport.potDecorationMaterialIds
+                    "side" -> TrimPotSupport.sideOptions()
                     else -> emptyList()
                 }
 
@@ -129,9 +132,9 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 isEffectAddCommand(args) && args[2].equals("remove_effects", true) -> parser.effectSuggestions(args[3])
                 isEffectAddCommand(args) && args[2].equals("teleport_randomly", true) -> listOf("5.0", "8.0", "16.0")
                 isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("1.0", "0.5", "0.25")
-                args[0].equals("trim", true) && args[1].equals("set", true) -> EditTrimPotSupport.trimMaterialIds()
-                args[0].equals("pot", true) && args[1].equals("set", true) -> EditTrimPotSupport.potDecorationMaterialIds
-                args[0].equals("pot", true) && args[1].equals("side", true) -> EditTrimPotSupport.potDecorationMaterialIds
+                args[0].equals("trim", true) && args[1].equals("set", true) -> TrimPotSupport.trimMaterialIds()
+                args[0].equals("pot", true) && args[1].equals("set", true) -> TrimPotSupport.potDecorationMaterialIds
+                args[0].equals("pot", true) && args[1].equals("side", true) -> TrimPotSupport.potDecorationMaterialIds
                 else -> emptyList()
             }
 
@@ -142,13 +145,13 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
             } else if (isEffectAddCommand(args) && args[2].equals("apply_effects", true)) {
                 parser.effectSuggestions(args[4])
             } else if (args[0].equals("pot", true) && args[1].equals("set", true)) {
-                EditTrimPotSupport.potDecorationMaterialIds
+                TrimPotSupport.potDecorationMaterialIds
             } else emptyList()
 
             6 -> when {
                 args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("mainhand", "offhand", "hand", "armor", "feet", "legs", "chest", "head", "body")
                 isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("100", "200", "600")
-                args[0].equals("pot", true) && args[1].equals("set", true) -> EditTrimPotSupport.potDecorationMaterialIds
+                args[0].equals("pot", true) && args[1].equals("set", true) -> TrimPotSupport.potDecorationMaterialIds
                 else -> emptyList()
             }
 
@@ -177,7 +180,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 (root == "attribute" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
                 (root == "trim" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
                 (root == "pot" && material != Material.DECORATED_POT) ||
-                (root == "container" && EditContainerSupport.containerCapacity(material) == null)
+                (root == "container" && ContainerSupport.containerCapacity(material) == null)
         }
     }
 }

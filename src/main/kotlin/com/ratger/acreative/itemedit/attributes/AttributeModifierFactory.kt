@@ -1,21 +1,21 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.attributes
 
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.AttributeModifier
 
-object EditAttributeModifierFactory {
+object AttributeModifierFactory {
     fun create(
         key: NamespacedKey,
         amount: Double,
         operation: AttributeModifier.Operation,
-        slotGroupSpec: EditSlotGroupSpec?
+        slotGroupSpec: SlotGroupSpec?
     ): AttributeModifier {
         if (slotGroupSpec == null) {
             return AttributeModifier(key, amount, operation)
         }
 
-        return AttributeModifier(key, amount, operation, EditSlotGroupAdapter.toPaperGroup(slotGroupSpec))
+        return AttributeModifier(key, amount, operation, SlotGroupAdapter.toPaperGroup(slotGroupSpec))
     }
 }

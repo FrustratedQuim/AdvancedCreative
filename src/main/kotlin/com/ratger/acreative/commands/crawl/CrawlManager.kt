@@ -36,8 +36,6 @@ class CrawlManager(private val hooker: FunctionHooker) {
             }
 
             val loc = player.location
-            // Keep server-side swimming state while crawling
-            if (!player.isSwimming) player.isSwimming = true
 
             val newLoc = loc.clone().add(0.0, 1.5, 0.0).toBlockLocation()
             val overheadBlock = newLoc.block
@@ -158,7 +156,6 @@ class CrawlManager(private val hooker: FunctionHooker) {
         }
         val crawling = CrawlingPlayer(player)
         crawlingPlayers[player] = crawling
-        player.isSwimming = true
         crawling.updateBarrier()
 
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_ON)
@@ -177,7 +174,6 @@ class CrawlManager(private val hooker: FunctionHooker) {
 
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_OFF)
         hooker.messageManager.stopRepeating(player, MessageChannel.ACTION_BAR)
-        if (player.isOnline) player.isSwimming = false
         hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
         hooker.playerStateManager.refreshPlayerPose(player)
     }

@@ -1,11 +1,11 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.head
 
 import com.destroystokyo.paper.profile.PlayerProfile
 import com.destroystokyo.paper.profile.ProfileProperty
 import org.bukkit.Bukkit
 import java.util.UUID
 
-object EditPlayerProfileCopyHelper {
+object PlayerProfileCopyHelper {
     @Suppress("DEPRECATION")
     fun copyProfile(source: PlayerProfile): PlayerProfile {
         val clone = runCatching { Bukkit.createProfile(source.uniqueId, source.name) }

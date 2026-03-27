@@ -1,6 +1,8 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.head
 
 import com.destroystokyo.paper.profile.ProfileProperty
+import com.ratger.acreative.commands.edit.EditTargetResolver
+import com.ratger.acreative.itemedit.api.ItemResult
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.inventory.meta.SkullMeta
@@ -14,14 +16,14 @@ import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
-class EditHeadProfileService(
+class HeadProfileService(
     private val plugin: JavaPlugin,
     private val targetResolver: EditTargetResolver
 ) {
     private val mini = MiniMessage.miniMessage()
     private val httpClient: HttpClient = HttpClient.newBuilder().build()
 
-    fun applyFromNameAsync(playerId: UUID, name: String): EditResult {
+    fun applyFromNameAsync(playerId: UUID, name: String): ItemResult {
         CompletableFuture.supplyAsync { lookupLicensedProfile(name) }.whenComplete { payload, error ->
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 val target = Bukkit.getPlayer(playerId) ?: return@Runnable
@@ -58,7 +60,7 @@ class EditHeadProfileService(
                 target.sendMessage(mini.deserialize("<green>Текстура головы установлена из официального licensed profile <white>${payload.canonicalName}</white>."))
             })
         }
-        return EditResult(true, listOf(mini.deserialize("<yellow>Запрошен профиль <white>$name</white>. Применю текстуру после асинхронного обновления.")))
+        return ItemResult(true, listOf(mini.deserialize("<yellow>Запрошен профиль <white>$name</white>. Применю текстуру после асинхронного обновления.")))
     }
 
     private fun lookupLicensedProfile(name: String): LicensedProfilePayload {

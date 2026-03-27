@@ -3,21 +3,28 @@ package com.ratger.acreative.commands.edit
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.itemedit.core.ItemEditingService
+import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.itemedit.head.HeadProfileService
+import com.ratger.acreative.itemedit.meta.MetaActionsApplier
+import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.itemedit.show.ShowService
+import com.ratger.acreative.itemedit.validation.ValidationService
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
 class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.EDIT) {
     private val parser = EditParsers()
     private val resolver = EditTargetResolver()
-    private val show = EditShowService()
-    private val validation = EditValidationService()
-    private val service = EditService(
+    private val show = ShowService()
+    private val validation = ValidationService()
+    private val service = ItemEditingService(
         targetResolver = resolver,
         validationService = validation,
         showService = show,
-        metaActionsApplier = EditMetaActionsApplier(hooker.plugin, parser, EditMiniMessage()),
-        experimentalComponentsService = EditExperimentalComponentsService(),
-        headProfileService = EditHeadProfileService(hooker.plugin, resolver)
+        metaActionsApplier = MetaActionsApplier(hooker.plugin, parser, MiniMessageParser()),
+        componentsService = ComponentsService(),
+        headProfileService = HeadProfileService(hooker.plugin, resolver)
     )
     private val tabSupport = EditTabCompleterSupport(parser)
 

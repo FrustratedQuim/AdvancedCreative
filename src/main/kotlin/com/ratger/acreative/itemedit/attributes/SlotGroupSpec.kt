@@ -1,6 +1,6 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.attributes
 
-enum class EditSlotGroupSpec {
+enum class SlotGroupSpec {
     MAINHAND,
     OFFHAND,
     HAND,
@@ -13,7 +13,7 @@ enum class EditSlotGroupSpec {
     ANY;
 
     companion object {
-        fun fromToken(input: String): EditSlotGroupSpec? {
+        fun fromToken(input: String): SlotGroupSpec? {
             return when (input.lowercase()) {
                 "mainhand" -> MAINHAND
                 "offhand" -> OFFHAND

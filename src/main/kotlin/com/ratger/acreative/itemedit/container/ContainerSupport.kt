@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.edit
+package com.ratger.acreative.itemedit.container
 
 import org.bukkit.Material
 import org.bukkit.block.BrushableBlock
@@ -12,7 +12,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 
-object EditContainerSupport {
+object ContainerSupport {
     data class ContainerContentsSnapshot(
         val capacity: Int,
         val contents: MutableList<ItemStack>

@@ -1,5 +1,7 @@
 package com.ratger.acreative.commands.edit
 
+import com.ratger.acreative.itemedit.api.ItemContext
+import com.ratger.acreative.itemedit.api.ItemSnapshot
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -8,22 +10,22 @@ import org.bukkit.inventory.ItemStack
 class EditTargetResolver {
     private val mini = MiniMessage.miniMessage()
 
-    fun resolve(player: Player): EditContext? {
+    fun resolve(player: Player): ItemContext? {
         val item = player.inventory.itemInMainHand
         if (item.type == Material.AIR || item.amount <= 0) {
             player.sendMessage(mini.deserialize("<red>Держите предмет в основной руке."))
             return null
         }
-        return EditContext(item, snapshot(item))
+        return ItemContext(item, snapshot(item))
     }
 
     fun save(player: Player, item: ItemStack) {
         player.inventory.setItemInMainHand(item)
     }
 
-    fun snapshot(item: ItemStack): EditStateSnapshot {
+    fun snapshot(item: ItemStack): ItemSnapshot {
         val meta = item.itemMeta
-        return EditStateSnapshot(
+        return ItemSnapshot(
             type = item.type.key.key,
             amount = item.amount,
             hasName = meta?.hasDisplayName() == true,

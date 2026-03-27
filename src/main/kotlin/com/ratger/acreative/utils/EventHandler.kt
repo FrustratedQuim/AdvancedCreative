@@ -1,7 +1,7 @@
 package com.ratger.acreative.utils
 
-import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.commands.sit.SitStyle
+import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.block.data.type.Bed
@@ -14,13 +14,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
-import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.event.entity.EntityDamageByEntityEvent
-import org.bukkit.event.entity.ProjectileHitEvent
-import org.bukkit.event.entity.EntityToggleGlideEvent
-import org.bukkit.event.entity.EntityToggleSwimEvent
-import org.bukkit.event.entity.PlayerDeathEvent
-import org.bukkit.event.entity.ProjectileLaunchEvent
+import org.bukkit.event.entity.*
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.*
@@ -249,15 +243,6 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         utils.checkSitUnsit(player)
     }
 
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onEntityToggleSwim(event: EntityToggleSwimEvent) {
-        val player = event.entity as? Player ?: return
-        if (!event.isSwimming && utils.isCrawling(player)) {
-            event.isCancelled = true
-            if (!player.isSwimming) player.isSwimming = true
-        }
-    }
-
     @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerDropItem(event: PlayerDropItemEvent) {
         val player = event.player
@@ -434,7 +419,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     }
 
     private fun hasPositionChanged(event: PlayerMoveEvent): Boolean {
-        val to = event.to ?: return false
+        val to = event.to
         return event.from.x != to.x || event.from.y != to.y || event.from.z != to.z
     }
 }
