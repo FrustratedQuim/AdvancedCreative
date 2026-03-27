@@ -1,6 +1,5 @@
 package com.ratger.acreative.commands.edit
 
-import io.papermc.paper.datacomponent.DataComponentTypes
 import org.bukkit.Material
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
@@ -71,7 +70,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "seconds" -> listOf("1.0", "0.8", "0.2")
                     "sound" -> listOf("minecraft:entity.wither.spawn", "default")
                     "effect_add" -> effectKinds()
-                    "effect_remove" -> (item?.getData(DataComponentTypes.CONSUMABLE)?.consumeEffects()?.indices?.map(Int::toString) ?: emptyList())
+                    "effect_remove" -> item?.let(EditExperimentalEffectSupport::consumableEffectIndices) ?: emptyList()
                     "nutrition" -> listOf("1", "5", "10")
                     "saturation" -> listOf("0.1", "1.0", "5.0")
                     else -> emptyList()
@@ -79,7 +78,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "death_protection" -> when (args[1].lowercase()) {
                     "toggle" -> listOf("on", "off")
                     "effect_add" -> effectKinds()
-                    "effect_remove" -> (item?.getData(DataComponentTypes.DEATH_PROTECTION)?.deathEffects()?.indices?.map(Int::toString) ?: emptyList())
+                    "effect_remove" -> item?.let(EditExperimentalEffectSupport::deathProtectionEffectIndices) ?: emptyList()
                     else -> emptyList()
                 }
                 "equippable" -> when (args[1].lowercase()) {
