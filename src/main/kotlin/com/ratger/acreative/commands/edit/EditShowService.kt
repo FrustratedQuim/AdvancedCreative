@@ -1,12 +1,9 @@
 package com.ratger.acreative.commands.edit
 
-import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.block.Lockable
 import org.bukkit.inventory.ItemFlag
-import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
@@ -37,55 +34,49 @@ class EditShowService {
         out += mini.deserialize("<gray>tooltip_style: <white>${runCatching { meta?.tooltipStyle?.asString() ?: "basic" }.getOrDefault("basic")}")
         out += mini.deserialize("<gray>hide_tooltip: <white>${runCatching { meta?.isHideTooltip == true }.getOrDefault(false)}")
         out += mini.deserialize("<gray>enchantment_glint_override: <white>${runCatching { meta?.enchantmentGlintOverride?.toString() ?: "default" }.getOrDefault("default")}")
-        val consumable = item.getData(DataComponentTypes.CONSUMABLE)
+        val consumable = EditShowViewAdapters.consumable(item)
         if (consumable == null) {
             out += mini.deserialize("<gray>consumable: <white><none>")
         } else {
             out += mini.deserialize(
-                "<gray>consumable: <white>seconds=${consumable.consumeSeconds()}, animation=${consumable.animation()}, particles=${consumable.hasConsumeParticles()}, sound=${consumable.sound() ?: "<default>"}"
+                "<gray>consumable: <white>seconds=${consumable.consumeSeconds}, animation=${consumable.animation}, particles=${consumable.hasConsumeParticles}, sound=${consumable.sound ?: "<default>"}"
             )
-            out += mini.deserialize("<gray>consumable effects: <white>${consumable.consumeEffects().size}")
-            consumable.consumeEffects().forEachIndexed { index, effect ->
-                out += mini.deserialize("<gray>consumable[$index]: <white>${EditConsumeEffectsAdapter.render(effect)}")
+            out += mini.deserialize("<gray>consumable effects: <white>${consumable.effects.size}")
+            consumable.effects.forEachIndexed { index, effect ->
+                out += mini.deserialize("<gray>consumable[$index]: <white>$effect")
             }
         }
-        val deathProtection = item.getData(DataComponentTypes.DEATH_PROTECTION)
+        val deathProtection = EditShowViewAdapters.deathProtection(item)
         if (deathProtection == null) {
             out += mini.deserialize("<gray>death_protection: <white><none>")
         } else {
-            out += mini.deserialize("<gray>death_protection: <white>enabled, effects=${deathProtection.deathEffects().size}")
-            deathProtection.deathEffects().forEachIndexed { index, effect ->
-                out += mini.deserialize("<gray>death_protection[$index]: <white>${EditConsumeEffectsAdapter.render(effect)}")
+            out += mini.deserialize("<gray>death_protection: <white>enabled, effects=${deathProtection.effects.size}")
+            deathProtection.effects.forEachIndexed { index, effect ->
+                out += mini.deserialize("<gray>death_protection[$index]: <white>$effect")
             }
         }
-        val food = item.getData(DataComponentTypes.FOOD)
+        val food = EditShowViewAdapters.food(item)
         out += if (food == null) {
             mini.deserialize("<gray>food: <white><none>")
         } else {
-            mini.deserialize("<gray>food: <white>nutrition=${food.nutrition()}, saturation=${food.saturation()}, canAlwaysEat=${food.canAlwaysEat()}")
+            mini.deserialize("<gray>food: <white>nutrition=${food.nutrition}, saturation=${food.saturation}, canAlwaysEat=${food.canAlwaysEat}")
         }
-        val remainder = item.getData(DataComponentTypes.USE_REMAINDER)
+        val remainder = EditShowViewAdapters.remainder(item)
         if (remainder == null) {
             out += mini.deserialize("<gray>remainder: <white><none>")
         } else {
-            val remainderItem = remainder.transformInto()
-            val remainderMeta = remainderItem.itemMeta
-            out += mini.deserialize("<gray>remainder: <white>${remainderItem.type.key} x${remainderItem.amount}")
-            val remainderName = remainderMeta?.displayName()?.let(plain::serialize)
-            if (!remainderName.isNullOrBlank()) {
-                out += mini.deserialize("<gray>remainder name: <white>$remainderName")
+            out += mini.deserialize("<gray>remainder: <white>${remainder.typeKey} x${remainder.amount}")
+            if (!remainder.name.isNullOrBlank()) {
+                out += mini.deserialize("<gray>remainder name: <white>${remainder.name}")
             }
-            out += mini.deserialize("<gray>remainder lore lines: <white>${remainderMeta?.lore()?.size ?: 0}")
-            out += mini.deserialize("<gray>remainder enchants: <white>${remainderMeta?.enchants?.size ?: 0}")
+            out += mini.deserialize("<gray>remainder lore lines: <white>${remainder.loreLines}")
+            out += mini.deserialize("<gray>remainder enchants: <white>${remainder.enchants}")
         }
-        val blockStateMeta = meta as? BlockStateMeta
-        val lockable = blockStateMeta?.blockState as? Lockable
-        if (lockable?.isLocked != true) {
-            out += mini.deserialize("<gray>lock: <white><none>")
+        val lock = EditShowViewAdapters.lock(meta)
+        out += if (lock == null) {
+            mini.deserialize("<gray>lock: <white><none>")
         } else {
-            val lockRaw = lockable.lock
-            val lockMaterial = lockRaw.substringBefore('[').takeIf { it.isNotBlank() } ?: "<unknown>"
-            out += mini.deserialize("<gray>lock: <white>material=$lockMaterial, amount=1")
+            mini.deserialize("<gray>lock: <white>material=${lock.material}, amount=${lock.amount}")
         }
         val equippable = EditEquippableSupport.existingView(item)
         if (equippable == null) {
@@ -94,25 +85,24 @@ class EditShowService {
             out += mini.deserialize(
                 "<gray>equippable: <white>slot=${equippable.slot}, dispensable=${equippable.dispensable}, swappable=${equippable.swappable}, damageOnHurt=${equippable.damageOnHurt}"
             )
-            out += mini.deserialize("<gray>equippable sound: <white>${equippable.equipSound.key.asString()}")
+            out += mini.deserialize("<gray>equippable sound: <white>${EditShowViewAdapters.soundId(equippable.equipSound)}")
             out += mini.deserialize("<gray>equippable camera_overlay: <white>${equippable.cameraOverlay?.asString() ?: "<none>"}")
             out += mini.deserialize("<gray>equippable asset_id: <white>${equippable.assetId?.asString() ?: "<none>"}")
             out += mini.deserialize("<gray>equippable allowed_entities: <white>${equippable.allowedEntitiesCount}")
         }
-        val tool = item.getData(DataComponentTypes.TOOL)
-        if (tool == null) {
-            out += mini.deserialize("<gray>tool: <white><none>")
+        val tool = EditShowViewAdapters.tool(item)
+        out += if (tool == null) {
+            mini.deserialize("<gray>tool: <white><none>")
         } else {
-            val speedRules = tool.rules().count { it.speed() != null }
-            out += mini.deserialize(
-                "<gray>tool: <white>default_mining_speed=${tool.defaultMiningSpeed()}, damage_per_block=${tool.damagePerBlock()}, rules=${tool.rules().size}, speed_rules=$speedRules"
+            mini.deserialize(
+                "<gray>tool: <white>default_mining_speed=${tool.defaultMiningSpeed}, damage_per_block=${tool.damagePerBlock}, rules=${tool.rules}, speed_rules=${tool.speedRules}"
             )
         }
-        val useCooldown = item.getData(DataComponentTypes.USE_COOLDOWN)
+        val useCooldown = EditShowViewAdapters.useCooldown(item)
         out += if (useCooldown == null) {
             mini.deserialize("<gray>use_cooldown: <white><none>")
         } else {
-            mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
+            mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds}, group=${useCooldown.cooldownGroup ?: "<none>"}")
         }
         val container = EditContainerSupport.readContainerContents(item)
         if (container == null) {
@@ -132,40 +122,38 @@ class EditShowService {
                 val enchants = stackMeta?.enchants?.size ?: 0
                 if (enchants > 0) suffixParts += "enchants=$enchants"
                 val suffix = if (suffixParts.isEmpty()) "" else " (${suffixParts.joinToString(", ")})"
-                out += mini.deserialize("<gray>container[$index]: <white>${stack.type.key.asString()} x${stack.amount}$suffix")
+                out += mini.deserialize("<gray>container[$index]: <white>${EditShowViewAdapters.materialId(stack.type)} x${stack.amount}$suffix")
             }
         }
-        val trim = (meta as? org.bukkit.inventory.meta.ArmorMeta)?.trim
+        val trim = (meta as? org.bukkit.inventory.meta.ArmorMeta)?.let(EditShowViewAdapters::trim)
         out += if (trim == null) {
             mini.deserialize("<gray>trim: <white><none>")
         } else {
-            mini.deserialize("<gray>trim: <white>pattern=${trim.pattern.key.asString()}, material=${trim.material.key.asString()}")
+            mini.deserialize("<gray>trim: <white>pattern=${trim.patternKey}, material=${trim.materialKey}")
         }
-        fun side(side: DecoratedPotSide): String = EditTrimPotSupport.sherd(item, side)?.key?.asString() ?: "<none>"
+        fun side(side: DecoratedPotSide): String = EditTrimPotSupport.sherd(item, side)?.let(EditShowViewAdapters::materialId) ?: "<none>"
         out += mini.deserialize("<gray>pot: <white>back=${side(DecoratedPotSide.BACK)}, left=${side(DecoratedPotSide.LEFT)}, right=${side(DecoratedPotSide.RIGHT)}, front=${side(DecoratedPotSide.FRONT)}")
-        out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
-        out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
-        out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")
+        val placeDestroy = EditShowViewAdapters.placeDestroy(meta)
+        out += mini.deserialize("<gray>can_place_on: <white>${placeDestroy.placeableCount} entries")
+        out += mini.deserialize("<gray>can_break: <white>${placeDestroy.destroyableCount} entries")
+        out += mini.deserialize("<gray>enchantments: <white>${EditShowViewAdapters.enchantmentsSummary(meta)}")
         out += mini.deserialize("<gray>flags: <white>${meta?.itemFlags?.joinToString { it.name } ?: "<none>"}")
         if (meta is PotionMeta) {
             out += mini.deserialize("<gray>potion color: <white>${meta.color?.asRGB() ?: "<none>"}")
-            meta.customEffects.forEachIndexed { index, effect ->
-                out += mini.deserialize("<gray>potion[$index]: <white>${effect.type.key.key} dur=${effect.duration} amp=${effect.amplifier}")
+            EditShowViewAdapters.potionEffectSummary(meta).forEachIndexed { index, line ->
+                out += mini.deserialize("<gray>potion[$index]: <white>$line")
             }
         }
 
         if (meta is SkullMeta) {
-            val profile = meta.playerProfile
-            out += if (profile == null) {
+            val profile = EditShowViewAdapters.headProfile(meta)
+            out += if (!profile.hasProfile) {
                 mini.deserialize("<gray>head: <white><none>")
             } else {
-                val name = profile.name ?: "<none>"
-                val uuid = profile.uniqueId?.toString() ?: "<none>"
-                val textures = profile.properties.firstOrNull { it.name == "textures" }?.value
-                if (textures == null) {
-                    mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=no")
+                if (!profile.hasTextures) {
+                    mini.deserialize("<gray>head: <white>profile=yes, textures=no")
                 } else {
-                    mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=yes, texture_base64_length=${textures.length}")
+                    mini.deserialize("<gray>head: <white>profile=yes, textures=yes, texture_base64_length=${profile.texturesBase64Length}")
                 }
             }
         }
