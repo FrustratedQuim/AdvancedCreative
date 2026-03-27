@@ -1,10 +1,11 @@
 package com.ratger.acreative.commands.edit
 
-import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.block.Lockable
 import org.bukkit.Material
+import org.bukkit.Registry
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
@@ -152,29 +153,35 @@ class EditValidationService {
             }
             is EditAction.EquippableSetEquipSound -> {
                 val key = action.keyOrDefault
-                if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для equip_sound")
-                if (key == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                if (key != null) {
+                    if (!isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для equip_sound")
+                    val namespaced = NamespacedKey.fromString(key.asString())
+                    if (namespaced == null || Registry.SOUNDS.get(namespaced) == null) {
+                        return fail(player, "Неизвестный sound key для equip_sound")
+                    }
+                }
+                if (key == null && EditEquippableSupport.prototypeSnapshot(context.item) == null) {
                     return fail(player, "Для этого material нельзя восстановить default equip sound")
                 }
             }
             is EditAction.EquippableSetCameraOverlay -> {
                 val key = action.keyOrNull
                 if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для camera_overlay")
-                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                if (!EditEquippableSupport.hasExistingOrPrototype(context.item)) {
                     return fail(player, "Сначала /edit equippable slot ...")
                 }
             }
             is EditAction.EquippableSetAssetId -> {
                 val key = action.keyOrNull
                 if (key != null && !isValidKey(key.asString())) return fail(player, "Некорректный namespaced key для asset_id")
-                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                if (!EditEquippableSupport.hasExistingOrPrototype(context.item)) {
                     return fail(player, "Сначала /edit equippable slot ...")
                 }
             }
             is EditAction.EquippableSetDispensable,
             is EditAction.EquippableSetSwappable,
             is EditAction.EquippableSetDamageOnHurt -> {
-                if (context.item.getData(DataComponentTypes.EQUIPPABLE) == null && context.item.type.getDefaultData(DataComponentTypes.EQUIPPABLE) == null) {
+                if (!EditEquippableSupport.hasExistingOrPrototype(context.item)) {
                     return fail(player, "Сначала /edit equippable slot ...")
                 }
             }

@@ -88,16 +88,17 @@ class EditShowService {
             val lockMaterial = lockRaw.substringBefore('[').takeIf { it.isNotBlank() } ?: "<unknown>"
             out += mini.deserialize("<gray>lock: <white>material=$lockMaterial, amount=1")
         }
-        val equippable = item.getData(DataComponentTypes.EQUIPPABLE)
+        val equippable = EditEquippableSupport.existingView(item)
         if (equippable == null) {
             out += mini.deserialize("<gray>equippable: <white><none>")
         } else {
             out += mini.deserialize(
-                "<gray>equippable: <white>slot=${equippable.slot()}, dispensable=${equippable.dispensable()}, swappable=${equippable.swappable()}, damageOnHurt=${equippable.damageOnHurt()}"
+                "<gray>equippable: <white>slot=${equippable.slot}, dispensable=${equippable.dispensable}, swappable=${equippable.swappable}, damageOnHurt=${equippable.damageOnHurt}"
             )
-            out += mini.deserialize("<gray>equippable sound: <white>${equippable.equipSound()}")
-            out += mini.deserialize("<gray>equippable camera_overlay: <white>${equippable.cameraOverlay() ?: "<none>"}")
-            out += mini.deserialize("<gray>equippable asset_id: <white>${equippable.assetId() ?: "<none>"}")
+            out += mini.deserialize("<gray>equippable sound: <white>${equippable.equipSound.key.asString()}")
+            out += mini.deserialize("<gray>equippable camera_overlay: <white>${equippable.cameraOverlay?.asString() ?: "<none>"}")
+            out += mini.deserialize("<gray>equippable asset_id: <white>${equippable.assetId?.asString() ?: "<none>"}")
+            out += mini.deserialize("<gray>equippable allowed_entities: <white>${equippable.allowedEntitiesCount}")
         }
         val tool = item.getData(DataComponentTypes.TOOL)
         if (tool == null) {
