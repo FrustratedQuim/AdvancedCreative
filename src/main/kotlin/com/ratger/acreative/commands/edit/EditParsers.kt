@@ -13,6 +13,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.Material
 
 class EditParsers {
     fun namespacedKey(input: String): NamespacedKey? = NamespacedKey.fromString(input)
@@ -50,6 +51,14 @@ class EditParsers {
     }
 
     fun attribute(input: String): Attribute? = Registry.ATTRIBUTE.get(NamespacedKey.minecraft(input.lowercase()))
+    fun material(input: String): Material? {
+        val normalized = input.lowercase()
+        val namespaced = NamespacedKey.fromString(normalized)
+        if (namespaced != null) {
+            return Registry.MATERIAL.get(namespaced)
+        }
+        return Registry.MATERIAL.get(NamespacedKey.minecraft(normalized))
+    }
 
     fun attributeOperation(input: String): AttributeModifier.Operation? = when (input.lowercase()) {
         "add_number" -> AttributeModifier.Operation.ADD_NUMBER
@@ -107,6 +116,7 @@ class EditParsers {
             }
 
             "component" -> parseComponent(args)
+            "id" -> EditAction.SetItemId(material(args.getOrNull(1) ?: return null) ?: return null)
             "enchant" -> parseEnchant(args)
             "tooltip" -> EditAction.TooltipToggle(args.getOrNull(1) ?: return null, args.getOrNull(2)?.lowercase() == "hide")
             "can_place_on" -> parseNamespacedSet(args, true)
@@ -347,4 +357,9 @@ class EditParsers {
     fun enchantSuggestions(prefix: String): List<String> = Registry.ENCHANTMENT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun effectSuggestions(prefix: String): List<String> = Registry.EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun attributeSuggestions(prefix: String): List<String> = Registry.ATTRIBUTE.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
+    fun materialSuggestions(prefix: String): List<String> = Registry.MATERIAL.iterator().asSequence()
+        .map { it.key.asString() }
+        .filter { it.startsWith(prefix, true) || it.removePrefix("minecraft:").startsWith(prefix, true) }
+        .sorted()
+        .toList()
 }

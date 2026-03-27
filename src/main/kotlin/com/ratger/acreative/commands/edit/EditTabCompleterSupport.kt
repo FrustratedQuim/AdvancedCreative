@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
 class EditTabCompleterSupport(private val parser: EditParsers) {
     private val roots = listOf(
         "show", "reset", "name", "lore", "component", "tooltip", "enchant", "can_place_on", "can_break",
-        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head"
+        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "id"
     )
 
     fun complete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -19,6 +19,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
             1 -> rootsByItem(type).filter { it.startsWith(args[0], true) }
             2 -> when (args[0].lowercase()) {
                 "reset" -> listOf("all")
+                "id" -> parser.materialSuggestions(args[1])
                 "name" -> listOf("set", "clear")
                 "lore" -> listOf("add", "set", "remove", "clear")
                 "component" -> listOf("item_model", "unbreakable", "glider", "max_damage", "damage", "max_stack_size", "rarity", "tooltip_style", "use_cooldown")

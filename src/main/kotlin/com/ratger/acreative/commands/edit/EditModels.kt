@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.Material
 
 data class EffectApplyEntrySpec(
     val type: PotionEffectType,
@@ -44,6 +45,7 @@ sealed interface EditAction {
     data class LoreRemove(val index: Int) : EditAction
     data object LoreClear : EditAction
     data class SetItemModel(val key: NamespacedKey?) : EditAction
+    data class SetItemId(val material: Material) : EditAction
     data class SetUnbreakable(val value: Boolean) : EditAction
     data class SetGlider(val value: Boolean) : EditAction
     data class SetMaxDamage(val value: Int?) : EditAction

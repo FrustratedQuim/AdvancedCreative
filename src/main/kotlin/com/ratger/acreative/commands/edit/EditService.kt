@@ -69,6 +69,11 @@ class EditService(
             }
         }
 
+        if (action is EditAction.SetItemId) {
+            item.type = action.material
+            return EditResult(true, listOf(mini.deserialize("<green>ID предмета изменён на <white>${action.material.key.asString()}</white>.")))
+        }
+
         if (isDataComponentAction(action)) {
             return applyDataComponentAction(player, action, item)
         }
@@ -441,6 +446,7 @@ class EditService(
             EditAction.AttributeClear -> meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
             EditAction.Show,
             is EditAction.Reset,
+            is EditAction.SetItemId,
             is EditAction.ConsumableToggle,
             is EditAction.ConsumableAnimation,
             is EditAction.ConsumableHasParticles,
