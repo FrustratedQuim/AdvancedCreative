@@ -5,7 +5,6 @@ import io.papermc.paper.registry.RegistryKey
 import io.papermc.paper.registry.set.RegistrySet
 import org.bukkit.Registry
 import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 
 object EditEffectActionsSupport {
     fun parseEffectSpec(parsers: EditParsers, args: List<String>): EffectActionSpec? {
