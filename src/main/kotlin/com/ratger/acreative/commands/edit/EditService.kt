@@ -385,7 +385,7 @@ class EditService(
             EditAction.LoreClear -> meta.lore(null)
             is EditAction.SetItemModel -> meta.itemModel = action.key
             is EditAction.SetUnbreakable -> meta.isUnbreakable = action.value
-            is EditAction.SetGlider -> meta.setGlider(action.value)
+            is EditAction.SetGlider -> meta.isGlider = action.value
             is EditAction.SetMaxDamage -> (meta as? Damageable)?.setMaxDamage(action.value)
                 ?: return EditResult(false, listOf(mini.deserialize("<red>Предмет не поддерживает max_damage")))
 
@@ -444,19 +444,19 @@ class EditService(
                 val skull = meta as? SkullMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не player head")))
                 val profile = Bukkit.createProfile(UUID.randomUUID())
                 profile.setProperty(ProfileProperty("textures", action.base64))
-                skull.setPlayerProfile(profile)
+                skull.playerProfile = profile
             }
 
             is EditAction.HeadSetFromOnline -> {
                 val skull = meta as? SkullMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не player head")))
                 val source = Bukkit.getPlayerExact(action.name)
                     ?: return EditResult(false, listOf(mini.deserialize("<red>Онлайн-игрок <white>${action.name}</white> не найден.")))
-                skull.setPlayerProfile(copyProfile(source.playerProfile))
+                skull.playerProfile = copyProfile(source.playerProfile)
             }
 
             EditAction.HeadClear -> {
                 val skull = meta as? SkullMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не player head")))
-                skull.setPlayerProfile(null)
+                skull.playerProfile = null
             }
 
             is EditAction.AttributeAdd -> {
@@ -480,11 +480,11 @@ class EditService(
             EditAction.AttributeClear -> meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
             is EditAction.TrimSet -> {
                 val armorMeta = meta as? ArmorMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
-                armorMeta.setTrim(ArmorTrim(action.material, action.pattern))
+                armorMeta.trim = ArmorTrim(action.material, action.pattern)
             }
             EditAction.TrimClear -> {
                 val armorMeta = meta as? ArmorMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
-                armorMeta.setTrim(null)
+                armorMeta.trim = null
             }
             EditAction.Show,
             is EditAction.Reset,
@@ -561,7 +561,7 @@ class EditService(
                 }
                 val officialProfile = Bukkit.createProfile(payload.uuid, payload.canonicalName)
                 officialProfile.setProperty(ProfileProperty("textures", payload.textureValue, payload.textureSignature))
-                meta.setPlayerProfile(officialProfile)
+                meta.playerProfile = officialProfile
                 item.itemMeta = meta
                 targetResolver.save(target, item)
                 target.sendMessage(mini.deserialize("<green>Текстура головы установлена из официального licensed profile <white>${payload.canonicalName}</white>."))
@@ -700,7 +700,7 @@ class EditService(
             else -> return EditResult(false, listOf(mini.deserialize("<red>Некорректное lock действие")))
         }
 
-        meta.setBlockState(state)
+        meta.blockState = state
         item.itemMeta = meta
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
     }
