@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 package com.ratger.acreative.commands.edit
 
 import net.kyori.adventure.text.minimessage.MiniMessage

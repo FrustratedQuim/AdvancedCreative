@@ -6,8 +6,6 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Color
 import org.bukkit.NamespacedKey
-import org.bukkit.attribute.AttributeModifier
-import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ArmorMeta
@@ -27,15 +25,15 @@ class EditMetaActionsApplier(
 ) {
     private val mini = MiniMessage.miniMessage()
 
-    fun apply(action: EditAction, player: Player, item: ItemStack): EditResult? {
+    fun apply(action: EditAction, item: ItemStack): EditResult? {
         val meta = item.itemMeta ?: return EditResult(false, listOf(mini.deserialize("<red>У предмета нет редактируемой meta")))
-        val result = applyToMeta(action, player, meta)
+        val result = applyToMeta(action, meta)
         if (!result.ok) return result
         item.itemMeta = meta
         return result
     }
 
-    private fun applyToMeta(action: EditAction, player: Player, meta: ItemMeta): EditResult {
+    private fun applyToMeta(action: EditAction, meta: ItemMeta): EditResult {
         when (action) {
             is EditAction.NameSet -> meta.displayName(withoutItalic(miniMessage.parse(action.miniMessage)))
             EditAction.NameClear -> meta.displayName(null)
@@ -115,7 +113,7 @@ class EditMetaActionsApplier(
                 val skull = meta as? SkullMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не player head")))
                 val source = Bukkit.getPlayerExact(action.name)
                     ?: return EditResult(false, listOf(mini.deserialize("<red>Онлайн-игрок <white>${action.name}</white> не найден.")))
-                skull.playerProfile = copyProfile(source.playerProfile)
+                skull.playerProfile = EditPlayerProfileCopyHelper.copyProfile(source.playerProfile)
             }
             EditAction.HeadClear -> {
                 val skull = meta as? SkullMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Не player head")))
@@ -124,11 +122,7 @@ class EditMetaActionsApplier(
             is EditAction.AttributeAdd -> {
                 val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
                 val key = NamespacedKey(plugin, "acreative_attr_${UUID.randomUUID()}")
-                val modifier = if (slotGroupSpec == null) {
-                    AttributeModifier(key, action.amount, action.operation)
-                } else {
-                    AttributeModifier(key, action.amount, action.operation, EditSlotGroupAdapter.toPaperGroup(slotGroupSpec))
-                }
+                val modifier = EditAttributeModifierFactory.create(key, action.amount, action.operation, slotGroupSpec)
                 meta.addAttributeModifier(action.attribute, modifier)
             }
             is EditAction.AttributeRemove -> {
@@ -149,13 +143,6 @@ class EditMetaActionsApplier(
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
         return EditResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
-    }
-
-    private fun copyProfile(source: com.destroystokyo.paper.profile.PlayerProfile): com.destroystokyo.paper.profile.PlayerProfile {
-        val clone = runCatching { Bukkit.createProfile(source.uniqueId, source.name) }
-            .getOrElse { Bukkit.createProfile(source.uniqueId ?: UUID.randomUUID()) }
-        source.properties.forEach { clone.setProperty(ProfileProperty(it.name, it.value, it.signature)) }
-        return clone
     }
 
     private fun toggleFlag(meta: ItemMeta, action: EditAction.TooltipToggle) {

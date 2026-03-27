@@ -291,8 +291,18 @@ class EditExperimentalComponentsService {
             return
         }
 
+        if (scope == ToolSpeedScope.INEFFECTIVE_ONLY) {
+            val rebuilt = Tool.tool()
+                .defaultMiningSpeed(speed)
+                .damagePerBlock(current.damagePerBlock())
+                .addRules(current.rules())
+                .build()
+            item.setData(DataComponentTypes.TOOL, rebuilt)
+            return
+        }
+
         val hasSpeedRules = hasSpeedBearingRules(current)
-        if (!hasSpeedRules || scope == ToolSpeedScope.INEFFECTIVE_ONLY) {
+        if (!hasSpeedRules) {
             val rebuilt = Tool.tool()
                 .defaultMiningSpeed(speed)
                 .damagePerBlock(current.damagePerBlock())
@@ -307,10 +317,7 @@ class EditExperimentalComponentsService {
             .damagePerBlock(current.damagePerBlock())
 
         current.rules().forEach { rule ->
-            val updatedSpeed = when (scope) {
-                ToolSpeedScope.ALL_BLOCKS, ToolSpeedScope.EFFECTIVE_ONLY -> rule.speed()?.let { speed }
-                ToolSpeedScope.INEFFECTIVE_ONLY -> rule.speed()
-            }
+            val updatedSpeed = rule.speed()?.let { speed }
             rebuilt.addRule(Tool.rule(rule.blocks(), updatedSpeed, rule.correctForDrops()))
         }
 

@@ -64,7 +64,7 @@ class EditService(
             return ApplyOutcome(item, EditLockActionsHelper.apply(player, action, item))
         }
 
-        val metaResult = metaActionsApplier.apply(action, player, item)
+        val metaResult = metaActionsApplier.apply(action, item)
             ?: failure("<red>Ветка не поддерживается для item meta")
         return ApplyOutcome(item, metaResult)
     }
