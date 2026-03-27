@@ -20,7 +20,8 @@ class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
             when (args.firstOrNull()?.lowercase()) {
                 "trim" -> player.sendRichMessage("<red>Использование: /edit trim set <pattern_template_id> <material_id> | /edit trim clear")
                 "pot" -> player.sendRichMessage("<red>Использование: /edit pot clear | /edit pot set <back> <left> <right> <front> | /edit pot side <back|left|right|front> <item_id>")
-                else -> player.sendRichMessage("<red>Использование: /edit show | /edit reset <all> | /edit id <item> | /edit name|lore|component|enchant|tooltip|potion|head(clear|from_texture|from_name|from_online)|attribute|consumable|death_protection|equippable|remainder|tool|lock|trim|pot ...")
+                "container" -> player.sendRichMessage("<red>Использование: /edit container <index>")
+                else -> player.sendRichMessage("<red>Использование: /edit show | /edit reset <all> | /edit id <item> | /edit name|lore|component|enchant|tooltip|potion|head(clear|from_texture|from_name|from_online)|attribute|consumable|death_protection|equippable|remainder|tool|lock|container|trim|pot ...")
             }
             return
         }

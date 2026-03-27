@@ -202,6 +202,17 @@ class EditValidationService {
                 val state = blockStateMeta.blockState
                 if (state !is Lockable) return fail(player, "Block state этого shulker не поддерживает lock API")
             }
+            is EditAction.ContainerSetSlotFromOffhand -> {
+                val capacity = EditContainerSupport.containerCapacity(context.item.type)
+                    ?: return fail(player, "Этот предмет не поддерживает /edit container")
+                if (action.index < 0 || action.index >= capacity) {
+                    return fail(player, "Для ${context.item.type.key.asString()} доступно $capacity слотов: 0..${capacity - 1}")
+                }
+                val offhand = player.inventory.itemInOffHand
+                if (EditContainerSupport.isEmpty(offhand)) {
+                    return fail(player, "Во второй руке должен быть предмет (не AIR) для установки в container slot")
+                }
+            }
 
             else -> Unit
         }

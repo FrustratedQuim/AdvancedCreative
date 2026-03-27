@@ -5,6 +5,7 @@ import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
+import io.papermc.paper.datacomponent.item.ItemContainerContents
 import io.papermc.paper.datacomponent.item.Tool
 import io.papermc.paper.datacomponent.item.PotDecorations
 import io.papermc.paper.datacomponent.item.UseCooldown
@@ -138,6 +139,7 @@ class EditService(
             action is EditAction.ToolClear ||
             action is EditAction.SetUseCooldown ||
             action is EditAction.ClearUseCooldown ||
+            action is EditAction.ContainerSetSlotFromOffhand ||
             action is EditAction.PotClear ||
             action is EditAction.PotSet ||
             action is EditAction.PotSetSide
@@ -345,6 +347,13 @@ class EditService(
             EditAction.ClearUseCooldown -> {
                 item.unsetData(DataComponentTypes.USE_COOLDOWN)
             }
+            is EditAction.ContainerSetSlotFromOffhand -> {
+                val capacity = EditContainerSupport.containerCapacity(item.type)
+                    ?: return EditResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /edit container")))
+                val contents = EditContainerSupport.buildContainerContents(capacity, item.getData(DataComponentTypes.CONTAINER))
+                contents[action.index] = player.inventory.itemInOffHand.clone()
+                item.setData(DataComponentTypes.CONTAINER, ItemContainerContents.containerContents(contents))
+            }
             EditAction.PotClear -> {
                 item.unsetData(DataComponentTypes.POT_DECORATIONS)
             }
@@ -541,6 +550,7 @@ class EditService(
             EditAction.ToolClear,
             is EditAction.SetUseCooldown,
             EditAction.ClearUseCooldown,
+            is EditAction.ContainerSetSlotFromOffhand,
             EditAction.PotClear,
             is EditAction.PotSet,
             is EditAction.PotSetSide,

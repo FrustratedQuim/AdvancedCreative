@@ -114,6 +114,29 @@ class EditShowService {
         } else {
             out += mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
         }
+        val containerCapacity = EditContainerSupport.containerCapacity(item.type)
+        val container = item.getData(DataComponentTypes.CONTAINER)
+        if (container == null) {
+            out += mini.deserialize("<gray>container: <white><none>")
+        } else {
+            val effectiveCapacity = containerCapacity ?: container.contents().size
+            val visible = container.contents().take(effectiveCapacity)
+            val filled = visible.count { it.type != org.bukkit.Material.AIR && it.amount > 0 }
+            out += mini.deserialize("<gray>container: <white>capacity=$effectiveCapacity, filled=$filled")
+            visible.forEachIndexed { index, stack ->
+                if (stack.type == org.bukkit.Material.AIR || stack.amount <= 0) return@forEachIndexed
+                val stackMeta = stack.itemMeta
+                val suffixParts = mutableListOf<String>()
+                val customName = stackMeta?.displayName()?.let(plain::serialize)?.takeIf { it.isNotBlank() }
+                if (customName != null) suffixParts += "name=$customName"
+                val loreSize = stackMeta?.lore()?.size ?: 0
+                if (loreSize > 0) suffixParts += "lore=$loreSize"
+                val enchants = stackMeta?.enchants?.size ?: 0
+                if (enchants > 0) suffixParts += "enchants=$enchants"
+                val suffix = if (suffixParts.isEmpty()) "" else " (${suffixParts.joinToString(", ")})"
+                out += mini.deserialize("<gray>container[$index]: <white>${stack.type.key.asString()} x${stack.amount}$suffix")
+            }
+        }
         val trim = (meta as? org.bukkit.inventory.meta.ArmorMeta)?.trim
         if (trim == null) {
             out += mini.deserialize("<gray>trim: <white><none>")

@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
 class EditTabCompleterSupport(private val parser: EditParsers) {
     private val roots = listOf(
         "show", "reset", "name", "lore", "component", "tooltip", "enchant", "can_place_on", "can_break",
-        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "trim", "pot", "id"
+        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "trim", "pot", "container", "id"
     )
 
     fun complete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -36,6 +36,10 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "attribute" -> listOf("add", "remove", "clear")
                 "trim" -> listOf("set", "clear")
                 "pot" -> listOf("clear", "set", "side")
+                "container" -> {
+                    val capacity = type?.let { EditContainerSupport.containerCapacity(it) }
+                    if (capacity == null) emptyList() else (0 until capacity).map(Int::toString)
+                }
                 else -> emptyList()
             }.filter { it.startsWith(args[1], true) }
 
@@ -173,7 +177,8 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 (root == "lock" && !material.name.endsWith("SHULKER_BOX")) ||
                 (root == "attribute" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
                 (root == "trim" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
-                (root == "pot" && material != Material.DECORATED_POT)
+                (root == "pot" && material != Material.DECORATED_POT) ||
+                (root == "container" && EditContainerSupport.containerCapacity(material) == null)
         }
     }
 }

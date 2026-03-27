@@ -130,10 +130,17 @@ class EditParsers {
             "equippable" -> parseEquippable(args)
             "tool" -> parseTool(args)
             "lock" -> parseLock(args)
+            "container" -> parseContainer(args)
             "trim" -> parseTrim(args)
             "pot" -> parsePot(args)
             else -> null
         }
+    }
+
+    private fun parseContainer(args: Array<out String>): EditAction? {
+        if (args.size != 2) return null
+        val index = args.getOrNull(1)?.toIntOrNull() ?: return null
+        return EditAction.ContainerSetSlotFromOffhand(index)
     }
 
     private fun parseTrim(args: Array<out String>): EditAction? {
