@@ -50,7 +50,7 @@ class EditService(
     fun execute(player: Player, action: EditAction): EditResult {
         val context = targetResolver.resolve(player) ?: return EditResult(false, emptyList())
         if (action is EditAction.Show) {
-            return EditResult(true, showService.render(player, context))
+            return EditResult(true, showService.render(context))
         }
 
         if (action is EditAction.Reset && action.scope.startsWith("unsupported:")) {

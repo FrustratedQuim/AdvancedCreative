@@ -5,7 +5,6 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.block.Lockable
-import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
@@ -16,7 +15,7 @@ class EditShowService {
     private val mini = MiniMessage.miniMessage()
     private val plain = PlainTextComponentSerializer.plainText()
 
-    fun render(player: Player, context: EditContext): List<Component> {
+    fun render(context: EditContext): List<Component> {
         val item = context.item
         val meta = item.itemMeta
         val out = mutableListOf<Component>()
@@ -60,10 +59,10 @@ class EditShowService {
             }
         }
         val food = item.getData(DataComponentTypes.FOOD)
-        if (food == null) {
-            out += mini.deserialize("<gray>food: <white><none>")
+        out += if (food == null) {
+            mini.deserialize("<gray>food: <white><none>")
         } else {
-            out += mini.deserialize("<gray>food: <white>nutrition=${food.nutrition()}, saturation=${food.saturation()}, canAlwaysEat=${food.canAlwaysEat()}")
+            mini.deserialize("<gray>food: <white>nutrition=${food.nutrition()}, saturation=${food.saturation()}, canAlwaysEat=${food.canAlwaysEat()}")
         }
         val remainder = item.getData(DataComponentTypes.USE_REMAINDER)
         if (remainder == null) {
@@ -110,10 +109,10 @@ class EditShowService {
             )
         }
         val useCooldown = item.getData(DataComponentTypes.USE_COOLDOWN)
-        if (useCooldown == null) {
-            out += mini.deserialize("<gray>use_cooldown: <white><none>")
+        out += if (useCooldown == null) {
+            mini.deserialize("<gray>use_cooldown: <white><none>")
         } else {
-            out += mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
+            mini.deserialize("<gray>use_cooldown: <white>seconds=${useCooldown.seconds()}, group=${useCooldown.cooldownGroup() ?: "<none>"}")
         }
         val container = EditContainerSupport.readContainerContents(item)
         if (container == null) {
@@ -137,10 +136,10 @@ class EditShowService {
             }
         }
         val trim = (meta as? org.bukkit.inventory.meta.ArmorMeta)?.trim
-        if (trim == null) {
-            out += mini.deserialize("<gray>trim: <white><none>")
+        out += if (trim == null) {
+            mini.deserialize("<gray>trim: <white><none>")
         } else {
-            out += mini.deserialize("<gray>trim: <white>pattern=${trim.pattern.key.asString()}, material=${trim.material.key.asString()}")
+            mini.deserialize("<gray>trim: <white>pattern=${trim.pattern.key.asString()}, material=${trim.material.key.asString()}")
         }
         fun side(side: DecoratedPotSide): String = EditTrimPotSupport.sherd(item, side)?.key?.asString() ?: "<none>"
         out += mini.deserialize("<gray>pot: <white>back=${side(DecoratedPotSide.BACK)}, left=${side(DecoratedPotSide.LEFT)}, right=${side(DecoratedPotSide.RIGHT)}, front=${side(DecoratedPotSide.FRONT)}")
@@ -157,16 +156,16 @@ class EditShowService {
 
         if (meta is SkullMeta) {
             val profile = meta.playerProfile
-            if (profile == null) {
-                out += mini.deserialize("<gray>head: <white><none>")
+            out += if (profile == null) {
+                mini.deserialize("<gray>head: <white><none>")
             } else {
                 val name = profile.name ?: "<none>"
                 val uuid = profile.uniqueId?.toString() ?: "<none>"
                 val textures = profile.properties.firstOrNull { it.name == "textures" }?.value
                 if (textures == null) {
-                    out += mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=no")
+                    mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=no")
                 } else {
-                    out += mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=yes, texture_base64_length=${textures.length}")
+                    mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=yes, texture_base64_length=${textures.length}")
                 }
             }
         }
