@@ -27,10 +27,10 @@ class EditParsers {
     }
 
     fun enchantment(input: String): Enchantment? = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(input.lowercase()))
-    fun effect(input: String): PotionEffectType? = Registry.EFFECT.get(NamespacedKey.minecraft(input.lowercase()))
+    fun effect(input: String): PotionEffectType? = Registry.MOB_EFFECT.get(NamespacedKey.minecraft(input.lowercase()))
     fun effectFromToken(input: String): PotionEffectType? {
         val key = NamespacedKey.fromString(input.lowercase()) ?: NamespacedKey.minecraft(input.lowercase())
-        return Registry.EFFECT.get(key)
+        return Registry.MOB_EFFECT.get(key)
     }
     fun parseAdventureKey(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
     fun parseCooldownGroup(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
@@ -405,7 +405,7 @@ class EditParsers {
     }
 
     fun enchantSuggestions(prefix: String): List<String> = Registry.ENCHANTMENT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
-    fun effectSuggestions(prefix: String): List<String> = Registry.EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
+    fun effectSuggestions(prefix: String): List<String> = Registry.MOB_EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun attributeSuggestions(prefix: String): List<String> = Registry.ATTRIBUTE.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun materialSuggestions(prefix: String): List<String> = Registry.MATERIAL.iterator().asSequence()
         .map { it.key.asString() }

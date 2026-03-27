@@ -1,11 +1,5 @@
 package com.ratger.acreative.commands.edit
 
-import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
-import io.papermc.paper.registry.RegistryKey
-import io.papermc.paper.registry.set.RegistrySet
-import org.bukkit.Registry
-import org.bukkit.potion.PotionEffect
-
 object EditEffectActionsSupport {
     fun parseEffectSpec(parsers: EditParsers, args: List<String>): EffectActionSpec? {
         val kind = args.firstOrNull()?.lowercase() ?: return null
@@ -40,40 +34,21 @@ object EditEffectActionsSupport {
         }
     }
 
-    fun toConsumeEffect(spec: EffectActionSpec): ConsumeEffect {
+    fun render(spec: EffectActionSpec): String {
         return when (spec) {
-            EffectActionSpec.ClearAllEffects -> ConsumeEffect.clearAllStatusEffects()
-            is EffectActionSpec.PlaySound -> ConsumeEffect.playSoundConsumeEffect(spec.key)
-            is EffectActionSpec.RemoveEffects -> ConsumeEffect.removeEffects(
-                RegistrySet.keySetFromValues(RegistryKey.MOB_EFFECT, spec.effects)
-            )
-
-            is EffectActionSpec.TeleportRandomly -> ConsumeEffect.teleportRandomlyEffect(spec.diameter)
-            is EffectActionSpec.ApplyEffects -> ConsumeEffect.applyStatusEffects(
-                spec.effects.map { PotionEffect(it.type, it.duration, it.amplifier, false, it.showParticles, it.showIcon) },
-                spec.probability
-            )
-        }
-    }
-
-    fun render(effect: ConsumeEffect): String {
-        return when (effect) {
-            is ConsumeEffect.ClearAllStatusEffects -> "clear_all_effects"
-            is ConsumeEffect.PlaySound -> "play_sound sound=${effect.sound().asString()}"
-            is ConsumeEffect.RemoveStatusEffects -> {
-                val keys = effect.removeEffects().resolve(Registry.EFFECT).joinToString(" ") { it.key.key }
+            EffectActionSpec.ClearAllEffects -> "clear_all_effects"
+            is EffectActionSpec.PlaySound -> "play_sound sound=${spec.key.asString()}"
+            is EffectActionSpec.RemoveEffects -> {
+                val keys = spec.effects.joinToString(" ") { it.key.key }
                 "remove_effects effects=$keys"
             }
-
-            is ConsumeEffect.TeleportRandomly -> "teleport_randomly diameter=${effect.diameter()}"
-            is ConsumeEffect.ApplyStatusEffects -> {
-                val effects = effect.effects().joinToString("; ") {
-                    "${it.type.key.key} dur=${it.duration} amp=${it.amplifier} particles=${it.hasParticles()} icon=${it.hasIcon()}"
+            is EffectActionSpec.TeleportRandomly -> "teleport_randomly diameter=${spec.diameter}"
+            is EffectActionSpec.ApplyEffects -> {
+                val effects = spec.effects.joinToString("; ") {
+                    "${it.type.key.key} dur=${it.duration} amp=${it.amplifier} particles=${it.showParticles} icon=${it.showIcon}"
                 }
-                "apply_effects probability=${effect.probability()} effects=$effects"
+                "apply_effects probability=${spec.probability} effects=$effects"
             }
-
-            else -> "<unknown_effect:${effect::class.simpleName ?: "?"}>"
         }
     }
 
@@ -130,10 +105,4 @@ object EditEffectActionsSupport {
         return EffectApplyEntrySpec(type, duration, amplifier, showParticles, showIcon)
     }
 
-    fun removeByIndex(effects: List<ConsumeEffect>, index: Int): List<ConsumeEffect>? {
-        if (index !in effects.indices) return null
-        return effects.filterIndexed { i, _ -> i != index }
-    }
-
-    fun clear(): List<ConsumeEffect> = emptyList()
 }
