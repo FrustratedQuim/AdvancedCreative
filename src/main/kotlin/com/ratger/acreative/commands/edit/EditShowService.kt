@@ -143,13 +143,8 @@ class EditShowService {
         } else {
             out += mini.deserialize("<gray>trim: <white>pattern=${trim.pattern.key.asString()}, material=${trim.material.key.asString()}")
         }
-        val pot = item.getData(DataComponentTypes.POT_DECORATIONS)
-        if (pot == null) {
-            out += mini.deserialize("<gray>pot: <white><none>")
-        } else {
-            fun side(value: org.bukkit.inventory.ItemType?): String = value?.key()?.asString() ?: "<none>"
-            out += mini.deserialize("<gray>pot: <white>back=${side(pot.back())}, left=${side(pot.left())}, right=${side(pot.right())}, front=${side(pot.front())}")
-        }
+        fun side(side: DecoratedPotSide): String = EditTrimPotSupport.sherd(item, side)?.key?.asString() ?: "<none>"
+        out += mini.deserialize("<gray>pot: <white>back=${side(DecoratedPotSide.BACK)}, left=${side(DecoratedPotSide.LEFT)}, right=${side(DecoratedPotSide.RIGHT)}, front=${side(DecoratedPotSide.FRONT)}")
         out += mini.deserialize("<gray>can_place_on: <white>${runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>can_break: <white>${runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)} entries")
         out += mini.deserialize("<gray>enchantments: <white>${meta?.enchants?.entries?.joinToString { "${it.key.key.key}:${it.value}" } ?: "<none>"}")

@@ -144,8 +144,6 @@ class EditValidationService {
                 }
                 val unsupported = materials.firstOrNull { !EditTrimPotSupport.potDecorationMaterialIds.contains(it.key.asString()) }
                 if (unsupported != null) return fail(player, "Недопустимый pot item id: ${unsupported.key.asString()}")
-                val missingItemType = materials.firstOrNull { it.asItemType() == null }
-                if (missingItemType != null) return fail(player, "Материал ${missingItemType.key.asString()} не поддерживается как item type")
             }
             is EditAction.AttributeAdd, is EditAction.AttributeClear, is EditAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {

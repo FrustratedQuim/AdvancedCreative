@@ -7,7 +7,6 @@ import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
 import io.papermc.paper.datacomponent.item.ItemContainerContents
 import io.papermc.paper.datacomponent.item.Tool
-import io.papermc.paper.datacomponent.item.PotDecorations
 import io.papermc.paper.datacomponent.item.UseCooldown
 import io.papermc.paper.datacomponent.item.UseRemainder
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
@@ -355,33 +354,19 @@ class EditService(
                 item.setData(DataComponentTypes.CONTAINER, ItemContainerContents.containerContents(contents))
             }
             EditAction.PotClear -> {
-                item.unsetData(DataComponentTypes.POT_DECORATIONS)
+                if (!EditTrimPotSupport.applyDecorations(item, null, null, null, null)) {
+                    return EditResult(false, listOf(mini.deserialize("<red>Не удалось применить pot-декорации: требуется decorated pot item с BlockStateMeta")))
+                }
             }
             is EditAction.PotSet -> {
-                item.setData(
-                    DataComponentTypes.POT_DECORATIONS,
-                    EditTrimPotSupport.potDecorations(action.back, action.left, action.right, action.front)
-                )
+                if (!EditTrimPotSupport.applyDecorations(item, action.back, action.left, action.right, action.front)) {
+                    return EditResult(false, listOf(mini.deserialize("<red>Не удалось применить pot-декорации: требуется decorated pot item с BlockStateMeta")))
+                }
             }
             is EditAction.PotSetSide -> {
-                val current = item.getData(DataComponentTypes.POT_DECORATIONS)
-                var back = potDecorationToMaterial(current?.back())
-                var left = potDecorationToMaterial(current?.left())
-                var right = potDecorationToMaterial(current?.right())
-                var front = potDecorationToMaterial(current?.front())
-                when (action.side) {
-                    DecoratedPotSide.BACK -> back = action.material
-                    DecoratedPotSide.LEFT -> left = action.material
-                    DecoratedPotSide.RIGHT -> right = action.material
-                    DecoratedPotSide.FRONT -> front = action.material
+                if (!EditTrimPotSupport.applySide(item, action.side, action.material)) {
+                    return EditResult(false, listOf(mini.deserialize("<red>Не удалось применить pot-декорации: требуется decorated pot item с BlockStateMeta")))
                 }
-                val rebuilt = PotDecorations.potDecorations(
-                    back?.asItemType(),
-                    left?.asItemType(),
-                    right?.asItemType(),
-                    front?.asItemType()
-                )
-                item.setData(DataComponentTypes.POT_DECORATIONS, rebuilt)
             }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
@@ -669,11 +654,6 @@ class EditService(
         return SessionProfilePayload(uuid, canonicalName, textureValue, textureSignature)
     }
 
-    private fun potDecorationToMaterial(type: org.bukkit.inventory.ItemType?): Material? {
-        val key = type?.key()?.asString() ?: return null
-        val namespaced = org.bukkit.NamespacedKey.fromString(key) ?: return null
-        return org.bukkit.Registry.MATERIAL.get(namespaced)
-    }
 
     private fun parseUuid(raw: String): UUID? {
         val normalized = raw.trim()
