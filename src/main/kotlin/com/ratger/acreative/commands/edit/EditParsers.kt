@@ -333,10 +333,20 @@ class EditParsers {
         }
     }
 
-    private fun parseHead(args: Array<out String>): EditAction? = when (args.getOrNull(1)?.lowercase()) {
-        "texture" -> EditAction.HeadTextureSet(rawTail(args, 2))
-        "clear" -> EditAction.HeadTextureClear
-        else -> null
+    private fun parseHead(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "clear" -> EditAction.HeadClear
+            "from_texture" -> EditAction.HeadSetFromTexture(rawTail(args, 2))
+            "from_name" -> {
+                val name = args.getOrNull(2) ?: return null
+                EditAction.HeadSetFromName(name)
+            }
+            "from_online" -> {
+                val name = args.getOrNull(2) ?: return null
+                EditAction.HeadSetFromOnline(name)
+            }
+            else -> null
+        }
     }
 
     private fun parseAttribute(args: Array<out String>): EditAction? {

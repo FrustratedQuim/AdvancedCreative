@@ -126,9 +126,19 @@ class EditShowService {
         }
 
         if (meta is SkullMeta) {
-            val textures = meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }?.value
-            val preview = textures?.take(24)?.plus("...")
-            out += mini.deserialize("<gray>head texture: <white>${if (textures == null) "<none>" else "len=${textures.length}, $preview"}")
+            val profile = meta.playerProfile
+            if (profile == null) {
+                out += mini.deserialize("<gray>head: <white><none>")
+            } else {
+                val name = profile.name ?: "<none>"
+                val uuid = profile.uniqueId?.toString() ?: "<none>"
+                val textures = profile.properties.firstOrNull { it.name == "textures" }?.value
+                if (textures == null) {
+                    out += mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=no")
+                } else {
+                    out += mini.deserialize("<gray>head: <white>name=$name, uuid=$uuid, textures=yes, texture_base64_length=${textures.length}")
+                }
+            }
         }
 
         if (meta?.itemFlags?.contains(ItemFlag.HIDE_ATTRIBUTES) == true && meta.itemFlags.contains(ItemFlag.HIDE_ENCHANTS)) {

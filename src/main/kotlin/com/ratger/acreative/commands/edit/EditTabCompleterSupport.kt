@@ -32,7 +32,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "lock" -> listOf("set", "clear")
                 "equippable" -> listOf("slot", "clear", "dispensable", "swappable", "damage_on_hurt", "equip_sound", "camera_overlay", "asset_id")
                 "tool" -> listOf("speed", "damage_per_block", "clear")
-                "head" -> listOf("texture", "clear")
+                "head" -> listOf("clear", "from_texture", "from_name", "from_online")
                 "attribute" -> listOf("add", "remove", "clear")
                 else -> emptyList()
             }.filter { it.startsWith(args[1], true) }
@@ -93,6 +93,10 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "attribute" -> when (args[1].lowercase()) {
                     "add" -> parser.attributeSuggestions(args[2])
                     "remove" -> (item?.itemMeta?.attributeModifiers?.entries()?.indices?.map(Int::toString) ?: emptyList())
+                    else -> emptyList()
+                }
+                "head" -> when (args[1].lowercase()) {
+                    "from_online", "from_name" -> org.bukkit.Bukkit.getOnlinePlayers().map { it.name }
                     else -> emptyList()
                 }
 

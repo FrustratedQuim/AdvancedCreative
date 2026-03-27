@@ -106,13 +106,23 @@ class EditValidationService {
                 if (action.index !in dp.deathEffects().indices) return fail(player, "Некорректный индекс effect_remove")
             }
 
-            is EditAction.HeadTextureSet -> {
+            is EditAction.HeadSetFromTexture -> {
                 if (!context.snapshot.isHead) return fail(player, "Эта ветка только для player_head")
                 if (action.base64.isBlank()) return fail(player, "texture base64 пустая")
             }
 
-            is EditAction.HeadTextureClear -> {
+            EditAction.HeadClear -> {
                 if (!context.snapshot.isHead) return fail(player, "Эта ветка только для player_head")
+            }
+
+            is EditAction.HeadSetFromName -> {
+                if (!context.snapshot.isHead) return fail(player, "Эта ветка только для player_head")
+                if (!action.name.matches(Regex("^[A-Za-z0-9_]{3,16}$"))) return fail(player, "Некорректный licensed_name (ожидается 3..16: A-Z a-z 0-9 _)")
+            }
+
+            is EditAction.HeadSetFromOnline -> {
+                if (!context.snapshot.isHead) return fail(player, "Эта ветка только для player_head")
+                if (action.name.isBlank()) return fail(player, "Укажите ник онлайн-игрока")
             }
 
             is EditAction.AttributeAdd, is EditAction.AttributeClear, is EditAction.AttributeRemove -> {

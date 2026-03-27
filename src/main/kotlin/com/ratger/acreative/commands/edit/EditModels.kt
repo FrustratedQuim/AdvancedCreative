@@ -107,8 +107,10 @@ sealed interface EditAction {
 
     data class PotionEffectRemove(val type: PotionEffectType) : EditAction
     data object PotionEffectClear : EditAction
-    data class HeadTextureSet(val base64: String) : EditAction
-    data object HeadTextureClear : EditAction
+    data object HeadClear : EditAction
+    data class HeadSetFromTexture(val base64: String) : EditAction
+    data class HeadSetFromName(val name: String) : EditAction
+    data class HeadSetFromOnline(val name: String) : EditAction
     data class AttributeAdd(
         val attribute: Attribute,
         val amount: Double,

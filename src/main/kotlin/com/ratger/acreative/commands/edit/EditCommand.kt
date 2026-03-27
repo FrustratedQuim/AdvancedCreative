@@ -11,13 +11,13 @@ class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
     private val resolver = EditTargetResolver()
     private val show = EditShowService()
     private val validation = EditValidationService()
-    private val service = EditService(resolver, validation, show, parser, EditMiniMessage())
+    private val service = EditService(hooker.plugin, resolver, validation, show, parser, EditMiniMessage())
     private val tabSupport = EditTabCompleterSupport(parser)
 
     override fun handle(player: Player, args: Array<out String>) {
         val action = parser.parseAction(args)
         if (action == null) {
-            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all> | /edit id <item> | /edit name|lore|component|enchant|tooltip|potion|head|attribute|consumable|death_protection|equippable|remainder|tool|lock ...")
+            player.sendRichMessage("<red>Использование: /edit show | /edit reset <all> | /edit id <item> | /edit name|lore|component|enchant|tooltip|potion|head(clear|from_texture|from_name|from_online)|attribute|consumable|death_protection|equippable|remainder|tool|lock ...")
             return
         }
 
