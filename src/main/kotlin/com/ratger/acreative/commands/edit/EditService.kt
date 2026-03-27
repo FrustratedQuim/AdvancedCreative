@@ -460,10 +460,11 @@ class EditService(
             }
 
             is EditAction.AttributeAdd -> {
-                val slotGroup = action.slotGroup?.let(parser::slotGroup)
-                val modifier = if (slotGroup == null) {
+                val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
+                val modifier = if (slotGroupSpec == null) {
                     AttributeModifier(UUID.randomUUID(), "acreative_attr", action.amount, action.operation)
                 } else {
+                    val slotGroup = EditSlotGroupAdapter.toPaperGroup(slotGroupSpec)
                     AttributeModifier(UUID.randomUUID(), "acreative_attr", action.amount, action.operation, slotGroup)
                 }
                 meta.addAttributeModifier(action.attribute, modifier)

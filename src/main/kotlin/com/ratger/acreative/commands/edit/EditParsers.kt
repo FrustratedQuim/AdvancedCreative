@@ -1,6 +1,8 @@
 package com.ratger.acreative.commands.edit
 
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
+import io.papermc.paper.registry.RegistryAccess
+import io.papermc.paper.registry.RegistryKey
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -9,7 +11,6 @@ import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.EquipmentSlot
-import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.potion.PotionEffectType
 
@@ -24,7 +25,7 @@ class EditParsers {
         }
     }
 
-    fun enchantment(input: String): Enchantment? = Registry.ENCHANTMENT.get(NamespacedKey.minecraft(input.lowercase()))
+    fun enchantment(input: String): Enchantment? = enchantmentRegistry().get(NamespacedKey.minecraft(input.lowercase()))
     fun effect(input: String): PotionEffectType? = Registry.MOB_EFFECT.get(NamespacedKey.minecraft(input.lowercase()))
     fun effectFromToken(input: String): PotionEffectType? {
         val key = NamespacedKey.fromString(input.lowercase()) ?: NamespacedKey.minecraft(input.lowercase())
@@ -76,21 +77,7 @@ class EditParsers {
         else -> null
     }
 
-    fun slotGroup(input: String): EquipmentSlotGroup? {
-        return when (input.lowercase()) {
-            "mainhand" -> EquipmentSlotGroup.MAINHAND
-            "offhand" -> EquipmentSlotGroup.OFFHAND
-            "hand" -> EquipmentSlotGroup.HAND
-            "feet" -> EquipmentSlotGroup.FEET
-            "legs" -> EquipmentSlotGroup.LEGS
-            "chest" -> EquipmentSlotGroup.CHEST
-            "head" -> EquipmentSlotGroup.HEAD
-            "armor" -> EquipmentSlotGroup.ARMOR
-            "body" -> EquipmentSlotGroup.BODY
-            "any" -> EquipmentSlotGroup.ANY
-            else -> null
-        }
-    }
+    fun slotGroup(input: String): EditSlotGroupSpec? = EditSlotGroupSpec.fromToken(input)
 
     fun rawTail(args: Array<out String>, from: Int): String = if (args.size <= from) "" else args.copyOfRange(from, args.size).joinToString(" ")
 
@@ -402,7 +389,7 @@ class EditParsers {
         }
     }
 
-    fun enchantSuggestions(prefix: String): List<String> = Registry.ENCHANTMENT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
+    fun enchantSuggestions(prefix: String): List<String> = enchantmentRegistry().iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun effectSuggestions(prefix: String): List<String> = Registry.MOB_EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun attributeSuggestions(prefix: String): List<String> = Registry.ATTRIBUTE.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun materialSuggestions(prefix: String): List<String> = Registry.MATERIAL.iterator().asSequence()
@@ -410,4 +397,6 @@ class EditParsers {
         .filter { it.startsWith(prefix, true) || it.removePrefix("minecraft:").startsWith(prefix, true) }
         .sorted()
         .toList()
+
+    private fun enchantmentRegistry() = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
 }
