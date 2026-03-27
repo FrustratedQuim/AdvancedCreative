@@ -103,8 +103,9 @@ class EditShowService {
         if (tool == null) {
             out += mini.deserialize("<gray>tool: <white><none>")
         } else {
+            val speedRules = tool.rules().count { it.speed() != null }
             out += mini.deserialize(
-                "<gray>tool: <white>speed=${tool.defaultMiningSpeed()}, damage_per_block=${tool.damagePerBlock()}, rules=${tool.rules().size}"
+                "<gray>tool: <white>default_mining_speed=${tool.defaultMiningSpeed()}, damage_per_block=${tool.damagePerBlock()}, rules=${tool.rules().size}, speed_rules=$speedRules"
             )
         }
         val useCooldown = item.getData(DataComponentTypes.USE_COOLDOWN)

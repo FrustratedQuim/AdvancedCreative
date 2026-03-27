@@ -134,9 +134,21 @@ class EditParsers {
 
     private fun parseTool(args: Array<out String>): EditAction? {
         return when (args.getOrNull(1)?.lowercase()) {
-            "speed" -> EditAction.ToolSetDefaultMiningSpeed(args.getOrNull(2)?.toFloatOrNull() ?: return null)
+            "speed" -> EditAction.ToolSetDefaultMiningSpeed(
+                args.getOrNull(2)?.toFloatOrNull() ?: return null,
+                parseToolSpeedScope(args.getOrNull(3)) ?: return null
+            )
             "damage_per_block" -> EditAction.ToolSetDamagePerBlock(args.getOrNull(2)?.toIntOrNull() ?: return null)
             "clear" -> EditAction.ToolClear
+            else -> null
+        }
+    }
+
+    private fun parseToolSpeedScope(raw: String?): ToolSpeedScope? {
+        return when (raw?.lowercase()) {
+            "all", "all_blocks", "both" -> ToolSpeedScope.ALL_BLOCKS
+            "effective", "effective_only" -> ToolSpeedScope.EFFECTIVE_ONLY
+            "ineffective", "ineffective_only" -> ToolSpeedScope.INEFFECTIVE_ONLY
             else -> null
         }
     }

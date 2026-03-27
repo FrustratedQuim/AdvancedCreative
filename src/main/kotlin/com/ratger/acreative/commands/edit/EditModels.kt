@@ -28,6 +28,12 @@ sealed interface EffectActionSpec {
     data class ApplyEffects(val probability: Float, val effects: List<EffectApplyEntrySpec>) : EffectActionSpec
 }
 
+enum class ToolSpeedScope {
+    ALL_BLOCKS,
+    EFFECTIVE_ONLY,
+    INEFFECTIVE_ONLY
+}
+
 sealed interface EditAction {
     data object Show : EditAction
     data class Reset(val scope: String) : EditAction
@@ -85,7 +91,7 @@ sealed interface EditAction {
     data class EquippableSetEquipSound(val keyOrDefault: net.kyori.adventure.key.Key?) : EditAction
     data class EquippableSetCameraOverlay(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
     data class EquippableSetAssetId(val keyOrNull: net.kyori.adventure.key.Key?) : EditAction
-    data class ToolSetDefaultMiningSpeed(val value: Float) : EditAction
+    data class ToolSetDefaultMiningSpeed(val value: Float, val scope: ToolSpeedScope) : EditAction
     data class ToolSetDamagePerBlock(val value: Int) : EditAction
     data object ToolClear : EditAction
     data class PotionEffectAdd(

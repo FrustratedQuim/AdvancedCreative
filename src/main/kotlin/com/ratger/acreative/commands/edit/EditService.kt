@@ -308,9 +308,7 @@ class EditService(
                 EditEquippableSupport.apply(item, builder)
             }
             is EditAction.ToolSetDefaultMiningSpeed -> {
-                val builder = toolBuilder(item)
-                builder.defaultMiningSpeed(action.value)
-                item.setData(DataComponentTypes.TOOL, builder.build())
+                applyToolSpeed(item, action.value, action.scope)
             }
             is EditAction.ToolSetDamagePerBlock -> {
                 val builder = toolBuilder(item)
@@ -583,4 +581,55 @@ class EditService(
         }
         return builder
     }
+
+    private fun applyToolSpeed(item: ItemStack, speed: Float, scope: ToolSpeedScope) {
+        val current = item.getData(DataComponentTypes.TOOL)
+        if (current == null) {
+            item.setData(DataComponentTypes.TOOL, Tool.tool().defaultMiningSpeed(speed).build())
+            return
+        }
+
+        val hasSpeedRules = hasSpeedBearingRules(current)
+        if (!hasSpeedRules) {
+            val rebuilt = Tool.tool()
+                .defaultMiningSpeed(speed)
+                .damagePerBlock(current.damagePerBlock())
+                .addRules(current.rules())
+                .build()
+            item.setData(DataComponentTypes.TOOL, rebuilt)
+            return
+        }
+
+        if (scope == ToolSpeedScope.INEFFECTIVE_ONLY) {
+            val rebuilt = Tool.tool()
+                .defaultMiningSpeed(speed)
+                .damagePerBlock(current.damagePerBlock())
+                .addRules(current.rules())
+                .build()
+            item.setData(DataComponentTypes.TOOL, rebuilt)
+            return
+        }
+
+        val rebuilt = Tool.tool()
+            .defaultMiningSpeed(
+                when (scope) {
+                    ToolSpeedScope.ALL_BLOCKS -> speed
+                    ToolSpeedScope.EFFECTIVE_ONLY -> current.defaultMiningSpeed()
+                    ToolSpeedScope.INEFFECTIVE_ONLY -> speed
+                }
+            )
+            .damagePerBlock(current.damagePerBlock())
+
+        current.rules().forEach { rule ->
+            val updatedSpeed = when (scope) {
+                ToolSpeedScope.ALL_BLOCKS, ToolSpeedScope.EFFECTIVE_ONLY -> rule.speed()?.let { speed }
+                ToolSpeedScope.INEFFECTIVE_ONLY -> rule.speed()
+            }
+            rebuilt.addRule(Tool.rule(rule.blocks(), updatedSpeed, rule.correctForDrops()))
+        }
+
+        item.setData(DataComponentTypes.TOOL, rebuilt.build())
+    }
+
+    private fun hasSpeedBearingRules(tool: Tool): Boolean = tool.rules().any { it.speed() != null }
 }
