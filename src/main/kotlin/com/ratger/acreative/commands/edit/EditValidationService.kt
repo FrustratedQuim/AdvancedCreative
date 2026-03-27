@@ -125,6 +125,28 @@ class EditValidationService {
                 if (action.name.isBlank()) return fail(player, "Укажите ник онлайн-игрока")
             }
 
+            EditAction.TrimClear -> {
+                if (!context.snapshot.isArmor) return fail(player, "Эта ветка только для armor items")
+                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return fail(player, "Item meta не поддерживает ArmorMeta")
+            }
+            is EditAction.TrimSet -> {
+                if (!context.snapshot.isArmor) return fail(player, "Эта ветка только для armor items")
+                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return fail(player, "Item meta не поддерживает ArmorMeta")
+            }
+            EditAction.PotClear,
+            is EditAction.PotSet,
+            is EditAction.PotSetSide -> {
+                if (context.item.type != Material.DECORATED_POT) return fail(player, "Эта ветка только для minecraft:decorated_pot")
+                val materials = when (action) {
+                    is EditAction.PotSet -> listOf(action.back, action.left, action.right, action.front)
+                    is EditAction.PotSetSide -> listOf(action.material)
+                    else -> emptyList()
+                }
+                val unsupported = materials.firstOrNull { !EditTrimPotSupport.potDecorationMaterialIds.contains(it.key.asString()) }
+                if (unsupported != null) return fail(player, "Недопустимый pot item id: ${unsupported.key.asString()}")
+                val missingItemType = materials.firstOrNull { it.asItemType() == null }
+                if (missingItemType != null) return fail(player, "Материал ${missingItemType.key.asString()} не поддерживается как item type")
+            }
             is EditAction.AttributeAdd, is EditAction.AttributeClear, is EditAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {
                     return fail(player, "attribute modifiers в этой команде доступны только для armor items")

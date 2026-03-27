@@ -130,6 +130,39 @@ class EditParsers {
             "equippable" -> parseEquippable(args)
             "tool" -> parseTool(args)
             "lock" -> parseLock(args)
+            "trim" -> parseTrim(args)
+            "pot" -> parsePot(args)
+            else -> null
+        }
+    }
+
+    private fun parseTrim(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "set" -> {
+                val pattern = EditTrimPotSupport.parseTrimPatternTemplateId(args.getOrNull(2) ?: return null) ?: return null
+                val material = EditTrimPotSupport.parseTrimMaterialItemId(args.getOrNull(3) ?: return null) ?: return null
+                EditAction.TrimSet(pattern, material)
+            }
+            "clear" -> EditAction.TrimClear
+            else -> null
+        }
+    }
+
+    private fun parsePot(args: Array<out String>): EditAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "clear" -> EditAction.PotClear
+            "set" -> {
+                val back = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(2) ?: return null) ?: return null
+                val left = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
+                val right = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(4) ?: return null) ?: return null
+                val front = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(5) ?: return null) ?: return null
+                EditAction.PotSet(back, left, right, front)
+            }
+            "side" -> {
+                val side = EditTrimPotSupport.parsePotSide(args.getOrNull(2) ?: return null) ?: return null
+                val material = EditTrimPotSupport.parsePotDecorationMaterial(args.getOrNull(3) ?: return null) ?: return null
+                EditAction.PotSetSide(side, material)
+            }
             else -> null
         }
     }

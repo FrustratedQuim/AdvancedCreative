@@ -8,7 +8,7 @@ import org.bukkit.entity.Player
 class EditTabCompleterSupport(private val parser: EditParsers) {
     private val roots = listOf(
         "show", "reset", "name", "lore", "component", "tooltip", "enchant", "can_place_on", "can_break",
-        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "id"
+        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "trim", "pot", "id"
     )
 
     fun complete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -34,6 +34,8 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 "tool" -> listOf("speed", "damage_per_block", "clear")
                 "head" -> listOf("clear", "from_texture", "from_name", "from_online")
                 "attribute" -> listOf("add", "remove", "clear")
+                "trim" -> listOf("set", "clear")
+                "pot" -> listOf("clear", "set", "side")
                 else -> emptyList()
             }.filter { it.startsWith(args[1], true) }
 
@@ -99,6 +101,15 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "from_online", "from_name" -> org.bukkit.Bukkit.getOnlinePlayers().map { it.name }
                     else -> emptyList()
                 }
+                "trim" -> when (args[1].lowercase()) {
+                    "set" -> EditTrimPotSupport.trimPatternIds()
+                    else -> emptyList()
+                }
+                "pot" -> when (args[1].lowercase()) {
+                    "set" -> EditTrimPotSupport.potDecorationMaterialIds
+                    "side" -> EditTrimPotSupport.sideOptions()
+                    else -> emptyList()
+                }
 
                 else -> emptyList()
             }.filter { it.startsWith(args[2], true) }
@@ -115,6 +126,9 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 isEffectAddCommand(args) && args[2].equals("remove_effects", true) -> parser.effectSuggestions(args[3])
                 isEffectAddCommand(args) && args[2].equals("teleport_randomly", true) -> listOf("5.0", "8.0", "16.0")
                 isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("1.0", "0.5", "0.25")
+                args[0].equals("trim", true) && args[1].equals("set", true) -> EditTrimPotSupport.trimMaterialIds()
+                args[0].equals("pot", true) && args[1].equals("set", true) -> EditTrimPotSupport.potDecorationMaterialIds
+                args[0].equals("pot", true) && args[1].equals("side", true) -> EditTrimPotSupport.potDecorationMaterialIds
                 else -> emptyList()
             }
 
@@ -124,11 +138,14 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 listOf("0", "1", "2")
             } else if (isEffectAddCommand(args) && args[2].equals("apply_effects", true)) {
                 parser.effectSuggestions(args[4])
+            } else if (args[0].equals("pot", true) && args[1].equals("set", true)) {
+                EditTrimPotSupport.potDecorationMaterialIds
             } else emptyList()
 
             6 -> when {
                 args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("mainhand", "offhand", "hand", "armor", "feet", "legs", "chest", "head", "body")
                 isEffectAddCommand(args) && args[2].equals("apply_effects", true) -> listOf("100", "200", "600")
+                args[0].equals("pot", true) && args[1].equals("set", true) -> EditTrimPotSupport.potDecorationMaterialIds
                 else -> emptyList()
             }
 
@@ -154,7 +171,9 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
             (root == "potion" && !(material.name.endsWith("POTION") || material == Material.TIPPED_ARROW)) ||
                 (root == "head" && material != Material.PLAYER_HEAD) ||
                 (root == "lock" && !material.name.endsWith("SHULKER_BOX")) ||
-                (root == "attribute" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS")))
+                (root == "attribute" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
+                (root == "trim" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
+                (root == "pot" && material != Material.DECORATED_POT)
         }
     }
 }

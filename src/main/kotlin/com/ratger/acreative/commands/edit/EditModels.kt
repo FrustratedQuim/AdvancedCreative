@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffectType
 import org.bukkit.Material
+import org.bukkit.inventory.meta.trim.TrimMaterial
+import org.bukkit.inventory.meta.trim.TrimPattern
 
 data class EffectApplyEntrySpec(
     val type: PotionEffectType,
@@ -120,6 +122,11 @@ sealed interface EditAction {
 
     data class AttributeRemove(val index: Int) : EditAction
     data object AttributeClear : EditAction
+    data class TrimSet(val pattern: TrimPattern, val material: TrimMaterial) : EditAction
+    data object TrimClear : EditAction
+    data object PotClear : EditAction
+    data class PotSet(val back: Material, val left: Material, val right: Material, val front: Material) : EditAction
+    data class PotSetSide(val side: DecoratedPotSide, val material: Material) : EditAction
 }
 
 data class EditResult(

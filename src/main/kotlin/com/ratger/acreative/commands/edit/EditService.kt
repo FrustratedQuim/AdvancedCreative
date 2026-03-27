@@ -6,6 +6,7 @@ import io.papermc.paper.datacomponent.item.Consumable
 import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
 import io.papermc.paper.datacomponent.item.Tool
+import io.papermc.paper.datacomponent.item.PotDecorations
 import io.papermc.paper.datacomponent.item.UseCooldown
 import io.papermc.paper.datacomponent.item.UseRemainder
 import io.papermc.paper.datacomponent.item.consumable.ConsumeEffect
@@ -22,8 +23,10 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.inventory.meta.ArmorMeta
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
+import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.potion.PotionEffect
 import java.util.UUID
 import org.bukkit.plugin.java.JavaPlugin
@@ -134,7 +137,10 @@ class EditService(
             action is EditAction.ToolSetDamagePerBlock ||
             action is EditAction.ToolClear ||
             action is EditAction.SetUseCooldown ||
-            action is EditAction.ClearUseCooldown
+            action is EditAction.ClearUseCooldown ||
+            action is EditAction.PotClear ||
+            action is EditAction.PotSet ||
+            action is EditAction.PotSetSide
     }
 
     private fun applyDataComponentAction(player: Player, action: EditAction, item: ItemStack): EditResult {
@@ -339,6 +345,35 @@ class EditService(
             EditAction.ClearUseCooldown -> {
                 item.unsetData(DataComponentTypes.USE_COOLDOWN)
             }
+            EditAction.PotClear -> {
+                item.unsetData(DataComponentTypes.POT_DECORATIONS)
+            }
+            is EditAction.PotSet -> {
+                item.setData(
+                    DataComponentTypes.POT_DECORATIONS,
+                    EditTrimPotSupport.potDecorations(action.back, action.left, action.right, action.front)
+                )
+            }
+            is EditAction.PotSetSide -> {
+                val current = item.getData(DataComponentTypes.POT_DECORATIONS)
+                var back = potDecorationToMaterial(current?.back())
+                var left = potDecorationToMaterial(current?.left())
+                var right = potDecorationToMaterial(current?.right())
+                var front = potDecorationToMaterial(current?.front())
+                when (action.side) {
+                    DecoratedPotSide.BACK -> back = action.material
+                    DecoratedPotSide.LEFT -> left = action.material
+                    DecoratedPotSide.RIGHT -> right = action.material
+                    DecoratedPotSide.FRONT -> front = action.material
+                }
+                val rebuilt = PotDecorations.potDecorations(
+                    back?.asItemType(),
+                    left?.asItemType(),
+                    right?.asItemType(),
+                    front?.asItemType()
+                )
+                item.setData(DataComponentTypes.POT_DECORATIONS, rebuilt)
+            }
 
             else -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для data components")))
         }
@@ -465,6 +500,14 @@ class EditService(
             }
 
             EditAction.AttributeClear -> meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
+            is EditAction.TrimSet -> {
+                val armorMeta = meta as? ArmorMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
+                armorMeta.setTrim(ArmorTrim(action.material, action.pattern))
+            }
+            EditAction.TrimClear -> {
+                val armorMeta = meta as? ArmorMeta ?: return EditResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
+                armorMeta.setTrim(null)
+            }
             EditAction.Show,
             is EditAction.Reset,
             is EditAction.SetItemId,
@@ -498,6 +541,9 @@ class EditService(
             EditAction.ToolClear,
             is EditAction.SetUseCooldown,
             EditAction.ClearUseCooldown,
+            EditAction.PotClear,
+            is EditAction.PotSet,
+            is EditAction.PotSetSide,
             EditAction.LockSetFromOffhand,
             EditAction.LockClear,
             is EditAction.HeadSetFromName -> return EditResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
@@ -611,6 +657,12 @@ class EditService(
         val textureValue = texturesObject?.let { jsonString(it, "value") }
         val textureSignature = texturesObject?.let { jsonString(it, "signature") }
         return SessionProfilePayload(uuid, canonicalName, textureValue, textureSignature)
+    }
+
+    private fun potDecorationToMaterial(type: org.bukkit.inventory.ItemType?): Material? {
+        val key = type?.key()?.asString() ?: return null
+        val namespaced = org.bukkit.NamespacedKey.fromString(key) ?: return null
+        return org.bukkit.Registry.MATERIAL.get(namespaced)
     }
 
     private fun parseUuid(raw: String): UUID? {
