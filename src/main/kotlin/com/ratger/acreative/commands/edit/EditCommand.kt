@@ -11,7 +11,14 @@ class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginComm
     private val resolver = EditTargetResolver()
     private val show = EditShowService()
     private val validation = EditValidationService()
-    private val service = EditService(hooker.plugin, resolver, validation, show, parser, EditMiniMessage())
+    private val service = EditService(
+        targetResolver = resolver,
+        validationService = validation,
+        showService = show,
+        metaActionsApplier = EditMetaActionsApplier(hooker.plugin, parser, EditMiniMessage()),
+        experimentalComponentsService = EditExperimentalComponentsService(),
+        headProfileService = EditHeadProfileService(hooker.plugin, resolver)
+    )
     private val tabSupport = EditTabCompleterSupport(parser)
 
     override fun handle(player: Player, args: Array<out String>) {
