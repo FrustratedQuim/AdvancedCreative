@@ -97,14 +97,14 @@ class EditValidationService {
                 if (message != null) return fail(message)
             }
             is EditAction.ConsumableEffectRemove -> {
-                val consumable = context.item.getData(io.papermc.paper.datacomponent.DataComponentTypes.CONSUMABLE)
+                val effectCount = EditExperimentalEffectSupport.consumableEffectCount(context.item)
                     ?: return fail("У предмета нет компонента consumable")
-                if (action.index !in consumable.consumeEffects().indices) return fail("Некорректный индекс effect_remove")
+                if (action.index !in 0 until effectCount) return fail("Некорректный индекс effect_remove")
             }
             is EditAction.DeathProtectionEffectRemove -> {
-                val dp = context.item.getData(io.papermc.paper.datacomponent.DataComponentTypes.DEATH_PROTECTION)
+                val effectCount = EditExperimentalEffectSupport.deathProtectionEffectCount(context.item)
                     ?: return fail("У предмета нет компонента death_protection")
-                if (action.index !in dp.deathEffects().indices) return fail("Некорректный индекс effect_remove")
+                if (action.index !in 0 until effectCount) return fail("Некорректный индекс effect_remove")
             }
 
             is EditAction.HeadSetFromTexture -> {
@@ -156,7 +156,7 @@ class EditValidationService {
                 if (key != null) {
                     if (!isValidKey(key.asString())) return fail("Некорректный namespaced key для equip_sound")
                     val namespaced = NamespacedKey.fromString(key.asString())
-                    if (namespaced == null || Registry.SOUNDS.get(namespaced) == null) {
+                    if (namespaced == null || Registry.SOUND_EVENT.get(namespaced) == null) {
                         return fail("Неизвестный sound key для equip_sound")
                     }
                 }
