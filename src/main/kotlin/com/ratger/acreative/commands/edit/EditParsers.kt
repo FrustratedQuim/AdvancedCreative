@@ -123,6 +123,17 @@ class EditParsers {
             "container" -> parseContainer(args)
             "trim" -> parseTrim(args)
             "pot" -> parsePot(args)
+            "frame" -> parseFrame(args)
+            else -> null
+        }
+    }
+
+    private fun parseFrame(args: Array<out String>): ItemAction? {
+        return when (args.getOrNull(1)?.lowercase()) {
+            "invisible" -> {
+                val toggle = parseToggle(args.getOrNull(2)) ?: return null
+                ItemAction.FrameSetInvisibility(toggle)
+            }
             else -> null
         }
     }

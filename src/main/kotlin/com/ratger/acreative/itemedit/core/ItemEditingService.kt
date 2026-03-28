@@ -7,6 +7,7 @@ import com.ratger.acreative.itemedit.api.ItemResult
 import com.ratger.acreative.itemedit.container.LockActionsHelper
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.HeadProfileService
+import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.meta.ItemStackReplacementSupport
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.show.ShowService
@@ -75,6 +76,13 @@ class ItemEditingService(
 
         if (action is ItemAction.LockSetFromOffhand || action is ItemAction.LockClear) {
             return ApplyOutcome(item, LockActionsHelper.apply(player, action, item))
+        }
+
+        if (action is ItemAction.FrameSetInvisibility) {
+            val replaced = FrameInvisibilitySupport.apply(item, action.value)
+                ?: return ApplyOutcome(item, failure("<red>Эта ветка только для minecraft:item_frame и minecraft:glow_item_frame"))
+            val state = if (action.value) "on" else "off"
+            return ApplyOutcome(replaced, success("<green>Frame invisibility: <white>$state</white>."))
         }
 
         val metaResult = metaActionsApplier.apply(action, item)

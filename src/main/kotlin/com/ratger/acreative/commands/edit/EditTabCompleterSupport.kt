@@ -10,7 +10,7 @@ import org.bukkit.entity.Player
 class EditTabCompleterSupport(private val parser: EditParsers) {
     private val roots = listOf(
         "show", "reset", "name", "lore", "component", "tooltip", "enchant", "can_place_on", "can_break",
-        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "trim", "pot", "container", "id"
+        "consumable", "death_protection", "tool", "equippable", "remainder", "attribute", "potion", "lock", "head", "trim", "pot", "container", "id", "frame"
     )
 
     fun complete(sender: CommandSender, args: Array<out String>): List<String> {
@@ -42,6 +42,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     val capacity = type?.let { ContainerSupport.containerCapacity(it) }
                     if (capacity == null) emptyList() else (0 until capacity).map(Int::toString)
                 }
+                "frame" -> listOf("invisible")
                 else -> emptyList()
             }.filter { it.startsWith(args[1], true) }
 
@@ -116,6 +117,10 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                     "side" -> TrimPotSupport.sideOptions()
                     else -> emptyList()
                 }
+                "frame" -> when (args[1].lowercase()) {
+                    "invisible" -> listOf("on", "off")
+                    else -> emptyList()
+                }
 
                 else -> emptyList()
             }.filter { it.startsWith(args[2], true) }
@@ -180,7 +185,8 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 (root == "attribute" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
                 (root == "trim" && !(material.name.endsWith("_HELMET") || material.name.endsWith("_CHESTPLATE") || material.name.endsWith("_LEGGINGS") || material.name.endsWith("_BOOTS"))) ||
                 (root == "pot" && material != Material.DECORATED_POT) ||
-                (root == "container" && ContainerSupport.containerCapacity(material) == null)
+                (root == "container" && ContainerSupport.containerCapacity(material) == null) ||
+                (root == "frame" && material != Material.ITEM_FRAME && material != Material.GLOW_ITEM_FRAME)
         }
     }
 }

@@ -128,6 +128,7 @@ sealed interface ItemAction {
     data object PotClear : ItemAction
     data class PotSet(val back: Material, val left: Material, val right: Material, val front: Material) : ItemAction
     data class PotSetSide(val side: DecoratedPotSide, val material: Material) : ItemAction
+    data class FrameSetInvisibility(val value: Boolean) : ItemAction
 }
 
 data class ItemResult(

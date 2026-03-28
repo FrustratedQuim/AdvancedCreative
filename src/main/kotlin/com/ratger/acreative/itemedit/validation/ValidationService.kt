@@ -154,6 +154,11 @@ class ValidationService {
                 val unsupported = materials.firstOrNull { !TrimPotSupport.potDecorationMaterialIds.contains(it.key.asString()) }
                 if (unsupported != null) return fail("Недопустимый pot item id: ${unsupported.key.asString()}")
             }
+            is ItemAction.FrameSetInvisibility -> {
+                if (context.item.type != Material.ITEM_FRAME && context.item.type != Material.GLOW_ITEM_FRAME) {
+                    return fail("Эта ветка только для minecraft:item_frame и minecraft:glow_item_frame")
+                }
+            }
             is ItemAction.AttributeAdd, is ItemAction.AttributeClear, is ItemAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {
                     return fail("attribute modifiers в этой команде доступны только для armor items")
