@@ -31,6 +31,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
+        hooker.menuService.handlePlayerDisconnect(player)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
@@ -47,6 +48,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.player
+        hooker.menuService.handlePlayerDisconnect(player)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         utils.unsetAllPoses(player, true)
@@ -259,7 +261,8 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerPickupItem(event: PlayerAttemptPickupItemEvent) {
         val player = event.player
-        if (utils.isFrozen(player) || hooker.menuService.isInItemEditSession(player)) {
+        val inItemSessionAndBlocked = hooker.menuService.isInItemEditSession(player) && !hooker.menuService.canPickupDuringItemSession(player)
+        if (utils.isFrozen(player) || inItemSessionAndBlocked) {
             event.isCancelled = true
         }
     }

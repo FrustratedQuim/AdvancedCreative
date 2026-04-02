@@ -97,7 +97,13 @@ enum class MessageKey {
     INFO_SLAP_ON,
     INFO_SLAP_OFF,
     ITEMDB_INFO,
-    EDIT_EMPTY_HAND
+    EDIT_EMPTY_HAND,
+    EDIT_APPLY_INVALID_VALUE,
+    EDIT_APPLY_USAGE_ID,
+    EDIT_APPLY_USAGE_AMOUNT,
+    EDIT_APPLY_PROMPT_TITLE,
+    EDIT_APPLY_PROMPT_SUBTITLE,
+    EDIT_PROMPT_CLEAR
 }
 
 object MessageCatalog {
@@ -209,6 +215,12 @@ object MessageCatalog {
             <#FFD700><u>▍</u> <#FFE68A>Предмет: <#FFF3E0>%item_name%
             <#FFD700>▍ <#FFE68A>Цифровое ID: <#FFF3E0>%numeric_id%
         """.trimIndent(),
-        MessageKey.EDIT_EMPTY_HAND to "<dark_red>▍ <#FF1500>Возьмите предмет в руку"
+        MessageKey.EDIT_EMPTY_HAND to "<dark_red>▍ <#FF1500>Возьмите предмет в руку",
+        MessageKey.EDIT_APPLY_INVALID_VALUE to "<dark_red>▍ <#FF1500>Некорректное значение",
+        MessageKey.EDIT_APPLY_USAGE_ID to "<dark_red>▍ <#FF1500>Используйте: /apply <id>",
+        MessageKey.EDIT_APPLY_USAGE_AMOUNT to "<dark_red>▍ <#FF1500>Используйте: /apply <число>",
+        MessageKey.EDIT_APPLY_PROMPT_TITLE to "<#00FF40>Укажите значение для редактора",
+        MessageKey.EDIT_APPLY_PROMPT_SUBTITLE to "<#7BFF00>/apply <id> - указать <gray>| <#7BFF00>/apply cancel - отмена",
+        MessageKey.EDIT_PROMPT_CLEAR to "<!i>"
     )
 }

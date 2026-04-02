@@ -82,6 +82,9 @@ commands:
   dedit:
     description: Edit item in main hand
     usage: /dedit <show|reset|...>
+  apply:
+    description: Apply pending editor input
+    usage: /apply <value|cancel>
 
 permissions:
   advancedcreative.ahelp:
@@ -177,4 +180,7 @@ permissions:
     default: op
   advancedcreative.dedit:
     description: Allows using /dedit
+    default: op
+  advancedcreative.apply:
+    description: Allows using /apply
     default: op

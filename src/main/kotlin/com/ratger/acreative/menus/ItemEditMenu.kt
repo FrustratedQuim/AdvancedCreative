@@ -2,13 +2,15 @@ package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.apply.EditorApplyKind
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
     hooker: FunctionHooker,
     sessionManager: ItemEditSessionManager,
     buttonFactory: MenuButtonFactory,
-    parser: MiniMessageParser
+    parser: MiniMessageParser,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
 
@@ -19,7 +21,13 @@ class ItemEditMenu(
 
     private val rootPage: RootItemEditMenuPage = RootItemEditMenuPage(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleItemEditMenuPage = SimpleItemEditMenuPage(support, buttonFactory, openRootHandler)
-    private val advancedPageOne: AdvancedItemEditMenuPageOne = AdvancedItemEditMenuPageOne(support, buttonFactory, openRootHandler, openAdvancedPageTwoHandler)
+    private val advancedPageOne: AdvancedItemEditMenuPageOne = AdvancedItemEditMenuPageOne(
+        support = support,
+        buttonFactory = buttonFactory,
+        openRoot = openRootHandler,
+        openAdvancedPageTwo = openAdvancedPageTwoHandler,
+        requestApplyInput = requestApplyInput
+    )
     private val advancedPageTwo: AdvancedItemEditMenuPageTwo = AdvancedItemEditMenuPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
 
     fun openRoot(player: Player, session: ItemEditSession) {

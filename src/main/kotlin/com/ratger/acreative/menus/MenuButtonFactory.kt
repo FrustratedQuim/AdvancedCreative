@@ -70,7 +70,8 @@ class MenuButtonFactory(
         material: Material,
         name: String,
         lore: List<String>,
-        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        action: ((ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit)? = null
     ): Button {
         val builder = ItemBuilder(material)
             .name(parser.parse(name))
@@ -78,7 +79,13 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return Button.simple(builder.build()).action { }.build()
+        val buttonBuilder = Button.simple(builder.build())
+        if (action != null) {
+            buttonBuilder.action(action)
+        } else {
+            buttonBuilder.action { }
+        }
+        return buttonBuilder.build()
     }
 
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()

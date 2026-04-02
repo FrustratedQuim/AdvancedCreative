@@ -2,8 +2,10 @@ package com.ratger.acreative.core
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import java.time.Duration
 import java.util.UUID
 
 class MessageManager(
@@ -81,6 +83,25 @@ class MessageManager(
         repeatTasks.clear()
         tickerTaskId?.let { hooker.tickScheduler.cancel(it) }
         tickerTaskId = null
+    }
+
+    fun sendTitle(
+        player: Player,
+        titleKey: MessageKey,
+        subtitleKey: MessageKey,
+        fadeIn: Duration,
+        stay: Duration,
+        fadeOut: Duration,
+        titleVariables: Map<String, String> = emptyMap(),
+        subtitleVariables: Map<String, String> = emptyMap()
+    ) {
+        player.showTitle(
+            Title.title(
+                renderComponent(titleKey, titleVariables),
+                renderComponent(subtitleKey, subtitleVariables),
+                Title.Times.times(fadeIn, stay, fadeOut)
+            )
+        )
     }
 
     private fun startTicker() {

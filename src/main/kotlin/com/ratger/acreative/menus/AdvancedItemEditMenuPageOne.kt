@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus
 
+import com.ratger.acreative.menus.apply.EditorApplyKind
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -8,7 +9,8 @@ class AdvancedItemEditMenuPageOne(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openRoot: (Player, ItemEditSession) -> Unit,
-    private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit
+    private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         val menuSize = 54
@@ -16,7 +18,7 @@ class AdvancedItemEditMenuPageOne(
             title = "<!i>▍ Продвинутый редактор [1/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 26, 35),
+            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 33),
             session = session
         )
 
@@ -36,9 +38,15 @@ class AdvancedItemEditMenuPageOne(
             "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <id> <#C7A300>- <#FFE68A>задать по id ",
-            "<!i><#C7A300> ● <#FFF3E0>/apply hand <#C7A300>- <#FFE68A>взять из руки ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
-        ), buttonFactory.hideEverythingExceptTooltip()))
+        ), buttonFactory.hideEverythingExceptTooltip(), action = {
+            support.transition(session) {
+                requestApplyInput(player, session, EditorApplyKind.ITEM_ID) { reopenPlayer, reopenSession ->
+                    open(reopenPlayer, reopenSession)
+                }
+            }
+        }))
         menu.setButton(32, buttonFactory.actionButton(Material.STRUCTURE_VOID, "<!i><#C7A300>⭘ <#FFD700>Модель: <#FF1500>Обычная", listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
@@ -59,7 +67,13 @@ class AdvancedItemEditMenuPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
-        ), buttonFactory.hideAdditionalTooltip()))
+        ), buttonFactory.hideAdditionalTooltip(), action = {
+            support.transition(session) {
+                requestApplyInput(player, session, EditorApplyKind.AMOUNT) { reopenPlayer, reopenSession ->
+                    open(reopenPlayer, reopenSession)
+                }
+            }
+        }))
         menu.setButton(38, buttonFactory.actionButton(Material.BRICK, "<!i><#C7A300>⭘ <#FFD700>Размер стака: <#FF1500>Обычный", listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",

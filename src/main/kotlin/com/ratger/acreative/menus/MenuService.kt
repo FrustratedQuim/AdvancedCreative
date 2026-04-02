@@ -2,7 +2,12 @@ package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.apply.AmountApplyHandler
+import com.ratger.acreative.menus.apply.ApplyPromptService
+import com.ratger.acreative.menus.apply.ItemEditorApplyStateManager
+import com.ratger.acreative.menus.apply.ItemIdApplyHandler
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -13,13 +18,38 @@ class MenuService(
     private val parser = MiniMessageParser()
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser)
-    private val itemEditMenu = ItemEditMenu(hooker, sessionManager, buttonFactory, parser)
+    private val applyStateManager = ItemEditorApplyStateManager(
+        hooker = hooker,
+        sessionManager = sessionManager,
+        promptService = ApplyPromptService(hooker.messageManager),
+        handlers = listOf(
+            ItemIdApplyHandler(EditParsers()),
+            AmountApplyHandler()
+        )
+    )
+    private val itemEditMenu = ItemEditMenu(
+        hooker = hooker,
+        sessionManager = sessionManager,
+        buttonFactory = buttonFactory,
+        parser = parser
+    ) { player, _, kind, reopen ->
+        applyStateManager.beginWaiting(player, kind, reopen)
+        player.closeInventory()
+    }
+
+    init {
+        sessionManager.addCloseListener { player, _ ->
+            applyStateManager.cancelWaiting(player, reopenMenu = false)
+        }
+    }
 
     fun isInItemEditSession(player: Player): Boolean = sessionManager.isInSession(player)
+    fun canPickupDuringItemSession(player: Player): Boolean = applyStateManager.canPickupInCurrentState(player)
 
     fun openItemEditor(player: Player) {
         val existingSession = sessionManager.getSession(player)
         if (existingSession != null) {
+            applyStateManager.cancelWaiting(player, reopenMenu = false)
             itemEditMenu.openRoot(player, existingSession)
             return
         }
@@ -33,6 +63,18 @@ class MenuService(
         val session = sessionManager.openSession(player, handItem)
         player.inventory.setItemInMainHand(ItemStack(Material.AIR))
         itemEditMenu.openRoot(player, session)
+    }
+
+    fun handleApply(player: Player, args: Array<out String>) {
+        applyStateManager.handleApplyCommand(player, args)
+    }
+
+    fun tabCompleteApply(player: Player, args: Array<out String>): List<String> {
+        return applyStateManager.tabComplete(player, args)
+    }
+
+    fun handlePlayerDisconnect(player: Player) {
+        applyStateManager.cancelWaiting(player, reopenMenu = false)
     }
 
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {
