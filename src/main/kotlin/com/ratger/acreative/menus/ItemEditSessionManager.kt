@@ -19,6 +19,8 @@ class ItemEditSessionManager {
 
     fun isInSession(player: Player): Boolean = sessions.containsKey(player.uniqueId)
 
+    fun getSession(player: Player): ItemEditSession? = sessions[player.uniqueId]
+
     fun updateEditableItem(player: Player, item: ItemStack) {
         sessions[player.uniqueId]?.editableItem = item.clone()
     }

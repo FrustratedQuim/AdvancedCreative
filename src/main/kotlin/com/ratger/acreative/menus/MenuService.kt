@@ -18,6 +18,12 @@ class MenuService(
     fun isInItemEditSession(player: Player): Boolean = sessionManager.isInSession(player)
 
     fun openItemEditor(player: Player) {
+        val existingSession = sessionManager.getSession(player)
+        if (existingSession != null) {
+            itemEditMenu.openRoot(player, existingSession)
+            return
+        }
+
         val handItem = player.inventory.itemInMainHand
         if (handItem.type == Material.AIR || handItem.amount <= 0) {
             hooker.messageManager.sendChat(player, MessageKey.EDIT_EMPTY_HAND)
@@ -26,7 +32,7 @@ class MenuService(
 
         val session = sessionManager.openSession(player, handItem)
         player.inventory.setItemInMainHand(ItemStack(Material.AIR))
-        itemEditMenu.open(player, session)
+        itemEditMenu.openRoot(player, session)
     }
 
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {

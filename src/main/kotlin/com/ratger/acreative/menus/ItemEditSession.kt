@@ -6,5 +6,6 @@ import java.util.UUID
 data class ItemEditSession(
     val playerId: UUID,
     val originalMainHandSlot: Int,
-    var editableItem: ItemStack
+    var editableItem: ItemStack,
+    var isInternalTransition: Boolean = false
 )
