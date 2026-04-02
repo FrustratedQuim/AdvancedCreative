@@ -166,6 +166,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
     ) {
         val ownersByEffect = internalEffectOwners.computeIfAbsent(player.uniqueId) { mutableMapOf() }
         ownersByEffect.computeIfAbsent(effectType) { mutableSetOf() }.add(owner)
+        player.removePotionEffect(effectType)
         player.addPotionEffect(
             PotionEffect(
                 effectType,
@@ -174,8 +175,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
                 false,
                 false,
                 false
-            ),
-            true
+            )
         )
     }
 
