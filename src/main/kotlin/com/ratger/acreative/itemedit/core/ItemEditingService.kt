@@ -61,7 +61,7 @@ class ItemEditingService(
                     ItemStackReplacementSupport.resetAll(item)
                     ApplyOutcome(item, success("<green>Состояние предмета очищено (reset all)."))
                 }
-                else -> ApplyOutcome(item, failure("<red>Использование: /edit reset <all>"))
+                else -> ApplyOutcome(item, failure("<red>Использование: /dedit reset <all>"))
             }
         }
 

@@ -2,6 +2,7 @@ package com.ratger.acreative.commands
 
 import com.ratger.acreative.commands.crawl.CrawlCommand
 import com.ratger.acreative.commands.disguise.DisguiseCommand
+import com.ratger.acreative.commands.edit.DeditCommand
 import com.ratger.acreative.commands.edit.EditCommand
 import com.ratger.acreative.commands.effects.EffectsCommand
 import com.ratger.acreative.commands.freeze.FreezeCommand
@@ -55,7 +56,8 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         SlapCommand(functionHooker),
         SitheadCommand(functionHooker),
         ItemdbCommand(functionHooker),
-        EditCommand(functionHooker)
+        EditCommand(functionHooker),
+        DeditCommand(functionHooker)
     ).associateBy { it.type }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

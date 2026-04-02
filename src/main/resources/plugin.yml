@@ -77,8 +77,11 @@ commands:
     usage: /itemdb
     aliases: [id]
   edit:
+    description: Open item editor menu
+    usage: /edit
+  dedit:
     description: Edit item in main hand
-    usage: /edit <show|reset|...>
+    usage: /dedit <show|reset|...>
 
 permissions:
   advancedcreative.ahelp:
@@ -171,4 +174,7 @@ permissions:
 
   advancedcreative.edit:
     description: Allows using /edit
+    default: op
+  advancedcreative.dedit:
+    description: Allows using /dedit
     default: op

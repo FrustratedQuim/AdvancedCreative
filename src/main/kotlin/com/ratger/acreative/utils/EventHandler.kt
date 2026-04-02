@@ -259,7 +259,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.HIGH)
     fun onPlayerPickupItem(event: PlayerAttemptPickupItemEvent) {
         val player = event.player
-        if (utils.isFrozen(player)) {
+        if (utils.isFrozen(player) || hooker.menuService.isInItemEditSession(player)) {
             event.isCancelled = true
         }
     }

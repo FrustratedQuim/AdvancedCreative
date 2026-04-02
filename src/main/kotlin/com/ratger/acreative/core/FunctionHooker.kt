@@ -24,6 +24,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
+import com.ratger.acreative.menus.MenuService
 import com.ratger.acreative.utils.*
 
 class FunctionHooker(val plugin: AdvancedCreative) {
@@ -88,6 +89,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var tickScheduler: TickScheduler
         private set
+    lateinit var menuService: MenuService
+        private set
 
     fun sitManagerOrNull(): SitManager? = if (this::sitManager.isInitialized) sitManager else null
     fun glideManagerOrNull(): GlideManager? = if (this::glideManager.isInitialized) glideManager else null
@@ -140,6 +143,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         jarManager = JarManager(this)
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
+        menuService = MenuService(this)
 
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }

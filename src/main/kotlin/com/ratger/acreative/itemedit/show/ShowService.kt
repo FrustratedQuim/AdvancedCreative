@@ -21,7 +21,7 @@ class ShowService {
         val item = context.item
         val meta = item.itemMeta
         val out = mutableListOf<Component>()
-        out += mini.deserialize("<#FFD700><b>/edit show</b> <gray>- ${context.snapshot.type} x${item.amount}")
+        out += mini.deserialize("<#FFD700><b>/dedit show</b> <gray>- ${context.snapshot.type} x${item.amount}")
         out += mini.deserialize("<gray>name: <white>${meta?.displayName()?.let(plain::serialize) ?: "<none>"}")
         out += mini.deserialize("<gray>lore lines: <white>${meta?.lore()?.size ?: 0}")
         (meta?.lore() ?: emptyList()).forEachIndexed { index, line ->
@@ -164,7 +164,7 @@ class ShowService {
         }
 
         if (meta?.itemFlags?.contains(ItemFlag.HIDE_ATTRIBUTES) == true && meta.itemFlags.contains(ItemFlag.HIDE_ENCHANTS)) {
-            out += mini.deserialize("<yellow>warning: tooltip heavily hidden; /edit tooltip ... show для раскрытия")
+            out += mini.deserialize("<yellow>warning: tooltip heavily hidden; /dedit tooltip ... show для раскрытия")
         }
 
         return out

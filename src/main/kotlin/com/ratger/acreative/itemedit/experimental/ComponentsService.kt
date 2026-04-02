@@ -152,17 +152,17 @@ class ComponentsService {
             ItemAction.EquippableClear -> EquippableSupport.clear(item)
             is ItemAction.EquippableSetDispensable -> {
                 if (!EquippableSupport.setDispensable(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetSwappable -> {
                 if (!EquippableSupport.setSwappable(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetDamageOnHurt -> {
                 if (!EquippableSupport.setDamageOnHurt(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetEquipSound -> {
@@ -175,17 +175,17 @@ class ComponentsService {
                         )
                     }
                 } else if (!EquippableSupport.setEquipSound(item, action.keyOrDefault)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetCameraOverlay -> {
                 if (!EquippableSupport.setCameraOverlay(item, action.keyOrNull)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetAssetId -> {
                 if (!EquippableSupport.setAssetId(item, action.keyOrNull)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
                 }
             }
             is ItemAction.ToolSetDefaultMiningSpeed -> applyToolSpeed(item, action.value, action.scope)
@@ -199,7 +199,7 @@ class ComponentsService {
             ItemAction.ClearUseCooldown -> item.unsetData(DataComponentTypes.USE_COOLDOWN)
             is ItemAction.ContainerSetSlotFromOffhand -> {
                 val snapshot = ContainerSupport.readContainerContents(item)
-                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /edit container на стабильном BlockState API")))
+                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /dedit container на стабильном BlockState API")))
                 snapshot.contents[action.index] = player.inventory.itemInOffHand.clone()
                 if (!ContainerSupport.applyContainerContents(item, snapshot.contents)) {
                     return ItemResult(false, listOf(mini.deserialize("<red>Не удалось применить container через стабильный BlockState API")))

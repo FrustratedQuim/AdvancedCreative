@@ -96,7 +96,8 @@ enum class MessageKey {
     INFO_JAR_TARGET_RELEASED,
     INFO_SLAP_ON,
     INFO_SLAP_OFF,
-    ITEMDB_INFO
+    ITEMDB_INFO,
+    EDIT_EMPTY_HAND
 }
 
 object MessageCatalog {
@@ -207,6 +208,7 @@ object MessageCatalog {
         MessageKey.ITEMDB_INFO to """
             <#FFD700><u>▍</u> <#FFE68A>Предмет: <#FFF3E0>%item_name%
             <#FFD700>▍ <#FFE68A>Цифровое ID: <#FFF3E0>%numeric_id%
-        """.trimIndent()
+        """.trimIndent(),
+        MessageKey.EDIT_EMPTY_HAND to "<dark_red>▍ <#FF1500>Возьмите предмет в руку"
     )
 }
