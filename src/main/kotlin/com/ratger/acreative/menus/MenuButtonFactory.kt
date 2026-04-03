@@ -1,8 +1,8 @@
 package com.ratger.acreative.menus
 
 import com.ratger.acreative.itemedit.experimental.ComponentsService
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
+import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
@@ -148,7 +148,12 @@ class MenuButtonFactory(
     }
 
     fun hideAttributes(): ItemBuilder.() -> ItemBuilder = {
-        clearAttributes()
+        edit { item ->
+            val meta = item.itemMeta ?: return@edit
+            meta.attributeModifiers = null
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
+            item.itemMeta = meta
+        }
     }
 
     fun hideAdditionalTooltip(): ItemBuilder.() -> ItemBuilder = {
@@ -175,6 +180,6 @@ class MenuButtonFactory(
             ItemFlag.HIDE_ARMOR_TRIM,
             ItemFlag.HIDE_STORED_ENCHANTS
         )
-        clearAttributes()
+        hideAttributes().invoke(this)
     }
 }
