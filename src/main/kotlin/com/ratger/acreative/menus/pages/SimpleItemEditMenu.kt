@@ -1,10 +1,13 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.pages
 
+import com.ratger.acreative.menus.ItemEditMenuSupport
+import com.ratger.acreative.menus.ItemEditSession
+import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
-class SimpleItemEditMenuPage(
+class SimpleItemEditMenu(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openRoot: (Player, ItemEditSession) -> Unit

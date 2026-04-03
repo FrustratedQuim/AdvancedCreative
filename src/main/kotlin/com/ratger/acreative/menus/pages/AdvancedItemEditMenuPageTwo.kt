@@ -1,5 +1,8 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.pages
 
+import com.ratger.acreative.menus.ItemEditMenuSupport
+import com.ratger.acreative.menus.ItemEditSession
+import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -27,7 +30,8 @@ class AdvancedItemEditMenuPageTwo(
         menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
         menu.setButton(31, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(32, buttonFactory.actionButton(Material.PRISMARINE_CRYSTALS, "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
-        menu.setButton(33, buttonFactory.actionButton(MenuButtonFactory.ADVANCED_RESTRICTIONS_ICON_MATERIAL, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
+        menu.setButton(33, buttonFactory.actionButton(
+            MenuButtonFactory.Companion.ADVANCED_RESTRICTIONS_ICON_MATERIAL, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
             "",
             "<!i><#FFD700>Назначение:",

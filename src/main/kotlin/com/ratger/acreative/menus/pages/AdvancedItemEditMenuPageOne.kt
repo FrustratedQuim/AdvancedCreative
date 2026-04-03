@@ -1,7 +1,10 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.pages
 
 import com.ratger.acreative.menus.apply.EditorApplyKind
 import com.ratger.acreative.itemedit.meta.MaxStackSizeSupport
+import com.ratger.acreative.menus.ItemEditMenuSupport
+import com.ratger.acreative.menus.ItemEditSession
+import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows

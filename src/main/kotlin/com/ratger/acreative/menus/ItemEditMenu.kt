@@ -3,6 +3,10 @@ package com.ratger.acreative.menus
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.apply.EditorApplyKind
+import com.ratger.acreative.menus.pages.AdvancedItemEditMenuPageOne
+import com.ratger.acreative.menus.pages.AdvancedItemEditMenuPageTwo
+import com.ratger.acreative.menus.pages.RootItemEditMenu
+import com.ratger.acreative.menus.pages.SimpleItemEditMenu
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
@@ -19,8 +23,8 @@ class ItemEditMenu(
     private val openAdvancedPageOneHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageOne(player, session) }
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
 
-    private val rootPage: RootItemEditMenuPage = RootItemEditMenuPage(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
-    private val simplePage: SimpleItemEditMenuPage = SimpleItemEditMenuPage(support, buttonFactory, openRootHandler)
+    private val rootPage: RootItemEditMenu = RootItemEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
+    private val simplePage: SimpleItemEditMenu = SimpleItemEditMenu(support, buttonFactory, openRootHandler)
     private val advancedPageOne: AdvancedItemEditMenuPageOne = AdvancedItemEditMenuPageOne(
         support = support,
         buttonFactory = buttonFactory,
@@ -28,7 +32,8 @@ class ItemEditMenu(
         openAdvancedPageTwo = openAdvancedPageTwoHandler,
         requestApplyInput = requestApplyInput
     )
-    private val advancedPageTwo: AdvancedItemEditMenuPageTwo = AdvancedItemEditMenuPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
+    private val advancedPageTwo: AdvancedItemEditMenuPageTwo =
+        AdvancedItemEditMenuPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
