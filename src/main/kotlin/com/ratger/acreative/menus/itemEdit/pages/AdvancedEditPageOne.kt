@@ -87,14 +87,14 @@ class AdvancedEditPageOne(
             }
             buttonFactory.hideEverythingExceptTooltip().invoke(this)
         }, action = { event ->
-            if (event.isRight() || event.isShiftRight()) {
+            if (event.isRight || event.isShiftRight) {
                 val meta = session.editableItem.itemMeta
                 if (meta != null) {
                     meta.itemModel = null
                     session.editableItem.itemMeta = meta
                     support.transition(session) { open(player, session) }
                 }
-            } else if (event.isLeft() || event.isShiftLeft()) {
+            } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
@@ -125,7 +125,7 @@ class AdvancedEditPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
             ""
         ), action = { event ->
-            if (event.isRight() || event.isShiftRight()) {
+            if (event.isRight || event.isShiftRight) {
                 val meta = session.editableItem.itemMeta
                 if (meta != null) {
                     if (meta.hasMaxStackSize()) {
@@ -135,7 +135,7 @@ class AdvancedEditPageOne(
                     }
                     support.transition(session) { open(player, session) }
                 }
-            } else if (event.isLeft() || event.isShiftLeft()) {
+            } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.STACK_SIZE) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
@@ -146,8 +146,8 @@ class AdvancedEditPageOne(
         menu.setButton(39, buttonFactory.actionButton(Material.PAINTING, "<!i><#C7A300>① <#FFD700>Тултип: <#FF1500>Обычный", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
-            "<!i>  <#00FF40>» Обычный",
-            "<!i><b> </b><#C7A300>» Сломанный",
+            "<!i>  <#00FF40>» Обычный ",
+            "<!i><b> </b><#C7A300>» Сломанный ",
             ""
         )))
         menu.setButton(40, buttonFactory.actionButton(Material.NETHERITE_INGOT, "<!i><#C7A300>⭘ <#FFD700>Неразрушимость: <#FF1500>Выкл", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
