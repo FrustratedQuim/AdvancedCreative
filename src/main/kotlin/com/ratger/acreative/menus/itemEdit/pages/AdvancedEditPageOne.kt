@@ -5,6 +5,7 @@ import com.ratger.acreative.itemedit.meta.MaxStackSizeSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.MenuButtonFactory
+import org.bukkit.NamespacedKey
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -22,7 +23,7 @@ class AdvancedEditPageOne(
             title = "<!i>▍ Продвинутый редактор [1/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38),
+            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38, 39, 40, 41),
             session = session
         )
 
@@ -143,21 +144,77 @@ class AdvancedEditPageOne(
                 }
             }
         }))
-        menu.setButton(39, buttonFactory.actionButton(Material.PAINTING, "<!i><#C7A300>① <#FFD700>Тултип: <#FF1500>Обычный", listOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "",
-            "<!i>  <#00FF40>» Обычный ",
-            "<!i><b> </b><#C7A300>» Сломанный ",
-            ""
-        )))
-        menu.setButton(40, buttonFactory.actionButton(Material.NETHERITE_INGOT, "<!i><#C7A300>⭘ <#FFD700>Неразрушимость: <#FF1500>Выкл", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
-        menu.setButton(41, buttonFactory.actionButton(Material.ELYTRA, "<!i><#C7A300>⭘ <#FFD700>Парение: <#FF1500>Выкл", listOf(
+        val brokenTooltipKey = NamespacedKey.minecraft("null")
+        val selectedTooltipIndex = if (session.editableItem.itemMeta?.tooltipStyle == brokenTooltipKey) 1 else 0
+        val tooltipOptions: List<MenuButtonFactory.ListButtonOption<NamespacedKey?>> = listOf(
+            MenuButtonFactory.ListButtonOption(null, "Обычный"),
+            MenuButtonFactory.ListButtonOption(brokenTooltipKey, "Сломанный")
+        )
+        menu.setButton(39, buttonFactory.listButton(
+            material = Material.PAINTING,
+            options = tooltipOptions,
+            selectedIndex = selectedTooltipIndex,
+            titleBuilder = { _, index ->
+                when (index) {
+                    0 -> "<!i><#C7A300>① <#FFD700>Тултип: <#FFF3E0>Обычный"
+                    else -> "<!i><#C7A300>② <#FFD700>Тултип: <#FFF3E0>Сломанный"
+                }
+            },
+            beforeOptionsLore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+                ""
+            ),
+            afterOptionsLore = listOf("<!i>"),
+            itemModifier = { selected ->
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.tooltipStyle = selected.value
+                    item.itemMeta = meta
+                }
+            },
+            action = { _, newIndex ->
+                val selected = tooltipOptions[newIndex]
+                val meta = session.editableItem.itemMeta ?: return@listButton
+                meta.tooltipStyle = selected.value
+                session.editableItem.itemMeta = meta
+                support.transition(session) { open(player, session) }
+            }
+        ))
+        val unbreakableEnabled = session.editableItem.itemMeta?.isUnbreakable == true
+        val unbreakableButtonName = if (unbreakableEnabled) {
+            "<!i><#C7A300>◎ <#FFD700>Неразрушимость: <#00FF40>Вкл"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Неразрушимость: <#FF1500>Выкл"
+        }
+        menu.setButton(40, buttonFactory.actionButton(
+            Material.NETHERITE_INGOT,
+            unbreakableButtonName,
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            action = {
+                val meta = session.editableItem.itemMeta ?: return@actionButton
+                meta.isUnbreakable = !unbreakableEnabled
+                session.editableItem.itemMeta = meta
+                support.transition(session) { open(player, session) }
+            }
+        ))
+        val gliderEnabled = runCatching { session.editableItem.itemMeta?.isGlider == true }.getOrDefault(false)
+        val gliderButtonName = if (gliderEnabled) {
+            "<!i><#C7A300>◎ <#FFD700>Парение: <#00FF40>Вкл"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Парение: <#FF1500>Выкл"
+        }
+        menu.setButton(41, buttonFactory.actionButton(Material.ELYTRA, gliderButtonName, listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
             "<!i><#FFD700>Назначение:",
             "<!i><#C7A300> ● <#FFE68A>Позволяет <#FFF3E0>парить, <#FFE68A>как на элитрах. ",
             ""
-        )))
+        ), action = {
+            val meta = session.editableItem.itemMeta ?: return@actionButton
+            meta.isGlider = !gliderEnabled
+            session.editableItem.itemMeta = meta
+            support.transition(session) { open(player, session) }
+        }))
         menu.setButton(42, buttonFactory.actionButton(Material.BRUSH, "<!i><#C7A300>✂ <#FFD700>Скрытие информации", listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",

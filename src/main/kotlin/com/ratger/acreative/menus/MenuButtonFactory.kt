@@ -15,6 +15,11 @@ class MenuButtonFactory(
     private val parser: MiniMessageParser,
     private val componentsService: ComponentsService
 ) {
+    data class ListButtonOption<T>(
+        val value: T,
+        val label: String
+    )
+
     companion object {
         val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.BARRIER
     }
@@ -85,6 +90,51 @@ class MenuButtonFactory(
             buttonBuilder.action { }
         }
         return buttonBuilder.build()
+    }
+
+    fun <T> listButton(
+        material: Material,
+        options: List<ListButtonOption<T>>,
+        selectedIndex: Int,
+        titleBuilder: (ListButtonOption<T>, Int) -> String,
+        beforeOptionsLore: List<String> = emptyList(),
+        afterOptionsLore: List<String> = emptyList(),
+        itemModifier: (ItemBuilder.(ListButtonOption<T>) -> ItemBuilder)? = null,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, Int) -> Unit
+    ): Button {
+        require(options.isNotEmpty()) { "List button options cannot be empty" }
+
+        val safeSelectedIndex = selectedIndex.coerceIn(0, options.lastIndex)
+        val selected = options[safeSelectedIndex]
+        val lore = beforeOptionsLore + buildListButtonLore(options, safeSelectedIndex) + afterOptionsLore
+        val builder = ItemBuilder(material)
+            .name(parser.parse(titleBuilder(selected, safeSelectedIndex)))
+            .lore(lore.map(parser::parse))
+
+        if (itemModifier != null) {
+            builder.itemModifier(selected)
+        }
+
+        return Button.simple(builder.build())
+            .action { event ->
+                val newIndex = when {
+                    event.isLeft || event.isShiftLeft -> (safeSelectedIndex + 1) % options.size
+                    event.isRight || event.isShiftRight -> (safeSelectedIndex - 1 + options.size) % options.size
+                    else -> return@action
+                }
+                action(event, newIndex)
+            }
+            .build()
+    }
+
+    private fun <T> buildListButtonLore(options: List<ListButtonOption<T>>, selectedIndex: Int): List<String> {
+        return options.mapIndexed { index, option ->
+            if (index == selectedIndex) {
+                "<!i>  <#00FF40>» ${option.label} "
+            } else {
+                "<!i><b> </b><#C7A300>» ${option.label} "
+            }
+        }
     }
 
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()

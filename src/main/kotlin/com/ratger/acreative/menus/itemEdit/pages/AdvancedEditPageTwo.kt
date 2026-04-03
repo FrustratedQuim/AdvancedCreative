@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemRarity
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
 class AdvancedEditPageTwo(
@@ -18,7 +19,7 @@ class AdvancedEditPageTwo(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27),
+            interactiveTopSlots = setOf(18, 27, 42),
             session = session
         )
 
@@ -42,19 +43,55 @@ class AdvancedEditPageTwo(
         menu.setButton(39, buttonFactory.actionButton(Material.TOTEM_OF_UNDYING, "<!i><#C7A300>☠ <#FFD700>Защита от смерти", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(40, buttonFactory.actionButton(Material.CLOCK, "<!i><#C7A300>⌚ <#FFD700>Задержка использования", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(41, buttonFactory.actionButton(Material.RESIN_CLUMP, "<!i><#C7A300>⚡ <#FFD700>После использования", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-        menu.setButton(42, buttonFactory.actionButton(Material.DIAMOND, "<!i><#C7A300>① <#FFD700>Редкость: <gray>Обычное", listOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "",
-            "<!i>  <#00FF40>» Обычное",
-            "<!i><b> </b><#C7A300>» Необычное ",
-            "<!i><b> </b><#C7A300>» Редкое ",
-            "<!i><b> </b><#C7A300>» Эпическое ",
-            "",
-            "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Влияет на цвет ",
-            "<!i><#C7A300> ● <#FFF3E0>обычного <#FFE68A>названия. ",
-            ""
-        )))
+        val rarityOptions = listOf(
+            MenuButtonFactory.ListButtonOption(ItemRarity.COMMON, "Обычное"),
+            MenuButtonFactory.ListButtonOption(ItemRarity.UNCOMMON, "Необычное"),
+            MenuButtonFactory.ListButtonOption(ItemRarity.RARE, "Редкое"),
+            MenuButtonFactory.ListButtonOption(ItemRarity.EPIC, "Эпическое")
+        )
+        val currentRarity = runCatching {
+            val meta = session.editableItem.itemMeta
+            if (meta != null && meta.hasRarity()) meta.rarity else ItemRarity.COMMON
+        }.getOrDefault(ItemRarity.COMMON)
+        val selectedRarityIndex = rarityOptions.indexOfFirst { it.value == currentRarity }.takeIf { it >= 0 } ?: 0
+        menu.setButton(42, buttonFactory.listButton(
+            material = Material.DIAMOND,
+            options = rarityOptions,
+            selectedIndex = selectedRarityIndex,
+            titleBuilder = { _, index ->
+                when (index) {
+                    0 -> "<!i><#C7A300>① <#FFD700>Редкость: <#FFF3E0>Обычное"
+                    1 -> "<!i><#C7A300>② <#FFD700>Редкость: <#FFF3E0>Необычное"
+                    2 -> "<!i><#C7A300>③ <#FFD700>Редкость: <#FFF3E0>Редкое"
+                    else -> "<!i><#C7A300>④ <#FFD700>Редкость: <#FFF3E0>Эпическое"
+                }
+            },
+            beforeOptionsLore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+                ""
+            ),
+            afterOptionsLore = listOf(
+                "",
+                "<!i><#FFD700>Назначение:",
+                "<!i><#C7A300> ● <#FFE68A>Влияет на цвет ",
+                "<!i><#C7A300> ● <#FFF3E0>обычного <#FFE68A>названия. ",
+                ""
+            ),
+            itemModifier = { selected ->
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.setRarity(selected.value)
+                    item.itemMeta = meta
+                }
+            },
+            action = { _, newIndex ->
+                val selected = rarityOptions[newIndex]
+                val meta = session.editableItem.itemMeta ?: return@listButton
+                meta.setRarity(selected.value)
+                session.editableItem.itemMeta = meta
+                support.transition(session) { open(player, session) }
+            }
+        ))
         menu.open(player)
     }
 }
