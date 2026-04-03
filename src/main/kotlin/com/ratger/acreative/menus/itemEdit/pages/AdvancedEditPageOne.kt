@@ -17,6 +17,10 @@ class AdvancedEditPageOne(
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
+    private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
+        menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
+    }
+
     fun open(player: Player, session: ItemEditSession) {
         val menuSize = 54
         val menu = support.buildMenu(
@@ -93,7 +97,34 @@ class AdvancedEditPageOne(
                 if (meta != null) {
                     meta.itemModel = null
                     session.editableItem.itemMeta = meta
-                    support.transition(session) { open(player, session) }
+                    menu.setButton(32, buttonFactory.actionButton(
+                        Material.STRUCTURE_VOID,
+                        "<!i><#C7A300>⭘ <#FFD700>Модель: <#FF1500>Обычная",
+                        listOf(
+                            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+                            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+                            "",
+                            "<!i><#FFD700>Назначение:",
+                            "<!i><#C7A300> ● <#FFE68A>Задаёт <#FFF3E0>внешний <#FFE68A>вид предмета. ",
+                            "<!i><#C7A300> ● <#FFE68A>Не влияет на его <#FFF3E0>поведение. ",
+                            "",
+                            "<!i><#FFD700>После нажатия:",
+                            "<!i><#C7A300> ● <#FFF3E0>/apply <id> <#C7A300>- <#FFE68A>задать по id ",
+                            "<!i><#C7A300> ● <#FFF3E0>/apply hand <#C7A300>- <#FFE68A>взять из руки ",
+                            ""
+                        ),
+                        itemModifier = { buttonFactory.hideEverythingExceptTooltip().invoke(this) },
+                        action = { clickEvent ->
+                            if (clickEvent.isLeft || clickEvent.isShiftLeft) {
+                                support.transition(session) {
+                                    requestApplyInput(player, session, EditorApplyKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
+                                        open(reopenPlayer, reopenSession)
+                                    }
+                                }
+                            }
+                        }
+                    ))
+                    updateEditablePreview(menu, session)
                 }
             } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
@@ -134,7 +165,29 @@ class AdvancedEditPageOne(
                             session.editableItem.itemMeta = meta
                         }
                     }
-                    support.transition(session) { open(player, session) }
+                    menu.setButton(38, buttonFactory.actionButton(
+                        Material.BRICK,
+                        "<!i><#C7A300>⭘ <#FFD700>Размер стака: <#FF1500>Обычный",
+                        listOf(
+                            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+                            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+                            "",
+                            "<!i><#FFD700>После нажатия:",
+                            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+                            "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
+                            ""
+                        ),
+                        action = { clickEvent ->
+                            if (clickEvent.isLeft || clickEvent.isShiftLeft) {
+                                support.transition(session) {
+                                    requestApplyInput(player, session, EditorApplyKind.STACK_SIZE) { reopenPlayer, reopenSession ->
+                                        open(reopenPlayer, reopenSession)
+                                    }
+                                }
+                            }
+                        }
+                    ))
+                    updateEditablePreview(menu, session)
                 }
             } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
@@ -177,7 +230,8 @@ class AdvancedEditPageOne(
                 val meta = session.editableItem.itemMeta ?: return@listButton
                 meta.tooltipStyle = selected.value
                 session.editableItem.itemMeta = meta
-                support.transition(session) { open(player, session) }
+                menu.setButton(39, buildTooltipButton(session))
+                updateEditablePreview(menu, session)
             }
         ))
         val unbreakableEnabled = session.editableItem.itemMeta?.isUnbreakable == true
@@ -194,7 +248,8 @@ class AdvancedEditPageOne(
                 val meta = session.editableItem.itemMeta ?: return@actionButton
                 meta.isUnbreakable = !unbreakableEnabled
                 session.editableItem.itemMeta = meta
-                support.transition(session) { open(player, session) }
+                menu.setButton(40, buildUnbreakableButton(session))
+                updateEditablePreview(menu, session)
             }
         ))
         val gliderEnabled = runCatching { session.editableItem.itemMeta?.isGlider == true }.getOrDefault(false)
@@ -213,7 +268,8 @@ class AdvancedEditPageOne(
             val meta = session.editableItem.itemMeta ?: return@actionButton
             meta.isGlider = !gliderEnabled
             session.editableItem.itemMeta = meta
-            support.transition(session) { open(player, session) }
+            menu.setButton(41, buildGliderButton(session))
+            updateEditablePreview(menu, session)
         }))
         menu.setButton(42, buttonFactory.actionButton(Material.BRUSH, "<!i><#C7A300>✂ <#FFD700>Скрытие информации", listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
@@ -234,5 +290,93 @@ class AdvancedEditPageOne(
             ""
         )))
         menu.open(player)
+    }
+
+    private fun buildTooltipButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val brokenTooltipKey = NamespacedKey.minecraft("null")
+        val tooltipOptions: List<MenuButtonFactory.ListButtonOption<NamespacedKey?>> = listOf(
+            MenuButtonFactory.ListButtonOption(null, "Обычный"),
+            MenuButtonFactory.ListButtonOption(brokenTooltipKey, "Сломанный")
+        )
+        val selectedTooltipIndex = if (session.editableItem.itemMeta?.tooltipStyle == brokenTooltipKey) 1 else 0
+        return buttonFactory.listButton(
+            material = Material.PAINTING,
+            options = tooltipOptions,
+            selectedIndex = selectedTooltipIndex,
+            titleBuilder = { _, index ->
+                when (index) {
+                    0 -> "<!i><#C7A300>① <#FFD700>Тултип: <#FFF3E0>Обычный"
+                    else -> "<!i><#C7A300>② <#FFD700>Тултип: <#FFF3E0>Сломанный"
+                }
+            },
+            beforeOptionsLore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+                ""
+            ),
+            afterOptionsLore = listOf("<!i>"),
+            itemModifier = { selected ->
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.tooltipStyle = selected.value
+                    item.itemMeta = meta
+                }
+            },
+            action = { event, newIndex ->
+                val selected = tooltipOptions[newIndex]
+                val meta = session.editableItem.itemMeta ?: return@listButton
+                meta.tooltipStyle = selected.value
+                session.editableItem.itemMeta = meta
+                event.menu.setButton(39, buildTooltipButton(session))
+                updateEditablePreview(event.menu, session)
+            }
+        )
+    }
+
+    private fun buildUnbreakableButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val unbreakableEnabled = session.editableItem.itemMeta?.isUnbreakable == true
+        val unbreakableButtonName = if (unbreakableEnabled) {
+            "<!i><#C7A300>◎ <#FFD700>Неразрушимость: <#00FF40>Вкл"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Неразрушимость: <#FF1500>Выкл"
+        }
+        return buttonFactory.actionButton(
+            Material.NETHERITE_INGOT,
+            unbreakableButtonName,
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            action = { event ->
+                val meta = session.editableItem.itemMeta ?: return@actionButton
+                meta.isUnbreakable = !unbreakableEnabled
+                session.editableItem.itemMeta = meta
+                event.menu.setButton(40, buildUnbreakableButton(session))
+                updateEditablePreview(event.menu, session)
+            }
+        )
+    }
+
+    private fun buildGliderButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val gliderEnabled = runCatching { session.editableItem.itemMeta?.isGlider == true }.getOrDefault(false)
+        val gliderButtonName = if (gliderEnabled) {
+            "<!i><#C7A300>◎ <#FFD700>Парение: <#00FF40>Вкл"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Парение: <#FF1500>Выкл"
+        }
+        return buttonFactory.actionButton(
+            Material.ELYTRA,
+            gliderButtonName,
+            listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+                "",
+                "<!i><#FFD700>Назначение:",
+                "<!i><#C7A300> ● <#FFE68A>Позволяет <#FFF3E0>парить, <#FFE68A>как на элитрах. ",
+                ""
+            ),
+            action = { event ->
+                val meta = session.editableItem.itemMeta ?: return@actionButton
+                meta.isGlider = !gliderEnabled
+                session.editableItem.itemMeta = meta
+                event.menu.setButton(41, buildGliderButton(session))
+                updateEditablePreview(event.menu, session)
+            }
+        )
     }
 }

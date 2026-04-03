@@ -29,7 +29,7 @@ class ItemEditMenuSupport(
         .title(parser.parse(title))
         .size(menuSize)
         .rows(rows)
-        .postClickRefresh(true)
+        .postClickRefresh(false)
         .clickListener(editorClickListener(menuSize, interactiveTopSlots))
         .dragListener(editorDragListener(menuSize))
         .openListener { session.isInternalTransition = false }
