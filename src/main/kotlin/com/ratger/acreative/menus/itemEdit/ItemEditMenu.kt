@@ -1,12 +1,13 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.itemEdit
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
-import com.ratger.acreative.menus.apply.EditorApplyKind
-import com.ratger.acreative.menus.pages.AdvancedItemEditMenuPageOne
-import com.ratger.acreative.menus.pages.AdvancedItemEditMenuPageTwo
-import com.ratger.acreative.menus.pages.RootItemEditMenu
-import com.ratger.acreative.menus.pages.SimpleItemEditMenu
+import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
+import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
+import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
+import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
@@ -23,17 +24,17 @@ class ItemEditMenu(
     private val openAdvancedPageOneHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageOne(player, session) }
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
 
-    private val rootPage: RootItemEditMenu = RootItemEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
-    private val simplePage: SimpleItemEditMenu = SimpleItemEditMenu(support, buttonFactory, openRootHandler)
-    private val advancedPageOne: AdvancedItemEditMenuPageOne = AdvancedItemEditMenuPageOne(
+    private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
+    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler)
+    private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
         support = support,
         buttonFactory = buttonFactory,
         openRoot = openRootHandler,
         openAdvancedPageTwo = openAdvancedPageTwoHandler,
         requestApplyInput = requestApplyInput
     )
-    private val advancedPageTwo: AdvancedItemEditMenuPageTwo =
-        AdvancedItemEditMenuPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
+    private val advancedPageTwo: AdvancedEditPageTwo =
+        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -44,7 +45,7 @@ class ItemEditMenu(
     }
 
     fun openAdvancedPageOne(player: Player, session: ItemEditSession) {
-        advancedPageOne.open(player, session)
+        advancedEditPageOne.open(player, session)
     }
 
     fun openAdvancedPageTwo(player: Player, session: ItemEditSession) {

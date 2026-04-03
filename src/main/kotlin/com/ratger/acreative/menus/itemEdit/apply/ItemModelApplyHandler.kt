@@ -1,7 +1,7 @@
-package com.ratger.acreative.menus.apply
+package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.commands.edit.EditParsers
-import com.ratger.acreative.menus.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 

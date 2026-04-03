@@ -1,4 +1,4 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.itemEdit
 
 import org.bukkit.inventory.ItemStack
 import java.util.UUID

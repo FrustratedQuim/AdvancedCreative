@@ -1,4 +1,4 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.itemEdit
 
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack

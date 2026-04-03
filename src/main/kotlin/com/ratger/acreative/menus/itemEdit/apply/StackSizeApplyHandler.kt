@@ -1,10 +1,10 @@
-package com.ratger.acreative.menus.apply
+package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ItemContext
 import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import org.bukkit.entity.Player
 import kotlin.math.absoluteValue
 

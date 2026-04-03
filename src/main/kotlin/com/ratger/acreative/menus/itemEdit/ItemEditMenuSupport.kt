@@ -1,9 +1,13 @@
-package com.ratger.acreative.menus
+package com.ratger.acreative.menus.itemEdit
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.MenuButtonFactory
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
+import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
+import ru.violence.coreapi.bukkit.api.menu.event.DragEvent
 
 class ItemEditMenuSupport(
     private val hooker: FunctionHooker,
@@ -45,7 +49,7 @@ class ItemEditMenuSupport(
         action()
     }
 
-    private fun editorClickListener(menuSize: Int, interactiveTopSlots: Set<Int>) = { event: ru.violence.coreapi.bukkit.api.menu.event.ClickEvent ->
+    private fun editorClickListener(menuSize: Int, interactiveTopSlots: Set<Int>) = { event: ClickEvent ->
         if (event.rawSlot == editableSlot) {
             false
         } else if (event.rawSlot in 0 until menuSize) {
@@ -55,11 +59,11 @@ class ItemEditMenuSupport(
         }
     }
 
-    private fun editorDragListener(menuSize: Int) = { event: ru.violence.coreapi.bukkit.api.menu.event.DragEvent ->
+    private fun editorDragListener(menuSize: Int) = { event: DragEvent ->
         event.rawSlots.none { it in 0 until menuSize }
     }
 
-    private fun editorCloseListener(session: ItemEditSession) = { event: ru.violence.coreapi.bukkit.api.menu.event.CloseEvent ->
+    private fun editorCloseListener(session: ItemEditSession) = { event: CloseEvent ->
         if (event.player.uniqueId == session.playerId && !session.isInternalTransition) {
             sessionManager.updateEditableItem(event.player, session.editableItem)
             val closedSession = sessionManager.closeSession(event.player)
