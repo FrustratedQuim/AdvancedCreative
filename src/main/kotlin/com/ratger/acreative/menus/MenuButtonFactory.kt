@@ -1,10 +1,8 @@
 package com.ratger.acreative.menus
 
+import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
-import io.papermc.paper.datacomponent.DataComponentTypes
-import io.papermc.paper.datacomponent.item.Consumable
-import io.papermc.paper.datacomponent.item.FoodProperties
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
@@ -14,7 +12,8 @@ import ru.violence.coreapi.bukkit.api.menu.button.Button
 import ru.violence.coreapi.bukkit.api.util.ItemBuilder
 
 class MenuButtonFactory(
-    private val parser: MiniMessageParser
+    private val parser: MiniMessageParser,
+    private val componentsService: ComponentsService
 ) {
     companion object {
         val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.BARRIER
@@ -158,13 +157,9 @@ class MenuButtonFactory(
 
     fun zeroFoodPreview(): ItemBuilder.() -> ItemBuilder = {
         edit { item ->
-            if (item.getData(DataComponentTypes.CONSUMABLE) == null) {
-                item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable().build())
-            }
-            item.setData(
-                DataComponentTypes.FOOD,
-                FoodProperties.food().nutrition(0).saturation(0f).build()
-            )
+            componentsService.applyConsumableToggle(item, true)
+            componentsService.applyFoodNutrition(item, 0)
+            componentsService.applyFoodSaturation(item, 0f)
         }
     }
 

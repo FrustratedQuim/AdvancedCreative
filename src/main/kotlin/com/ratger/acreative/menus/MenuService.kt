@@ -3,6 +3,7 @@ package com.ratger.acreative.menus
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
+import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.apply.AmountApplyHandler
 import com.ratger.acreative.menus.apply.ApplyPromptService
@@ -22,7 +23,7 @@ class MenuService(
     private val parser = MiniMessageParser()
     private val editParsers = EditParsers()
     private val sessionManager = ItemEditSessionManager()
-    private val buttonFactory = MenuButtonFactory(parser)
+    private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(ValidationService(), EditTargetResolver())
     private val applyStateManager = ItemEditorApplyStateManager(
