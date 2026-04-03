@@ -8,11 +8,15 @@ import java.time.Duration
 class ApplyPromptService(
     private val messageManager: MessageManager
 ) {
-    fun showPrompt(player: Player, applyTimeoutSeconds: Int) {
+    fun showPrompt(player: Player, kind: EditorApplyKind, applyTimeoutSeconds: Int) {
+        val subtitleKey = when (kind) {
+            EditorApplyKind.ITEM_ID, EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID
+            EditorApplyKind.AMOUNT, EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
+        }
         messageManager.sendTitle(
             player = player,
             titleKey = MessageKey.EDIT_APPLY_PROMPT_TITLE,
-            subtitleKey = MessageKey.EDIT_APPLY_PROMPT_SUBTITLE,
+            subtitleKey = subtitleKey,
             fadeIn = Duration.ofMillis(500L),
             stay = Duration.ofSeconds((applyTimeoutSeconds + 10).toLong()),
             fadeOut = Duration.ofMillis(500L)

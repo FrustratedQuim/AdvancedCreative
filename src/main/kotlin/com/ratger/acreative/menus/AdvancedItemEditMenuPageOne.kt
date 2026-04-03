@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus
 
 import com.ratger.acreative.menus.apply.EditorApplyKind
+import com.ratger.acreative.itemedit.meta.MaxStackSizeSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -18,7 +19,7 @@ class AdvancedItemEditMenuPageOne(
             title = "<!i>▍ Продвинутый редактор [1/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 33),
+            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38),
             session = session
         )
 
@@ -31,6 +32,20 @@ class AdvancedItemEditMenuPageOne(
 
         val itemId = session.editableItem.type.key.key
         val amount = session.editableItem.amount
+        val editableMeta = session.editableItem.itemMeta
+        val modelKey = runCatching { editableMeta?.itemModel }.getOrNull()
+        val modelId = runCatching { modelKey?.asString() }.getOrNull()
+        val modelName = if (modelId == null) {
+            "<!i><#C7A300>⭘ <#FFD700>Модель: <#FF1500>Обычная"
+        } else {
+            "<!i><#C7A300>◎ <#FFD700>Модель: <#00FF40>$modelId"
+        }
+        val stackSize = if (editableMeta?.hasMaxStackSize() == true) editableMeta.maxStackSize else null
+        val stackSizeName = if (stackSize == null) {
+            "<!i><#C7A300>⭘ <#FFD700>Размер стака: <#FF1500>Обычный"
+        } else {
+            "<!i><#C7A300>◎ <#FFD700>Размер стака: <#00FF40>$stackSize"
+        }
         menu.setButton(29, buttonFactory.specialParameterButton(session.editableItem, player))
         menu.setButton(30, buttonFactory.actionButton(Material.NAME_TAG, "<!i><#C7A300>✎ <#FFD700>Изменить название и описание", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(31, buttonFactory.actionButton(session.editableItem.type, "<!i><#C7A300>◎ <#FFD700>ID предмета: <#00FF40>$itemId", listOf(
@@ -47,7 +62,7 @@ class AdvancedItemEditMenuPageOne(
                 }
             }
         }))
-        menu.setButton(32, buttonFactory.actionButton(Material.STRUCTURE_VOID, "<!i><#C7A300>⭘ <#FFD700>Модель: <#FF1500>Обычная", listOf(
+        menu.setButton(32, buttonFactory.actionButton(Material.STRUCTURE_VOID, modelName, listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
@@ -59,7 +74,31 @@ class AdvancedItemEditMenuPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply <id> <#C7A300>- <#FFE68A>задать по id ",
             "<!i><#C7A300> ● <#FFF3E0>/apply hand <#C7A300>- <#FFE68A>взять из руки ",
             ""
-        ), buttonFactory.hideEverythingExceptTooltip()))
+        ), itemModifier = {
+            modelKey?.let { key ->
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.itemModel = key
+                    item.itemMeta = meta
+                }
+            }
+            buttonFactory.hideEverythingExceptTooltip().invoke(this)
+        }, action = { event ->
+            if (event.isRight() || event.isShiftRight()) {
+                val meta = session.editableItem.itemMeta
+                if (meta != null) {
+                    meta.itemModel = null
+                    session.editableItem.itemMeta = meta
+                    support.transition(session) { open(player, session) }
+                }
+            } else if (event.isLeft() || event.isShiftLeft()) {
+                support.transition(session) {
+                    requestApplyInput(player, session, EditorApplyKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession)
+                    }
+                }
+            }
+        }))
         menu.setButton(33, buttonFactory.actionButton(Material.BUNDLE, "<!i><#C7A300>◎ <#FFD700>Количество: <#00FF40>$amount", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
@@ -74,7 +113,7 @@ class AdvancedItemEditMenuPageOne(
                 }
             }
         }))
-        menu.setButton(38, buttonFactory.actionButton(Material.BRICK, "<!i><#C7A300>⭘ <#FFD700>Размер стака: <#FF1500>Обычный", listOf(
+        menu.setButton(38, buttonFactory.actionButton(Material.BRICK, stackSizeName, listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
@@ -82,7 +121,25 @@ class AdvancedItemEditMenuPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
             "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
             ""
-        )))
+        ), action = { event ->
+            if (event.isRight() || event.isShiftRight()) {
+                val meta = session.editableItem.itemMeta
+                if (meta != null) {
+                    if (meta.hasMaxStackSize()) {
+                        if (MaxStackSizeSupport.clearCustomMaxStackSize(meta)) {
+                            session.editableItem.itemMeta = meta
+                        }
+                    }
+                    support.transition(session) { open(player, session) }
+                }
+            } else if (event.isLeft() || event.isShiftLeft()) {
+                support.transition(session) {
+                    requestApplyInput(player, session, EditorApplyKind.STACK_SIZE) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession)
+                    }
+                }
+            }
+        }))
         menu.setButton(39, buttonFactory.actionButton(Material.PAINTING, "<!i><#C7A300>① <#FFD700>Тултип: <#FF1500>Обычный", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",

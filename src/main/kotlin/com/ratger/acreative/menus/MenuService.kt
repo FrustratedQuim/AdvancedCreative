@@ -8,6 +8,10 @@ import com.ratger.acreative.menus.apply.AmountApplyHandler
 import com.ratger.acreative.menus.apply.ApplyPromptService
 import com.ratger.acreative.menus.apply.ItemEditorApplyStateManager
 import com.ratger.acreative.menus.apply.ItemIdApplyHandler
+import com.ratger.acreative.menus.apply.ItemModelApplyHandler
+import com.ratger.acreative.menus.apply.StackSizeApplyHandler
+import com.ratger.acreative.commands.edit.EditTargetResolver
+import com.ratger.acreative.itemedit.validation.ValidationService
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -16,15 +20,20 @@ class MenuService(
     private val hooker: FunctionHooker
 ) {
     private val parser = MiniMessageParser()
+    private val editParsers = EditParsers()
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser)
+    private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
+    private val stackSizeApplyHandler = StackSizeApplyHandler(ValidationService(), EditTargetResolver())
     private val applyStateManager = ItemEditorApplyStateManager(
         hooker = hooker,
         sessionManager = sessionManager,
         promptService = ApplyPromptService(hooker.messageManager),
         handlers = listOf(
-            ItemIdApplyHandler(EditParsers()),
-            AmountApplyHandler()
+            itemIdApplyHandler,
+            AmountApplyHandler(),
+            ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
+            stackSizeApplyHandler
         )
     )
     private val itemEditMenu = ItemEditMenu(

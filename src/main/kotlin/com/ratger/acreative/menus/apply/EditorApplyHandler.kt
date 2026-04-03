@@ -13,7 +13,9 @@ interface EditorApplyHandler {
 
 enum class EditorApplyKind {
     ITEM_ID,
-    AMOUNT
+    AMOUNT,
+    ITEM_MODEL,
+    STACK_SIZE
 }
 
 sealed interface ApplyExecutionResult {

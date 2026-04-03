@@ -42,7 +42,7 @@ class ItemEditorApplyStateManager(
             timeoutTaskId = timeoutTask
         )
 
-        promptService.showPrompt(player, TIMEOUT_SECONDS)
+        promptService.showPrompt(player, kind, TIMEOUT_SECONDS)
     }
 
     fun isWaiting(player: Player): Boolean = requests.containsKey(player.uniqueId)
@@ -107,6 +107,8 @@ class ItemEditorApplyStateManager(
         return when (kind) {
             EditorApplyKind.ITEM_ID -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.AMOUNT -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_USAGE_ID
+            EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
         }
     }
 }
