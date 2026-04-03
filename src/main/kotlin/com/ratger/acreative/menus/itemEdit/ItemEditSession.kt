@@ -7,5 +7,8 @@ data class ItemEditSession(
     val playerId: UUID,
     val originalMainHandSlot: Int,
     var editableItem: ItemStack,
-    var isInternalTransition: Boolean = false
+    var isInternalTransition: Boolean = false,
+    var hiddenInfoFocusIndex: Int = 0,
+    var vanillaDiscJukeboxComponentInjected: Boolean = false,
+    var attributesMaterializedForHide: Boolean = false
 )

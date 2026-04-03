@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.itemEdit.pages
 
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
+import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MaxStackSizeSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -17,6 +18,23 @@ class AdvancedEditPageOne(
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
+    private data class HiddenInfoOption(val label: String, val key: String)
+
+    companion object {
+        private val hiddenInfoOptions = listOf(
+            HiddenInfoOption("Скрыть зачарования", "enchantments"),
+            HiddenInfoOption("Скрыть атрибуты", "attribute_modifiers"),
+            HiddenInfoOption("Скрыть неразрушимость", "unbreakable"),
+            HiddenInfoOption("Скрыть разное", "hide_additional_tooltip"),
+            HiddenInfoOption("Скрыть цвет брони", "dyed_color"),
+            HiddenInfoOption("Скрыть ограничения ломания", "can_break"),
+            HiddenInfoOption("Скрыть ограничения установки", "can_place_on"),
+            HiddenInfoOption("Скрыть отделку брони", "trim"),
+            HiddenInfoOption("Скрыть музыку", "jukebox_playable"),
+            HiddenInfoOption("Скрыть само отображение", "hide_tooltip")
+        )
+    }
+
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
     }
@@ -27,7 +45,7 @@ class AdvancedEditPageOne(
             title = "<!i>▍ Продвинутый редактор [1/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38, 39, 40, 41),
+            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38, 39, 40, 41, 42),
             session = session
         )
 
@@ -271,25 +289,144 @@ class AdvancedEditPageOne(
             menu.setButton(41, buildGliderButton(session))
             updateEditablePreview(menu, session)
         }))
-        menu.setButton(42, buttonFactory.actionButton(Material.BRUSH, "<!i><#C7A300>✂ <#FFD700>Скрытие информации", listOf(
-            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
-            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
-            "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
-            "",
-            "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]  <#00FF40>» Скрыть зачарования ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть атрибуты ",
-            "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<b> </b><#C7A300>» Скрыть неразрушимость ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть разное ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть цвет брони ",
-            "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<b> </b><#C7A300>» Скрыть ограничения ломания ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть ограничения установки ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть отделку брони ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть музыку ",
-            "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<b> </b><#C7A300>» Скрыть всё ",
-            "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> </b><#C7A300>» Скрыть само отображение ",
-            ""
-        )))
+        menu.setButton(42, buildHiddenInfoButton(session))
         menu.open(player)
+    }
+
+    private fun buildHiddenInfoButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val focusedIndex = session.hiddenInfoFocusIndex.coerceIn(0, hiddenInfoOptions.lastIndex)
+        val meta = session.editableItem.itemMeta
+        val options = hiddenInfoOptions.mapIndexed { index, option ->
+            MenuButtonFactory.FocusedToggleListOption(
+                label = option.label,
+                enabled = isHiddenInfoEnabled(meta, index)
+            )
+        }
+        return buttonFactory.focusedToggleListButton(
+            material = Material.BRUSH,
+            title = "<!i><#C7A300>✂ <#FFD700>Скрытие информации",
+            options = options,
+            focusedIndex = focusedIndex,
+            beforeOptionsLore = listOf(
+                "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
+                "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
+                "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
+                ""
+            ),
+            afterOptionsLore = listOf("")
+        ) { event, interaction ->
+            session.hiddenInfoFocusIndex = session.hiddenInfoFocusIndex.coerceIn(0, hiddenInfoOptions.lastIndex)
+            var itemChanged = false
+            when (interaction) {
+                MenuButtonFactory.FocusedToggleListInteraction.NEXT_FOCUS -> {
+                    session.hiddenInfoFocusIndex = (session.hiddenInfoFocusIndex + 1) % hiddenInfoOptions.size
+                }
+                MenuButtonFactory.FocusedToggleListInteraction.TOGGLE_FOCUSED -> {
+                    itemChanged = toggleHiddenInfoOption(session, session.hiddenInfoFocusIndex)
+                }
+                MenuButtonFactory.FocusedToggleListInteraction.RESET_ALL -> {
+                    itemChanged = resetAllHiddenInfo(session)
+                }
+            }
+            event.menu.setButton(42, buildHiddenInfoButton(session))
+            if (itemChanged) {
+                updateEditablePreview(event.menu, session)
+            }
+        }
+    }
+
+    private fun isHiddenInfoEnabled(meta: org.bukkit.inventory.meta.ItemMeta?, index: Int): Boolean {
+        if (meta == null) return false
+        return MetaActionsApplier.isTooltipHidden(meta, hiddenInfoOptions[index].key)
+    }
+
+    private fun toggleHiddenInfoOption(session: ItemEditSession, index: Int): Boolean {
+        val meta = session.editableItem.itemMeta ?: return false
+        val key = hiddenInfoOptions[index].key
+        if (!MetaActionsApplier.canEnableTooltipHide(meta, key, session.editableItem.type) &&
+            !MetaActionsApplier.isTooltipHidden(meta, key)
+        ) {
+            return false
+        }
+        val before = MetaActionsApplier.isTooltipHidden(meta, key)
+        val changed = when {
+            key == "jukebox_playable" && before && session.vanillaDiscJukeboxComponentInjected -> {
+                val cleared = MetaActionsApplier.clearVanillaDiscExplicitJukeboxComponent(meta, session.editableItem.type)
+                if (cleared) {
+                    session.vanillaDiscJukeboxComponentInjected = false
+                    true
+                } else {
+                    MetaActionsApplier.setTooltipHidden(meta, key, false, session.editableItem.type)
+                }
+            }
+            key == "attribute_modifiers" && before && session.attributesMaterializedForHide -> {
+                val unhidden = MetaActionsApplier.setTooltipHidden(meta, key, false, session.editableItem.type)
+                val restored = MetaActionsApplier.clearExplicitAttributeModifiers(meta)
+                if (unhidden || restored) {
+                    session.attributesMaterializedForHide = false
+                }
+                unhidden || restored
+            }
+            else -> {
+                val hadExplicitJukebox = if (key == "jukebox_playable") meta.hasJukeboxPlayable() else false
+                val hadExplicitAttributes = if (key == "attribute_modifiers") meta.hasAttributeModifiers() else false
+                val mutation = MetaActionsApplier.setTooltipHidden(meta, key, !before, session.editableItem.type)
+                if (mutation && key == "jukebox_playable" && !before && !hadExplicitJukebox && meta.hasJukeboxPlayable()) {
+                    session.vanillaDiscJukeboxComponentInjected = true
+                }
+                if (mutation && key == "attribute_modifiers" && !before && !hadExplicitAttributes && meta.hasAttributeModifiers()) {
+                    session.attributesMaterializedForHide = true
+                }
+                mutation
+            }
+        }
+        if (!changed) {
+            return false
+        }
+        val after = MetaActionsApplier.isTooltipHidden(meta, key)
+        if (before == after) {
+            return false
+        }
+        session.editableItem.itemMeta = meta
+        return true
+    }
+
+    private fun resetAllHiddenInfo(session: ItemEditSession): Boolean {
+        val meta = session.editableItem.itemMeta ?: return false
+        val hadAnyEnabled = hiddenInfoOptions.indices.any { index ->
+            MetaActionsApplier.isTooltipHidden(meta, hiddenInfoOptions[index].key)
+        }
+        if (!hadAnyEnabled) {
+            return false
+        }
+        var changed = false
+        for (option in hiddenInfoOptions) {
+            if (option.key == "jukebox_playable" && session.vanillaDiscJukeboxComponentInjected) {
+                val cleared = MetaActionsApplier.clearVanillaDiscExplicitJukeboxComponent(meta, session.editableItem.type)
+                if (cleared) {
+                    session.vanillaDiscJukeboxComponentInjected = false
+                    changed = true
+                    continue
+                }
+            }
+            if (option.key == "attribute_modifiers" && session.attributesMaterializedForHide) {
+                val unhidden = MetaActionsApplier.setTooltipHidden(meta, option.key, false, session.editableItem.type)
+                val restored = MetaActionsApplier.clearExplicitAttributeModifiers(meta)
+                if (unhidden || restored) {
+                    session.attributesMaterializedForHide = false
+                    changed = true
+                }
+                continue
+            }
+            if (MetaActionsApplier.setTooltipHidden(meta, option.key, false, session.editableItem.type)) {
+                changed = true
+            }
+        }
+        if (!changed) {
+            return false
+        }
+        session.editableItem.itemMeta = meta
+        return true
     }
 
     private fun buildTooltipButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {

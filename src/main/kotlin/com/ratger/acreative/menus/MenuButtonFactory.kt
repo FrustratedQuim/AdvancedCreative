@@ -3,6 +3,7 @@ package com.ratger.acreative.menus
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
@@ -19,6 +20,17 @@ class MenuButtonFactory(
         val value: T,
         val label: String
     )
+
+    data class FocusedToggleListOption(
+        val label: String,
+        val enabled: Boolean
+    )
+
+    enum class FocusedToggleListInteraction {
+        NEXT_FOCUS,
+        TOGGLE_FOCUSED,
+        RESET_ALL
+    }
 
     companion object {
         val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.BARRIER
@@ -127,6 +139,34 @@ class MenuButtonFactory(
             .build()
     }
 
+    fun focusedToggleListButton(
+        material: Material,
+        title: String,
+        options: List<FocusedToggleListOption>,
+        focusedIndex: Int,
+        beforeOptionsLore: List<String> = emptyList(),
+        afterOptionsLore: List<String> = emptyList(),
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
+    ): Button {
+        require(options.isNotEmpty()) { "Focused toggle list options cannot be empty" }
+        val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
+        val lore = beforeOptionsLore + buildFocusedToggleListLore(options, safeFocusedIndex) + afterOptionsLore
+        return Button.simple(
+            ItemBuilder(material)
+                .name(parser.parse(title))
+                .lore(lore.map(parser::parse))
+                .build()
+        ).action { event ->
+            val interaction = when {
+                event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
+                event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
+                isDropClick(event) -> FocusedToggleListInteraction.RESET_ALL
+                else -> return@action
+            }
+            action(event, interaction)
+        }.build()
+    }
+
     private fun <T> buildListButtonLore(options: List<ListButtonOption<T>>, selectedIndex: Int): List<String> {
         return options.mapIndexed { index, option ->
             if (index == selectedIndex) {
@@ -135,6 +175,26 @@ class MenuButtonFactory(
                 "<!i><b> </b><#C7A300>» ${option.label} "
             }
         }
+    }
+
+    private fun buildFocusedToggleListLore(options: List<FocusedToggleListOption>, focusedIndex: Int): List<String> {
+        return options.mapIndexed { index, option ->
+            val statePrefix = if (option.enabled) {
+                "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]"
+            } else {
+                "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
+            }
+            val focusSuffix = if (index == focusedIndex) {
+                "  <#00FF40>» ${option.label} "
+            } else {
+                "<b> </b><#C7A300>» ${option.label} "
+            }
+            statePrefix + focusSuffix
+        }
+    }
+
+    private fun isDropClick(event: ru.violence.coreapi.bukkit.api.menu.event.ClickEvent): Boolean {
+        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
     }
 
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()

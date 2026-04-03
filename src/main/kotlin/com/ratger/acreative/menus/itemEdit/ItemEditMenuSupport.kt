@@ -50,16 +50,10 @@ class ItemEditMenuSupport(
     }
 
     private fun editorClickListener(menuSize: Int, interactiveTopSlots: Set<Int>) = { event: ClickEvent ->
-        when (event.rawSlot) {
-            event.rawSlot -> {
-                false
-            }
-            in 0 until menuSize -> {
-                event.rawSlot in interactiveTopSlots
-            }
-            else -> {
-                true
-            }
+        when {
+            event.rawSlot == editableSlot -> false
+            event.rawSlot in 0 until menuSize -> event.rawSlot in interactiveTopSlots
+            else -> true
         }
     }
 

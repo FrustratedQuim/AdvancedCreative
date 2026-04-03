@@ -1,6 +1,8 @@
 package com.ratger.acreative.itemedit.meta
 
 import com.destroystokyo.paper.profile.ProfileProperty
+import com.google.common.collect.LinkedHashMultimap
+import com.google.common.collect.Multimap
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ItemResult
@@ -10,10 +12,14 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Bukkit
 import org.bukkit.Color
+import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.*
+import org.bukkit.inventory.meta.components.JukeboxPlayableComponent
 import org.bukkit.inventory.meta.trim.ArmorTrim
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffect
@@ -24,17 +30,166 @@ class MetaActionsApplier(
     private val parser: EditParsers,
     private val miniMessage: MiniMessageParser
 ) {
+    companion object {
+        fun isTooltipHidden(meta: ItemMeta, key: String): Boolean {
+            return when (key.lowercase()) {
+                "hide_tooltip" -> meta.isHideTooltip
+                "jukebox_playable", "music" -> meta.hasJukeboxPlayable() && !meta.jukeboxPlayable.isShowInTooltip
+                else -> keyToFlag(key)?.let { meta.itemFlags.contains(it) } ?: false
+            }
+        }
+
+        fun canEnableTooltipHide(meta: ItemMeta, key: String, itemType: Material? = null): Boolean {
+            return when (key.lowercase()) {
+                "hide_tooltip" -> true
+                "enchantments" -> meta.hasEnchants()
+                "attribute_modifiers", "attributes" -> true
+                "unbreakable" -> meta.isUnbreakable
+                "dyed_color" -> (meta as? LeatherArmorMeta)?.isDyed() == true
+                "can_break" -> runCatching { meta.destroyableKeys.isNotEmpty() }.getOrDefault(false)
+                "can_place_on" -> runCatching { meta.placeableKeys.isNotEmpty() }.getOrDefault(false)
+                "trim" -> (meta as? ArmorMeta)?.trim != null
+                "jukebox_playable", "music" -> meta.hasJukeboxPlayable() || resolveDefaultDiscSongKey(itemType) != null
+                else -> keyToFlag(key) != null
+            }
+        }
+
+        fun setTooltipHidden(meta: ItemMeta, key: String, hide: Boolean, itemType: Material? = null): Boolean {
+            if (key.equals("hide_tooltip", ignoreCase = true)) {
+                if (meta.isHideTooltip == hide) return false
+                meta.isHideTooltip = hide
+                return true
+            }
+            if (key.equals("jukebox_playable", ignoreCase = true) || key.equals("music", ignoreCase = true)) {
+                return setJukeboxTooltipHidden(meta, hide, itemType)
+            }
+            if (key.equals("attribute_modifiers", ignoreCase = true) || key.equals("attributes", ignoreCase = true)) {
+                return if (hide) enableAttributeTooltipHide(meta, itemType) else disableAttributeTooltipHide(meta)
+            }
+            if (hide && !canEnableTooltipHide(meta, key, itemType)) {
+                return false
+            }
+            val flag = keyToFlag(key) ?: return false
+            val wasHidden = meta.itemFlags.contains(flag)
+            if (wasHidden == hide) return false
+            if (hide) meta.addItemFlags(flag) else meta.removeItemFlags(flag)
+            return true
+        }
+
+        private fun enableAttributeTooltipHide(meta: ItemMeta, itemType: Material?): Boolean {
+            if (meta.itemFlags.contains(ItemFlag.HIDE_ATTRIBUTES)) {
+                return false
+            }
+            if (!meta.hasAttributeModifiers()) {
+                materializeDefaultAttributeModifiers(meta, itemType)
+            }
+            meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
+            return true
+        }
+
+        private fun disableAttributeTooltipHide(meta: ItemMeta): Boolean {
+            if (!meta.itemFlags.contains(ItemFlag.HIDE_ATTRIBUTES)) return false
+            meta.removeItemFlags(ItemFlag.HIDE_ATTRIBUTES)
+            return true
+        }
+
+        fun materializeDefaultAttributeModifiers(meta: ItemMeta, itemType: Material?): Boolean {
+            if (meta.hasAttributeModifiers()) return false
+            val defaults = resolveDefaultAttributeModifiers(itemType)
+            val explicitList = LinkedHashMultimap.create<Attribute, AttributeModifier>()
+            explicitList.putAll(defaults)
+            meta.setAttributeModifiers(explicitList)
+            return true
+        }
+
+        private fun resolveDefaultAttributeModifiers(itemType: Material?): Multimap<Attribute, AttributeModifier> {
+            val type = itemType ?: return LinkedHashMultimap.create()
+            val itemTypeHandle = type.asItemType() ?: return LinkedHashMultimap.create()
+            return itemTypeHandle.getDefaultAttributeModifiers()
+        }
+
+        fun clearExplicitAttributeModifiers(meta: ItemMeta): Boolean {
+            if (!meta.hasAttributeModifiers()) return false
+            meta.setAttributeModifiers(null)
+            return true
+        }
+
+        private fun setJukeboxTooltipHidden(meta: ItemMeta, hide: Boolean, itemType: Material?): Boolean {
+            if (hide) {
+                val component = if (meta.hasJukeboxPlayable()) {
+                    meta.jukeboxPlayable
+                } else {
+                    val songKey = resolveDefaultDiscSongKey(itemType) ?: return false
+                    val generated = createJukeboxComponentFromDefaults(itemType) ?: return false
+                    generated.setSongKey(songKey)
+                    generated
+                }
+                if (!component.isShowInTooltip) return false
+                component.setShowInTooltip(false)
+                meta.setJukeboxPlayable(component)
+                return true
+            }
+
+            if (!meta.hasJukeboxPlayable()) return false
+            val component = meta.jukeboxPlayable
+            if (component.isShowInTooltip) return false
+            component.setShowInTooltip(true)
+            meta.setJukeboxPlayable(component)
+            return true
+        }
+
+        fun clearVanillaDiscExplicitJukeboxComponent(meta: ItemMeta, itemType: Material?): Boolean {
+            if (!meta.hasJukeboxPlayable()) return false
+            val defaultSong = resolveDefaultDiscSongKey(itemType) ?: return false
+            val component = meta.jukeboxPlayable
+            if (component.songKey != defaultSong) return false
+            meta.setJukeboxPlayable(null)
+            return true
+        }
+
+        private fun createJukeboxComponentFromDefaults(itemType: Material?): JukeboxPlayableComponent? {
+            val candidates = buildList {
+                if (itemType != null) {
+                    add(runCatching { Bukkit.getItemFactory().getItemMeta(itemType) }.getOrNull())
+                    add(runCatching { ItemStack(itemType).itemMeta }.getOrNull())
+                }
+            }
+            return candidates.firstNotNullOfOrNull { candidate ->
+                candidate?.jukeboxPlayable
+            }
+        }
+
+        private fun resolveDefaultDiscSongKey(itemType: Material?): NamespacedKey? {
+            val type = itemType ?: return null
+            val typeKey = type.key.key
+            if (!typeKey.startsWith("music_disc_")) return null
+            return NamespacedKey.minecraft(typeKey.removePrefix("music_disc_"))
+        }
+
+        private fun keyToFlag(key: String): ItemFlag? = when (key.lowercase()) {
+            "enchantments" -> ItemFlag.HIDE_ENCHANTS
+            "attribute_modifiers", "attributes" -> ItemFlag.HIDE_ATTRIBUTES
+            "unbreakable" -> ItemFlag.HIDE_UNBREAKABLE
+            "dyed_color" -> ItemFlag.HIDE_DYE
+            "can_break" -> ItemFlag.HIDE_DESTROYS
+            "can_place_on" -> ItemFlag.HIDE_PLACED_ON
+            "trim" -> ItemFlag.HIDE_ARMOR_TRIM
+            "hide_additional_tooltip", "additional", "misc" -> ItemFlag.HIDE_ADDITIONAL_TOOLTIP
+            else -> null
+        }
+    }
+
     private val mini = MiniMessage.miniMessage()
 
     fun apply(action: ItemAction, item: ItemStack): ItemResult? {
         val meta = item.itemMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>У предмета нет редактируемой meta")))
-        val result = applyToMeta(action, meta)
+        val result = applyToMeta(action, meta, item.type)
         if (!result.ok) return result
         item.itemMeta = meta
         return result
     }
 
-    private fun applyToMeta(action: ItemAction, meta: ItemMeta): ItemResult {
+    private fun applyToMeta(action: ItemAction, meta: ItemMeta, itemType: Material): ItemResult {
         when (action) {
             is ItemAction.NameSet -> meta.displayName(withoutItalic(miniMessage.parse(action.miniMessage)))
             ItemAction.NameClear -> meta.displayName(null)
@@ -75,7 +230,7 @@ class MetaActionsApplier(
             }
             is ItemAction.SetTooltipStyle -> meta.tooltipStyle = action.value
             is ItemAction.SetHideTooltip -> meta.isHideTooltip = action.value
-            is ItemAction.SetHideAdditionalTooltip -> meta.isHideTooltip = action.value
+            is ItemAction.SetHideAdditionalTooltip -> setTooltipHidden(meta, "hide_additional_tooltip", action.value, itemType)
             is ItemAction.EnchantAdd -> meta.addEnchant(action.enchantment, action.level, true)
             is ItemAction.EnchantRemove -> {
                 if (!meta.hasEnchant(action.enchantment)) {
@@ -85,7 +240,7 @@ class MetaActionsApplier(
             }
             ItemAction.EnchantClear -> meta.enchants.keys.toList().forEach(meta::removeEnchant)
             is ItemAction.SetEnchantmentGlint -> meta.setEnchantmentGlintOverride(action.value)
-            is ItemAction.TooltipToggle -> toggleFlag(meta, action)
+            is ItemAction.TooltipToggle -> toggleFlag(meta, action, itemType)
             is ItemAction.SetCanPlaceOn -> LegacyMetaKeySupport.setCanPlaceOn(meta, action.keys)
             is ItemAction.SetCanBreak -> LegacyMetaKeySupport.setCanBreak(meta, action.keys)
             is ItemAction.PotionColor -> {
@@ -132,7 +287,9 @@ class MetaActionsApplier(
                 val pair = mods[action.index]
                 meta.removeAttributeModifier(pair.key, pair.value)
             }
-            ItemAction.AttributeClear -> meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
+            ItemAction.AttributeClear -> {
+                meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
+            }
             is ItemAction.TrimSet -> {
                 val armorMeta = meta as? ArmorMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
                 armorMeta.trim = ArmorTrim(action.material, action.pattern)
@@ -146,27 +303,8 @@ class MetaActionsApplier(
         return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
     }
 
-    private fun toggleFlag(meta: ItemMeta, action: ItemAction.TooltipToggle) {
-        if (action.key.equals("hide_tooltip", ignoreCase = true)) {
-            meta.isHideTooltip = action.hide
-            return
-        }
-        if (action.key.equals("hide_additional_tooltip", ignoreCase = true)) {
-            meta.isHideTooltip = action.hide
-            return
-        }
-        val flag = when (action.key.lowercase()) {
-            "enchantments" -> ItemFlag.HIDE_ENCHANTS
-            "attribute_modifiers", "attributes" -> ItemFlag.HIDE_ATTRIBUTES
-            "unbreakable" -> ItemFlag.HIDE_UNBREAKABLE
-            "dyed_color" -> ItemFlag.HIDE_DYE
-            "can_break" -> ItemFlag.HIDE_DESTROYS
-            "can_place_on" -> ItemFlag.HIDE_PLACED_ON
-            "trim" -> ItemFlag.HIDE_ARMOR_TRIM
-            else -> null
-        } ?: return
-
-        if (action.hide) meta.addItemFlags(flag) else meta.removeItemFlags(flag)
+    private fun toggleFlag(meta: ItemMeta, action: ItemAction.TooltipToggle, itemType: Material) {
+        setTooltipHidden(meta, action.key, action.hide, itemType)
     }
 
     private fun withoutItalic(component: net.kyori.adventure.text.Component): net.kyori.adventure.text.Component {
