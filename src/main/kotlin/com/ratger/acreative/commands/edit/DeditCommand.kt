@@ -22,7 +22,7 @@ class DeditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
         targetResolver = resolver,
         validationService = validation,
         showService = show,
-        metaActionsApplier = MetaActionsApplier(hooker.plugin, parser, MiniMessageParser()),
+        metaActionsApplier = MetaActionsApplier(parser, MiniMessageParser()),
         componentsService = ComponentsService(),
         headProfileService = HeadProfileService(hooker.plugin, resolver)
     )

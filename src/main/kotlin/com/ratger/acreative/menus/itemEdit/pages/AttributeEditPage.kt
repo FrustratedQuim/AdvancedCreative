@@ -77,9 +77,10 @@ class AttributeEditPage(
             name = "<!i><#FF1500>⚠ Удалить всё",
             lore = emptyList(),
             action = {
-                val meta = session.editableItem.itemMeta ?: return@actionButton
-                meta.setAttributeModifiers(LinkedHashMultimap.create<Attribute, AttributeModifier>())
-                session.editableItem.itemMeta = meta
+                ItemAttributeMenuSupport.writeExplicitAttributes(
+                    session.editableItem,
+                    LinkedHashMultimap.create<Attribute, AttributeModifier>()
+                )
                 support.transition(session) {
                     open(player, session, 0)
                 }
@@ -137,13 +138,11 @@ class AttributeEditPage(
 
     private fun removeAt(session: ItemEditSession, globalIndex: Int) {
         val item = session.editableItem
-        val meta = item.itemMeta ?: return
-        val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, item.type)
+        val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(item)
         val entries = explicit.entries().toList()
         if (globalIndex !in entries.indices) return
         val pair = entries[globalIndex]
         explicit.remove(pair.key, pair.value)
-        meta.setAttributeModifiers(explicit)
-        item.itemMeta = meta
+        ItemAttributeMenuSupport.writeExplicitAttributes(item, explicit)
     }
 }

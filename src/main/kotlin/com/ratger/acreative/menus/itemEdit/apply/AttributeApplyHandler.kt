@@ -44,14 +44,12 @@ class AttributeApplyHandler : EditorApplyHandler {
         val operation = if (args.size >= 4) operationTokens[args[3].lowercase()] ?: return ApplyExecutionResult.InvalidValue else AttributeModifier.Operation.ADD_NUMBER
 
         val item = session.editableItem
-        val meta = item.itemMeta ?: return ApplyExecutionResult.InvalidValue
-        val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, item.type)
+        val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(item)
         val key = randomModifierKey()
         val modifier = AttributeModifierFactory.create(key, clampedAmount, operation, slotSpec)
 
         explicit.put(attribute, modifier)
-        meta.setAttributeModifiers(explicit)
-        item.itemMeta = meta
+        ItemAttributeMenuSupport.writeExplicitAttributes(item, explicit)
         return ApplyExecutionResult.Success
     }
 

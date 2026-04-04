@@ -260,54 +260,8 @@ class AdvancedEditPageOne(
                 updateEditablePreview(menu, session)
             }
         ))
-        val unbreakableEnabled = session.editableItem.itemMeta?.isUnbreakable == true
-        val unbreakableButtonName = if (unbreakableEnabled) {
-            "<!i><#C7A300>◎ <#FFD700>Неразрушимость: <#00FF40>Вкл"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Неразрушимость: <#FF1500>Выкл"
-        }
-        menu.setButton(40, buttonFactory.actionButton(
-            Material.NETHERITE_INGOT,
-            unbreakableButtonName,
-            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-            itemModifier = {
-                if (unbreakableEnabled) {
-                    glint(true)
-                }
-                this
-            },
-            action = {
-                val meta = session.editableItem.itemMeta ?: return@actionButton
-                meta.isUnbreakable = !unbreakableEnabled
-                session.editableItem.itemMeta = meta
-                menu.setButton(40, buildUnbreakableButton(session))
-                updateEditablePreview(menu, session)
-            }
-        ))
-        val gliderEnabled = runCatching { session.editableItem.itemMeta?.isGlider == true }.getOrDefault(false)
-        val gliderButtonName = if (gliderEnabled) {
-            "<!i><#C7A300>◎ <#FFD700>Парение: <#00FF40>Вкл"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Парение: <#FF1500>Выкл"
-        }
-        menu.setButton(41, buttonFactory.actionButton(Material.ELYTRA, gliderButtonName, listOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "",
-            "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Позволяет <#FFF3E0>парить, <#FFE68A>как на элитрах. ",
-            ""
-        ), itemModifier = {
-            if (gliderEnabled) {
-                glint(true)
-            }
-            this
-        }, action = {
-            val meta = session.editableItem.itemMeta ?: return@actionButton
-            meta.isGlider = !gliderEnabled
-            session.editableItem.itemMeta = meta
-            menu.setButton(41, buildGliderButton(session))
-            updateEditablePreview(menu, session)
-        }))
+        menu.setButton(40, buildUnbreakableButton(session))
+        menu.setButton(41, buildGliderButton(session))
         menu.setButton(42, buildHiddenInfoButton(session))
         menu.open(player)
     }
@@ -399,12 +353,16 @@ class AdvancedEditPageOne(
             }
             else -> {
                 val hadExplicitJukebox = if (key == "jukebox_playable") meta.hasJukeboxPlayable() else false
-                val hadExplicitAttributes = if (key == "attribute_modifiers") meta.hasAttributeModifiers() else false
+                val hadExplicitAttributes = if (key == "attribute_modifiers") {
+                    com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport.hasExplicitAttributeOverride(session.editableItem)
+                } else false
                 val mutation = MetaActionsApplier.setTooltipHidden(meta, key, !before, session.editableItem.type)
                 if (mutation && key == "jukebox_playable" && !before && !hadExplicitJukebox && meta.hasJukeboxPlayable()) {
                     session.vanillaDiscJukeboxComponentInjected = true
                 }
-                if (mutation && key == "attribute_modifiers" && !before && !hadExplicitAttributes && meta.hasAttributeModifiers()) {
+                if (mutation && key == "attribute_modifiers" && !before && !hadExplicitAttributes &&
+                    com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport.hasExplicitAttributeOverride(session.editableItem)
+                ) {
                     session.attributesMaterializedForHide = true
                 }
                 mutation
@@ -510,6 +468,12 @@ class AdvancedEditPageOne(
             Material.NETHERITE_INGOT,
             unbreakableButtonName,
             listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            itemModifier = {
+                if (unbreakableEnabled) {
+                    glint(true)
+                }
+                this
+            },
             action = { event ->
                 val meta = session.editableItem.itemMeta ?: return@actionButton
                 meta.isUnbreakable = !unbreakableEnabled
@@ -537,6 +501,12 @@ class AdvancedEditPageOne(
                 "<!i><#C7A300> ● <#FFE68A>Позволяет <#FFF3E0>парить, <#FFE68A>как на элитрах. ",
                 ""
             ),
+            itemModifier = {
+                if (gliderEnabled) {
+                    glint(true)
+                }
+                this
+            },
             action = { event ->
                 val meta = session.editableItem.itemMeta ?: return@actionButton
                 meta.isGlider = !gliderEnabled

@@ -1,6 +1,10 @@
+@file:Suppress("UnstableApiUsage")
+
 package com.ratger.acreative.itemedit.attributes
 
 import com.google.common.collect.LinkedHashMultimap
+import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.datacomponent.item.ItemAttributeModifiers
 import org.bukkit.Material
 import org.bukkit.Registry
 import org.bukkit.attribute.Attribute
@@ -8,9 +12,8 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.ItemMeta
 import java.math.BigDecimal
-import java.util.Locale
+import java.util.*
 
 object ItemAttributeMenuSupport {
     data class AttributeEntry(
@@ -30,16 +33,16 @@ object ItemAttributeMenuSupport {
         "knockback_resistance" to "Сопротивление отбрасыванию",
         "movement_speed" to "Скорость",
         "flying_speed" to "Скорость полёта",
-        "attack_damage" to "Урон атаки",
-        "attack_knockback" to "Отбрасывание атаки",
+        "attack_damage" to "Урон",
+        "attack_knockback" to "Отдача",
         "attack_speed" to "Скорость атаки",
         "armor" to "Броня",
-        "armor_toughness" to "Прочность брони",
+        "armor_toughness" to "Твёрдость брони",
         "luck" to "Удача",
-        "spawn_reinforcements" to "Подкрепления",
+        "spawn_reinforcements" to "Шанс подкрепления",
         "jump_strength" to "Сила прыжка",
-        "burning_time" to "Горение",
-        "explosion_knockback_resistance" to "Сопротивление взрывам",
+        "burning_time" to "Время горения",
+        "explosion_knockback_resistance" to "Сопротивление отбрасыванию от взрыва",
         "fall_damage_multiplier" to "Множитель урона от падения",
         "gravity" to "Гравитация",
         "safe_fall_distance" to "Безопасная высота падения",
@@ -50,12 +53,12 @@ object ItemAttributeMenuSupport {
         "block_break_speed" to "Скорость ломания блоков",
         "mining_efficiency" to "Эффективность копания",
         "submerged_mining_speed" to "Скорость копания под водой",
-        "sneaking_speed" to "Скорость крадучись",
+        "sneaking_speed" to "Скорость подкрадывания",
         "movement_efficiency" to "Эффективность движения",
         "oxygen_bonus" to "Запас воздуха",
         "water_movement_efficiency" to "Скорость движения в воде",
         "tempt_range" to "Дальность приманки",
-        "sweeping_damage_ratio" to "Урон размашистой атаки"
+        "sweeping_damage_ratio" to "Коэффициент разящего удара"
     )
 
     private val slotDisplayNames = mapOf(
@@ -77,16 +80,33 @@ object ItemAttributeMenuSupport {
     }
 
     fun currentEffectiveAttributes(item: ItemStack): LinkedHashMultimap<Attribute, AttributeModifier> {
-        val meta = item.itemMeta
-        return currentEffectiveAttributes(meta, item.type)
+        if (hasExplicitAttributeOverride(item)) {
+            val explicit = LinkedHashMultimap.create<Attribute, AttributeModifier>()
+            val component = item.getData(DataComponentTypes.ATTRIBUTE_MODIFIERS)
+            component?.modifiers()?.forEach { entry ->
+                explicit.put(entry.attribute(), entry.modifier())
+            }
+            return explicit
+        }
+        return defaultEffectiveAttributes(item.type)
     }
 
-    fun currentEffectiveAttributes(meta: ItemMeta?, material: Material?): LinkedHashMultimap<Attribute, AttributeModifier> {
-        val explicit = meta?.attributeModifiers
-        val resolved = if (meta?.hasAttributeModifiers() == true && explicit != null) explicit else defaultEffectiveAttributes(material)
-        val copy = LinkedHashMultimap.create<Attribute, AttributeModifier>()
-        copy.putAll(resolved)
-        return copy
+    fun hasExplicitAttributeOverride(item: ItemStack): Boolean {
+        return item.hasData(DataComponentTypes.ATTRIBUTE_MODIFIERS)
+    }
+
+    fun writeExplicitAttributes(item: ItemStack, attributes: LinkedHashMultimap<Attribute, AttributeModifier>) {
+        val currentComponent = if (hasExplicitAttributeOverride(item)) {
+            item.getData(DataComponentTypes.ATTRIBUTE_MODIFIERS)
+        } else {
+            null
+        }
+        val showInTooltip = currentComponent?.showInTooltip() ?: true
+        val builder = ItemAttributeModifiers.itemAttributes().showInTooltip(showInTooltip)
+        attributes.entries().forEach { (attribute, modifier) ->
+            builder.addModifier(attribute, modifier)
+        }
+        item.setData(DataComponentTypes.ATTRIBUTE_MODIFIERS, builder.build())
     }
 
     fun defaultEffectiveAttributes(material: Material?): LinkedHashMultimap<Attribute, AttributeModifier> {

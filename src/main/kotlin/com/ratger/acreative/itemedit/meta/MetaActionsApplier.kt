@@ -23,12 +23,10 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.*
 import org.bukkit.inventory.meta.components.JukeboxPlayableComponent
 import org.bukkit.inventory.meta.trim.ArmorTrim
-import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffect
 import java.util.*
 
 class MetaActionsApplier(
-    private val plugin: JavaPlugin,
     private val parser: EditParsers,
     private val miniMessage: MiniMessageParser
 ) {
@@ -182,14 +180,50 @@ class MetaActionsApplier(
     private val mini = MiniMessage.miniMessage()
 
     fun apply(action: ItemAction, item: ItemStack): ItemResult? {
+        when (action) {
+            is ItemAction.AttributeAdd,
+            is ItemAction.AttributeRemove,
+            ItemAction.AttributeClear -> return applyAttributeAction(action, item)
+            else -> Unit
+        }
         val meta = item.itemMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>У предмета нет редактируемой meta")))
-        val result = applyToMeta(action, meta, item.type)
+        val result = applyToMeta(action, meta, item)
         if (!result.ok) return result
         item.itemMeta = meta
         return result
     }
 
-    private fun applyToMeta(action: ItemAction, meta: ItemMeta, itemType: Material): ItemResult {
+    private fun applyAttributeAction(action: ItemAction, item: ItemStack): ItemResult {
+        when (action) {
+            is ItemAction.AttributeAdd -> {
+                val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
+                val key = NamespacedKey.minecraft(UUID.randomUUID().toString())
+                val modifier = AttributeModifierFactory.create(key, action.amount, action.operation, slotGroupSpec)
+                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(item)
+                explicit.put(action.attribute, modifier)
+                ItemAttributeMenuSupport.writeExplicitAttributes(item, explicit)
+            }
+            is ItemAction.AttributeRemove -> {
+                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(item)
+                val mods = explicit.entries().toList()
+                if (action.index !in mods.indices) return ItemResult(false, listOf(mini.deserialize("<red>Нет такого индекса attribute modifier")))
+                val pair = mods[action.index]
+                explicit.remove(pair.key, pair.value)
+                ItemAttributeMenuSupport.writeExplicitAttributes(item, explicit)
+            }
+            ItemAction.AttributeClear -> {
+                ItemAttributeMenuSupport.writeExplicitAttributes(
+                    item,
+                    LinkedHashMultimap.create<Attribute, AttributeModifier>()
+                )
+            }
+            else -> return ItemResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
+        }
+        return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
+    }
+
+    private fun applyToMeta(action: ItemAction, meta: ItemMeta, item: ItemStack): ItemResult {
+        val itemType = item.type
         when (action) {
             is ItemAction.NameSet -> meta.customName(withoutItalic(miniMessage.parse(action.miniMessage)))
             ItemAction.NameClear -> meta.customName(null)
@@ -274,25 +308,6 @@ class MetaActionsApplier(
             ItemAction.HeadClear -> {
                 val skull = meta as? SkullMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>Не player head")))
                 skull.playerProfile = null
-            }
-            is ItemAction.AttributeAdd -> {
-                val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
-                val key = NamespacedKey.minecraft(UUID.randomUUID().toString())
-                val modifier = AttributeModifierFactory.create(key, action.amount, action.operation, slotGroupSpec)
-                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, itemType)
-                explicit.put(action.attribute, modifier)
-                meta.setAttributeModifiers(explicit)
-            }
-            is ItemAction.AttributeRemove -> {
-                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, itemType)
-                val mods = explicit.entries().toList()
-                if (action.index !in mods.indices) return ItemResult(false, listOf(mini.deserialize("<red>Нет такого индекса attribute modifier")))
-                val pair = mods[action.index]
-                explicit.remove(pair.key, pair.value)
-                meta.setAttributeModifiers(explicit)
-            }
-            ItemAction.AttributeClear -> {
-                meta.setAttributeModifiers(LinkedHashMultimap.create<Attribute, AttributeModifier>())
             }
             is ItemAction.TrimSet -> {
                 val armorMeta = meta as? ArmorMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))
