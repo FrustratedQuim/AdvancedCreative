@@ -7,11 +7,13 @@ import org.bukkit.entity.Player
 
 class ItemModelApplyHandler(
     private val parser: EditParsers,
-    private val itemIdSuggestions: (String) -> List<String>
+    private val itemIdSuggestions: (Array<out String>) -> List<String>
 ) : EditorApplyHandler {
     override val kind: EditorApplyKind = EditorApplyKind.ITEM_MODEL
 
-    override fun apply(player: Player, session: ItemEditSession, rawValue: String): ApplyExecutionResult {
+    override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
+        if (args.size != 1) return ApplyExecutionResult.InvalidValue
+        val rawValue = args[0]
         val candidate = rawValue.trim().lowercase()
         if (candidate.isEmpty()) return ApplyExecutionResult.InvalidValue
 
@@ -25,5 +27,5 @@ class ItemModelApplyHandler(
         return ApplyExecutionResult.Success
     }
 
-    override fun suggestions(prefix: String): List<String> = itemIdSuggestions(prefix)
+    override fun suggestions(args: Array<out String>): List<String> = itemIdSuggestions(args)
 }

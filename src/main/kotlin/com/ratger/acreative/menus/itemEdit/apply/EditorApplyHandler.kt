@@ -6,16 +6,17 @@ import org.bukkit.entity.Player
 interface EditorApplyHandler {
     val kind: EditorApplyKind
 
-    fun apply(player: Player, session: ItemEditSession, rawValue: String): ApplyExecutionResult
+    fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult
 
-    fun suggestions(prefix: String): List<String>
+    fun suggestions(args: Array<out String>): List<String>
 }
 
 enum class EditorApplyKind {
     ITEM_ID,
     AMOUNT,
     ITEM_MODEL,
-    STACK_SIZE
+    STACK_SIZE,
+    ATTRIBUTE
 }
 
 sealed interface ApplyExecutionResult {

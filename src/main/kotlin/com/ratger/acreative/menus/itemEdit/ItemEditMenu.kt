@@ -6,6 +6,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
+import com.ratger.acreative.menus.itemEdit.pages.AttributeEditPage
 import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import org.bukkit.entity.Player
@@ -23,6 +24,7 @@ class ItemEditMenu(
     private val openSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSimple(player, session) }
     private val openAdvancedPageOneHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageOne(player, session) }
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
+    private val openAttributePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAttributePage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler)
@@ -34,7 +36,9 @@ class ItemEditMenu(
         requestApplyInput = requestApplyInput
     )
     private val advancedPageTwo: AdvancedEditPageTwo =
-        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler)
+        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler, openAttributePageHandler)
+    private val attributePage: AttributeEditPage =
+        AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -50,5 +54,9 @@ class ItemEditMenu(
 
     fun openAdvancedPageTwo(player: Player, session: ItemEditSession) {
         advancedPageTwo.open(player, session)
+    }
+
+    fun openAttributePage(player: Player, session: ItemEditSession) {
+        attributePage.open(player, session)
     }
 }

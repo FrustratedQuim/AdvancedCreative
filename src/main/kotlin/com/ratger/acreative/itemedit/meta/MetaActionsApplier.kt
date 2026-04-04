@@ -8,6 +8,7 @@ import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ItemResult
 import com.ratger.acreative.itemedit.attributes.AttributeModifierFactory
+import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
@@ -104,8 +105,7 @@ class MetaActionsApplier(
         }
 
         private fun resolveDefaultAttributeModifiers(itemType: Material?): Multimap<Attribute, AttributeModifier> {
-            val type = itemType ?: return LinkedHashMultimap.create()
-            return type.getDefaultAttributeModifiers()
+            return ItemAttributeMenuSupport.defaultEffectiveAttributes(itemType)
         }
 
         fun clearExplicitAttributeModifiers(meta: ItemMeta): Boolean {
@@ -279,16 +279,20 @@ class MetaActionsApplier(
                 val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
                 val key = NamespacedKey(plugin, "acreative_attr_${UUID.randomUUID()}")
                 val modifier = AttributeModifierFactory.create(key, action.amount, action.operation, slotGroupSpec)
-                meta.addAttributeModifier(action.attribute, modifier)
+                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, itemType)
+                explicit.put(action.attribute, modifier)
+                meta.setAttributeModifiers(explicit)
             }
             is ItemAction.AttributeRemove -> {
-                val mods = meta.attributeModifiers?.entries()?.toList().orEmpty()
+                val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, itemType)
+                val mods = explicit.entries().toList()
                 if (action.index !in mods.indices) return ItemResult(false, listOf(mini.deserialize("<red>Нет такого индекса attribute modifier")))
                 val pair = mods[action.index]
-                meta.removeAttributeModifier(pair.key, pair.value)
+                explicit.remove(pair.key, pair.value)
+                meta.setAttributeModifiers(explicit)
             }
             ItemAction.AttributeClear -> {
-                meta.attributeModifiers?.entries()?.toList()?.forEach { (attr, mod) -> meta.removeAttributeModifier(attr, mod) }
+                meta.setAttributeModifiers(LinkedHashMultimap.create<Attribute, AttributeModifier>())
             }
             is ItemAction.TrimSet -> {
                 val armorMeta = meta as? ArmorMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>Item meta не поддерживает ArmorMeta")))

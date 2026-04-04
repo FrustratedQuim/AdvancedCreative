@@ -9,7 +9,9 @@ class AmountApplyHandler : EditorApplyHandler {
 
     private val presets = listOf("1", "8", "16", "32", "64")
 
-    override fun apply(player: Player, session: ItemEditSession, rawValue: String): ApplyExecutionResult {
+    override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
+        if (args.size != 1) return ApplyExecutionResult.InvalidValue
+        val rawValue = args[0]
         val parsed = rawValue.toIntOrNull() ?: return ApplyExecutionResult.InvalidValue
         val normalized = parsed.absoluteValue
         if (normalized == 0 || normalized > 99) {
@@ -20,7 +22,9 @@ class AmountApplyHandler : EditorApplyHandler {
         return ApplyExecutionResult.Success
     }
 
-    override fun suggestions(prefix: String): List<String> {
+    override fun suggestions(args: Array<out String>): List<String> {
+        if (args.size != 1) return emptyList()
+        val prefix = args[0]
         return presets.filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }

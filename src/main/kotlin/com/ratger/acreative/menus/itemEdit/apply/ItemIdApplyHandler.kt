@@ -18,13 +18,17 @@ class ItemIdApplyHandler(
         .sorted()
         .toList()
 
-    override fun apply(player: Player, session: ItemEditSession, rawValue: String): ApplyExecutionResult {
+    override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
+        if (args.size != 1) return ApplyExecutionResult.InvalidValue
+        val rawValue = args[0]
         val material = parser.material(rawValue) ?: return ApplyExecutionResult.InvalidValue
         session.editableItem = ItemStackReplacementSupport.replaceItemId(session.editableItem, material)
         return ApplyExecutionResult.Success
     }
 
-    override fun suggestions(prefix: String): List<String> {
+    override fun suggestions(args: Array<out String>): List<String> {
+        if (args.size != 1) return emptyList()
+        val prefix = args[0]
         return materialSuggestions.filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }

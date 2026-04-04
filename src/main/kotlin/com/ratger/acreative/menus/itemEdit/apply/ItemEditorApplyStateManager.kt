@@ -57,13 +57,7 @@ class ItemEditorApplyStateManager(
             return
         }
 
-        if (args.size != 1) {
-            hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
-            return
-        }
-
-        val rawValue = args[0]
-        if (rawValue.equals("cancel", ignoreCase = true)) {
+        if (args[0].equals("cancel", ignoreCase = true)) {
             cancelWaiting(player, reopenMenu = true)
             return
         }
@@ -75,7 +69,7 @@ class ItemEditorApplyStateManager(
         }
 
         val handler = handlersByKind[request.kind] ?: return
-        when (handler.apply(player, session, rawValue)) {
+        when (handler.apply(player, session, args)) {
             ApplyExecutionResult.Success -> cancelWaiting(player, reopenMenu = true)
             ApplyExecutionResult.InvalidValue -> hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
         }
@@ -83,12 +77,10 @@ class ItemEditorApplyStateManager(
 
     fun tabComplete(player: Player, args: Array<out String>): List<String> {
         val request = requests[player.uniqueId] ?: return emptyList()
-        if (args.size != 1) return emptyList()
-
-        val prefix = args[0]
         val handler = handlersByKind[request.kind] ?: return emptyList()
-        val values = handler.suggestions(prefix)
-        val cancel = if ("cancel".startsWith(prefix, ignoreCase = true)) listOf("cancel") else emptyList()
+        val values = handler.suggestions(args)
+        val cancelPrefix = args.firstOrNull().orEmpty()
+        val cancel = if (args.size == 1 && "cancel".startsWith(cancelPrefix, ignoreCase = true)) listOf("cancel") else emptyList()
         return values + cancel
     }
 
@@ -109,6 +101,7 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.AMOUNT -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.ATTRIBUTE -> MessageKey.EDIT_APPLY_USAGE_ATTRIBUTE
         }
     }
 }

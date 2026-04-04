@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.itemEdit.pages
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemRarity
@@ -11,7 +12,8 @@ import ru.violence.coreapi.bukkit.api.menu.MenuRows
 class AdvancedEditPageTwo(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val openAdvancedPageOne: (Player, ItemEditSession) -> Unit
+    private val openAdvancedPageOne: (Player, ItemEditSession) -> Unit,
+    private val openAttributePage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -71,13 +73,51 @@ class AdvancedEditPageTwo(
         )
     }
 
+    private fun buildAttributesButton(player: Player, session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val entries = ItemAttributeMenuSupport.listEffectiveEntries(session.editableItem)
+        if (entries.isEmpty()) {
+            return buttonFactory.actionButton(
+                material = Material.PRISMARINE_CRYSTALS,
+                name = "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет",
+                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+                action = { support.transition(session) { openAttributePage(player, session) } }
+            )
+        }
+
+        val lore = mutableListOf(
+            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+            "",
+            "<!i><#FFD700>Выбрано:"
+        )
+        entries.forEach { entry ->
+            lore += "<!i><#C7A300> ● <#FFE68A>${ItemAttributeMenuSupport.displayAttributeName(entry.attribute)} " +
+                "<#FFF3E0>${ItemAttributeMenuSupport.formatAmount(entry.modifier)} " +
+                "<#C7A300>[<#FFD700>${ItemAttributeMenuSupport.displaySlot(entry.modifier.slotGroup)}<#C7A300>]"
+        }
+        lore += ""
+
+        return buttonFactory.actionButton(
+            material = Material.PRISMARINE_CRYSTALS,
+            name = "<!i><#C7A300>◎ <#FFD700>Атрибуты: <#00FF40>${entries.size}",
+            lore = lore,
+            itemModifier = {
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.setEnchantmentGlintOverride(true)
+                    item.itemMeta = meta
+                }
+            },
+            action = { support.transition(session) { openAttributePage(player, session) } }
+        )
+    }
+
     fun open(player: Player, session: ItemEditSession) {
         val menuSize = 54
         val menu = support.buildMenu(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 42),
+            interactiveTopSlots = setOf(18, 27, 32, 42),
             session = session
         )
 
@@ -88,7 +128,7 @@ class AdvancedEditPageTwo(
         menu.setButton(29, buttonFactory.actionButton(Material.IRON_CHESTPLATE, "<!i><#C7A300>🛡 <#FFD700>Параметры экипировки", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
         menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
         menu.setButton(31, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-        menu.setButton(32, buttonFactory.actionButton(Material.PRISMARINE_CRYSTALS, "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
+        menu.setButton(32, buildAttributesButton(player, session))
         menu.setButton(33, buttonFactory.actionButton(Material.FIRE_CHARGE, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
             "",
