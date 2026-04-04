@@ -349,8 +349,8 @@ class AdvancedEditPageOne(
             return false
         }
         val before = MetaActionsApplier.isTooltipHidden(meta, key)
-        val changed = when {
-            key == "jukebox_playable" && before && session.vanillaDiscJukeboxComponentInjected -> {
+        val changed = when (key) {
+            "jukebox_playable" if before && session.vanillaDiscJukeboxComponentInjected -> {
                 val cleared = MetaActionsApplier.clearVanillaDiscExplicitJukeboxComponent(meta, session.editableItem.type)
                 if (cleared) {
                     session.vanillaDiscJukeboxComponentInjected = false
@@ -359,7 +359,7 @@ class AdvancedEditPageOne(
                     MetaActionsApplier.setTooltipHidden(meta, key, false, session.editableItem.type)
                 }
             }
-            key == "attribute_modifiers" && before && session.attributesMaterializedForHide -> {
+            "attribute_modifiers" if before && session.attributesMaterializedForHide -> {
                 val unhidden = MetaActionsApplier.setTooltipHidden(meta, key, false, session.editableItem.type)
                 val restored = MetaActionsApplier.clearExplicitAttributeModifiers(meta)
                 if (unhidden || restored) {
