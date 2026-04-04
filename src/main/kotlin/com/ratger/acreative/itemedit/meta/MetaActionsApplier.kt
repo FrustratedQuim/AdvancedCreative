@@ -1,3 +1,4 @@
+@file:Suppress("UnstableApiUsage", "DEPRECATION")
 package com.ratger.acreative.itemedit.meta
 
 import com.destroystokyo.paper.profile.ProfileProperty
@@ -104,8 +105,7 @@ class MetaActionsApplier(
 
         private fun resolveDefaultAttributeModifiers(itemType: Material?): Multimap<Attribute, AttributeModifier> {
             val type = itemType ?: return LinkedHashMultimap.create()
-            val itemTypeHandle = type.asItemType() ?: return LinkedHashMultimap.create()
-            return itemTypeHandle.defaultAttributeModifiers
+            return type.getDefaultAttributeModifiers()
         }
 
         fun clearExplicitAttributeModifiers(meta: ItemMeta): Boolean {
@@ -151,7 +151,7 @@ class MetaActionsApplier(
             val candidates = buildList {
                 if (itemType != null) {
                     add(runCatching { Bukkit.getItemFactory().getItemMeta(itemType) }.getOrNull())
-                    add(runCatching { ItemStack(itemType).itemMeta }.getOrNull())
+                    add(runCatching { ItemStack.of(itemType).itemMeta }.getOrNull())
                 }
             }
             return candidates.firstNotNullOfOrNull { candidate ->
@@ -191,8 +191,8 @@ class MetaActionsApplier(
 
     private fun applyToMeta(action: ItemAction, meta: ItemMeta, itemType: Material): ItemResult {
         when (action) {
-            is ItemAction.NameSet -> meta.displayName(withoutItalic(miniMessage.parse(action.miniMessage)))
-            ItemAction.NameClear -> meta.displayName(null)
+            is ItemAction.NameSet -> meta.customName(withoutItalic(miniMessage.parse(action.miniMessage)))
+            ItemAction.NameClear -> meta.customName(null)
             is ItemAction.LoreAdd -> {
                 val lore = (meta.lore() ?: mutableListOf()).toMutableList()
                 lore += withoutItalic(miniMessage.parse(action.miniMessage))
