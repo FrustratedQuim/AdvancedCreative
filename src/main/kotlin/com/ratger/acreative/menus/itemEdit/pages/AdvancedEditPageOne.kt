@@ -107,6 +107,7 @@ class AdvancedEditPageOne(
                     meta.itemModel = key
                     item.itemMeta = meta
                 }
+                glint(true)
             }
             buttonFactory.hideEverythingExceptTooltip().invoke(this)
         }, action = { event ->
@@ -131,7 +132,9 @@ class AdvancedEditPageOne(
                             "<!i><#C7A300> ● <#FFF3E0>/apply hand <#C7A300>- <#FFE68A>взять из руки ",
                             ""
                         ),
-                        itemModifier = { buttonFactory.hideEverythingExceptTooltip().invoke(this) },
+                        itemModifier = {
+                            buttonFactory.hideEverythingExceptTooltip().invoke(this)
+                        },
                         action = { clickEvent ->
                             if (clickEvent.isLeft || clickEvent.isShiftLeft) {
                                 support.transition(session) {
@@ -174,7 +177,12 @@ class AdvancedEditPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
             "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
             ""
-        ), action = { event ->
+        ), itemModifier = {
+            if (stackSize != null) {
+                glint(true)
+            }
+            this
+        }, action = { event ->
             if (event.isRight || event.isShiftRight) {
                 val meta = session.editableItem.itemMeta
                 if (meta != null) {
@@ -262,6 +270,12 @@ class AdvancedEditPageOne(
             Material.NETHERITE_INGOT,
             unbreakableButtonName,
             listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            itemModifier = {
+                if (unbreakableEnabled) {
+                    glint(true)
+                }
+                this
+            },
             action = {
                 val meta = session.editableItem.itemMeta ?: return@actionButton
                 meta.isUnbreakable = !unbreakableEnabled
@@ -282,7 +296,12 @@ class AdvancedEditPageOne(
             "<!i><#FFD700>Назначение:",
             "<!i><#C7A300> ● <#FFE68A>Позволяет <#FFF3E0>парить, <#FFE68A>как на элитрах. ",
             ""
-        ), action = {
+        ), itemModifier = {
+            if (gliderEnabled) {
+                glint(true)
+            }
+            this
+        }, action = {
             val meta = session.editableItem.itemMeta ?: return@actionButton
             meta.isGlider = !gliderEnabled
             session.editableItem.itemMeta = meta
@@ -313,7 +332,13 @@ class AdvancedEditPageOne(
                 "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
                 ""
             ),
-            afterOptionsLore = listOf("")
+            afterOptionsLore = listOf(""),
+            itemModifier = {
+                if (hasAnyHiddenInfoEnabled(meta)) {
+                    glint(true)
+                }
+                this
+            }
         ) { event, interaction ->
             session.hiddenInfoFocusIndex = session.hiddenInfoFocusIndex.coerceIn(0, hiddenInfoOptions.lastIndex)
             var itemChanged = false
@@ -338,6 +363,11 @@ class AdvancedEditPageOne(
     private fun isHiddenInfoEnabled(meta: org.bukkit.inventory.meta.ItemMeta?, index: Int): Boolean {
         if (meta == null) return false
         return MetaActionsApplier.isTooltipHidden(meta, hiddenInfoOptions[index].key)
+    }
+
+    private fun hasAnyHiddenInfoEnabled(meta: org.bukkit.inventory.meta.ItemMeta?): Boolean {
+        if (meta == null) return false
+        return hiddenInfoOptions.indices.any { index -> isHiddenInfoEnabled(meta, index) }
     }
 
     private fun toggleHiddenInfoOption(session: ItemEditSession, index: Int): Boolean {

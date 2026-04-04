@@ -110,7 +110,7 @@ class MetaActionsApplier(
 
         fun clearExplicitAttributeModifiers(meta: ItemMeta): Boolean {
             if (!meta.hasAttributeModifiers()) return false
-            meta.attributeModifiers = null
+            meta.attributeModifiers = LinkedHashMultimap.create<Attribute, AttributeModifier>()
             return true
         }
 
@@ -277,7 +277,7 @@ class MetaActionsApplier(
             }
             is ItemAction.AttributeAdd -> {
                 val slotGroupSpec = action.slotGroup?.let(parser::slotGroup)
-                val key = NamespacedKey(plugin, "acreative_attr_${UUID.randomUUID()}")
+                val key = NamespacedKey.minecraft(UUID.randomUUID().toString())
                 val modifier = AttributeModifierFactory.create(key, action.amount, action.operation, slotGroupSpec)
                 val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(meta, itemType)
                 explicit.put(action.attribute, modifier)

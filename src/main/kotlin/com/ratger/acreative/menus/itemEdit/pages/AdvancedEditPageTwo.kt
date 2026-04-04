@@ -101,11 +101,7 @@ class AdvancedEditPageTwo(
             name = "<!i><#C7A300>◎ <#FFD700>Атрибуты: <#00FF40>${entries.size}",
             lore = lore,
             itemModifier = {
-                edit { item ->
-                    val meta = item.itemMeta ?: return@edit
-                    meta.setEnchantmentGlintOverride(true)
-                    item.itemMeta = meta
-                }
+                glint(true)
             },
             action = { support.transition(session) { openAttributePage(player, session) } }
         )

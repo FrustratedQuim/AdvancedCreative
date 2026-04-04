@@ -66,9 +66,7 @@ class AttributeApplyHandler : EditorApplyHandler {
     }
 
     private fun randomModifierKey(): NamespacedKey {
-        val namespace = UUID.randomUUID().toString().replace("-", "")
-        val key = UUID.randomUUID().toString().replace("-", "")
-        return NamespacedKey(namespace, key)
+        return NamespacedKey.minecraft(UUID.randomUUID().toString())
     }
 
     private fun String.toBigDecimalOrNull(): BigDecimal? = runCatching { BigDecimal(this) }.getOrNull()

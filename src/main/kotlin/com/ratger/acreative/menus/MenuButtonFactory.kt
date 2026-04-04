@@ -145,17 +145,19 @@ class MenuButtonFactory(
         focusedIndex: Int,
         beforeOptionsLore: List<String> = emptyList(),
         afterOptionsLore: List<String> = emptyList(),
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
     ): Button {
         require(options.isNotEmpty()) { "Focused toggle list options cannot be empty" }
         val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
         val lore = beforeOptionsLore + buildFocusedToggleListLore(options, safeFocusedIndex) + afterOptionsLore
-        return Button.simple(
-            ItemBuilder(material)
-                .name(parser.parse(title))
-                .lore(lore.map(parser::parse))
-                .build()
-        ).action { event ->
+        val builder = ItemBuilder(material)
+            .name(parser.parse(title))
+            .lore(lore.map(parser::parse))
+        if (itemModifier != null) {
+            builder.itemModifier()
+        }
+        return Button.simple(builder.build()).action { event ->
             val interaction = when {
                 event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
                 event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
