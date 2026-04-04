@@ -45,7 +45,7 @@ class MetaActionsApplier(
                 "enchantments" -> meta.hasEnchants()
                 "attribute_modifiers", "attributes" -> true
                 "unbreakable" -> meta.isUnbreakable
-                "dyed_color" -> (meta as? LeatherArmorMeta)?.isDyed() == true
+                "dyed_color" -> (meta as? LeatherArmorMeta)?.isDyed == true
                 "can_break" -> runCatching { meta.destroyableKeys.isNotEmpty() }.getOrDefault(false)
                 "can_place_on" -> runCatching { meta.placeableKeys.isNotEmpty() }.getOrDefault(false)
                 "trim" -> (meta as? ArmorMeta)?.trim != null
@@ -98,19 +98,19 @@ class MetaActionsApplier(
             val defaults = resolveDefaultAttributeModifiers(itemType)
             val explicitList = LinkedHashMultimap.create<Attribute, AttributeModifier>()
             explicitList.putAll(defaults)
-            meta.setAttributeModifiers(explicitList)
+            meta.attributeModifiers = explicitList
             return true
         }
 
         private fun resolveDefaultAttributeModifiers(itemType: Material?): Multimap<Attribute, AttributeModifier> {
             val type = itemType ?: return LinkedHashMultimap.create()
             val itemTypeHandle = type.asItemType() ?: return LinkedHashMultimap.create()
-            return itemTypeHandle.getDefaultAttributeModifiers()
+            return itemTypeHandle.defaultAttributeModifiers
         }
 
         fun clearExplicitAttributeModifiers(meta: ItemMeta): Boolean {
             if (!meta.hasAttributeModifiers()) return false
-            meta.setAttributeModifiers(null)
+            meta.attributeModifiers = null
             return true
         }
 
@@ -121,11 +121,11 @@ class MetaActionsApplier(
                 } else {
                     val songKey = resolveDefaultDiscSongKey(itemType) ?: return false
                     val generated = createJukeboxComponentFromDefaults(itemType) ?: return false
-                    generated.setSongKey(songKey)
+                    generated.songKey = songKey
                     generated
                 }
                 if (!component.isShowInTooltip) return false
-                component.setShowInTooltip(false)
+                component.isShowInTooltip = false
                 meta.setJukeboxPlayable(component)
                 return true
             }
@@ -133,7 +133,7 @@ class MetaActionsApplier(
             if (!meta.hasJukeboxPlayable()) return false
             val component = meta.jukeboxPlayable
             if (component.isShowInTooltip) return false
-            component.setShowInTooltip(true)
+            component.isShowInTooltip = true
             meta.setJukeboxPlayable(component)
             return true
         }
