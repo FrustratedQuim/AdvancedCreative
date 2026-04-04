@@ -89,8 +89,7 @@ class AdvancedEditPageTwo(
         menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
         menu.setButton(31, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(32, buttonFactory.actionButton(Material.PRISMARINE_CRYSTALS, "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
-        menu.setButton(33, buttonFactory.actionButton(
-            MenuButtonFactory.Companion.ADVANCED_RESTRICTIONS_ICON_MATERIAL, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
+        menu.setButton(33, buttonFactory.actionButton(Material.FIRE_CHARGE, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
             "",
             "<!i><#FFD700>Назначение:",

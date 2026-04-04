@@ -35,10 +35,6 @@ class MenuButtonFactory(
         RESET_ALL
     }
 
-    companion object {
-        val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.FIRE_CHARGE
-    }
-
     fun blackFillerButton() = Button.simple(
         ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
             .name(parser.parse("<!i>"))
