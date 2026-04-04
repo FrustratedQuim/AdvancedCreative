@@ -1,10 +1,13 @@
 package com.ratger.acreative.menus
 
+import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
@@ -33,7 +36,7 @@ class MenuButtonFactory(
     }
 
     companion object {
-        val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.BARRIER
+        val ADVANCED_RESTRICTIONS_ICON_MATERIAL: Material = Material.FIRE_CHARGE
     }
 
     fun blackFillerButton() = Button.simple(
@@ -260,7 +263,7 @@ class MenuButtonFactory(
     fun hideAttributes(): ItemBuilder.() -> ItemBuilder = {
         edit { item ->
             val meta = item.itemMeta ?: return@edit
-            meta.attributeModifiers = null
+            meta.attributeModifiers = LinkedHashMultimap.create<Attribute, AttributeModifier>()
             meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES)
             item.itemMeta = meta
         }
