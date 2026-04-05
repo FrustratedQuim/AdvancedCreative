@@ -8,6 +8,7 @@ import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
 import com.ratger.acreative.menus.itemEdit.pages.AttributeEditPage
 import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import org.bukkit.entity.Player
 
@@ -25,6 +26,7 @@ class ItemEditMenu(
     private val openAdvancedPageOneHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageOne(player, session) }
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
     private val openAttributePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAttributePage(player, session) }
+    private val openEquippablePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEquippablePage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler)
@@ -36,9 +38,11 @@ class ItemEditMenu(
         requestApplyInput = requestApplyInput
     )
     private val advancedPageTwo: AdvancedEditPageTwo =
-        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler, openAttributePageHandler)
+        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler, openAttributePageHandler, openEquippablePageHandler)
     private val attributePage: AttributeEditPage =
         AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
+    private val equippablePage: EquippableEditPage =
+        EquippableEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -58,5 +62,9 @@ class ItemEditMenu(
 
     fun openAttributePage(player: Player, session: ItemEditSession) {
         attributePage.open(player, session)
+    }
+
+    fun openEquippablePage(player: Player, session: ItemEditSession) {
+        equippablePage.open(player, session)
     }
 }

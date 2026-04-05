@@ -102,6 +102,7 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.ATTRIBUTE -> MessageKey.EDIT_APPLY_USAGE_ATTRIBUTE
+            EditorApplyKind.EQUIP_SOUND -> MessageKey.EDIT_APPLY_USAGE_SOUND
         }
     }
 }

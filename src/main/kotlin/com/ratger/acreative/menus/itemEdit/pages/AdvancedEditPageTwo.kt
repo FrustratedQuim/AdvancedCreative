@@ -13,7 +13,8 @@ class AdvancedEditPageTwo(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageOne: (Player, ItemEditSession) -> Unit,
-    private val openAttributePage: (Player, ItemEditSession) -> Unit
+    private val openAttributePage: (Player, ItemEditSession) -> Unit,
+    private val openEquippablePage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -113,7 +114,7 @@ class AdvancedEditPageTwo(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 32, 42),
+            interactiveTopSlots = setOf(18, 27, 29, 32, 42),
             session = session
         )
 
@@ -121,7 +122,7 @@ class AdvancedEditPageTwo(
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { openAdvancedPageOne(player, session) } })
         menu.setButton(27, buttonFactory.backButton { support.transition(session) { openAdvancedPageOne(player, session) } })
-        menu.setButton(29, buttonFactory.actionButton(Material.IRON_CHESTPLATE, "<!i><#C7A300>🛡 <#FFD700>Параметры экипировки", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
+        menu.setButton(29, buttonFactory.actionButton(Material.IRON_CHESTPLATE, "<!i><#C7A300>🛡 <#FFD700>Параметры экипировки", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes(), action = { support.transition(session) { openEquippablePage(player, session) } }))
         menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
         menu.setButton(31, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(32, buildAttributesButton(player, session))

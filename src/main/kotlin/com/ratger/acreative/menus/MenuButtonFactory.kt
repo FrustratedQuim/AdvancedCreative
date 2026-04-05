@@ -3,6 +3,7 @@ package com.ratger.acreative.menus
 import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
+import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
@@ -269,6 +270,14 @@ class MenuButtonFactory(
 
     fun hideAdditionalTooltip(): ItemBuilder.() -> ItemBuilder = {
         flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+    }
+
+    fun hideJukeboxTooltip(itemType: Material): ItemBuilder.() -> ItemBuilder = {
+        edit { item ->
+            val meta = item.itemMeta ?: return@edit
+            MetaActionsApplier.setTooltipHidden(meta, "jukebox_playable", true, itemType)
+            item.itemMeta = meta
+        }
     }
 
     fun zeroFoodPreview(): ItemBuilder.() -> ItemBuilder = {

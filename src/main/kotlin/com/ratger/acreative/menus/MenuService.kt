@@ -7,6 +7,7 @@ import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.itemEdit.apply.AmountApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
+import com.ratger.acreative.menus.itemEdit.apply.EquipSoundApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemEditorApplyStateManager
 import com.ratger.acreative.menus.itemEdit.apply.ItemIdApplyHandler
@@ -40,7 +41,8 @@ class MenuService(
             AmountApplyHandler(),
             ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
             stackSizeApplyHandler,
-            attributeApplyHandler
+            attributeApplyHandler,
+            EquipSoundApplyHandler()
         )
     )
     private val itemEditMenu = ItemEditMenu(

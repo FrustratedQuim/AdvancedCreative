@@ -16,7 +16,8 @@ enum class EditorApplyKind {
     AMOUNT,
     ITEM_MODEL,
     STACK_SIZE,
-    ATTRIBUTE
+    ATTRIBUTE,
+    EQUIP_SOUND
 }
 
 sealed interface ApplyExecutionResult {
