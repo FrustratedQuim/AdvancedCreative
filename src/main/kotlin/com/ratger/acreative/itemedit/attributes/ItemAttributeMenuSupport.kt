@@ -74,6 +74,41 @@ object ItemAttributeMenuSupport {
         EquipmentSlotGroup.BODY to "Тело"
     )
 
+    private val attributeSuggestedValues = mapOf(
+        Attribute.MAX_HEALTH to listOf("4", "20", "40", "100", "600", "1024"),
+        Attribute.MAX_ABSORPTION to listOf("4", "20", "40", "100", "600", "2048"),
+        Attribute.FOLLOW_RANGE to listOf("8", "16", "32", "64", "128", "2048"),
+        Attribute.KNOCKBACK_RESISTANCE to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.MOVEMENT_SPEED to listOf("0.05", "0.1", "0.2", "0.3", "0.5", "1"),
+        Attribute.FLYING_SPEED to listOf("0.05", "0.1", "0.2", "0.4", "0.8", "1"),
+        Attribute.ATTACK_DAMAGE to listOf("1", "4", "8", "12", "20", "100"),
+        Attribute.ATTACK_KNOCKBACK to listOf("0.5", "1", "2", "3", "5"),
+        Attribute.ATTACK_SPEED to listOf("1", "2", "4", "8", "16"),
+        Attribute.ARMOR to listOf("1", "2", "4", "8", "16", "30"),
+        Attribute.ARMOR_TOUGHNESS to listOf("1", "2", "4", "8", "12", "20"),
+        Attribute.LUCK to listOf("-10", "1", "5", "10", "100"),
+        Attribute.SAFE_FALL_DISTANCE to listOf("3", "8", "16", "32", "128"),
+        Attribute.SCALE to listOf("0.25", "0.5", "1", "2", "4", "16"),
+        Attribute.STEP_HEIGHT to listOf("0.5", "1", "2", "4", "10"),
+        Attribute.GRAVITY to listOf("-0.08", "0", "0.04", "0.08", "0.5", "1"),
+        Attribute.JUMP_STRENGTH to listOf("0.5", "1", "2", "5", "10", "32"),
+        Attribute.BURNING_TIME to listOf("20", "100", "200", "600", "1024"),
+        Attribute.EXPLOSION_KNOCKBACK_RESISTANCE to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.FALL_DAMAGE_MULTIPLIER to listOf("0", "0.25", "0.5", "1", "2", "10"),
+        Attribute.MOVEMENT_EFFICIENCY to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.OXYGEN_BONUS to listOf("10", "50", "100", "300", "1024"),
+        Attribute.WATER_MOVEMENT_EFFICIENCY to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.TEMPT_RANGE to listOf("4", "10", "20", "40", "80", "2048"),
+        Attribute.BLOCK_INTERACTION_RANGE to listOf("2", "4", "6", "8", "16", "64"),
+        Attribute.ENTITY_INTERACTION_RANGE to listOf("2", "3", "4", "6", "8", "64"),
+        Attribute.BLOCK_BREAK_SPEED to listOf("1", "5", "10", "50", "100", "1024"),
+        Attribute.MINING_EFFICIENCY to listOf("1", "5", "10", "50", "100", "1024"),
+        Attribute.SUBMERGED_MINING_SPEED to listOf("0.5", "1", "5", "10", "20"),
+        Attribute.SNEAKING_SPEED to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.SWEEPING_DAMAGE_RATIO to listOf("0.1", "0.25", "0.5", "0.75", "1"),
+        Attribute.SPAWN_REINFORCEMENTS to listOf("0.05", "0.1", "0.25", "0.5", "1")
+    )
+
     fun listEffectiveEntries(item: ItemStack): List<AttributeEntry> {
         val effective = currentEffectiveAttributes(item)
         return effective.entries().map { AttributeEntry(it.key, it.value) }
@@ -170,6 +205,10 @@ object ItemAttributeMenuSupport {
         return parsed.coerceIn(min, max).toDouble()
     }
 
+    fun suggestedValues(attribute: Attribute): List<String> {
+        return attributeSuggestedValues[attribute] ?: fallbackSuggestedValues(attribute)
+    }
+
     private fun attributeRange(attribute: Attribute): Pair<BigDecimal, BigDecimal> {
         return when (attribute) {
             Attribute.MAX_HEALTH -> "1" bd "1024"
@@ -205,6 +244,18 @@ object ItemAttributeMenuSupport {
             Attribute.SPAWN_REINFORCEMENTS -> "0" bd "1"
             else -> "-1024" bd "1024"
         }
+    }
+
+    private fun fallbackSuggestedValues(attribute: Attribute): List<String> {
+        val (min, max) = attributeRange(attribute)
+        val midpoint = min.add(max).divide(BigDecimal("2"))
+        val quarter = min.add(max.subtract(min).divide(BigDecimal("4")))
+        return linkedSetOf(
+            min.toPlainString(),
+            quarter.stripTrailingZeros().toPlainString(),
+            midpoint.stripTrailingZeros().toPlainString(),
+            max.stripTrailingZeros().toPlainString()
+        ).toList()
     }
 
     private fun toReadableName(value: String): String {

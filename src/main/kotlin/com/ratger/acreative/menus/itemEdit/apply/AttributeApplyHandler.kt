@@ -56,7 +56,11 @@ class AttributeApplyHandler : EditorApplyHandler {
     override fun suggestions(args: Array<out String>): List<String> {
         return when (args.size) {
             1 -> attributeTokenMap.keys.filter { it.startsWith(args[0], ignoreCase = true) }
-            2 -> listOf("5", "25", "50", "100").filter { it.startsWith(args[1], ignoreCase = true) }
+            2 -> {
+                val attribute = attributeTokenMap[args[0].lowercase()] ?: return emptyList()
+                ItemAttributeMenuSupport.suggestedValues(attribute)
+                    .filter { it.startsWith(args[1], ignoreCase = true) }
+            }
             3 -> slotTokens.keys.filter { it.startsWith(args[2], ignoreCase = true) }
             4 -> listOf("add", "multipled_base", "multipled_total").filter { it.startsWith(args[3], ignoreCase = true) }
             else -> emptyList()
