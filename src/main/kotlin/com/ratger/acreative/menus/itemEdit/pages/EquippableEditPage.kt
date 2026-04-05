@@ -24,7 +24,6 @@ class EquippableEditPage(
     )
 
     private val slotOptions = listOf(
-        IconOption<EquipmentSlot?>(null, "Обычный", Material.BRICK),
         IconOption(EquipmentSlot.HEAD, "Шлем", Material.IRON_HELMET),
         IconOption(EquipmentSlot.CHEST, "Нагрудник", Material.IRON_CHESTPLATE),
         IconOption(EquipmentSlot.LEGS, "Поножи", Material.IRON_LEGGINGS),
@@ -103,7 +102,6 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDamageOnHurt = !EquippableSupport.effectiveDamageOnHurt(session.editableItem)
             }
-            EquippableSupport.normalizeAfterMutation(session.editableItem)
             refreshButtons(event.menu, event.player as Player, session)
         }
     )
@@ -133,7 +131,6 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDispensable = !EquippableSupport.effectiveDispensable(session.editableItem)
             }
-            EquippableSupport.normalizeAfterMutation(session.editableItem)
             refreshButtons(event.menu, event.player as Player, session)
         }
     )
@@ -163,13 +160,12 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isSwappable = !EquippableSupport.effectiveSwappable(session.editableItem)
             }
-            EquippableSupport.normalizeAfterMutation(session.editableItem)
             refreshButtons(event.menu, event.player as Player, session)
         }
     )
 
     private fun buildSlotButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
-        val displaySlot = EquippableSupport.displaySlotForMenu(session.editableItem)
+        val displaySlot = EquippableSupport.effectiveSlot(session.editableItem) ?: EquipmentSlot.HAND
         val selectedIndex = slotOptions.indexOfFirst { it.value == displaySlot }.takeIf { it >= 0 } ?: 0
 
         return buttonFactory.listButton(
@@ -178,13 +174,12 @@ class EquippableEditPage(
             selectedIndex = selectedIndex,
             titleBuilder = { _, index ->
                 when (index) {
-                    0 -> "<!i><#C7A300>① <#FFD700>Слот экипировки: <#FFF3E0>Обычный"
-                    1 -> "<!i><#C7A300>② <#FFD700>Слот экипировки: <#FFF3E0>Шлем"
-                    2 -> "<!i><#C7A300>③ <#FFD700>Слот экипировки: <#FFF3E0>Нагрудник"
-                    3 -> "<!i><#C7A300>④ <#FFD700>Слот экипировки: <#FFF3E0>Поножи"
-                    4 -> "<!i><#C7A300>⑤ <#FFD700>Слот экипировки: <#FFF3E0>Ботинки"
-                    5 -> "<!i><#C7A300>⑥ <#FFD700>Слот экипировки: <#FFF3E0>Основная рука"
-                    else -> "<!i><#C7A300>⑦ <#FFD700>Слот экипировки: <#FFF3E0>Вторая рука"
+                    0 -> "<!i><#C7A300>① <#FFD700>Слот экипировки: <#FFF3E0>Шлем"
+                    1 -> "<!i><#C7A300>② <#FFD700>Слот экипировки: <#FFF3E0>Нагрудник"
+                    2 -> "<!i><#C7A300>③ <#FFD700>Слот экипировки: <#FFF3E0>Поножи"
+                    3 -> "<!i><#C7A300>④ <#FFD700>Слот экипировки: <#FFF3E0>Ботинки"
+                    4 -> "<!i><#C7A300>⑤ <#FFD700>Слот экипировки: <#FFF3E0>Основная рука"
+                    else -> "<!i><#C7A300>⑥ <#FFD700>Слот экипировки: <#FFF3E0>Вторая рука"
                 }
             },
             beforeOptionsLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", ""),
@@ -198,14 +193,8 @@ class EquippableEditPage(
             },
             action = { event, newIndex ->
                 val selected = slotOptions[newIndex]
-                if (selected.value == null) {
-                    EquippableSupport.resetSlotToOrdinaryForMenu(session.editableItem, EquipmentSlot.HAND)
-                    EquippableSupport.normalizeAfterMutation(session.editableItem)
-                } else {
-                    EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
-                        setSlot(selected.value)
-                    }
-                    EquippableSupport.normalizeAfterMutation(session.editableItem)
+                EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
+                    setSlot(selected.value)
                 }
                 refreshButtons(event.menu, event.player as Player, session)
             }
@@ -261,7 +250,6 @@ class EquippableEditPage(
                 EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HEAD) {
                     cameraOverlay = selected.value
                 }
-                EquippableSupport.normalizeAfterMutation(session.editableItem)
                 refreshButtons(event.menu, event.player as Player, session)
             }
         )
@@ -312,7 +300,6 @@ class EquippableEditPage(
                 EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                     model = selected.value
                 }
-                EquippableSupport.normalizeAfterMutation(session.editableItem)
                 refreshButtons(event.menu, event.player as Player, session)
             }
         )
@@ -354,7 +341,6 @@ class EquippableEditPage(
                     EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                         setEquipSound(null)
                     }
-                    EquippableSupport.normalizeAfterMutation(session.editableItem)
                     refreshButtons(event.menu, player, session)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {

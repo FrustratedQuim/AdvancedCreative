@@ -13,9 +13,9 @@ class EquipSoundApplyHandler : EditorApplyHandler {
     private val presets = listOf(
         "minecraft:item.totem.use",
         "minecraft:entity.player.levelup",
-        "minecraft:block.amethyst_block.chime",
-        "minecraft:entity.frog.tongue",
-        "minecraft:entity.puffer_fish.blow_up"
+        "minecraft:entity.goat.screaming.ambient",
+        "minecraft:ui.toast.challenge_complete",
+        "minecraft:ambient.cave"
     )
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
@@ -30,7 +30,6 @@ class EquipSoundApplyHandler : EditorApplyHandler {
             setEquipSound(sound)
         }
         if (!updated) return ApplyExecutionResult.InvalidValue
-        EquippableSupport.normalizeAfterMutation(session.editableItem)
         return ApplyExecutionResult.Success
     }
 

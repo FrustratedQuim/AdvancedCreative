@@ -4,6 +4,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.itemedit.equippable.EquippableSupport
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.itemEdit.apply.AmountApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
@@ -96,6 +97,7 @@ class MenuService(
     }
 
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {
+        EquippableSupport.normalizeAfterMutation(session.editableItem)
         val item = session.editableItem.clone()
         if (item.type == Material.AIR || item.amount <= 0) return
 

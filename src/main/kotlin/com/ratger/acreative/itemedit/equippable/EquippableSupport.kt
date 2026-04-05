@@ -39,7 +39,7 @@ object EquippableSupport {
 
     fun hasExisting(item: ItemStack): Boolean = item.itemMeta?.hasEquippable() == true
 
-    fun hasExistingOrPrototype(item: ItemStack): Boolean = hasExisting(item) || prototypeSnapshot(item) != null
+    fun hasExistingOrPrototype(item: ItemStack): Boolean = hasExisting(item) || baselineComponent(item, EquipmentSlot.HAND) != null
 
     fun existingSnapshot(item: ItemStack): EquippableComponent? = explicitSnapshot(item)
 
@@ -49,7 +49,7 @@ object EquippableSupport {
         return meta.equippable
     }
 
-    fun resolvedSnapshot(item: ItemStack): EquippableComponent? = explicitSnapshot(item) ?: prototypeSnapshot(item)
+    fun resolvedSnapshot(item: ItemStack): EquippableComponent? = explicitSnapshot(item) ?: baselineComponent(item, EquipmentSlot.HAND)
 
     fun prototypeSnapshot(item: ItemStack): EquippableComponent? {
         val meta = ItemStack(item.type).itemMeta ?: return null
@@ -71,7 +71,7 @@ object EquippableSupport {
 
     fun effectiveDamageOnHurt(item: ItemStack): Boolean = resolvedSnapshot(item)?.isDamageOnHurt ?: true
 
-    fun baselineSlot(item: ItemStack): EquipmentSlot? = prototypeSnapshot(item)?.slot ?: inferredPrototypeSlot(item)
+    fun baselineSlot(item: ItemStack): EquipmentSlot? = baselineComponent(item, EquipmentSlot.HAND)?.slot
 
     fun isFieldOrdinarySlot(item: ItemStack): Boolean {
         val explicit = explicitSnapshot(item) ?: return true
@@ -165,7 +165,7 @@ object EquippableSupport {
     }
 
     fun restoreDefaultEquipSound(item: ItemStack): Boolean {
-        val defaultSound = prototypeSnapshot(item)?.equipSound ?: return false
+        val defaultSound = baselineComponent(item, EquipmentSlot.HAND)?.equipSound ?: return false
         return mutateFromExistingOrPrototype(item) { setEquipSound(defaultSound) }
     }
 
@@ -177,9 +177,6 @@ object EquippableSupport {
 
 
     private fun baselineComponent(item: ItemStack, preferredFallbackSlot: EquipmentSlot): EquippableComponent? {
-        val prototype = prototypeSnapshot(item)
-        if (prototype != null) return prototype
-
         val freshMeta = ItemStack(item.type).itemMeta ?: return null
         val baseline = freshMeta.equippable
         baseline.setSlot(inferredPrototypeSlot(item) ?: preferredFallbackSlot)
@@ -206,7 +203,7 @@ object EquippableSupport {
     }
 
     private fun mutateFromExistingOrPrototype(item: ItemStack, mutator: EquippableComponent.() -> Unit): Boolean {
-        val base = explicitSnapshot(item) ?: prototypeSnapshot(item) ?: return false
+        val base = explicitSnapshot(item) ?: baselineComponent(item, EquipmentSlot.HAND) ?: return false
         return apply(item, base, mutator)
     }
 
