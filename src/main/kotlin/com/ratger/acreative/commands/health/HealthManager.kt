@@ -1,12 +1,11 @@
 package com.ratger.acreative.commands.health
 
 import com.ratger.acreative.commands.common.NumericAttributeManager
+import com.ratger.acreative.commands.common.AttributeModifierSupport
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 
 class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -28,24 +27,23 @@ class HealthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     override val playerStateType: PlayerStateType = PlayerStateType.CUSTOM_HEALTH
 
     override fun applyAttribute(player: Player, value: Double) {
-        removeAttribute(player)
-
-        player.getAttribute(Attribute.MAX_HEALTH)?.addModifier(
-            AttributeModifier(
-                NamespacedKey(hooker.plugin, "health_mod"),
-                value - defaultValue,
-                AttributeModifier.Operation.ADD_NUMBER
-            )
+        AttributeModifierSupport.applyAddNumberModifier(
+            player = player,
+            attribute = Attribute.MAX_HEALTH,
+            plugin = hooker.plugin,
+            modifierName = "health_mod",
+            value = value - defaultValue
         )
         player.health = value
     }
 
     override fun removeAttribute(player: Player) {
-        val modifierKey = NamespacedKey(hooker.plugin, "health_mod")
-        player.getAttribute(Attribute.MAX_HEALTH)
-            ?.modifiers
-            ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.MAX_HEALTH)?.removeModifier(it) }
+        AttributeModifierSupport.removeModifier(
+            player = player,
+            attribute = Attribute.MAX_HEALTH,
+            plugin = hooker.plugin,
+            modifierName = "health_mod"
+        )
     }
 
     override fun onAfterEffectRemoved(player: Player) {

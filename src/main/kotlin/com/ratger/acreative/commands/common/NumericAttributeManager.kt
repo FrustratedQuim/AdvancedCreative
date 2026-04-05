@@ -72,7 +72,7 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
         else -> value
     }
 
-    private fun parseValue(arg: String): Double? {
+    protected fun parseValue(arg: String): Double? {
         if (arg.equals("basic", ignoreCase = true)) return defaultValue
         if (arg.startsWith("-")) return normalizeNegativeInput()
 
@@ -87,7 +87,7 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
         return normalizeParsedValue(value)
     }
 
-    private fun formatValue(value: Double): String {
+    protected fun formatValue(value: Double): String {
         return BigDecimal.valueOf(value)
             .stripTrailingZeros()
             .toPlainString()

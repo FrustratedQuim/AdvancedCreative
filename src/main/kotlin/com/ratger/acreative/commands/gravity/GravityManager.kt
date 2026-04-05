@@ -1,11 +1,10 @@
 package com.ratger.acreative.commands.gravity
 
 import com.ratger.acreative.commands.common.NumericAttributeManager
+import com.ratger.acreative.commands.common.AttributeModifierSupport
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
-import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import kotlin.math.max
 import kotlin.math.min
@@ -30,23 +29,23 @@ class GravityManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     val gravityPlayers: MutableMap<Player, Double> get() = trackedPlayers
 
     override fun applyAttribute(player: Player, value: Double) {
-        removeAttribute(player)
         val modifierValue = calculateModifier(value)
-        player.getAttribute(Attribute.GRAVITY)?.addModifier(
-            AttributeModifier(
-                NamespacedKey(hooker.plugin, "gravity_mod"),
-                modifierValue,
-                AttributeModifier.Operation.ADD_NUMBER
-            )
+        AttributeModifierSupport.applyAddNumberModifier(
+            player = player,
+            attribute = Attribute.GRAVITY,
+            plugin = hooker.plugin,
+            modifierName = "gravity_mod",
+            value = modifierValue
         )
     }
 
     override fun removeAttribute(player: Player) {
-        val modifierKey = NamespacedKey(hooker.plugin, "gravity_mod")
-        player.getAttribute(Attribute.GRAVITY)
-            ?.modifiers
-            ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.GRAVITY)?.removeModifier(it) }
+        AttributeModifierSupport.removeModifier(
+            player = player,
+            attribute = Attribute.GRAVITY,
+            plugin = hooker.plugin,
+            modifierName = "gravity_mod"
+        )
     }
 
     override fun normalizeParsedValue(value: Double): Double {

@@ -6,7 +6,6 @@ import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
-import java.math.BigDecimal
 import kotlin.math.abs
 
 class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -61,7 +60,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             return
         }
 
-        val value = parseResizeValue(arg) ?: run {
+        val value = parseValue(arg) ?: run {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             return
         }
@@ -78,7 +77,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         hooker.messageManager.sendChat(
             player,
             successSetMessageKey,
-            variables = mapOf("value" to formatResizeValue(value))
+            variables = mapOf("value" to formatValue(value))
         )
     }
 
@@ -189,24 +188,4 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         } else 0.0
     }
 
-    private fun parseResizeValue(arg: String): Double? {
-        if (arg.equals("basic", ignoreCase = true)) return defaultValue
-        if (arg.startsWith("-")) return normalizeNegativeInput()
-
-        val cleanedArg = arg.replace(",", ".").trim()
-        val numericStr = when {
-            cleanedArg.matches(Regex("^\\d+$")) -> cleanedArg
-            cleanedArg.matches(Regex("^\\d*\\.\\d+$")) -> cleanedArg
-            else -> return null
-        }
-
-        val value = numericStr.toDoubleOrNull() ?: return null
-        return normalizeParsedValue(value)
-    }
-
-    private fun formatResizeValue(value: Double): String {
-        return BigDecimal.valueOf(value)
-            .stripTrailingZeros()
-            .toPlainString()
-    }
 }

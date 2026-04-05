@@ -1,12 +1,11 @@
 package com.ratger.acreative.commands.strength
 
 import com.ratger.acreative.commands.common.NumericAttributeManager
+import com.ratger.acreative.commands.common.AttributeModifierSupport
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 
 class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
@@ -37,23 +36,22 @@ class StrengthManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) 
     }
 
     override fun applyAttribute(player: Player, value: Double) {
-        removeAttribute(player)
-
-        player.getAttribute(Attribute.ATTACK_DAMAGE)?.addModifier(
-            AttributeModifier(
-                NamespacedKey(hooker.plugin, "strength_mod"),
-                value,
-                AttributeModifier.Operation.ADD_NUMBER
-            )
+        AttributeModifierSupport.applyAddNumberModifier(
+            player = player,
+            attribute = Attribute.ATTACK_DAMAGE,
+            plugin = hooker.plugin,
+            modifierName = "strength_mod",
+            value = value
         )
     }
 
     override fun removeAttribute(player: Player) {
-        val modifierKey = NamespacedKey(hooker.plugin, "strength_mod")
-        player.getAttribute(Attribute.ATTACK_DAMAGE)
-            ?.modifiers
-            ?.find { it.key == modifierKey }
-            ?.let { player.getAttribute(Attribute.ATTACK_DAMAGE)?.removeModifier(it) }
+        AttributeModifierSupport.removeModifier(
+            player = player,
+            attribute = Attribute.ATTACK_DAMAGE,
+            plugin = hooker.plugin,
+            modifierName = "strength_mod"
+        )
     }
 
 }
