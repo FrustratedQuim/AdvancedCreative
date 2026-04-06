@@ -209,41 +209,8 @@ object ItemAttributeMenuSupport {
         return attributeSuggestedValues[attribute] ?: fallbackSuggestedValues(attribute)
     }
 
-    private fun attributeRange(attribute: Attribute): Pair<BigDecimal, BigDecimal> {
-        return when (attribute) {
-            Attribute.MAX_HEALTH -> "1" bd "1024"
-            Attribute.FOLLOW_RANGE -> "0" bd "2048"
-            Attribute.KNOCKBACK_RESISTANCE -> "0" bd "1"
-            Attribute.MOVEMENT_SPEED -> "0" bd "1024"
-            Attribute.FLYING_SPEED -> "0" bd "1024"
-            Attribute.ATTACK_DAMAGE -> "0" bd "2048"
-            Attribute.ATTACK_KNOCKBACK -> "0" bd "5"
-            Attribute.ATTACK_SPEED -> "0" bd "1024"
-            Attribute.ARMOR -> "0" bd "30"
-            Attribute.ARMOR_TOUGHNESS -> "0" bd "20"
-            Attribute.LUCK -> "-1024" bd "1024"
-            Attribute.MAX_ABSORPTION -> "0" bd "2048"
-            Attribute.SAFE_FALL_DISTANCE -> "-1024" bd "1024"
-            Attribute.SCALE -> "0.0625" bd "16"
-            Attribute.STEP_HEIGHT -> "0" bd "10"
-            Attribute.GRAVITY -> "-1" bd "1"
-            Attribute.JUMP_STRENGTH -> "0" bd "32"
-            Attribute.BURNING_TIME -> "0" bd "1024"
-            Attribute.EXPLOSION_KNOCKBACK_RESISTANCE -> "0" bd "1"
-            Attribute.MOVEMENT_EFFICIENCY -> "0" bd "1"
-            Attribute.OXYGEN_BONUS -> "0" bd "1024"
-            Attribute.WATER_MOVEMENT_EFFICIENCY -> "0" bd "1"
-            Attribute.TEMPT_RANGE -> "0" bd "2048"
-            Attribute.BLOCK_INTERACTION_RANGE -> "0" bd "64"
-            Attribute.ENTITY_INTERACTION_RANGE -> "0" bd "64"
-            Attribute.BLOCK_BREAK_SPEED -> "0" bd "1024"
-            Attribute.MINING_EFFICIENCY -> "0" bd "1024"
-            Attribute.SUBMERGED_MINING_SPEED -> "0" bd "20"
-            Attribute.SNEAKING_SPEED -> "0" bd "1"
-            Attribute.SWEEPING_DAMAGE_RATIO -> "0" bd "1"
-            Attribute.SPAWN_REINFORCEMENTS -> "0" bd "1"
-            else -> "-1024" bd "1024"
-        }
+    private fun attributeRange(@Suppress("UNUSED_PARAMETER") attribute: Attribute): Pair<BigDecimal, BigDecimal> {
+        return "-2048" bd "2048"
     }
 
     private fun fallbackSuggestedValues(attribute: Attribute): List<String> {

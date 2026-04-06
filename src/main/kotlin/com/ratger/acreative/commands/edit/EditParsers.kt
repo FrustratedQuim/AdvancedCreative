@@ -45,6 +45,7 @@ class EditParsers {
             else -> null
         }
     }
+    fun parseSignedAttributeAmount(input: String?): Double? = input?.trim()?.toDoubleOrNull()
 
     fun rarity(input: String): ItemRarity? = when (input.lowercase()) {
         "common" -> ItemRarity.COMMON
@@ -394,7 +395,7 @@ class EditParsers {
         return when (args.getOrNull(1)?.lowercase()) {
             "add" -> {
                 val attribute = attribute(args.getOrNull(2) ?: return null) ?: return null
-                val amount = args.getOrNull(3)?.toDoubleOrNull() ?: return null
+                val amount = parseSignedAttributeAmount(args.getOrNull(3)) ?: return null
                 val operation = attributeOperation(args.getOrNull(4) ?: return null) ?: return null
                 ItemAction.AttributeAdd(attribute, amount, operation, args.getOrNull(5))
             }

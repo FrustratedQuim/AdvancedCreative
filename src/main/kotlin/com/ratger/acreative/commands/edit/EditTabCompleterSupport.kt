@@ -129,7 +129,7 @@ class EditTabCompleterSupport(private val parser: EditParsers) {
                 args[0].equals("tool", true) && args[1].equals("speed", true) && args[2].toFloatOrNull() != null ->
                     listOf("effective_only", "ineffective_only", "all_blocks")
                 args[0].equals("enchant", true) && args[1].equals("add", true) -> listOf("1", "2", "3", "5", "10")
-                args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("1", "2", "5", "10")
+                args[0].equals("attribute", true) && args[1].equals("add", true) -> listOf("-10", "-5", "-2", "-1", "1", "2", "5", "10")
                 args[0].equals("potion", true) && args[1].equals("effect_add", true) -> listOf("200", "600", "1200")
                 args[0].equals("component", true) && args[1].equals("use_cooldown", true) && args[2].toFloatOrNull() != null ->
                     listOf("minecraft:test", "minecraft:ender_pearl", "minecraft:custom_group")
