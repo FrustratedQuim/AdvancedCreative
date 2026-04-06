@@ -5,6 +5,8 @@ package com.ratger.acreative.itemedit.show
 import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
 import com.ratger.acreative.itemedit.meta.LegacyMetaKeySupport
 import io.papermc.paper.datacomponent.DataComponentTypes
+import io.papermc.paper.registry.RegistryAccess
+import io.papermc.paper.registry.RegistryKey
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Material
 import org.bukkit.Registry
@@ -19,6 +21,8 @@ import org.bukkit.inventory.meta.SkullMeta
 
 object ShowViewAdapters {
     private val plain = PlainTextComponentSerializer.plainText()
+    private val enchantmentRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT) }
+    private val trimPatternRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN) }
 
     data class ConsumableShowView(
         val consumeSeconds: Float,
@@ -75,8 +79,7 @@ object ShowViewAdapters {
     )
 
     data class LockSummary(
-        val material: String,
-        val amount: Int
+        val isLocked: Boolean
     )
 
     fun consumable(item: ItemStack): ConsumableShowView? {
@@ -160,7 +163,7 @@ object ShowViewAdapters {
 
     fun trim(meta: ArmorMeta): TrimSummary? {
         val trim = meta.trim ?: return null
-        val patternKey = Registry.TRIM_PATTERN.getKey(trim.pattern)?.asString() ?: "<unknown>"
+        val patternKey = trimPatternRegistry.getKey(trim.pattern)?.asString() ?: "<unknown>"
         val materialKey = Registry.TRIM_MATERIAL.getKey(trim.material)?.asString() ?: "<unknown>"
         return TrimSummary(patternKey = patternKey, materialKey = materialKey)
     }
@@ -171,15 +174,13 @@ object ShowViewAdapters {
         val blockStateMeta = meta as? BlockStateMeta ?: return null
         val lockable = blockStateMeta.blockState as? Lockable ?: return null
         if (!lockable.isLocked) return null
-        val lockRaw = lockable.lock
-        val lockMaterial = lockRaw.substringBefore('[').takeIf { it.isNotBlank() } ?: "<unknown>"
-        return LockSummary(material = lockMaterial, amount = 1)
+        return LockSummary(isLocked = true)
     }
 
     fun enchantmentsSummary(meta: ItemMeta?): String {
         val entries = meta?.enchants?.entries ?: return "<none>"
         return entries.joinToString {
-            val id = Registry.ENCHANTMENT.getKey(it.key)?.asString() ?: "<unknown>"
+            val id = enchantmentRegistry.getKey(it.key)?.asString() ?: "<unknown>"
             "$id:${it.value}"
         }
     }

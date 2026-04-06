@@ -81,7 +81,7 @@ class ShowService {
         out += if (lock == null) {
             mini.deserialize("<gray>lock: <white><none>")
         } else {
-            mini.deserialize("<gray>lock: <white>material=${lock.material}, amount=${lock.amount}")
+            mini.deserialize("<gray>lock: <white>enabled=${lock.isLocked}")
         }
         val equippable = EquippableSupport.existingView(item)
         if (equippable == null) {
