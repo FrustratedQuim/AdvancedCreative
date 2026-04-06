@@ -1,17 +1,11 @@
 package com.ratger.acreative.itemedit.meta
 
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object ItemStackReplacementSupport {
     fun replaceItemId(original: ItemStack, newMaterial: Material): ItemStack {
-        val replaced = ItemStack(newMaterial, original.amount)
-        val oldMeta = original.itemMeta
-        if (oldMeta != null && Bukkit.getItemFactory().isApplicable(oldMeta, newMaterial)) {
-            replaced.itemMeta = oldMeta.clone()
-        }
-        return replaced
+        return original.withType(newMaterial)
     }
 
     fun resetAll(item: ItemStack) {

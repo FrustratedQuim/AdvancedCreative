@@ -184,11 +184,7 @@ class EquippableEditPage(
             },
             beforeOptionsLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", ""),
             afterOptionsLore = listOf(""),
-            itemModifier = { selected ->
-                val icon = slotOptions.firstOrNull { it.value == selected.value }?.icon ?: Material.BRICK
-                edit { item ->
-                    item.type = icon
-                }
+            itemModifier = {
                 buttonFactory.hideAttributes().invoke(this)
             },
             action = { event, newIndex ->
@@ -238,11 +234,7 @@ class EquippableEditPage(
                 "<!i><#C7A300> ● <#FFE68A>предмет надет на голову.",
                 ""
             ),
-            itemModifier = { selected ->
-                val icon = overlayOptions.firstOrNull { it.value == selected.value }?.icon ?: Material.BRICK
-                edit { item ->
-                    item.type = icon
-                }
+            itemModifier = {
                 buttonFactory.hideAttributes().invoke(this)
             },
             action = { event, newIndex ->
@@ -288,11 +280,7 @@ class EquippableEditPage(
                 "<!i><#C7A300> ● <#FFF3E0>модель<#FFE68A> надетой брони.",
                 ""
             ),
-            itemModifier = { selected ->
-                val icon = modelOptions.firstOrNull { it.value == selected.value }?.icon ?: Material.BRICK
-                edit { item ->
-                    item.type = icon
-                }
+            itemModifier = {
                 buttonFactory.hideAttributes().invoke(this)
             },
             action = { event, newIndex ->
