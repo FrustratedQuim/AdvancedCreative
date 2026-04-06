@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage") // Experimental Consumable/Tool/etc
 
 package com.ratger.acreative.itemedit.show
 
@@ -23,6 +23,7 @@ object ShowViewAdapters {
     private val plain = PlainTextComponentSerializer.plainText()
     private val enchantmentRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT) }
     private val trimPatternRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN) }
+    private val trimMaterialRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL) }
 
     data class ConsumableShowView(
         val consumeSeconds: Float,
@@ -164,7 +165,7 @@ object ShowViewAdapters {
     fun trim(meta: ArmorMeta): TrimSummary? {
         val trim = meta.trim ?: return null
         val patternKey = trimPatternRegistry.getKey(trim.pattern)?.asString() ?: "<unknown>"
-        val materialKey = Registry.TRIM_MATERIAL.getKey(trim.material)?.asString() ?: "<unknown>"
+        val materialKey = trimMaterialRegistry.getKey(trim.material)?.asString() ?: "<unknown>"
         return TrimSummary(patternKey = patternKey, materialKey = materialKey)
     }
 

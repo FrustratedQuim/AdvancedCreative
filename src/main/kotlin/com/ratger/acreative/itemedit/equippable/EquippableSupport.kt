@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage") // Experimental Equippable
 
 package com.ratger.acreative.itemedit.equippable
 

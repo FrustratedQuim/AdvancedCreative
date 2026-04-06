@@ -1,9 +1,5 @@
-/**
- * На данный момент не существует стабильного аналога для работы с Consumable.
- * Варны были скрыты, так-как их просто слишком много.
- */
+@file:Suppress("UnstableApiUsage") // Experimental Consumable
 
-@file:Suppress("UnstableApiUsage")
 package com.ratger.acreative.itemedit.effects
 
 import com.ratger.acreative.itemedit.api.EffectActionSpec

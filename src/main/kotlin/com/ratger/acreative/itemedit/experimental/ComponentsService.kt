@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage") // Experimental Consumable/Tool/etc
 
 package com.ratger.acreative.itemedit.experimental
 

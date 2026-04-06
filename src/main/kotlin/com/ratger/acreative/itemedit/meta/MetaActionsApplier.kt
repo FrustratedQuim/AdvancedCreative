@@ -1,4 +1,5 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage") // Experimental Jukebox
+
 package com.ratger.acreative.itemedit.meta
 
 import com.destroystokyo.paper.profile.ProfileProperty
