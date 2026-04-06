@@ -479,19 +479,19 @@ class JarManager(private val hooker: FunctionHooker) {
     private fun disableFlightAndLaunch(player: Player) {
         player.allowFlight = false
         player.isFlying = false
-        if (!hasEnoughHeadroom(player.location, 5)) return
+        if (!hasEnoughHeadroom(player.location)) return
 
         val velocity = player.velocity
         player.velocity = Vector(velocity.x, LAUNCH_UP_VELOCITY, velocity.z)
     }
 
-    private fun hasEnoughHeadroom(location: Location, requiredAirBlocks: Int): Boolean {
+    private fun hasEnoughHeadroom(location: Location): Boolean {
         val world = location.world ?: return false
         val baseX = location.blockX
         val baseY = location.blockY
         val baseZ = location.blockZ
 
-        for (offset in 1..requiredAirBlocks) {
+        for (offset in 1..REQUIRED_HEADROOM_AIR_BLOCKS) {
             if (!world.getBlockAt(baseX, baseY + offset, baseZ).isPassable) {
                 return false
             }
@@ -535,6 +535,7 @@ class JarManager(private val hooker: FunctionHooker) {
         private const val SCALE_MULTIPLIER = 0.45
         private const val ANCHOR_EPSILON_SQUARED = 0.0004
         private const val LAUNCH_UP_VELOCITY = 0.75
+        private const val REQUIRED_HEADROOM_AIR_BLOCKS = 5
         private const val JAR_ATTACK_UPWARD_BOOST = 1.0
         private const val JAR_MODEL_Y_OFFSET = -0.495
     }

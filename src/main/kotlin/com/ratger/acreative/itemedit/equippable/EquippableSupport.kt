@@ -41,8 +41,6 @@ object EquippableSupport {
 
     fun hasExistingOrPrototype(item: ItemStack): Boolean = hasExisting(item) || baselineComponent(item, EquipmentSlot.HAND) != null
 
-    fun existingSnapshot(item: ItemStack): EquippableComponent? = explicitSnapshot(item)
-
     fun explicitSnapshot(item: ItemStack): EquippableComponent? {
         val meta = item.itemMeta ?: return null
         if (!meta.hasEquippable()) return null
@@ -61,31 +59,11 @@ object EquippableSupport {
 
     fun effectiveEquipSound(item: ItemStack): Sound? = resolvedSnapshot(item)?.equipSound
 
-    fun effectiveCameraOverlay(item: ItemStack): NamespacedKey? = resolvedSnapshot(item)?.cameraOverlay
-
-    fun effectiveModel(item: ItemStack): NamespacedKey? = resolvedSnapshot(item)?.model
-
     fun effectiveDispensable(item: ItemStack): Boolean = resolvedSnapshot(item)?.isDispensable == true
 
     fun effectiveSwappable(item: ItemStack): Boolean = resolvedSnapshot(item)?.isSwappable == true
 
     fun effectiveDamageOnHurt(item: ItemStack): Boolean = resolvedSnapshot(item)?.isDamageOnHurt ?: true
-
-    fun baselineSlot(item: ItemStack): EquipmentSlot? = baselineComponent(item, EquipmentSlot.HAND)?.slot
-
-    fun isFieldOrdinarySlot(item: ItemStack): Boolean {
-        val explicit = explicitSnapshot(item) ?: return true
-        val baselineSlot = baselineSlot(item)
-        if (baselineSlot != null) return explicit.slot == baselineSlot
-        return isNoBaselineOrdinaryStoredSlot(explicit)
-    }
-
-    fun displaySlotForMenu(item: ItemStack): EquipmentSlot? {
-        val explicit = explicitSnapshot(item) ?: return baselineSlot(item)
-        val baselineSlot = baselineSlot(item)
-        if (baselineSlot != null) return if (explicit.slot == baselineSlot) baselineSlot else explicit.slot
-        return if (isNoBaselineOrdinaryStoredSlot(explicit)) null else explicit.slot
-    }
 
     fun isFieldOrdinarySound(item: ItemStack): Boolean {
         val explicit = explicitSnapshot(item) ?: return true
@@ -115,17 +93,6 @@ object EquippableSupport {
         meta.setEquippable(base)
         item.itemMeta = meta
         return true
-    }
-
-    fun resetSlotToOrdinaryForMenu(item: ItemStack, preferredFallbackSlot: EquipmentSlot = EquipmentSlot.HAND): Boolean {
-        return mutateOrCreateForMenu(item, preferredFallbackSlot) {
-            val baselineSlot = baselineSlot(item)
-            when {
-                baselineSlot != null -> setSlot(baselineSlot)
-                cameraOverlay != null -> setSlot(EquipmentSlot.HEAD)
-                else -> setSlot(preferredFallbackSlot)
-            }
-        }
     }
 
     fun normalizeAfterMutation(item: ItemStack) {
@@ -179,13 +146,8 @@ object EquippableSupport {
     private fun baselineComponent(item: ItemStack, preferredFallbackSlot: EquipmentSlot): EquippableComponent? {
         val freshMeta = ItemStack(item.type).itemMeta ?: return null
         val baseline = freshMeta.equippable
-        baseline.setSlot(inferredPrototypeSlot(item) ?: preferredFallbackSlot)
+        baseline.slot = inferredPrototypeSlot(item) ?: preferredFallbackSlot
         return baseline
-    }
-
-    private fun isNoBaselineOrdinaryStoredSlot(explicit: EquippableComponent): Boolean {
-        return explicit.slot == EquipmentSlot.HAND ||
-            (explicit.slot == EquipmentSlot.HEAD && explicit.cameraOverlay != null)
     }
 
     fun inferredPrototypeSlot(item: ItemStack): EquipmentSlot? {

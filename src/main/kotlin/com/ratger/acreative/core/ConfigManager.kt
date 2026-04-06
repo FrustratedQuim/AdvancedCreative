@@ -8,7 +8,7 @@ import java.io.InputStreamReader
 class ConfigManager(private val hooker: FunctionHooker) {
 
     private val pluginFolder = hooker.plugin.dataFolder
-    private val configFile = File(pluginFolder, "config.yml")
+    private val configFile = File(pluginFolder, CONFIG_RESOURCE_NAME)
     private val stringToNumericIds = HashMap<String, String>()
 
     lateinit var config: YamlConfiguration
@@ -17,11 +17,11 @@ class ConfigManager(private val hooker: FunctionHooker) {
     fun initConfigs() {
         if (!pluginFolder.exists()) pluginFolder.mkdirs()
 
-        if (!configFile.exists()) hooker.plugin.saveResource("config.yml", false)
+        if (!configFile.exists()) hooker.plugin.saveResource(CONFIG_RESOURCE_NAME, false)
 
         config = YamlConfiguration.loadConfiguration(configFile)
 
-        fixEmptyValues(config, "config.yml")
+        fixEmptyValues(config)
 
         initStringToNumericIds()
 
@@ -44,8 +44,8 @@ class ConfigManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun fixEmptyValues(yaml: YamlConfiguration, resourceName: String) {
-        hooker.plugin.getResource(resourceName)?.use { inputStream ->
+    private fun fixEmptyValues(yaml: YamlConfiguration) {
+        hooker.plugin.getResource(CONFIG_RESOURCE_NAME)?.use { inputStream ->
             val defaultYaml = YamlConfiguration.loadConfiguration(InputStreamReader(inputStream))
             for (key in defaultYaml.getKeys(true)) {
                 if (!yaml.contains(key) || yaml.get(key) == null) {
@@ -53,5 +53,9 @@ class ConfigManager(private val hooker: FunctionHooker) {
                 }
             }
         }
+    }
+
+    companion object {
+        private const val CONFIG_RESOURCE_NAME = "config.yml"
     }
 }
