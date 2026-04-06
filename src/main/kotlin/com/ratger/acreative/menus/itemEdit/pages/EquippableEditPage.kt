@@ -7,6 +7,7 @@ import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.Registry
 import org.bukkit.entity.Player
 import org.bukkit.inventory.EquipmentSlot
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -295,7 +296,7 @@ class EquippableEditPage(
 
     private fun buildSoundButton(player: Player, session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val isOrdinary = EquippableSupport.isFieldOrdinarySound(session.editableItem)
-        val soundKey = EquippableSupport.effectiveEquipSound(session.editableItem)?.key?.asString().orEmpty()
+        val soundKey = EquippableSupport.effectiveEquipSound(session.editableItem)?.let(Registry.SOUNDS::getKey)?.asString().orEmpty()
 
         return buttonFactory.actionButton(
             material = Material.MUSIC_DISC_13,
