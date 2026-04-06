@@ -102,7 +102,7 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDamageOnHurt = !EquippableSupport.effectiveDamageOnHurt(session.editableItem)
             }
-            refreshButtons(event.menu, event.player as Player, session)
+            refreshButtons(event.menu, event.player, session)
         }
     )
 
@@ -131,7 +131,7 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDispensable = !EquippableSupport.effectiveDispensable(session.editableItem)
             }
-            refreshButtons(event.menu, event.player as Player, session)
+            refreshButtons(event.menu, event.player, session)
         }
     )
 
@@ -160,7 +160,7 @@ class EquippableEditPage(
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isSwappable = !EquippableSupport.effectiveSwappable(session.editableItem)
             }
-            refreshButtons(event.menu, event.player as Player, session)
+            refreshButtons(event.menu, event.player, session)
         }
     )
 
@@ -194,9 +194,9 @@ class EquippableEditPage(
             action = { event, newIndex ->
                 val selected = slotOptions[newIndex]
                 EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
-                    setSlot(selected.value)
+                    slot = selected.value
                 }
-                refreshButtons(event.menu, event.player as Player, session)
+                refreshButtons(event.menu, event.player, session)
             }
         )
     }
@@ -250,7 +250,7 @@ class EquippableEditPage(
                 EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HEAD) {
                     cameraOverlay = selected.value
                 }
-                refreshButtons(event.menu, event.player as Player, session)
+                refreshButtons(event.menu, event.player, session)
             }
         )
     }
@@ -300,7 +300,7 @@ class EquippableEditPage(
                 EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                     model = selected.value
                 }
-                refreshButtons(event.menu, event.player as Player, session)
+                refreshButtons(event.menu, event.player, session)
             }
         )
     }

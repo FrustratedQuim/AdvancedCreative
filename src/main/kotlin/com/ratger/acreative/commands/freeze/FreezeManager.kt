@@ -7,8 +7,6 @@ import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class FreezeManager(private val hooker: FunctionHooker) {
 

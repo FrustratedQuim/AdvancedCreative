@@ -136,7 +136,7 @@ class PlayerStateManager(
     }
 
     private data class PlayerInventorySnapshot(
-        val armor: Array<ItemStack?>,
+        val armor: List<ItemStack?>,
         val offHand: ItemStack?
     ) {
         fun restore(player: Player) {
@@ -149,7 +149,7 @@ class PlayerStateManager(
             fun capture(player: Player): PlayerInventorySnapshot {
                 val inventory = player.inventory
                 return PlayerInventorySnapshot(
-                    armor = inventory.armorContents.map { it?.clone() }.toTypedArray(),
+                    armor = inventory.armorContents.map { it?.clone() },
                     offHand = inventory.itemInOffHand.clone()
                 )
             }
