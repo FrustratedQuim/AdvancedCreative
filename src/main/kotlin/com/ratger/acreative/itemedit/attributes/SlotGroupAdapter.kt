@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage")
+@file:Suppress("UnstableApiUsage") // Experimental EquipmentSlotGroup
 
 package com.ratger.acreative.itemedit.attributes
 
