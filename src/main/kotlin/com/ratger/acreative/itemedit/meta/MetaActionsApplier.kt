@@ -1,4 +1,4 @@
-@file:Suppress("UnstableApiUsage", "DEPRECATION")
+@file:Suppress("UnstableApiUsage")
 package com.ratger.acreative.itemedit.meta
 
 import com.destroystokyo.paper.profile.ProfileProperty
@@ -46,8 +46,8 @@ class MetaActionsApplier(
                 "attribute_modifiers", "attributes" -> true
                 "unbreakable" -> meta.isUnbreakable
                 "dyed_color" -> (meta as? LeatherArmorMeta)?.isDyed == true
-                "can_break" -> runCatching { meta.destroyableKeys.isNotEmpty() }.getOrDefault(false)
-                "can_place_on" -> runCatching { meta.placeableKeys.isNotEmpty() }.getOrDefault(false)
+                "can_break" -> LegacyMetaKeySupport.hasDestroyable(meta)
+                "can_place_on" -> LegacyMetaKeySupport.hasPlaceable(meta)
                 "trim" -> (meta as? ArmorMeta)?.trim != null
                 "jukebox_playable", "music" -> meta.hasJukeboxPlayable() || resolveDefaultDiscSongKey(itemType) != null
                 else -> keyToFlag(key) != null

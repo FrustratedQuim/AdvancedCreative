@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.itemEdit.pages
 
 import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
+import com.ratger.acreative.itemedit.attributes.SlotGroupAdapter
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -108,7 +109,7 @@ class AttributeEditPage(
         entry: ItemAttributeMenuSupport.AttributeEntry
     ): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val attributeDisplayName = ItemAttributeMenuSupport.displayAttributeName(entry.attribute)
-        val slotDisplayName = ItemAttributeMenuSupport.displaySlot(entry.modifier.slotGroup)
+        val slotDisplayName = SlotGroupAdapter.displayName(entry.modifier)
         val operationDisplayName = ItemAttributeMenuSupport.displayOperation(entry.modifier.operation)
         val value = ItemAttributeMenuSupport.formatAmount(entry.modifier)
 

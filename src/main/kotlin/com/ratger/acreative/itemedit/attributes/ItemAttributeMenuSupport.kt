@@ -10,7 +10,6 @@ import org.bukkit.Registry
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.EquipmentSlot
-import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemStack
 import java.math.BigDecimal
 import java.util.*
@@ -59,19 +58,6 @@ object ItemAttributeMenuSupport {
         "water_movement_efficiency" to "Скорость движения в воде",
         "tempt_range" to "Дальность приманки",
         "sweeping_damage_ratio" to "Коэффициент разящего удара"
-    )
-
-    private val slotDisplayNames = mapOf(
-        EquipmentSlotGroup.ANY to "Любой слот",
-        EquipmentSlotGroup.HAND to "Любая рука",
-        EquipmentSlotGroup.MAINHAND to "Главная рука",
-        EquipmentSlotGroup.OFFHAND to "Вторая рука",
-        EquipmentSlotGroup.ARMOR to "Броня",
-        EquipmentSlotGroup.HEAD to "Шлем",
-        EquipmentSlotGroup.CHEST to "Нагрудник",
-        EquipmentSlotGroup.LEGS to "Поножи",
-        EquipmentSlotGroup.FEET to "Ботинки",
-        EquipmentSlotGroup.BODY to "Тело"
     )
 
     private val attributeSuggestedValues = mapOf(
@@ -173,10 +159,6 @@ object ItemAttributeMenuSupport {
             AttributeModifier.Operation.ADD_SCALAR -> "Процент"
             AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> "Процент (Общий)"
         }
-    }
-
-    fun displaySlot(slotGroup: EquipmentSlotGroup): String {
-        return slotDisplayNames[slotGroup] ?: toReadableName(slotGroup.toString().lowercase(Locale.ROOT))
     }
 
     fun formatAmount(modifier: AttributeModifier): String {

@@ -1,8 +1,9 @@
-@file:Suppress("UnstableApiUsage", "DEPRECATION")
+@file:Suppress("UnstableApiUsage")
 
 package com.ratger.acreative.itemedit.show
 
 import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
+import com.ratger.acreative.itemedit.meta.LegacyMetaKeySupport
 import io.papermc.paper.datacomponent.DataComponentTypes
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Material
@@ -138,8 +139,8 @@ object ShowViewAdapters {
 
     fun placeDestroy(meta: ItemMeta?): PlaceDestroySummary {
         return PlaceDestroySummary(
-            placeableCount = runCatching { meta?.placeableKeys?.size ?: 0 }.getOrDefault(0),
-            destroyableCount = runCatching { meta?.destroyableKeys?.size ?: 0 }.getOrDefault(0)
+            placeableCount = LegacyMetaKeySupport.placeableCount(meta),
+            destroyableCount = LegacyMetaKeySupport.destroyableCount(meta)
         )
     }
 

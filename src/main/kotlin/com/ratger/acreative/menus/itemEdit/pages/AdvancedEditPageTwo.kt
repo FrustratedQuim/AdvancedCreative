@@ -4,6 +4,7 @@ import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
+import com.ratger.acreative.itemedit.attributes.SlotGroupAdapter
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemRarity
@@ -93,7 +94,7 @@ class AdvancedEditPageTwo(
         entries.forEach { entry ->
             lore += "<!i><#C7A300> ● <#FFE68A>${ItemAttributeMenuSupport.displayAttributeName(entry.attribute)} " +
                 "<#FFF3E0>${ItemAttributeMenuSupport.formatAmount(entry.modifier)} " +
-                "<#C7A300>[<#FFD700>${ItemAttributeMenuSupport.displaySlot(entry.modifier.slotGroup)}<#C7A300>]"
+                "<#C7A300>[<#FFD700>${SlotGroupAdapter.displayName(entry.modifier)}<#C7A300>]"
         }
         lore += ""
 
