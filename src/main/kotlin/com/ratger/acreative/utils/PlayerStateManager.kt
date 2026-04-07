@@ -68,6 +68,8 @@ class PlayerStateManager(
         val stateSet = playerStates.computeIfAbsent(player.uniqueId) { mutableSetOf() }
         if (stateSet.contains(state)) return
 
+        closePlayerMenu(player)
+
         val conflicts = stateSet.filter { it in state.conflicts() || state in it.conflicts() }
         conflicts.forEach { conflictingState ->
             deactivators[conflictingState]?.invoke(player)
@@ -78,6 +80,7 @@ class PlayerStateManager(
     }
 
     fun deactivateState(player: Player, state: PlayerStateType) {
+        closePlayerMenu(player)
         playerStates[player.uniqueId]?.remove(state)
         if (playerStates[player.uniqueId].isNullOrEmpty()) {
             playerStates.remove(player.uniqueId)
@@ -85,8 +88,14 @@ class PlayerStateManager(
     }
 
     fun clearPlayerStates(player: Player) {
+        closePlayerMenu(player)
         playerStates.remove(player.uniqueId)
         inventorySessions.remove(player.uniqueId)
+    }
+
+    private fun closePlayerMenu(player: Player) {
+        if (!player.isOnline) return
+        player.closeInventory()
     }
 
     fun savePlayerInventory(player: Player) {
