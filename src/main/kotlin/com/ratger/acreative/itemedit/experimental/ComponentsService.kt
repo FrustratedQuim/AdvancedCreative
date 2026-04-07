@@ -8,6 +8,7 @@ import com.ratger.acreative.itemedit.api.ToolSpeedScope
 import com.ratger.acreative.itemedit.container.ContainerSupport
 import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
 import com.ratger.acreative.itemedit.equippable.EquippableSupport
+import com.ratger.acreative.itemedit.remainder.UseRemainderSupport
 import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Consumable
@@ -15,7 +16,6 @@ import io.papermc.paper.datacomponent.item.DeathProtection
 import io.papermc.paper.datacomponent.item.FoodProperties
 import io.papermc.paper.datacomponent.item.Tool
 import io.papermc.paper.datacomponent.item.UseCooldown
-import io.papermc.paper.datacomponent.item.UseRemainder
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -142,8 +142,8 @@ class ComponentsService {
             is ItemAction.FoodNutrition -> applyFoodNutrition(item, action.value)
             is ItemAction.FoodSaturation -> applyFoodSaturation(item, action.value)
             is ItemAction.FoodCanAlwaysEat -> applyFoodCanAlwaysEat(item, action.value)
-            ItemAction.RemainderSetFromOffhand -> item.setData(DataComponentTypes.USE_REMAINDER, UseRemainder.useRemainder(player.inventory.itemInOffHand.clone()))
-            ItemAction.RemainderClear -> item.unsetData(DataComponentTypes.USE_REMAINDER)
+            ItemAction.RemainderSetFromOffhand -> UseRemainderSupport.setOrClear(item, player.inventory.itemInOffHand)
+            ItemAction.RemainderClear -> UseRemainderSupport.clear(item)
             is ItemAction.EquippableSetSlot -> {
                 if (!EquippableSupport.setSlot(item, action.slot)) {
                     return ItemResult(false, listOf(mini.deserialize("<red>Не удалось создать equippable snapshot для этого предмета")))

@@ -12,6 +12,7 @@ import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
 import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
 import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
@@ -31,6 +32,7 @@ class ItemEditMenu(
     private val openEquippablePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEquippablePage(player, session) }
     private val openEnchantmentsFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromSimple(player, session) }
     private val openEnchantmentsFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromAdvanced(player, session) }
+    private val openUseRemainderPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseRemainderPage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -48,12 +50,15 @@ class ItemEditMenu(
             openAdvancedPageOneHandler,
             openAttributePageHandler,
             openEquippablePageHandler,
-            openEnchantmentsFromAdvancedHandler
+            openEnchantmentsFromAdvancedHandler,
+            openUseRemainderPageHandler
         )
     private val attributePage: AttributeEditPage =
         AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
     private val equippablePage: EquippableEditPage =
         EquippableEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
+    private val useRemainderPage: UseRemainderEditPage =
+        UseRemainderEditPage(support, buttonFactory, openAdvancedPageTwoHandler)
     private val enchantmentsActivePage: EnchantmentsActivePage =
         EnchantmentsActivePage(support, buttonFactory, requestApplyInput)
     private val enchantmentsPage: EnchantmentsEditPage =
@@ -89,5 +94,9 @@ class ItemEditMenu(
 
     fun openEnchantmentsFromAdvanced(player: Player, session: ItemEditSession) {
         enchantmentsPage.open(player, session, openAdvancedPageTwoHandler)
+    }
+
+    fun openUseRemainderPage(player: Player, session: ItemEditSession) {
+        useRemainderPage.open(player, session)
     }
 }

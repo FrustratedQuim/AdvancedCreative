@@ -5,6 +5,7 @@ package com.ratger.acreative.itemedit.show
 import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
 import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.itemedit.meta.LegacyMetaKeySupport
+import com.ratger.acreative.itemedit.remainder.UseRemainderSupport
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
@@ -129,8 +130,7 @@ object ShowViewAdapters {
     }
 
     fun remainder(item: ItemStack): RemainderShowView? {
-        val remainder = item.getData(DataComponentTypes.USE_REMAINDER) ?: return null
-        val remainderItem = remainder.transformInto()
+        val remainderItem = UseRemainderSupport.get(item) ?: return null
         val remainderMeta = remainderItem.itemMeta
         return RemainderShowView(
             typeKey = remainderItem.type.key.asString(),

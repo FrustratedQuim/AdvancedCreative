@@ -201,6 +201,22 @@ class MenuButtonFactory(
 
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()
 
+
+    fun useRemainderSlotButton(
+        remainder: ItemStack?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        if (remainder == null) {
+            return Button.simple(
+                ItemBuilder(Material.BARRIER)
+                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот предмета<#FFD700> ←"))
+                    .build()
+            ).action(action).build()
+        }
+
+        return Button.simple(remainder.clone()).action(action).build()
+    }
+
     fun specialParameterButton(editedItem: ItemStack, viewer: Player): Button {
         val type = editedItem.type
         val typeName = type.name

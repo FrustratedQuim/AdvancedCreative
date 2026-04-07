@@ -24,13 +24,14 @@ class ItemEditMenuSupport(
         menuSize: Int,
         rows: MenuRows,
         interactiveTopSlots: Set<Int>,
-        session: ItemEditSession
+        session: ItemEditSession,
+        allowPlayerInventoryClicks: Boolean = false
     ): Menu = Menu.newBuilder(hooker.plugin)
         .title(parser.parse(title))
         .size(menuSize)
         .rows(rows)
         .postClickRefresh(false)
-        .clickListener(editorClickListener(menuSize, interactiveTopSlots))
+        .clickListener(editorClickListener(menuSize, interactiveTopSlots, allowPlayerInventoryClicks))
         .dragListener(editorDragListener(menuSize))
         .openListener { session.isInternalTransition = false }
         .closeListener(editorCloseListener(session))
@@ -49,11 +50,16 @@ class ItemEditMenuSupport(
         action()
     }
 
-    private fun editorClickListener(menuSize: Int, interactiveTopSlots: Set<Int>) = { event: ClickEvent ->
-        when (event.rawSlot) {
-            event.rawSlot -> false
-            in 0 until menuSize -> event.rawSlot in interactiveTopSlots
-            else -> true
+    private fun editorClickListener(
+        menuSize: Int,
+        interactiveTopSlots: Set<Int>,
+        allowPlayerInventoryClicks: Boolean
+    ) = { event: ClickEvent ->
+        val rawSlot = event.rawSlot
+        if (rawSlot in 0 until menuSize) {
+            rawSlot in interactiveTopSlots
+        } else {
+            allowPlayerInventoryClicks
         }
     }
 
