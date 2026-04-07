@@ -1,10 +1,10 @@
 package com.ratger.acreative.menus.itemEdit.pages
 
-import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.itemedit.attributes.SlotGroupAdapter
+import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
+import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemRarity
@@ -15,7 +15,8 @@ class AdvancedEditPageTwo(
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageOne: (Player, ItemEditSession) -> Unit,
     private val openAttributePage: (Player, ItemEditSession) -> Unit,
-    private val openEquippablePage: (Player, ItemEditSession) -> Unit
+    private val openEquippablePage: (Player, ItemEditSession) -> Unit,
+    private val openEnchantmentsPage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -115,7 +116,7 @@ class AdvancedEditPageTwo(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 29, 32, 42),
+            interactiveTopSlots = setOf(18, 27, 29, 31, 32, 42),
             session = session
         )
 
@@ -125,7 +126,12 @@ class AdvancedEditPageTwo(
         menu.setButton(27, buttonFactory.backButton { support.transition(session) { openAdvancedPageOne(player, session) } })
         menu.setButton(29, buttonFactory.actionButton(Material.IRON_CHESTPLATE, "<!i><#C7A300>🛡 <#FFD700>Параметры экипировки", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes(), action = { support.transition(session) { openEquippablePage(player, session) } }))
         menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
-        menu.setButton(31, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
+        menu.setButton(31, buttonFactory.actionButton(
+            material = Material.LAPIS_LAZULI,
+            name = "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            action = { support.transition(session) { openEnchantmentsPage(player, session) } }
+        ))
         menu.setButton(32, buildAttributesButton(player, session))
         menu.setButton(33, buttonFactory.actionButton(Material.FIRE_CHARGE, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",

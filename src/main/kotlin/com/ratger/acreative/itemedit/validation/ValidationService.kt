@@ -56,7 +56,7 @@ class ValidationService {
 
             is ItemAction.EnchantAdd -> {
                 if (action.level <= 0) return fail("уровень чар должен быть > 0")
-                if (action.level > 255) return fail("уровень чар больше hard cap API (255)")
+                if (action.level > 127) return fail("уровень чар должен быть в диапазоне 1..127")
             }
 
             is ItemAction.PotionEffectAdd -> {

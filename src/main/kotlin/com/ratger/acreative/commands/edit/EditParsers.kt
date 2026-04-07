@@ -4,17 +4,15 @@ import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ToolSpeedScope
 import com.ratger.acreative.itemedit.attributes.SlotGroupSpec
 import com.ratger.acreative.itemedit.effects.EffectActionsSupport
+import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
-import io.papermc.paper.registry.RegistryAccess
-import io.papermc.paper.registry.RegistryKey
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemRarity
 import org.bukkit.potion.PotionEffectType
@@ -30,7 +28,7 @@ class EditParsers {
         }
     }
 
-    fun enchantment(input: String): Enchantment? = enchantmentRegistry().get(NamespacedKey.minecraft(input.lowercase()))
+    fun enchantment(input: String) = EnchantmentSupport.resolve(input)
     fun effect(input: String): PotionEffectType? = Registry.MOB_EFFECT.get(NamespacedKey.minecraft(input.lowercase()))
     fun effectFromToken(input: String): PotionEffectType? {
         val key = NamespacedKey.fromString(input.lowercase()) ?: NamespacedKey.minecraft(input.lowercase())
@@ -406,7 +404,7 @@ class EditParsers {
         }
     }
 
-    fun enchantSuggestions(prefix: String): List<String> = enchantmentRegistry().iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
+    fun enchantSuggestions(prefix: String): List<String> = EnchantmentSupport.suggestions(prefix)
     fun effectSuggestions(prefix: String): List<String> = Registry.MOB_EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun attributeSuggestions(prefix: String): List<String> = Registry.ATTRIBUTE.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun materialSuggestions(prefix: String): List<String> = Registry.MATERIAL.iterator().asSequence()
@@ -415,5 +413,4 @@ class EditParsers {
         .sorted()
         .toList()
 
-    private fun enchantmentRegistry() = RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT)
 }

@@ -38,7 +38,7 @@ class ShowService {
         out += mini.deserialize("<gray>rarity: <white>${runCatching { meta?.rarity?.name ?: "<none>" }.getOrDefault("<none>")}")
         out += mini.deserialize("<gray>tooltip_style: <white>${runCatching { meta?.tooltipStyle?.asString() ?: "basic" }.getOrDefault("basic")}")
         out += mini.deserialize("<gray>hide_tooltip: <white>${runCatching { meta?.isHideTooltip == true }.getOrDefault(false)}")
-        out += mini.deserialize("<gray>enchantment_glint_override: <white>${runCatching { meta?.enchantmentGlintOverride?.toString() ?: "default" }.getOrDefault("default")}")
+        out += mini.deserialize("<gray>enchantment_glint_override: <white>${runCatching { if (meta?.hasEnchantmentGlintOverride() == true) meta.getEnchantmentGlintOverride().toString() else "default" }.getOrDefault("default")}")
         val consumable = ShowViewAdapters.consumable(item)
         if (consumable == null) {
             out += mini.deserialize("<gray>consumable: <white><none>")

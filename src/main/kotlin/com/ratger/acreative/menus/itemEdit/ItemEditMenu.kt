@@ -7,8 +7,10 @@ import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
 import com.ratger.acreative.menus.itemEdit.pages.AttributeEditPage
-import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsActivePage
+import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
 import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
+import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import org.bukkit.entity.Player
 
@@ -27,9 +29,11 @@ class ItemEditMenu(
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
     private val openAttributePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAttributePage(player, session) }
     private val openEquippablePageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEquippablePage(player, session) }
+    private val openEnchantmentsFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromSimple(player, session) }
+    private val openEnchantmentsFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromAdvanced(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
-    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler)
+    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
     private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
         support = support,
         buttonFactory = buttonFactory,
@@ -38,11 +42,22 @@ class ItemEditMenu(
         requestApplyInput = requestApplyInput
     )
     private val advancedPageTwo: AdvancedEditPageTwo =
-        AdvancedEditPageTwo(support, buttonFactory, openAdvancedPageOneHandler, openAttributePageHandler, openEquippablePageHandler)
+        AdvancedEditPageTwo(
+            support,
+            buttonFactory,
+            openAdvancedPageOneHandler,
+            openAttributePageHandler,
+            openEquippablePageHandler,
+            openEnchantmentsFromAdvancedHandler
+        )
     private val attributePage: AttributeEditPage =
         AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
     private val equippablePage: EquippableEditPage =
         EquippableEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
+    private val enchantmentsActivePage: EnchantmentsActivePage =
+        EnchantmentsActivePage(support, buttonFactory, requestApplyInput)
+    private val enchantmentsPage: EnchantmentsEditPage =
+        EnchantmentsEditPage(support, buttonFactory, enchantmentsActivePage::open)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -66,5 +81,13 @@ class ItemEditMenu(
 
     fun openEquippablePage(player: Player, session: ItemEditSession) {
         equippablePage.open(player, session)
+    }
+
+    fun openEnchantmentsFromSimple(player: Player, session: ItemEditSession) {
+        enchantmentsPage.open(player, session, openSimpleHandler)
+    }
+
+    fun openEnchantmentsFromAdvanced(player: Player, session: ItemEditSession) {
+        enchantmentsPage.open(player, session, openAdvancedPageTwoHandler)
     }
 }

@@ -9,6 +9,7 @@ import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ItemResult
 import com.ratger.acreative.itemedit.attributes.AttributeModifierFactory
+import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import net.kyori.adventure.text.format.TextDecoration
@@ -43,7 +44,7 @@ class MetaActionsApplier(
         fun canEnableTooltipHide(meta: ItemMeta, key: String, itemType: Material? = null): Boolean {
             return when (key.lowercase()) {
                 "hide_tooltip" -> true
-                "enchantments" -> meta.hasEnchants()
+                "enchantments" -> EnchantmentSupport.hasAny(meta)
                 "attribute_modifiers", "attributes" -> true
                 "unbreakable" -> meta.isUnbreakable
                 "dyed_color" -> (meta as? LeatherArmorMeta)?.isDyed == true
@@ -266,14 +267,13 @@ class MetaActionsApplier(
             is ItemAction.SetTooltipStyle -> meta.tooltipStyle = action.value
             is ItemAction.SetHideTooltip -> meta.isHideTooltip = action.value
             is ItemAction.SetHideAdditionalTooltip -> setTooltipHidden(meta, "hide_additional_tooltip", action.value, itemType)
-            is ItemAction.EnchantAdd -> meta.addEnchant(action.enchantment, action.level, true)
+            is ItemAction.EnchantAdd -> EnchantmentSupport.add(meta, action.enchantment, action.level, ignoreLevelRestriction = true)
             is ItemAction.EnchantRemove -> {
-                if (!meta.hasEnchant(action.enchantment)) {
-                    return ItemResult(false, listOf(mini.deserialize("<yellow>На предмете нет зачарования <white>${action.enchantment.key.key}</white>.")), warning = true)
+                if (!EnchantmentSupport.remove(meta, action.enchantment)) {
+                    return ItemResult(false, listOf(mini.deserialize("<yellow>На предмете нет зачарования <white>${EnchantmentSupport.keyPath(action.enchantment)}</white>.")), warning = true)
                 }
-                meta.removeEnchant(action.enchantment)
             }
-            ItemAction.EnchantClear -> meta.enchants.keys.toList().forEach(meta::removeEnchant)
+            ItemAction.EnchantClear -> EnchantmentSupport.clear(meta)
             is ItemAction.SetEnchantmentGlint -> meta.setEnchantmentGlintOverride(action.value)
             is ItemAction.TooltipToggle -> toggleFlag(meta, action, itemType)
             is ItemAction.SetCanPlaceOn -> LegacyMetaKeySupport.setCanPlaceOn(meta, action.keys)

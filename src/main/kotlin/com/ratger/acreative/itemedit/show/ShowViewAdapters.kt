@@ -3,6 +3,7 @@
 package com.ratger.acreative.itemedit.show
 
 import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
+import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.itemedit.meta.LegacyMetaKeySupport
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.registry.RegistryAccess
@@ -21,7 +22,6 @@ import org.bukkit.inventory.meta.SkullMeta
 
 object ShowViewAdapters {
     private val plain = PlainTextComponentSerializer.plainText()
-    private val enchantmentRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT) }
     private val trimPatternRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN) }
     private val trimMaterialRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL) }
 
@@ -137,7 +137,7 @@ object ShowViewAdapters {
             amount = remainderItem.amount,
             name = remainderMeta?.displayName()?.let(plain::serialize)?.takeIf { it.isNotBlank() },
             loreLines = remainderMeta?.lore()?.size ?: 0,
-            enchants = remainderMeta?.enchants?.size ?: 0
+            enchants = EnchantmentSupport.count(remainderMeta)
         )
     }
 
@@ -179,11 +179,9 @@ object ShowViewAdapters {
     }
 
     fun enchantmentsSummary(meta: ItemMeta?): String {
-        val entries = meta?.enchants?.entries ?: return "<none>"
-        return entries.joinToString {
-            val id = enchantmentRegistry.getKey(it.key)?.asString() ?: "<unknown>"
-            "$id:${it.value}"
-        }
+        val entries = EnchantmentSupport.entries(meta)
+        if (entries.isEmpty()) return "<none>"
+        return entries.joinToString { "${it.keyPath}:${it.level}" }
     }
 
     fun potionEffectSummary(meta: PotionMeta): List<String> {

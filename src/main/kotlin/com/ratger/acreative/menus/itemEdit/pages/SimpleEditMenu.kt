@@ -1,8 +1,8 @@
 package com.ratger.acreative.menus.itemEdit.pages
 
+import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -10,7 +10,8 @@ import ru.violence.coreapi.bukkit.api.menu.MenuRows
 class SimpleEditMenu(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val openRoot: (Player, ItemEditSession) -> Unit
+    private val openRoot: (Player, ItemEditSession) -> Unit,
+    private val openEnchantments: (Player, ItemEditSession) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         val menuSize = 45
@@ -18,7 +19,7 @@ class SimpleEditMenu(
             title = "<!i>▍ Простой редактор",
             menuSize = menuSize,
             rows = MenuRows.FIVE,
-            interactiveTopSlots = setOf(18),
+            interactiveTopSlots = setOf(18, 33),
             session = session
         )
 
@@ -29,7 +30,12 @@ class SimpleEditMenu(
         menu.setButton(30, buttonFactory.actionButton(Material.APPLE, "<!i><#C7A300>🍖 <#FFD700>Сделать предмет съедобным", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"), buttonFactory.zeroFoodPreview()))
         menu.setButton(31, buttonFactory.actionButton(Material.IRON_HELMET, "<!i><#C7A300>🔔 <#FFD700>Позволить надевать на голову", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"), buttonFactory.hideAttributes()))
         menu.setButton(32, buttonFactory.actionButton(Material.NAME_TAG, "<!i><#C7A300>✎ <#FFD700>Изменить название и описание", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-        menu.setButton(33, buttonFactory.actionButton(Material.LAPIS_LAZULI, "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
+        menu.setButton(33, buttonFactory.actionButton(
+            material = Material.LAPIS_LAZULI,
+            name = "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            action = { support.transition(session) { openEnchantments(player, session) } }
+        ))
         menu.open(player)
     }
 }
