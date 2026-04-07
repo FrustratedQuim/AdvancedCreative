@@ -182,21 +182,21 @@ object ItemAttributeMenuSupport {
             .toSortedMap()
     }
 
-    fun clampAmount(attribute: Attribute, parsed: BigDecimal): Double {
-        val (min, max) = attributeRange(attribute)
+    fun clampAmount(parsed: BigDecimal): Double {
+        val (min, max) = attributeRange()
         return parsed.coerceIn(min, max).toDouble()
     }
 
     fun suggestedValues(attribute: Attribute): List<String> {
-        return attributeSuggestedValues[attribute] ?: fallbackSuggestedValues(attribute)
+        return attributeSuggestedValues[attribute] ?: fallbackSuggestedValues()
     }
 
-    private fun attributeRange(@Suppress("UNUSED_PARAMETER") attribute: Attribute): Pair<BigDecimal, BigDecimal> {
+    private fun attributeRange(): Pair<BigDecimal, BigDecimal> {
         return "-2048" bd "2048"
     }
 
-    private fun fallbackSuggestedValues(attribute: Attribute): List<String> {
-        val (min, max) = attributeRange(attribute)
+    private fun fallbackSuggestedValues(): List<String> {
+        val (min, max) = attributeRange()
         val midpoint = min.add(max).divide(BigDecimal("2"))
         val quarter = min.add(max.subtract(min).divide(BigDecimal("4")))
         return linkedSetOf(

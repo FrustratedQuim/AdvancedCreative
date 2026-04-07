@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage") // Experimental Sound
+
 package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.itemedit.equippable.EquippableSupport

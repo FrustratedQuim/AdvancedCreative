@@ -34,14 +34,14 @@ class EnchantmentsEditPage(
 
     private fun buildGlintButton(session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val options: List<MenuButtonFactory.ListButtonOption<Boolean?>> = listOf(
-            MenuButtonFactory.ListButtonOption<Boolean?>(null, "Обычное"),
+            MenuButtonFactory.ListButtonOption(null, "Обычное"),
             MenuButtonFactory.ListButtonOption(false, "Всегда отключено"),
             MenuButtonFactory.ListButtonOption(true, "Всегда включено")
         )
         val meta = session.editableItem.itemMeta
         val selectedIndex = when {
             meta?.hasEnchantmentGlintOverride() != true -> 0
-            meta.getEnchantmentGlintOverride() == false -> 1
+            !meta.enchantmentGlintOverride -> 1
             else -> 2
         }
 
