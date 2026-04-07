@@ -18,7 +18,11 @@ enum class EditorApplyKind {
     STACK_SIZE,
     ATTRIBUTE,
     EQUIP_SOUND,
-    ENCHANTMENT
+    ENCHANTMENT,
+    MAX_DURABILITY,
+    DAMAGE,
+    MINING_SPEED,
+    DAMAGE_PER_BLOCK
 }
 
 sealed interface ApplyExecutionResult {

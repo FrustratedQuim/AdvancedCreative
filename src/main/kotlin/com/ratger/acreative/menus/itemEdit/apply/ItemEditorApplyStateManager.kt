@@ -104,6 +104,10 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.ATTRIBUTE -> MessageKey.EDIT_APPLY_USAGE_ATTRIBUTE
             EditorApplyKind.EQUIP_SOUND -> MessageKey.EDIT_APPLY_USAGE_SOUND
             EditorApplyKind.ENCHANTMENT -> MessageKey.EDIT_APPLY_USAGE_ENCHANTMENT
+            EditorApplyKind.MAX_DURABILITY,
+            EditorApplyKind.DAMAGE,
+            EditorApplyKind.MINING_SPEED,
+            EditorApplyKind.DAMAGE_PER_BLOCK -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
         }
     }
 }

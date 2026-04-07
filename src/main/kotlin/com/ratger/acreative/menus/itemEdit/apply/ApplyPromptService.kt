@@ -15,6 +15,10 @@ class ApplyPromptService(
             EditorApplyKind.ATTRIBUTE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ATTRIBUTE
             EditorApplyKind.EQUIP_SOUND -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_SOUND
             EditorApplyKind.ENCHANTMENT -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ENCHANTMENT
+            EditorApplyKind.MAX_DURABILITY,
+            EditorApplyKind.DAMAGE,
+            EditorApplyKind.MINING_SPEED,
+            EditorApplyKind.DAMAGE_PER_BLOCK -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
         }
         messageManager.sendTitle(
             player = player,

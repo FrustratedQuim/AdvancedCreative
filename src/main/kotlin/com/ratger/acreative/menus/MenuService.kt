@@ -11,9 +11,13 @@ import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
 import com.ratger.acreative.menus.itemEdit.apply.EquipSoundApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.EnchantmentApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DamageApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DamagePerBlockApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemEditorApplyStateManager
 import com.ratger.acreative.menus.itemEdit.apply.ItemIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemModelApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.MaxDurabilityApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.StackSizeApplyHandler
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.itemedit.validation.ValidationService
@@ -29,10 +33,12 @@ class MenuService(
 ) {
     private val parser = MiniMessageParser()
     private val editParsers = EditParsers()
+    private val validationService = ValidationService()
+    private val editTargetResolver = EditTargetResolver()
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
-    private val stackSizeApplyHandler = StackSizeApplyHandler(ValidationService(), EditTargetResolver())
+    private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
     private val attributeApplyHandler = AttributeApplyHandler()
     private val applyStateManager = ItemEditorApplyStateManager(
         hooker = hooker,
@@ -45,7 +51,11 @@ class MenuService(
             stackSizeApplyHandler,
             attributeApplyHandler,
             EquipSoundApplyHandler(),
-            EnchantmentApplyHandler()
+            EnchantmentApplyHandler(),
+            MaxDurabilityApplyHandler(validationService, editTargetResolver),
+            DamageApplyHandler(validationService, editTargetResolver),
+            MiningSpeedApplyHandler(validationService, editTargetResolver),
+            DamagePerBlockApplyHandler(validationService, editTargetResolver)
         )
     )
     private val itemEditMenu = ItemEditMenu(

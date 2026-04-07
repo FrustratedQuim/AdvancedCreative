@@ -16,6 +16,7 @@ class AdvancedEditPageTwo(
     private val openAdvancedPageOne: (Player, ItemEditSession) -> Unit,
     private val openAttributePage: (Player, ItemEditSession) -> Unit,
     private val openEquippablePage: (Player, ItemEditSession) -> Unit,
+    private val openToolPage: (Player, ItemEditSession) -> Unit,
     private val openEnchantmentsPage: (Player, ItemEditSession) -> Unit,
     private val openUseRemainderPage: (Player, ItemEditSession) -> Unit
 ) {
@@ -126,7 +127,13 @@ class AdvancedEditPageTwo(
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { openAdvancedPageOne(player, session) } })
         menu.setButton(27, buttonFactory.backButton { support.transition(session) { openAdvancedPageOne(player, session) } })
         menu.setButton(29, buttonFactory.actionButton(Material.IRON_CHESTPLATE, "<!i><#C7A300>🛡 <#FFD700>Параметры экипировки", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes(), action = { support.transition(session) { openEquippablePage(player, session) } }))
-        menu.setButton(30, buttonFactory.actionButton(Material.IRON_PICKAXE, "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.hideAttributes()))
+        menu.setButton(30, buttonFactory.actionButton(
+            material = Material.IRON_PICKAXE,
+            name = "<!i><#C7A300>⛏ <#FFD700>Параметры инструмента",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            itemModifier = buttonFactory.hideAttributes(),
+            action = { support.transition(session) { openToolPage(player, session) } }
+        ))
         menu.setButton(31, buttonFactory.actionButton(
             material = Material.LAPIS_LAZULI,
             name = "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований",
