@@ -63,6 +63,10 @@ class EditParsers {
         return Registry.MATERIAL.get(NamespacedKey.minecraft(normalized))
     }
 
+    fun itemMaterial(input: String): Material? = material(input)?.takeIf { it.isItem && it != Material.AIR }
+
+    fun blockItemMaterial(input: String): Material? = material(input)?.takeIf { it.isBlock && it.isItem }
+
     fun attributeOperation(input: String): AttributeModifier.Operation? = when (input.lowercase()) {
         "add_number" -> AttributeModifier.Operation.ADD_NUMBER
         "add_scalar", "add_multiplied_base" -> AttributeModifier.Operation.ADD_SCALAR
@@ -105,7 +109,7 @@ class EditParsers {
             }
 
             "component" -> parseComponent(args)
-            "id" -> ItemAction.SetItemId(material(args.getOrNull(1) ?: return null) ?: return null)
+            "id" -> ItemAction.SetItemId(itemMaterial(args.getOrNull(1) ?: return null) ?: return null)
             "enchant" -> parseEnchant(args)
             "tooltip" -> ItemAction.TooltipToggle(args.getOrNull(1) ?: return null, args.getOrNull(2)?.lowercase() == "hide")
             "can_place_on" -> parseNamespacedSet(args, true)
@@ -407,10 +411,24 @@ class EditParsers {
     fun enchantSuggestions(prefix: String): List<String> = EnchantmentSupport.suggestions(prefix)
     fun effectSuggestions(prefix: String): List<String> = Registry.MOB_EFFECT.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
     fun attributeSuggestions(prefix: String): List<String> = Registry.ATTRIBUTE.iterator().asSequence().map { it.key.key }.filter { it.startsWith(prefix, true) }.sorted().toList()
-    fun materialSuggestions(prefix: String): List<String> = Registry.MATERIAL.iterator().asSequence()
-        .map { it.key.asString() }
-        .filter { it.startsWith(prefix, true) || it.removePrefix("minecraft:").startsWith(prefix, true) }
-        .sorted()
-        .toList()
+    fun materialSuggestions(prefix: String): List<String> {
+        val normalizedPrefix = prefix.removePrefix("minecraft:")
+        return Registry.MATERIAL.iterator().asSequence()
+            .filter { it.isItem && it != Material.AIR }
+            .map { it.key.key }
+            .filter { it.startsWith(normalizedPrefix, true) }
+            .sorted()
+            .toList()
+    }
+
+    fun blockItemSuggestions(prefix: String): List<String> {
+        val normalizedPrefix = prefix.removePrefix("minecraft:")
+        return Registry.MATERIAL.iterator().asSequence()
+            .filter { it.isBlock && it.isItem }
+            .map { it.key.key }
+            .filter { it.startsWith(normalizedPrefix, true) }
+            .sorted()
+            .toList()
+    }
 
 }

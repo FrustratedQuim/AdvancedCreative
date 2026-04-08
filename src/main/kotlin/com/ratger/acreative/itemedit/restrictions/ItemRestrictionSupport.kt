@@ -20,7 +20,7 @@ object ItemRestrictionSupport {
                 RestrictionEntry(
                     key = key,
                     displayId = displayId(key),
-                    material = Registry.MATERIAL.get(key)?.takeIf { it.isBlock }
+                    material = Registry.MATERIAL.get(key)?.takeIf { it.isBlock && it.isItem }
                 )
             }
     }

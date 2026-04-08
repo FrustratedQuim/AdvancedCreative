@@ -32,4 +32,5 @@ enum class EditorApplyKind {
 sealed interface ApplyExecutionResult {
     data object Success : ApplyExecutionResult
     data object InvalidValue : ApplyExecutionResult
+    data object UnknownValue : ApplyExecutionResult
 }

@@ -27,5 +27,12 @@ class ItemModelApplyHandler(
         return ApplyExecutionResult.Success
     }
 
-    override fun suggestions(args: Array<out String>): List<String> = itemIdSuggestions(args)
+    override fun suggestions(args: Array<out String>): List<String> {
+        if (args.size != 1) return emptyList()
+
+        val prefix = args[0]
+        val values = itemIdSuggestions(args)
+        val air = if ("air".startsWith(prefix.removePrefix("minecraft:"), ignoreCase = true)) listOf("air") else emptyList()
+        return (values + air).distinct()
+    }
 }

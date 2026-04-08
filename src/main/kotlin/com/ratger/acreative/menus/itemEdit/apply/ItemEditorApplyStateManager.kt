@@ -72,6 +72,7 @@ class ItemEditorApplyStateManager(
         when (handler.apply(player, session, args)) {
             ApplyExecutionResult.Success -> cancelWaiting(player, reopenMenu = true)
             ApplyExecutionResult.InvalidValue -> hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
+            ApplyExecutionResult.UnknownValue -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
         }
     }
 
