@@ -104,6 +104,29 @@ class MenuButtonFactory(
         return buttonBuilder.build()
     }
 
+
+    fun headTextureSourceButton(
+        editedItem: ItemStack,
+        activeName: String,
+        lore: List<String>,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val item = editedItem.clone().also {
+            if (it.type != Material.PLAYER_HEAD) {
+                it.type = Material.PLAYER_HEAD
+            }
+        }
+        val meta = item.itemMeta
+        meta?.let {
+            it.displayName(parser.parse(activeName))
+            it.lore(lore.map(parser::parse))
+            it.addItemFlags(ItemFlag.HIDE_ENCHANTS)
+            it.setEnchantmentGlintOverride(true)
+            item.itemMeta = it
+        }
+        return Button.simple(item).action(action).build()
+    }
+
     fun <T> listButton(
         material: Material,
         options: List<ListButtonOption<T>>,

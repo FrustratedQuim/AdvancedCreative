@@ -73,6 +73,7 @@ class ItemEditorApplyStateManager(
             ApplyExecutionResult.Success -> cancelWaiting(player, reopenMenu = true)
             ApplyExecutionResult.InvalidValue -> hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
             ApplyExecutionResult.UnknownValue -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+            ApplyExecutionResult.AwaitingAsync -> Unit
         }
     }
 
@@ -112,7 +113,10 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.USE_COOLDOWN_SECONDS -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_USAGE_USE_COOLDOWN_GROUP
             EditorApplyKind.CAN_PLACE_ON,
-            EditorApplyKind.CAN_BREAK -> MessageKey.EDIT_APPLY_USAGE_ID
+            EditorApplyKind.CAN_BREAK,
+            EditorApplyKind.HEAD_ONLINE_NAME,
+            EditorApplyKind.HEAD_LICENSED_NAME -> MessageKey.EDIT_APPLY_USAGE_NAME
+            EditorApplyKind.HEAD_TEXTURE_VALUE -> MessageKey.EDIT_APPLY_USAGE_VALUE
         }
     }
 }

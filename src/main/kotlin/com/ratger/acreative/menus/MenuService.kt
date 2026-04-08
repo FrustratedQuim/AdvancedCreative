@@ -3,16 +3,29 @@ package com.ratger.acreative.menus
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
-import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.itemedit.equippable.EquippableSupport
+import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.itemedit.head.HeadProfileService
+import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.LicensedProfileLookupService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import com.ratger.acreative.itemedit.validation.ValidationService
+import com.ratger.acreative.menus.itemEdit.ItemEditMenu
+import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
 import com.ratger.acreative.menus.itemEdit.apply.AmountApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
-import com.ratger.acreative.menus.itemEdit.apply.EquipSoundApplyHandler
-import com.ratger.acreative.menus.itemEdit.apply.EnchantmentApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamageApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamagePerBlockApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
+import com.ratger.acreative.menus.itemEdit.apply.EnchantmentApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.EquipSoundApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.HeadLicensedNameApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.HeadOnlineNameApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.HeadTextureValueApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemEditorApplyStateManager
 import com.ratger.acreative.menus.itemEdit.apply.ItemIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemModelApplyHandler
@@ -22,13 +35,6 @@ import com.ratger.acreative.menus.itemEdit.apply.RestrictionBlockApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.StackSizeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.UseCooldownGroupApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.UseCooldownSecondsApplyHandler
-import com.ratger.acreative.itemedit.restrictions.RestrictionMode
-import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
-import com.ratger.acreative.commands.edit.EditTargetResolver
-import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.itemEdit.ItemEditMenu
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -42,44 +48,68 @@ class MenuService(
     private val editTargetResolver = EditTargetResolver()
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
+    private val headMutationSupport = HeadTextureMutationSupport()
+    private val headLookupService = LicensedProfileLookupService()
+    private val headProfileService = HeadProfileService(hooker.plugin, editTargetResolver, headLookupService, headMutationSupport)
+
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
     private val attributeApplyHandler = AttributeApplyHandler()
     private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
     private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
-    private val applyStateManager = ItemEditorApplyStateManager(
-        hooker = hooker,
-        sessionManager = sessionManager,
-        promptService = ApplyPromptService(hooker.messageManager),
-        handlers = listOf(
-            itemIdApplyHandler,
-            AmountApplyHandler(),
-            ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
-            stackSizeApplyHandler,
-            attributeApplyHandler,
-            EquipSoundApplyHandler(),
-            EnchantmentApplyHandler(),
-            MaxDurabilityApplyHandler(validationService, editTargetResolver),
-            DamageApplyHandler(validationService, editTargetResolver),
-            MiningSpeedApplyHandler(validationService, editTargetResolver),
-            DamagePerBlockApplyHandler(validationService, editTargetResolver),
-            UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
-            UseCooldownGroupApplyHandler(validationService, editTargetResolver),
-            canPlaceOnApplyHandler,
-            canBreakApplyHandler
-        )
-    )
+
+    private lateinit var applyStateManager: ItemEditorApplyStateManager
+
     private val itemEditMenu = ItemEditMenu(
         hooker = hooker,
         sessionManager = sessionManager,
         buttonFactory = buttonFactory,
-        parser = parser
-    ) { player, _, kind, reopen ->
-        applyStateManager.beginWaiting(player, kind, reopen)
-        player.closeInventory()
-    }
+        parser = parser,
+        requestApplyInput = { player, _, kind, reopen ->
+            applyStateManager.beginWaiting(player, kind, reopen)
+            player.closeInventory()
+        },
+        headMutationSupport = headMutationSupport
+    )
 
     init {
+        applyStateManager = ItemEditorApplyStateManager(
+            hooker = hooker,
+            sessionManager = sessionManager,
+            promptService = ApplyPromptService(hooker.messageManager),
+            handlers = listOf(
+                itemIdApplyHandler,
+                AmountApplyHandler(),
+                ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
+                stackSizeApplyHandler,
+                attributeApplyHandler,
+                EquipSoundApplyHandler(),
+                EnchantmentApplyHandler(),
+                MaxDurabilityApplyHandler(validationService, editTargetResolver),
+                DamageApplyHandler(validationService, editTargetResolver),
+                MiningSpeedApplyHandler(validationService, editTargetResolver),
+                DamagePerBlockApplyHandler(validationService, editTargetResolver),
+                UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
+                UseCooldownGroupApplyHandler(validationService, editTargetResolver),
+                canPlaceOnApplyHandler,
+                canBreakApplyHandler,
+                HeadOnlineNameApplyHandler(headMutationSupport),
+                HeadTextureValueApplyHandler(headMutationSupport),
+                HeadLicensedNameApplyHandler(
+                    plugin = hooker.plugin,
+                    sessionManager = sessionManager,
+                    headProfileService = headProfileService,
+                    mutationSupport = headMutationSupport,
+                    reopenHeadTexturePage = { waitingPlayer ->
+                        val activeSession = sessionManager.getSession(waitingPlayer)
+                        if (activeSession != null) {
+                            itemEditMenu.openHeadTexturePage(waitingPlayer, activeSession)
+                        }
+                    }
+                )
+            )
+        )
+
         sessionManager.addCloseListener { player, _ ->
             applyStateManager.cancelWaiting(player, reopenMenu = false)
         }

@@ -45,6 +45,20 @@ class ItemEditMenuSupport(
         }
     }
 
+
+    fun replaceSlotTemporarily(
+        menu: Menu,
+        slot: Int,
+        temporaryButton: ru.violence.coreapi.bukkit.api.menu.button.Button,
+        restoreAfterTicks: Long,
+        restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
+    ) {
+        menu.setButton(slot, temporaryButton)
+        hooker.tickScheduler.runLater(restoreAfterTicks.coerceAtLeast(1L)) {
+            restoreButton().let { menu.setButton(slot, it) }
+        }
+    }
+
     fun transition(session: ItemEditSession, action: () -> Unit) {
         session.isInternalTransition = true
         action()

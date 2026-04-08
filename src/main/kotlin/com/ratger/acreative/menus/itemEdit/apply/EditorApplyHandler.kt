@@ -26,11 +26,15 @@ enum class EditorApplyKind {
     USE_COOLDOWN_SECONDS,
     USE_COOLDOWN_GROUP,
     CAN_PLACE_ON,
-    CAN_BREAK
+    CAN_BREAK,
+    HEAD_ONLINE_NAME,
+    HEAD_TEXTURE_VALUE,
+    HEAD_LICENSED_NAME
 }
 
 sealed interface ApplyExecutionResult {
     data object Success : ApplyExecutionResult
     data object InvalidValue : ApplyExecutionResult
     data object UnknownValue : ApplyExecutionResult
+    data object AwaitingAsync : ApplyExecutionResult
 }

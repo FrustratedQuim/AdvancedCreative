@@ -10,5 +10,8 @@ data class ItemEditSession(
     var isInternalTransition: Boolean = false,
     var hiddenInfoFocusIndex: Int = 0,
     var vanillaDiscJukeboxComponentInjected: Boolean = false,
-    var attributesMaterializedForHide: Boolean = false
+    var attributesMaterializedForHide: Boolean = false,
+    var headTextureSectionActive: Boolean = false,
+    var headTextureLoadingToken: Long? = null,
+    var headTextureOpSequence: Long = 0
 )

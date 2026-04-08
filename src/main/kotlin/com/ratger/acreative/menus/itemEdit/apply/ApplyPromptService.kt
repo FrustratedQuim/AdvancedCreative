@@ -23,6 +23,9 @@ class ApplyPromptService(
             EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_USE_COOLDOWN_GROUP
             EditorApplyKind.CAN_PLACE_ON,
             EditorApplyKind.CAN_BREAK -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID
+            EditorApplyKind.HEAD_ONLINE_NAME,
+            EditorApplyKind.HEAD_LICENSED_NAME -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_NAME
+            EditorApplyKind.HEAD_TEXTURE_VALUE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_VALUE
         }
         messageManager.sendTitle(
             player = player,

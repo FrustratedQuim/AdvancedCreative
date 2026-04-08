@@ -20,6 +20,8 @@ import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
 import com.ratger.acreative.menus.itemEdit.pages.DecoratedPotPartDescriptor
 import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
+import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
+import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -29,7 +31,8 @@ class ItemEditMenu(
     sessionManager: ItemEditSessionManager,
     buttonFactory: MenuButtonFactory,
     parser: MiniMessageParser,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val headMutationSupport: HeadTextureMutationSupport
 ) {
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
 
@@ -92,6 +95,8 @@ class ItemEditMenu(
         PotPatternSelectPage(support, buttonFactory)
     private val potEditPage: PotEditPage =
         PotEditPage(support, buttonFactory, this::openDecoratedPotPattern)
+    private val headTextureEditPage: HeadTextureEditPage =
+        HeadTextureEditPage(support, buttonFactory, headMutationSupport, openAdvancedPageOneHandler, requestApplyInput)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -145,9 +150,20 @@ class ItemEditMenu(
         restrictionsListPage.open(player, session, mode, page)
     }
 
+
+    fun openHeadTexturePage(player: Player, session: ItemEditSession) {
+        support.transition(session) {
+            headTextureEditPage.open(player, session)
+        }
+    }
+
     fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
         if (session.editableItem.type == Material.DECORATED_POT) {
             openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
+            return
+        }
+        if (session.editableItem.type == Material.PLAYER_HEAD) {
+            headTextureEditPage.open(player, session)
             return
         }
         openAdvancedPageOne(player, session)

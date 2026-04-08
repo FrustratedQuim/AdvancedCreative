@@ -6,6 +6,8 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.core.ItemEditingService
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.HeadProfileService
+import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.LicensedProfileLookupService
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.show.ShowService
@@ -18,13 +20,16 @@ class DeditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     private val resolver = EditTargetResolver()
     private val show = ShowService()
     private val validation = ValidationService()
+    private val headMutationSupport = HeadTextureMutationSupport()
+    private val headLookupService = LicensedProfileLookupService()
     private val service = ItemEditingService(
         targetResolver = resolver,
         validationService = validation,
         showService = show,
         metaActionsApplier = MetaActionsApplier(parser, MiniMessageParser()),
         componentsService = ComponentsService(),
-        headProfileService = HeadProfileService(hooker.plugin, resolver)
+        headProfileService = HeadProfileService(hooker.plugin, resolver, headLookupService, headMutationSupport),
+        headMutationSupport = headMutationSupport
     )
     private val tabSupport = EditTabCompleterSupport(parser)
 

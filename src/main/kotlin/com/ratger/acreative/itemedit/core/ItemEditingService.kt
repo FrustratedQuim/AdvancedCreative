@@ -7,6 +7,7 @@ import com.ratger.acreative.itemedit.api.ItemResult
 import com.ratger.acreative.itemedit.container.LockActionsHelper
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.HeadProfileService
+import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.meta.ItemStackReplacementSupport
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
@@ -21,7 +22,8 @@ class ItemEditingService(
     private val showService: ShowService,
     private val metaActionsApplier: MetaActionsApplier,
     private val componentsService: ComponentsService,
-    private val headProfileService: HeadProfileService
+    private val headProfileService: HeadProfileService,
+    private val headMutationSupport: HeadTextureMutationSupport
 ) {
     private val mini = MiniMessage.miniMessage()
 
@@ -42,8 +44,24 @@ class ItemEditingService(
 
         validationService.validate(action, context, player)?.let { return it }
 
+
         if (action is ItemAction.HeadSetFromName) {
             return headProfileService.applyFromNameAsync(player.uniqueId, action.name)
+        }
+
+        if (action is ItemAction.HeadSetFromTexture || action is ItemAction.HeadSetFromOnline || action is ItemAction.HeadClear) {
+            val item = context.item.clone()
+            val mutationResult = when (action) {
+                is ItemAction.HeadSetFromTexture -> headMutationSupport.applyFromTextureValue(item, action.base64)
+                is ItemAction.HeadSetFromOnline -> headMutationSupport.applyFromOnlinePlayer(item, action.name)
+                ItemAction.HeadClear -> headMutationSupport.clearProfile(item)
+                else -> null
+            }
+            if (mutationResult is HeadTextureMutationSupport.MutationResult.Failure) {
+                return failure("<red>${mutationResult.reason}")
+            }
+            targetResolver.save(player, item)
+            return success("<green>Изменение применено.")
         }
 
         val initialItem = context.item.clone()
