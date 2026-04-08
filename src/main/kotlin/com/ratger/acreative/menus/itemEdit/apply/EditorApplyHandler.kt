@@ -24,7 +24,9 @@ enum class EditorApplyKind {
     MINING_SPEED,
     DAMAGE_PER_BLOCK,
     USE_COOLDOWN_SECONDS,
-    USE_COOLDOWN_GROUP
+    USE_COOLDOWN_GROUP,
+    CAN_PLACE_ON,
+    CAN_BREAK
 }
 
 sealed interface ApplyExecutionResult {

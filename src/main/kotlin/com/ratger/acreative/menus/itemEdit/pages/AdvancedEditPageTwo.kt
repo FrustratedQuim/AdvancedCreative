@@ -19,7 +19,8 @@ class AdvancedEditPageTwo(
     private val openToolPage: (Player, ItemEditSession) -> Unit,
     private val openEnchantmentsPage: (Player, ItemEditSession) -> Unit,
     private val openUseRemainderPage: (Player, ItemEditSession) -> Unit,
-    private val openUseCooldownPage: (Player, ItemEditSession) -> Unit
+    private val openUseCooldownPage: (Player, ItemEditSession) -> Unit,
+    private val openRestrictionsRootPage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -142,13 +143,18 @@ class AdvancedEditPageTwo(
             action = { support.transition(session) { openEnchantmentsPage(player, session) } }
         ))
         menu.setButton(32, buildAttributesButton(player, session))
-        menu.setButton(33, buttonFactory.actionButton(Material.FIRE_CHARGE, "<!i><#C7A300>🔥 <#FFD700>Ограничения", listOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
-            "",
-            "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Ограничивает действия в <#FFF3E0>/gm 2 ",
-            ""
-        )))
+        menu.setButton(33, buttonFactory.actionButton(
+            material = Material.FIRE_CHARGE,
+            name = "<!i><#C7A300>🔥 <#FFD700>Ограничения",
+            lore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
+                "",
+                "<!i><#FFD700>Назначение:",
+                "<!i><#C7A300> ● <#FFE68A>Ограничивает действия в <#FFF3E0>/gm 2 ",
+                ""
+            ),
+            action = { support.transition(session) { openRestrictionsRootPage(player, session) } }
+        ))
         menu.setButton(38, buttonFactory.actionButton(Material.APPLE, "<!i><#C7A300>🍖 <#FFD700>Съедобность", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.zeroFoodPreview()))
         menu.setButton(39, buttonFactory.actionButton(Material.TOTEM_OF_UNDYING, "<!i><#C7A300>☠ <#FFD700>Защита от смерти", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(40, buttonFactory.actionButton(

@@ -110,6 +110,8 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.DAMAGE_PER_BLOCK,
             EditorApplyKind.USE_COOLDOWN_SECONDS -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_USAGE_USE_COOLDOWN_GROUP
+            EditorApplyKind.CAN_PLACE_ON,
+            EditorApplyKind.CAN_BREAK -> MessageKey.EDIT_APPLY_USAGE_ID
         }
     }
 }

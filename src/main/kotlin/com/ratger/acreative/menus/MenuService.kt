@@ -18,9 +18,12 @@ import com.ratger.acreative.menus.itemEdit.apply.ItemIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemModelApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MaxDurabilityApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.RestrictionBlockApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.StackSizeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.UseCooldownGroupApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.UseCooldownSecondsApplyHandler
+import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.itemedit.validation.ValidationService
 import com.ratger.acreative.menus.itemEdit.ItemEditMenu
@@ -42,6 +45,8 @@ class MenuService(
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
     private val attributeApplyHandler = AttributeApplyHandler()
+    private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
+    private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
     private val applyStateManager = ItemEditorApplyStateManager(
         hooker = hooker,
         sessionManager = sessionManager,
@@ -59,7 +64,9 @@ class MenuService(
             MiningSpeedApplyHandler(validationService, editTargetResolver),
             DamagePerBlockApplyHandler(validationService, editTargetResolver),
             UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
-            UseCooldownGroupApplyHandler(validationService, editTargetResolver)
+            UseCooldownGroupApplyHandler(validationService, editTargetResolver),
+            canPlaceOnApplyHandler,
+            canBreakApplyHandler
         )
     )
     private val itemEditMenu = ItemEditMenu(

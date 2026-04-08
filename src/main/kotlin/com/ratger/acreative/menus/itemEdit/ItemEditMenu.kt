@@ -11,10 +11,13 @@ import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsActivePage
 import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
 import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
 import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.RestrictionsListPage
+import com.ratger.acreative.menus.itemEdit.pages.RestrictionsRootPage
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
+import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
@@ -37,6 +40,7 @@ class ItemEditMenu(
     private val openEnchantmentsFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromAdvanced(player, session) }
     private val openUseRemainderPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseRemainderPage(player, session) }
     private val openUseCooldownPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseCooldownPage(player, session) }
+    private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -57,7 +61,8 @@ class ItemEditMenu(
             openToolPageHandler,
             openEnchantmentsFromAdvancedHandler,
             openUseRemainderPageHandler,
-            openUseCooldownPageHandler
+            openUseCooldownPageHandler,
+            openRestrictionsRootHandler
         )
     private val attributePage: AttributeEditPage =
         AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
@@ -73,6 +78,10 @@ class ItemEditMenu(
         EnchantmentsActivePage(support, buttonFactory, requestApplyInput)
     private val enchantmentsPage: EnchantmentsEditPage =
         EnchantmentsEditPage(support, buttonFactory, enchantmentsActivePage::open)
+    private val restrictionsListPage: RestrictionsListPage =
+        RestrictionsListPage(support, buttonFactory, openRestrictionsRootHandler, requestApplyInput)
+    private val restrictionsRootPage: RestrictionsRootPage =
+        RestrictionsRootPage(support, buttonFactory, openAdvancedPageTwoHandler, restrictionsListPage::open)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -116,5 +125,13 @@ class ItemEditMenu(
 
     fun openToolPage(player: Player, session: ItemEditSession) {
         toolPage.open(player, session)
+    }
+
+    fun openRestrictionsRoot(player: Player, session: ItemEditSession) {
+        restrictionsRootPage.open(player, session)
+    }
+
+    fun openRestrictionsList(player: Player, session: ItemEditSession, mode: RestrictionMode, page: Int = 0) {
+        restrictionsListPage.open(player, session, mode, page)
     }
 }
