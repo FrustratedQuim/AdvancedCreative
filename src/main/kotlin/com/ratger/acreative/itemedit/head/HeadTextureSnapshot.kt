@@ -8,8 +8,6 @@ import org.bukkit.inventory.meta.SkullMeta
 class HeadTextureSnapshot private constructor(
     val profileName: String?,
     val textureValue: String?,
-    val hasTextures: Boolean,
-    val markerSource: HeadTextureSource?,
     val effectiveSource: HeadTextureSource
 ) {
     val canShowOnlineActive: Boolean = effectiveSource == HeadTextureSource.ONLINE_PLAYER && !profileName.isNullOrBlank()
@@ -17,11 +15,11 @@ class HeadTextureSnapshot private constructor(
     val canShowLicensedActive: Boolean = effectiveSource == HeadTextureSource.LICENSED_NAME && !profileName.isNullOrBlank()
 
     companion object {
-        fun fromItem(item: ItemStack): HeadTextureSnapshot {
+        fun fromItem(item: ItemStack, sessionSource: HeadTextureSource? = null): HeadTextureSnapshot {
             if (item.type != Material.PLAYER_HEAD) {
-                return HeadTextureSnapshot(null, null, false, null, HeadTextureSource.NONE)
+                return HeadTextureSnapshot(null, null, HeadTextureSource.NONE)
             }
-            val meta = item.itemMeta as? SkullMeta ?: return HeadTextureSnapshot(null, null, false, null, HeadTextureSource.NONE)
+            val meta = item.itemMeta as? SkullMeta ?: return HeadTextureSnapshot(null, null, HeadTextureSource.NONE)
             val profile = meta.playerProfile
             val profileName = profile?.name?.takeIf { it.isNotBlank() }
             val textureValue = profile
@@ -30,14 +28,11 @@ class HeadTextureSnapshot private constructor(
                 ?.value
                 ?.takeIf { it.isNotBlank() }
 
-            val markerSource = HeadSourceMarkerSupport.read(meta)
-            val effective = markerSource?.takeIf { it != HeadTextureSource.NONE } ?: fallback(profileName, textureValue)
+            val effective = sessionSource?.takeIf { it != HeadTextureSource.NONE } ?: fallback(profileName, textureValue)
 
             return HeadTextureSnapshot(
                 profileName = profileName,
                 textureValue = textureValue,
-                hasTextures = !textureValue.isNullOrBlank(),
-                markerSource = markerSource,
                 effectiveSource = effective
             )
         }

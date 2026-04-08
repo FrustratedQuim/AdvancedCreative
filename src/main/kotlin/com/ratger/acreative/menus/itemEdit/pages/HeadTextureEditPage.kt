@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.itemEdit.pages
 
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureSnapshot
+import com.ratger.acreative.itemedit.head.HeadTextureSource
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -44,7 +45,7 @@ class HeadTextureEditPage(
             return
         }
 
-        val snapshot = HeadTextureSnapshot.fromItem(session.editableItem)
+        val snapshot = HeadTextureSnapshot.fromItem(session.editableItem, session.headTextureSource)
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(29, onlineButton(player, session, snapshot, menu))
         menu.setButton(30, valueButton(player, session, snapshot, menu))
@@ -184,8 +185,9 @@ class HeadTextureEditPage(
 
     private fun clearAndRefresh(player: Player, session: ItemEditSession, menu: Menu) {
         mutationSupport.clearProfile(session.editableItem)
+        session.headTextureSource = HeadTextureSource.NONE
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
-        val snapshot = HeadTextureSnapshot.fromItem(session.editableItem)
+        val snapshot = HeadTextureSnapshot.fromItem(session.editableItem, session.headTextureSource)
         menu.setButton(29, onlineButton(player, session, snapshot, menu))
         menu.setButton(30, valueButton(player, session, snapshot, menu))
         menu.setButton(31, licensedButton(player, session, snapshot, menu))

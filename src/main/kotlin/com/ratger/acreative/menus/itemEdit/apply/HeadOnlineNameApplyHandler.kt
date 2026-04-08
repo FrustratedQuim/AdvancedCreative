@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.HeadTextureSource
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import org.bukkit.entity.Player
 
@@ -12,7 +13,10 @@ class HeadOnlineNameApplyHandler(
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
         return when (val result = mutationSupport.applyFromOnlinePlayer(session.editableItem, args[0])) {
             is HeadTextureMutationSupport.MutationResult.Failure -> ApplyExecutionResult.InvalidValue
-            HeadTextureMutationSupport.MutationResult.Success -> ApplyExecutionResult.Success
+            HeadTextureMutationSupport.MutationResult.Success -> {
+                session.headTextureSource = HeadTextureSource.ONLINE_PLAYER
+                ApplyExecutionResult.Success
+            }
         }
     }
 

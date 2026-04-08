@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.HeadTextureSource
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
@@ -18,7 +19,10 @@ class HeadTextureValueApplyHandler(
                 player.sendMessage(mini.deserialize("<red>${result.reason}"))
                 ApplyExecutionResult.InvalidValue
             }
-            HeadTextureMutationSupport.MutationResult.Success -> ApplyExecutionResult.Success
+            HeadTextureMutationSupport.MutationResult.Success -> {
+                session.headTextureSource = HeadTextureSource.TEXTURE_VALUE
+                ApplyExecutionResult.Success
+            }
         }
     }
 

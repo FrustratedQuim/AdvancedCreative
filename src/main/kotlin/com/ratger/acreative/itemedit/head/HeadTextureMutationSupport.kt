@@ -17,7 +17,6 @@ class HeadTextureMutationSupport {
         val skull = skullMeta(item) ?: return MutationResult.Failure("Не player head")
         val source = Bukkit.getPlayerExact(name) ?: return MutationResult.Failure("Онлайн-игрок <white>$name</white> не найден.")
         skull.playerProfile = PlayerProfileCopyHelper.copyProfile(source.playerProfile)
-        HeadSourceMarkerSupport.write(skull, HeadTextureSource.ONLINE_PLAYER)
         item.itemMeta = skull
         return MutationResult.Success
     }
@@ -28,7 +27,6 @@ class HeadTextureMutationSupport {
         val profile = Bukkit.createProfile(UUID.randomUUID())
         profile.setProperty(ProfileProperty("textures", textureValue))
         skull.playerProfile = profile
-        HeadSourceMarkerSupport.write(skull, HeadTextureSource.TEXTURE_VALUE)
         item.itemMeta = skull
         return MutationResult.Success
     }
@@ -41,7 +39,6 @@ class HeadTextureMutationSupport {
         val officialProfile = Bukkit.createProfile(payload.uuid, payload.canonicalName)
         officialProfile.setProperty(ProfileProperty("textures", payload.textureValue, payload.textureSignature))
         skull.playerProfile = officialProfile
-        HeadSourceMarkerSupport.write(skull, HeadTextureSource.LICENSED_NAME)
         item.itemMeta = skull
         return MutationResult.Success
     }
@@ -49,7 +46,6 @@ class HeadTextureMutationSupport {
     fun clearProfile(item: ItemStack): MutationResult {
         val skull = skullMeta(item) ?: return MutationResult.Failure("Не player head")
         skull.playerProfile = null
-        HeadSourceMarkerSupport.clear(skull)
         item.itemMeta = skull
         return MutationResult.Success
     }

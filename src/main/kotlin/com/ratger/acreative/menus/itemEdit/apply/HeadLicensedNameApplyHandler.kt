@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.itemEdit.apply
 
 import com.ratger.acreative.itemedit.head.HeadProfileService
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.HeadTextureSource
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
 import org.bukkit.Bukkit
@@ -39,7 +40,10 @@ class HeadLicensedNameApplyHandler(
                 }
 
                 if (error == null && payload != null) {
-                    mutationSupport.applyFromLicensedPayload(onlineSession.editableItem, payload)
+                    val applyResult = mutationSupport.applyFromLicensedPayload(onlineSession.editableItem, payload)
+                    if (applyResult is HeadTextureMutationSupport.MutationResult.Success) {
+                        onlineSession.headTextureSource = HeadTextureSource.LICENSED_NAME
+                    }
                 }
                 onlineSession.headTextureLoadingToken = null
                 reopenHeadTexturePage(onlinePlayer)

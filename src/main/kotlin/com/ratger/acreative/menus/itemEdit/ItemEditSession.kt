@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.itemEdit
 
+import com.ratger.acreative.itemedit.head.HeadTextureSource
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
 
@@ -13,5 +14,6 @@ data class ItemEditSession(
     var attributesMaterializedForHide: Boolean = false,
     var headTextureSectionActive: Boolean = false,
     var headTextureLoadingToken: Long? = null,
-    var headTextureOpSequence: Long = 0
+    var headTextureOpSequence: Long = 0,
+    var headTextureSource: HeadTextureSource? = null
 )
