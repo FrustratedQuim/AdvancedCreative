@@ -11,7 +11,7 @@ class HeadOnlineNameApplyHandler(
     override val kind: EditorApplyKind = EditorApplyKind.HEAD_ONLINE_NAME
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
-        return when (val result = mutationSupport.applyFromOnlinePlayer(session.editableItem, args[0])) {
+        return when (mutationSupport.applyFromOnlinePlayer(session.editableItem, args[0])) {
             is HeadTextureMutationSupport.MutationResult.Failure -> ApplyExecutionResult.InvalidValue
             HeadTextureMutationSupport.MutationResult.Success -> {
                 session.headTextureSource = HeadTextureSource.ONLINE_PLAYER
