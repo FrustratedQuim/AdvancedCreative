@@ -19,7 +19,6 @@ class DamagePerBlockApplyHandler(
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
-        if (!ToolComponentSupport.supportsToolEditing(session.editableItem)) return ApplyExecutionResult.InvalidValue
         val value = ToolDamageSupport.parseDamageLikeValue(args[0], session.editableItem)
             ?: return ApplyExecutionResult.InvalidValue
         if (value < 0) return ApplyExecutionResult.InvalidValue

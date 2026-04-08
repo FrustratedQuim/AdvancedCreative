@@ -20,8 +20,6 @@ class MiningSpeedApplyHandler(
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
         val value = args[0].toFloatOrNull() ?: return ApplyExecutionResult.InvalidValue
-        if (!ToolComponentSupport.supportsToolEditing(session.editableItem)) return ApplyExecutionResult.InvalidValue
-
         val action = ItemAction.ToolSetDefaultMiningSpeed(value, ToolSpeedScope.INEFFECTIVE_ONLY)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
         if (validationService.validate(action, context, player) != null) {

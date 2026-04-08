@@ -40,13 +40,8 @@ class ToolEditPage(
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(29, buildMaxDurabilityButton(player, session))
         menu.setButton(30, buildDamageButton(player, session))
-        if (!ToolComponentSupport.supportsToolEditing(session.editableItem)) {
-            menu.setButton(32, buildUnsupportedToolButton())
-            menu.setButton(33, buildUnsupportedToolButton())
-        } else {
-            menu.setButton(32, buildMiningSpeedButton(player, session))
-            menu.setButton(33, buildDamagePerBlockButton(player, session))
-        }
+        menu.setButton(32, buildMiningSpeedButton(player, session))
+        menu.setButton(33, buildDamagePerBlockButton(player, session))
     }
 
     private fun buildMaxDurabilityButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
@@ -208,9 +203,4 @@ class ToolEditPage(
         return if (number % 1f == 0f) number.toInt().toString() else number.toString()
     }
 
-    private fun buildUnsupportedToolButton() = buttonFactory.actionButton(
-        material = Material.BARRIER,
-        name = "<!i><#FF1500>⚠ Доступно только для инструмента",
-        lore = emptyList()
-    )
 }

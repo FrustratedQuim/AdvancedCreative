@@ -4,17 +4,23 @@ package com.ratger.acreative.itemedit.tool
 
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.datacomponent.item.Tool
+import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 
 object ToolComponentSupport {
+    private val toolTypeBySuffix = linkedMapOf(
+        "_PICKAXE" to Material.WOODEN_PICKAXE,
+        "_AXE" to Material.WOODEN_AXE,
+        "_HOE" to Material.WOODEN_HOE,
+        "_SHOVEL" to Material.WOODEN_SHOVEL,
+        "_SWORD" to Material.WOODEN_SWORD
+    )
 
     fun explicitSnapshot(item: ItemStack): Tool? = item.getData(DataComponentTypes.TOOL)
 
     fun prototypeSnapshot(item: ItemStack): Tool? = item.type.getDefaultData(DataComponentTypes.TOOL)
 
     fun resolvedSnapshot(item: ItemStack): Tool? = explicitSnapshot(item) ?: prototypeSnapshot(item)
-
-    fun supportsToolEditing(item: ItemStack): Boolean = resolvedSnapshot(item) != null
 
     fun effectiveMiningSpeed(item: ItemStack): Float? {
         val tool = resolvedSnapshot(item) ?: return null
@@ -37,32 +43,68 @@ object ToolComponentSupport {
     }
 
     fun setMiningSpeed(item: ItemStack, value: Float): Boolean {
-        val base = explicitSnapshot(item) ?: prototypeSnapshot(item) ?: return false
-        val hasRules = base.rules().isNotEmpty()
-        val rebuiltRules = if (hasRules) {
-            base.rules().map { rule ->
-                Tool.rule(rule.blocks(), value, rule.correctForDrops())
+        val explicit = explicitSnapshot(item)
+        val base = explicit ?: prototypeSnapshot(item)
+        val rebuilt = if (base != null) {
+            val toolPrototype = matchingToolPrototype(item)
+            if (toolPrototype != null) {
+                val speedRule = toolPrototype.rules().firstOrNull { it.speed() != null }
+                if (speedRule != null) {
+                    Tool.tool()
+                        .defaultMiningSpeed(base.defaultMiningSpeed())
+                        .damagePerBlock(base.damagePerBlock())
+                        .addRule(Tool.rule(speedRule.blocks(), value, speedRule.correctForDrops()))
+                        .build()
+                } else {
+                    Tool.tool()
+                        .defaultMiningSpeed(value)
+                        .damagePerBlock(base.damagePerBlock())
+                        .addRules(base.rules())
+                        .build()
+                }
+            } else {
+                val combinedRules = speedRuleTemplates()
+                Tool.tool()
+                    .defaultMiningSpeed(base.defaultMiningSpeed())
+                    .damagePerBlock(base.damagePerBlock())
+                    .addRules(combinedRules.map { Tool.rule(it.blocks(), value, it.correctForDrops()) })
+                    .build()
             }
         } else {
-            base.rules()
+            val combinedRules = speedRuleTemplates()
+            if (combinedRules.isNotEmpty()) {
+                Tool.tool()
+                    .defaultMiningSpeed(1f)
+                    .damagePerBlock(1)
+                    .addRules(combinedRules.map { Tool.rule(it.blocks(), value, it.correctForDrops()) })
+                    .build()
+            } else {
+                Tool.tool().defaultMiningSpeed(value).damagePerBlock(1).build()
+            }
         }
-        val rebuilt = Tool.tool()
-            .defaultMiningSpeed(if (hasRules) base.defaultMiningSpeed() else value)
-            .damagePerBlock(base.damagePerBlock())
-            .addRules(rebuiltRules)
-            .build()
         item.setData(DataComponentTypes.TOOL, rebuilt)
         normalizeAfterMutation(item)
         return true
     }
 
     fun setDamagePerBlock(item: ItemStack, value: Int): Boolean {
-        val base = explicitSnapshot(item) ?: prototypeSnapshot(item) ?: return false
-        val rebuilt = Tool.tool()
-            .defaultMiningSpeed(base.defaultMiningSpeed())
-            .damagePerBlock(value)
-            .addRules(base.rules())
-            .build()
+        val base = explicitSnapshot(item) ?: prototypeSnapshot(item)
+        val rebuilt = if (base != null) {
+            Tool.tool()
+                .defaultMiningSpeed(base.defaultMiningSpeed())
+                .damagePerBlock(value)
+                .addRules(base.rules())
+                .build()
+        } else {
+            val shovelRule = toolPrototype(Material.WOODEN_SHOVEL)?.rules()?.firstOrNull { it.speed() != null }
+            val builder = Tool.tool()
+                .defaultMiningSpeed(1f)
+                .damagePerBlock(value)
+            if (shovelRule != null) {
+                builder.addRule(Tool.rule(shovelRule.blocks(), 1f, shovelRule.correctForDrops()))
+            }
+            builder.build()
+        }
         item.setData(DataComponentTypes.TOOL, rebuilt)
         normalizeAfterMutation(item)
         return true
@@ -125,4 +167,26 @@ object ToolComponentSupport {
         }
         return "default:${tool.defaultMiningSpeed()}"
     }
+
+    private fun matchingToolPrototype(item: ItemStack): Tool? {
+        val materialName = item.type.name
+        val templateMaterial = toolTypeBySuffix.entries.firstOrNull { materialName.endsWith(it.key) }?.value
+        return templateMaterial?.let { toolPrototype(it) }
+    }
+
+    private fun speedRuleTemplates(): List<Tool.Rule> {
+        val templates = listOf(
+            Material.WOODEN_AXE,
+            Material.WOODEN_HOE,
+            Material.WOODEN_PICKAXE,
+            Material.WOODEN_SHOVEL,
+            Material.WOODEN_SWORD
+        )
+        return templates.mapNotNull { material ->
+            toolPrototype(material)?.rules()?.firstOrNull { it.speed() != null }
+        }
+    }
+
+    private fun toolPrototype(material: Material): Tool? =
+        material.getDefaultData(DataComponentTypes.TOOL)
 }
