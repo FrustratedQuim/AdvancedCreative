@@ -16,6 +16,7 @@ class AdvancedEditPageOne(
     private val buttonFactory: MenuButtonFactory,
     private val openRoot: (Player, ItemEditSession) -> Unit,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
+    private val openSpecialParameters: (Player, ItemEditSession) -> Unit,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private data class HiddenInfoOption(val label: String, val key: String)
@@ -45,7 +46,7 @@ class AdvancedEditPageOne(
             title = "<!i>▍ Продвинутый редактор [1/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 26, 35, 31, 32, 33, 38, 39, 40, 41, 42),
+            interactiveTopSlots = setOf(18, 27, 26, 35, 29, 31, 32, 33, 38, 39, 40, 41, 42),
             session = session
         )
 
@@ -72,7 +73,11 @@ class AdvancedEditPageOne(
         } else {
             "<!i><#C7A300>◎ <#FFD700>Размер стака: <#00FF40>$stackSize"
         }
-        menu.setButton(29, buttonFactory.specialParameterButton(session.editableItem, player))
+        menu.setButton(29, buttonFactory.specialParameterButton(session.editableItem, player) {
+            support.transition(session) {
+                openSpecialParameters(player, session)
+            }
+        })
         menu.setButton(30, buttonFactory.actionButton(Material.NAME_TAG, "<!i><#C7A300>✎ <#FFD700>Изменить название и описание", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
         menu.setButton(31, buttonFactory.actionButton(session.editableItem.type, "<!i><#C7A300>◎ <#FFD700>ID предмета: <#00FF40>$itemId", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",

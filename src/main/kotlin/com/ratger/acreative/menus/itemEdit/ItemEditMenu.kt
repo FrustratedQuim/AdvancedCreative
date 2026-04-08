@@ -17,7 +17,11 @@ import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
+import com.ratger.acreative.menus.itemEdit.pages.DecoratedPotPartDescriptor
+import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
+import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import org.bukkit.Material
 import org.bukkit.entity.Player
 
 class ItemEditMenu(
@@ -41,6 +45,7 @@ class ItemEditMenu(
     private val openUseRemainderPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseRemainderPage(player, session) }
     private val openUseCooldownPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseCooldownPage(player, session) }
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
+    private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -49,6 +54,7 @@ class ItemEditMenu(
         buttonFactory = buttonFactory,
         openRoot = openRootHandler,
         openAdvancedPageTwo = openAdvancedPageTwoHandler,
+        openSpecialParameters = openSpecialParametersFromAdvancedHandler,
         requestApplyInput = requestApplyInput
     )
     private val advancedPageTwo: AdvancedEditPageTwo =
@@ -82,6 +88,10 @@ class ItemEditMenu(
         RestrictionsListPage(support, buttonFactory, openRestrictionsRootHandler, requestApplyInput)
     private val restrictionsRootPage: RestrictionsRootPage =
         RestrictionsRootPage(support, buttonFactory, openAdvancedPageTwoHandler, restrictionsListPage::open)
+    private val potPatternSelectPage: PotPatternSelectPage =
+        PotPatternSelectPage(support, buttonFactory)
+    private val potEditPage: PotEditPage =
+        PotEditPage(support, buttonFactory, this::openDecoratedPotPattern)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)
@@ -133,5 +143,26 @@ class ItemEditMenu(
 
     fun openRestrictionsList(player: Player, session: ItemEditSession, mode: RestrictionMode, page: Int = 0) {
         restrictionsListPage.open(player, session, mode, page)
+    }
+
+    fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
+        if (session.editableItem.type == Material.DECORATED_POT) {
+            openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
+            return
+        }
+        openAdvancedPageOne(player, session)
+    }
+
+    fun openDecoratedPotRoot(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
+        potEditPage.open(player, session, openBack)
+    }
+
+    fun openDecoratedPotPattern(
+        player: Player,
+        session: ItemEditSession,
+        part: DecoratedPotPartDescriptor,
+        openBack: (Player, ItemEditSession) -> Unit
+    ) {
+        potPatternSelectPage.open(player, session, part, openBack)
     }
 }

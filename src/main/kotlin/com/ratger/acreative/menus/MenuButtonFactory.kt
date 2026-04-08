@@ -217,7 +217,11 @@ class MenuButtonFactory(
         return Button.simple(remainder.clone()).action(action).build()
     }
 
-    fun specialParameterButton(editedItem: ItemStack, viewer: Player): Button {
+    fun specialParameterButton(
+        editedItem: ItemStack,
+        viewer: Player,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit = { }
+    ): Button {
         val type = editedItem.type
         val typeName = type.name
         val lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")
@@ -272,7 +276,53 @@ class MenuButtonFactory(
                 .name(parser.parse("<!i><#FFD700>Особый параметр"))
                 .build()
         }
-        return Button.simple(buttonItem).action { }.build()
+        return Button.simple(buttonItem).action(action).build()
+    }
+
+    fun decoratedPotPartButton(
+        partLabel: String,
+        material: Material?,
+        materialDisplayName: String?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val displayMaterial = material ?: Material.BRICK
+        val displayName = materialDisplayName ?: "Кирпич"
+        return actionButton(
+            material = displayMaterial,
+            name = "<!i><#C7A300>$partLabel <#FFD700>Часть: <#FFF3E0>$displayName",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            action = action
+        )
+    }
+
+    fun potterySherdButton(
+        material: Material,
+        sherdDisplayName: String,
+        selected: Boolean,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val marker = if (selected) "◎" else "⭘"
+        val lore = if (selected) {
+            listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять",
+                "<!i>",
+                "<!i><#00FF40>▍ Выбрано"
+            )
+        } else {
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать")
+        }
+        return actionButton(
+            material = material,
+            name = "<!i><#C7A300>$marker <#FFD700>Глиняный черепок «$sherdDisplayName»",
+            lore = lore,
+            itemModifier = {
+                if (selected) {
+                    glint(true)
+                }
+                this
+            },
+            action = action
+        )
     }
 
     fun hideAttributes(): ItemBuilder.() -> ItemBuilder = {

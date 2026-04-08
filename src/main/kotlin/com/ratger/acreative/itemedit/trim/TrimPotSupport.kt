@@ -111,6 +111,21 @@ object TrimPotSupport {
         return state.getSherd(side.toBukkit())
     }
 
+    fun isSherdSelected(item: ItemStack, side: DecoratedPotSide, material: Material): Boolean {
+        return sherd(item, side) == material
+    }
+
+    fun isBrickSelected(item: ItemStack, side: DecoratedPotSide): Boolean {
+        val current = sherd(item, side)
+        return current == null || current == Material.BRICK
+    }
+
+    fun toggleSideSherd(item: ItemStack, side: DecoratedPotSide, material: Material): Boolean {
+        val current = sherd(item, side)
+        val next = if (current == material) null else material
+        return applySide(item, side, next)
+    }
+
 }
 
 enum class DecoratedPotSide {
