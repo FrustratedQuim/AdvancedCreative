@@ -150,7 +150,7 @@ object ToolComponentSupport {
         val explicit = explicitSnapshot(item) ?: return
         val prototype = prototypeSnapshot(item) ?: return
         if (componentsMatch(explicit, prototype)) {
-            item.unsetData(DataComponentTypes.TOOL)
+            item.resetData(DataComponentTypes.TOOL)
         }
     }
 
