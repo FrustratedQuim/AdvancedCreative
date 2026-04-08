@@ -22,7 +22,9 @@ enum class EditorApplyKind {
     MAX_DURABILITY,
     DAMAGE,
     MINING_SPEED,
-    DAMAGE_PER_BLOCK
+    DAMAGE_PER_BLOCK,
+    USE_COOLDOWN_SECONDS,
+    USE_COOLDOWN_GROUP
 }
 
 sealed interface ApplyExecutionResult {

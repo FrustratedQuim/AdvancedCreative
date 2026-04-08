@@ -107,7 +107,9 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.MAX_DURABILITY,
             EditorApplyKind.DAMAGE,
             EditorApplyKind.MINING_SPEED,
-            EditorApplyKind.DAMAGE_PER_BLOCK -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.DAMAGE_PER_BLOCK,
+            EditorApplyKind.USE_COOLDOWN_SECONDS -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_USAGE_USE_COOLDOWN_GROUP
         }
     }
 }

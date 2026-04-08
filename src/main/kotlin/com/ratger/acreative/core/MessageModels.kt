@@ -104,6 +104,7 @@ enum class MessageKey {
     EDIT_APPLY_USAGE_ATTRIBUTE,
     EDIT_APPLY_USAGE_SOUND,
     EDIT_APPLY_USAGE_ENCHANTMENT,
+    EDIT_APPLY_USAGE_USE_COOLDOWN_GROUP,
     EDIT_APPLY_PROMPT_TITLE,
     EDIT_APPLY_PROMPT_SUBTITLE,
     EDIT_APPLY_PROMPT_SUBTITLE_ID,
@@ -111,6 +112,7 @@ enum class MessageKey {
     EDIT_APPLY_PROMPT_SUBTITLE_ATTRIBUTE,
     EDIT_APPLY_PROMPT_SUBTITLE_SOUND,
     EDIT_APPLY_PROMPT_SUBTITLE_ENCHANTMENT,
+    EDIT_APPLY_PROMPT_SUBTITLE_USE_COOLDOWN_GROUP,
     EDIT_PROMPT_CLEAR
 }
 
@@ -230,6 +232,7 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_USAGE_ATTRIBUTE to "<dark_red>▍ <#FF1500>Используйте: /apply <атрибут> <число>",
         MessageKey.EDIT_APPLY_USAGE_SOUND to "<dark_red>▍ <#FF1500>Используйте: /apply <звук>",
         MessageKey.EDIT_APPLY_USAGE_ENCHANTMENT to "<dark_red>▍ <#FF1500>Используйте: /apply <зачарование> [уровень]",
+        MessageKey.EDIT_APPLY_USAGE_USE_COOLDOWN_GROUP to "<dark_red>▍ <#FF1500>Используйте: /apply <название>",
         MessageKey.EDIT_APPLY_PROMPT_TITLE to "<#00FF40>Укажите значение для редактора",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE to "<#7BFF00>/apply <id> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID to "<#7BFF00>/apply <id> - указать <gray>| <#7BFF00>/apply cancel - отмена",
@@ -237,6 +240,7 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ATTRIBUTE to "<#7BFF00>/apply <атрибут> <число> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_SOUND to "<#7BFF00>/apply <звук> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ENCHANTMENT to "<#7BFF00>/apply <зачарование> [уровень] - указать <gray>| <#7BFF00>/apply cancel - отмена",
+        MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_USE_COOLDOWN_GROUP to "<#7BFF00>/apply <название> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_PROMPT_CLEAR to "<!i>"
     )
 }

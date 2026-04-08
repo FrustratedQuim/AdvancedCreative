@@ -6,6 +6,7 @@ import com.ratger.acreative.itemedit.effects.ConsumeEffectsAdapter
 import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.itemedit.meta.LegacyMetaKeySupport
 import com.ratger.acreative.itemedit.remainder.UseRemainderSupport
+import com.ratger.acreative.itemedit.usecooldown.UseCooldownSupport
 import io.papermc.paper.datacomponent.DataComponentTypes
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
@@ -122,10 +123,10 @@ object ShowViewAdapters {
     }
 
     fun useCooldown(item: ItemStack): UseCooldownShowView? {
-        val useCooldown = item.getData(DataComponentTypes.USE_COOLDOWN) ?: return null
+        val seconds = UseCooldownSupport.seconds(item) ?: return null
         return UseCooldownShowView(
-            seconds = useCooldown.seconds(),
-            cooldownGroup = useCooldown.cooldownGroup()?.asString()
+            seconds = seconds,
+            cooldownGroup = UseCooldownSupport.group(item)?.asString()
         )
     }
 

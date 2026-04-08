@@ -19,6 +19,8 @@ import com.ratger.acreative.menus.itemEdit.apply.ItemModelApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MaxDurabilityApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.StackSizeApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.UseCooldownGroupApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.UseCooldownSecondsApplyHandler
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.itemedit.validation.ValidationService
 import com.ratger.acreative.menus.itemEdit.ItemEditMenu
@@ -55,7 +57,9 @@ class MenuService(
             MaxDurabilityApplyHandler(validationService, editTargetResolver),
             DamageApplyHandler(validationService, editTargetResolver),
             MiningSpeedApplyHandler(validationService, editTargetResolver),
-            DamagePerBlockApplyHandler(validationService, editTargetResolver)
+            DamagePerBlockApplyHandler(validationService, editTargetResolver),
+            UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
+            UseCooldownGroupApplyHandler(validationService, editTargetResolver)
         )
     )
     private val itemEditMenu = ItemEditMenu(

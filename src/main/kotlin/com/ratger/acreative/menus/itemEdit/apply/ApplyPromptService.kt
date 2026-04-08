@@ -18,7 +18,9 @@ class ApplyPromptService(
             EditorApplyKind.MAX_DURABILITY,
             EditorApplyKind.DAMAGE,
             EditorApplyKind.MINING_SPEED,
-            EditorApplyKind.DAMAGE_PER_BLOCK -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
+            EditorApplyKind.DAMAGE_PER_BLOCK,
+            EditorApplyKind.USE_COOLDOWN_SECONDS -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
+            EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_USE_COOLDOWN_GROUP
         }
         messageManager.sendTitle(
             player = player,

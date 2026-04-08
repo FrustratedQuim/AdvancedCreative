@@ -18,7 +18,8 @@ class AdvancedEditPageTwo(
     private val openEquippablePage: (Player, ItemEditSession) -> Unit,
     private val openToolPage: (Player, ItemEditSession) -> Unit,
     private val openEnchantmentsPage: (Player, ItemEditSession) -> Unit,
-    private val openUseRemainderPage: (Player, ItemEditSession) -> Unit
+    private val openUseRemainderPage: (Player, ItemEditSession) -> Unit,
+    private val openUseCooldownPage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -118,7 +119,7 @@ class AdvancedEditPageTwo(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 29, 31, 32, 41, 42),
+            interactiveTopSlots = setOf(18, 27, 29, 31, 32, 40, 41, 42),
             session = session
         )
 
@@ -150,7 +151,12 @@ class AdvancedEditPageTwo(
         )))
         menu.setButton(38, buttonFactory.actionButton(Material.APPLE, "<!i><#C7A300>🍖 <#FFD700>Съедобность", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.zeroFoodPreview()))
         menu.setButton(39, buttonFactory.actionButton(Material.TOTEM_OF_UNDYING, "<!i><#C7A300>☠ <#FFD700>Защита от смерти", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-        menu.setButton(40, buttonFactory.actionButton(Material.CLOCK, "<!i><#C7A300>⌚ <#FFD700>Задержка использования", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
+        menu.setButton(40, buttonFactory.actionButton(
+            material = Material.CLOCK,
+            name = "<!i><#C7A300>⌚ <#FFD700>Задержка использования",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            action = { support.transition(session) { openUseCooldownPage(player, session) } }
+        ))
         menu.setButton(41, buttonFactory.actionButton(
             material = Material.RESIN_CLUMP,
             name = "<!i><#C7A300>⚡ <#FFD700>После использования",
