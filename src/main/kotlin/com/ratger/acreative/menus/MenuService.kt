@@ -101,6 +101,10 @@ class MenuService(
     }
 
     fun handleApply(player: Player, args: Array<out String>) {
+        if (!applyStateManager.isWaiting(player)) {
+            openItemEditor(player)
+            return
+        }
         applyStateManager.handleApplyCommand(player, args)
     }
 
