@@ -122,7 +122,7 @@ class MenuService(
         val existingSession = sessionManager.getSession(player)
         if (existingSession != null) {
             applyStateManager.cancelWaiting(player, reopenMenu = false)
-            itemEditMenu.openRoot(player, existingSession)
+            itemEditMenu.openLastCategoryOrDefault(player, existingSession)
             return
         }
 
@@ -134,7 +134,7 @@ class MenuService(
 
         val session = sessionManager.openSession(player, handItem)
         player.inventory.setItemInMainHand(ItemStack(Material.AIR))
-        itemEditMenu.openRoot(player, session)
+        itemEditMenu.openLastCategoryOrDefault(player, session)
     }
 
     fun handleApply(player: Player, args: Array<out String>) {

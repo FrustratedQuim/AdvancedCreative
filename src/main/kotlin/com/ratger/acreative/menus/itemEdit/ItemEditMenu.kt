@@ -35,8 +35,15 @@ class ItemEditMenu(
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val headMutationSupport: HeadTextureMutationSupport
 ) {
+    enum class LastEditorCategory {
+        ROOT,
+        SIMPLE,
+        ADVANCED
+    }
+
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
     private val headTextureValueBookSupport = HeadTextureValueBookSupport()
+    private val lastCategoryByPlayer = mutableMapOf<java.util.UUID, LastEditorCategory>()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }
     private val openSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSimple(player, session) }
@@ -101,19 +108,31 @@ class ItemEditMenu(
         HeadTextureEditPage(support, buttonFactory, headMutationSupport, headTextureValueBookSupport, openAdvancedPageOneHandler, requestApplyInput)
 
     fun openRoot(player: Player, session: ItemEditSession) {
+        rememberCategory(player, LastEditorCategory.ROOT)
         rootPage.open(player, session)
     }
 
     fun openSimple(player: Player, session: ItemEditSession) {
+        rememberCategory(player, LastEditorCategory.SIMPLE)
         simplePage.open(player, session)
     }
 
     fun openAdvancedPageOne(player: Player, session: ItemEditSession) {
+        rememberCategory(player, LastEditorCategory.ADVANCED)
         advancedEditPageOne.open(player, session)
     }
 
     fun openAdvancedPageTwo(player: Player, session: ItemEditSession) {
+        rememberCategory(player, LastEditorCategory.ADVANCED)
         advancedPageTwo.open(player, session)
+    }
+
+    fun openLastCategoryOrDefault(player: Player, session: ItemEditSession) {
+        when (lastCategoryByPlayer[player.uniqueId] ?: LastEditorCategory.ROOT) {
+            LastEditorCategory.ROOT -> openRoot(player, session)
+            LastEditorCategory.SIMPLE -> openSimple(player, session)
+            LastEditorCategory.ADVANCED -> openAdvancedPageOne(player, session)
+        }
     }
 
     fun openAttributePage(player: Player, session: ItemEditSession) {
@@ -182,5 +201,9 @@ class ItemEditMenu(
         openBack: (Player, ItemEditSession) -> Unit
     ) {
         potPatternSelectPage.open(player, session, part, openBack)
+    }
+
+    private fun rememberCategory(player: Player, category: LastEditorCategory) {
+        lastCategoryByPlayer[player.uniqueId] = category
     }
 }
