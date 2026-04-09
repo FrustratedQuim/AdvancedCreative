@@ -20,11 +20,7 @@ object LockItemSupport {
             return null
         }
 
-        readPreview(item)?.let { return it }
-
-        val fallback = previewFromLegacyStringLock(item) ?: return null
-        writePreview(item, fallback)
-        return fallback.clone()
+        return readPreview(item)
     }
 
     fun set(item: ItemStack, key: ItemStack) {
@@ -75,11 +71,6 @@ object LockItemSupport {
         return stack == null || stack.type == Material.AIR || stack.amount <= 0
     }
 
-    private fun lockableState(item: ItemStack): Lockable? {
-        val meta = item.itemMeta as? BlockStateMeta ?: return null
-        return meta.blockState as? Lockable
-    }
-
     private fun readPreview(item: ItemStack): ItemStack? {
         val meta = item.itemMeta ?: return null
         val serialized = meta.persistentDataContainer.get(PREVIEW_KEY, PersistentDataType.BYTE_ARRAY) ?: return null
@@ -110,46 +101,5 @@ object LockItemSupport {
         item.itemMeta = meta
     }
 
-    @Suppress("DEPRECATION") // Legacy lock-string fallback for old items without preview bytes
-    private fun previewFromLegacyStringLock(item: ItemStack): ItemStack? {
-        val lockable = lockableState(item) ?: return null
-        if (!lockable.isLocked) return null
-
-        val material = parseMaterialFromLock(lockable.lock) ?: return null
-        return ItemStack(material)
-    }
-
-    private fun parseMaterialFromLock(lock: String): Material? {
-        if (lock.isBlank()) return null
-
-        val explicitKey = LOCK_ITEMS_PATTERN.find(lock)?.groupValues?.getOrNull(1)
-            ?: LOCK_ID_PATTERN.find(lock)?.groupValues?.getOrNull(1)
-        if (explicitKey != null) {
-            keyToMaterial(explicitKey)?.let { return it }
-        }
-
-        LOCK_NAMESPACE_PATTERN.findAll(lock)
-            .mapNotNull { keyToMaterial(it.value) }
-            .firstOrNull()
-            ?.let { return it }
-
-        return keyToMaterial(lock)
-    }
-
-    private fun keyToMaterial(raw: String): Material? {
-        val normalized = raw.trim().trim('"')
-        val fromNamespaced = Material.matchMaterial(normalized, true)
-        if (fromNamespaced != null) {
-            return fromNamespaced
-        }
-
-        val tail = normalized.substringAfter(':', normalized)
-        return Material.matchMaterial(tail.uppercase(), true)
-    }
-
     private val PREVIEW_KEY = NamespacedKey.minecraft("ac_lock_preview")
-
-    private val LOCK_ITEMS_PATTERN = Regex("\"?items\"?\\s*:\\s*\"?([a-z0-9_:]+)", RegexOption.IGNORE_CASE)
-    private val LOCK_ID_PATTERN = Regex("\"?id\"?\\s*:\\s*\"?([a-z0-9_:]+)", RegexOption.IGNORE_CASE)
-    private val LOCK_NAMESPACE_PATTERN = Regex("[a-z0-9_]+:[a-z0-9_]+", RegexOption.IGNORE_CASE)
 }
