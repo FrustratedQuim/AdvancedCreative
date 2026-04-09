@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus
 
 import com.google.common.collect.LinkedHashMultimap
+import com.ratger.acreative.itemedit.container.LockItemSupport
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
@@ -241,6 +242,22 @@ class MenuButtonFactory(
         return Button.simple(valueBook.clone()).action(action).build()
     }
 
+
+    fun lockKeySlotButton(
+        keyItem: ItemStack?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        if (keyItem == null) {
+            return Button.simple(
+                ItemBuilder(Material.BARRIER)
+                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот ключа<#FFD700> ←"))
+                    .build()
+            ).action(action).build()
+        }
+
+        return Button.simple(keyItem.clone()).action(action).build()
+    }
+
     fun useRemainderSlotButton(
         remainder: ItemStack?,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
@@ -271,7 +288,7 @@ class MenuButtonFactory(
                     .lore(lore.map(parser::parse))
                     .build()
 
-            typeName.contains("SHULKER_BOX") ->
+            LockItemSupport.supports(editedItem) ->
                 ItemBuilder(Material.FURNACE_MINECART)
                     .name(parser.parse("<!i><#C7A300>🛡 <#FFD700>Запереть на ключ"))
                     .lore(lore.map(parser::parse))

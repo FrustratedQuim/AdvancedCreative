@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.itemEdit
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.itemedit.container.LockItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
@@ -21,6 +22,7 @@ import com.ratger.acreative.menus.itemEdit.pages.DecoratedPotPartDescriptor
 import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
+import com.ratger.acreative.menus.itemEdit.pages.LockEditPage
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
@@ -56,6 +58,7 @@ class ItemEditMenu(
     private val openEnchantmentsFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openEnchantmentsFromAdvanced(player, session) }
     private val openUseRemainderPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseRemainderPage(player, session) }
     private val openUseCooldownPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseCooldownPage(player, session) }
+    private val openLockPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openLockPageInternal(player, session) }
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
     private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
 
@@ -90,6 +93,8 @@ class ItemEditMenu(
         UseRemainderEditPage(support, buttonFactory, openAdvancedPageTwoHandler)
     private val useCooldownPage: UseCooldownEditPage =
         UseCooldownEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
+    private val lockPage: LockEditPage =
+        LockEditPage(support, buttonFactory, openAdvancedPageOneHandler)
     private val toolPage: ToolEditPage =
         ToolEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
     private val enchantmentsActivePage: EnchantmentsActivePage =
@@ -159,6 +164,14 @@ class ItemEditMenu(
         useCooldownPage.open(player, session)
     }
 
+    fun openLockPage(player: Player, session: ItemEditSession) {
+        lockPage.open(player, session)
+    }
+
+    private fun openLockPageInternal(player: Player, session: ItemEditSession) {
+        lockPage.open(player, session)
+    }
+
     fun openToolPage(player: Player, session: ItemEditSession) {
         toolPage.open(player, session)
     }
@@ -185,6 +198,10 @@ class ItemEditMenu(
         }
         if (session.editableItem.type == Material.PLAYER_HEAD) {
             headTextureEditPage.open(player, session)
+            return
+        }
+        if (LockItemSupport.supports(session.editableItem)) {
+            openLockPageHandler(player, session)
             return
         }
         openAdvancedPageOne(player, session)
