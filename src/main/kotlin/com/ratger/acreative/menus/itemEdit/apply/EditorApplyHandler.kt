@@ -29,7 +29,9 @@ enum class EditorApplyKind {
     CAN_BREAK,
     HEAD_ONLINE_NAME,
     HEAD_TEXTURE_VALUE,
-    HEAD_LICENSED_NAME
+    HEAD_LICENSED_NAME,
+    POTION_COLOR,
+    POTION_EFFECT_ADD
 }
 
 sealed interface ApplyExecutionResult {

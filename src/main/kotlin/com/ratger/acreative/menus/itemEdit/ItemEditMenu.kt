@@ -23,6 +23,8 @@ import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
 import com.ratger.acreative.menus.itemEdit.pages.LockEditPage
+import com.ratger.acreative.menus.itemEdit.pages.PotionEditPage
+import com.ratger.acreative.menus.itemEdit.pages.PotionEffectsActivePage
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
@@ -61,6 +63,9 @@ class ItemEditMenu(
     private val openLockPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openLockPageInternal(player, session) }
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
     private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
+    private val openPotionPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session ->
+        openPotionPage(player, session, openAdvancedPageOneHandler)
+    }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -111,6 +116,12 @@ class ItemEditMenu(
         PotEditPage(support, buttonFactory, this::openDecoratedPotPattern)
     private val headTextureEditPage: HeadTextureEditPage =
         HeadTextureEditPage(support, buttonFactory, headMutationSupport, headTextureValueBookSupport, openAdvancedPageOneHandler, requestApplyInput)
+    private val potionEditPage: PotionEditPage =
+        PotionEditPage(support, buttonFactory, requestApplyInput, this::openPotionEffectsPage)
+    private val potionEffectsPage: PotionEffectsActivePage =
+        PotionEffectsActivePage(support, buttonFactory, requestApplyInput) { player, session ->
+            openPotionPage(player, session, openAdvancedPageOneHandler)
+        }
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rememberCategory(player, LastEditorCategory.ROOT)
@@ -191,6 +202,14 @@ class ItemEditMenu(
         }
     }
 
+    fun openPotionPage(player: Player, session: ItemEditSession, back: (Player, ItemEditSession) -> Unit = openAdvancedPageOneHandler) {
+        potionEditPage.open(player, session, back)
+    }
+
+    fun openPotionEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
+        potionEffectsPage.open(player, session, page)
+    }
+
     fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
         if (session.editableItem.type == Material.DECORATED_POT) {
             openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
@@ -202,6 +221,15 @@ class ItemEditMenu(
         }
         if (LockItemSupport.supports(session.editableItem)) {
             openLockPageHandler(player, session)
+            return
+        }
+        if (
+            session.editableItem.type == Material.POTION ||
+            session.editableItem.type == Material.SPLASH_POTION ||
+            session.editableItem.type == Material.LINGERING_POTION ||
+            session.editableItem.type == Material.TIPPED_ARROW
+        ) {
+            openPotionPageFromAdvancedHandler(player, session)
             return
         }
         openAdvancedPageOne(player, session)

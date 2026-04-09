@@ -26,6 +26,8 @@ class ApplyPromptService(
             EditorApplyKind.HEAD_ONLINE_NAME,
             EditorApplyKind.HEAD_LICENSED_NAME -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_NAME
             EditorApplyKind.HEAD_TEXTURE_VALUE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_VALUE
+            EditorApplyKind.POTION_COLOR -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_COLOR
+            EditorApplyKind.POTION_EFFECT_ADD -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT
         }
         messageManager.sendTitle(
             player = player,

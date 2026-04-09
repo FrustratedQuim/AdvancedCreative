@@ -6,6 +6,7 @@ import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.itemedit.potion.PotionItemSupport
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute
@@ -13,6 +14,7 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import ru.violence.coreapi.bukkit.api.menu.button.Button
 import ru.violence.coreapi.bukkit.api.util.ItemBuilder
@@ -342,6 +344,113 @@ class MenuButtonFactory(
             material = displayMaterial,
             name = "<!i><#C7A300>$partLabel <#FFD700>Часть: <#FFF3E0>$displayName",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            action = action
+        )
+    }
+
+    fun potionColorButton(
+        hexColor: String?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val active = hexColor != null
+        val name = if (active) {
+            "<!i><#C7A300>◎ <#FFD700>Цвет: <$hexColor>$hexColor"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Цвет: <#FF1500>Обычный"
+        }
+        val lore = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+            "<!i>",
+            "<!i><#FFD700>После нажатия:",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать",
+            if (active) {
+                "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена"
+            } else {
+                "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
+            },
+            "<!i>"
+        )
+        return actionButton(
+            material = Material.BRUSH,
+            name = name,
+            lore = lore,
+            itemModifier = {
+                if (active) {
+                    glint(true)
+                }
+                this
+            },
+            action = action
+        )
+    }
+
+    fun potionEffectsSummaryButton(
+        count: Int,
+        selectedEffectsLore: List<String>,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val active = count > 0
+        val name = if (active) {
+            "<!i><#C7A300>◎ <#FFD700>Эффекты: <#00FF40>$count"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Эффекты: <#FF1500>Нет"
+        }
+        val lore = if (!active) {
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
+        } else {
+            listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+                "<!i>",
+                "<!i><#FFD700>Выбрано:"
+            ) + selectedEffectsLore + listOf("<!i>")
+        }
+
+        return actionButton(
+            material = Material.BREWING_STAND,
+            name = name,
+            lore = lore,
+            itemModifier = {
+                if (active) {
+                    glint(true)
+                }
+                this
+            },
+            action = action
+        )
+    }
+
+    fun potionEffectEntryButton(
+        entry: PotionItemSupport.PotionEffectEntry,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val previewPotionType = PotionItemSupport.previewPotionType(entry.effect.type)
+        return actionButton(
+            material = Material.POTION,
+            name = "<!i><#C7A300>◎ <#FFD700>Эффект №${entry.index + 1}",
+            lore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
+                "<!i>",
+                "<!i><#FFD700>Параметры:",
+                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName}",
+                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds}",
+                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel}",
+                "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
+                "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
+                "<!i>"
+            ),
+            itemModifier = {
+                if (previewPotionType != null) {
+                    edit { item ->
+                        val meta = item.itemMeta as? PotionMeta ?: return@edit
+                        meta.basePotionType = previewPotionType
+                        meta.addCustomEffect(entry.effect, true)
+                        item.itemMeta = meta
+                    }
+                }
+                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+                this
+            },
             action = action
         )
     }
