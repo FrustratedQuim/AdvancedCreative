@@ -22,6 +22,7 @@ import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -35,6 +36,7 @@ class ItemEditMenu(
     private val headMutationSupport: HeadTextureMutationSupport
 ) {
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
+    private val headTextureValueBookSupport = HeadTextureValueBookSupport()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }
     private val openSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSimple(player, session) }
@@ -96,7 +98,7 @@ class ItemEditMenu(
     private val potEditPage: PotEditPage =
         PotEditPage(support, buttonFactory, this::openDecoratedPotPattern)
     private val headTextureEditPage: HeadTextureEditPage =
-        HeadTextureEditPage(support, buttonFactory, headMutationSupport, openAdvancedPageOneHandler, requestApplyInput)
+        HeadTextureEditPage(support, buttonFactory, headMutationSupport, headTextureValueBookSupport, openAdvancedPageOneHandler, requestApplyInput)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rootPage.open(player, session)

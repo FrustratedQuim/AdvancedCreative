@@ -225,6 +225,22 @@ class MenuButtonFactory(
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()
 
 
+
+    fun headTextureValueInputSlotButton(
+        valueBook: ItemStack?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        if (valueBook == null) {
+            return Button.simple(
+                ItemBuilder(Material.BARRIER)
+                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот для value <#FFD700>←"))
+                    .build()
+            ).action(action).build()
+        }
+
+        return Button.simple(valueBook.clone()).action(action).build()
+    }
+
     fun useRemainderSlotButton(
         remainder: ItemStack?,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit

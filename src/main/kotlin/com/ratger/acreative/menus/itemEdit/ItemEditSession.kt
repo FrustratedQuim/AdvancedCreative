@@ -15,5 +15,7 @@ data class ItemEditSession(
     var headTextureSectionActive: Boolean = false,
     var headTextureLoadingToken: Long? = null,
     var headTextureOpSequence: Long = 0,
-    var headTextureSource: HeadTextureSource? = null
+    var headTextureSource: HeadTextureSource? = null,
+    var headTextureValueInputBook: ItemStack? = null,
+    var headTextureVirtualValue: String? = null
 )
