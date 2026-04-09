@@ -225,52 +225,47 @@ class MenuButtonFactory(
 
     fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()
 
-
-
     fun headTextureValueInputSlotButton(
         valueBook: ItemStack?,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ): Button {
-        if (valueBook == null) {
-            return Button.simple(
-                ItemBuilder(Material.BARRIER)
-                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот для value <#FFD700>←"))
-                    .build()
-            ).action(action).build()
-        }
-
-        return Button.simple(valueBook.clone()).action(action).build()
-    }
-
+    ): Button = itemInputSlotButton(
+        storedItem = valueBook,
+        placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот для value <#FFD700>←",
+        action = action
+    )
 
     fun lockKeySlotButton(
         keyItem: ItemStack?,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ): Button {
-        if (keyItem == null) {
-            return Button.simple(
-                ItemBuilder(Material.BARRIER)
-                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот ключа<#FFD700> ←"))
-                    .build()
-            ).action(action).build()
-        }
-
-        return Button.simple(keyItem.clone()).action(action).build()
-    }
+    ): Button = itemInputSlotButton(
+        storedItem = keyItem,
+        placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот ключа<#FFD700> ←",
+        action = action
+    )
 
     fun useRemainderSlotButton(
         remainder: ItemStack?,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = itemInputSlotButton(
+        storedItem = remainder,
+        placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот предмета<#FFD700> ←",
+        action = action
+    )
+
+    private fun itemInputSlotButton(
+        storedItem: ItemStack?,
+        placeholderName: String,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
     ): Button {
-        if (remainder == null) {
-            return Button.simple(
-                ItemBuilder(Material.BARRIER)
-                    .name(parser.parse("<!i><#FFD700>→ <#FFE68A>Слот предмета<#FFD700> ←"))
-                    .build()
-            ).action(action).build()
+        val buttonItem = if (storedItem == null) {
+            ItemBuilder(Material.BARRIER)
+                .name(parser.parse(placeholderName))
+                .build()
+        } else {
+            storedItem.clone()
         }
 
-        return Button.simple(remainder.clone()).action(action).build()
+        return Button.simple(buttonItem).action(action).build()
     }
 
     fun specialParameterButton(

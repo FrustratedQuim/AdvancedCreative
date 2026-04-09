@@ -51,7 +51,7 @@ class LockEditPage(
         event: ru.violence.coreapi.bukkit.api.menu.event.ClickEvent,
         session: ItemEditSession
     ): Boolean {
-        val key = LockItemSupport.get(session.editableItem) ?: return false
+        val key = LockItemSupport.preview(session.editableItem) ?: return false
         val playerInventory = event.player.inventory
         val emptySlot = findPreferredShiftTargetSlot(playerInventory) ?: return false
 
@@ -85,7 +85,7 @@ class LockEditPage(
             return false
         }
 
-        val previousKey = LockItemSupport.get(session.editableItem)
+        val previousKey = LockItemSupport.preview(session.editableItem)
         LockItemSupport.set(session.editableItem, clickedItem.clone())
 
         if (previousKey == null) {
@@ -126,10 +126,10 @@ class LockEditPage(
     )
 
     private fun buildLockSlotButton(session: ItemEditSession) = buttonFactory.lockKeySlotButton(
-        LockItemSupport.get(session.editableItem)
+        LockItemSupport.preview(session.editableItem)
     ) { event ->
         val player = event.player
-        val currentKey = LockItemSupport.get(session.editableItem)
+        val currentKey = LockItemSupport.preview(session.editableItem)
         val cursorItem = player.itemOnCursor
 
         if (currentKey == null) {
