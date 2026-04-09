@@ -21,6 +21,7 @@ class HeadTextureValueApplyHandler(
             }
             HeadTextureMutationSupport.MutationResult.Success -> {
                 session.headTextureSource = HeadTextureSource.TEXTURE_VALUE
+                session.headTextureVirtualValue = mutationSupport.texturesValue(session.editableItem)?.takeUnless { it.isBlank() }
                 ApplyExecutionResult.Success
             }
         }

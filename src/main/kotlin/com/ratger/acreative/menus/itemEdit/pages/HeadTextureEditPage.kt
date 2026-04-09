@@ -27,7 +27,7 @@ class HeadTextureEditPage(
 ) {
     fun open(player: Player, session: ItemEditSession) {
         session.headTextureSectionActive = true
-        syncVirtualTextureValue(session)
+        syncVirtualTextureValue(session, force = session.headTextureValueInputBook == null)
         val isLoading = session.headTextureLoadingToken != null
 
         val menu = support.buildMenu(
@@ -139,6 +139,7 @@ class HeadTextureEditPage(
             }
 
             if (isEmpty(cursorItem)) {
+                restoreEditableTextureFromVirtualValue(session)
                 player.setItemOnCursor(materializeStoredValueItem(session))
                 session.headTextureValueInputBook = null
                 refreshDynamicButtons(player, session, event.menu)
@@ -149,7 +150,7 @@ class HeadTextureEditPage(
                 return@headTextureValueInputSlotButton
             }
 
-            player.setItemOnCursor(materializeValueCarrier(currentBook, session.headTextureVirtualValue))
+            player.setItemOnCursor(currentBook.clone())
         }
     )
 
@@ -159,7 +160,6 @@ class HeadTextureEditPage(
             is HeadTextureMutationSupport.MutationResult.Failure -> false
             HeadTextureMutationSupport.MutationResult.Success -> {
                 session.headTextureSource = HeadTextureSource.TEXTURE_VALUE
-                session.headTextureVirtualValue = extracted.value
                 session.headTextureValueInputBook = extracted.storedItem
                 refreshDynamicButtons(event.player, session, event.menu)
                 true
@@ -175,12 +175,11 @@ class HeadTextureEditPage(
         }
 
         val previousItem = session.headTextureValueInputBook?.clone()
-        val previousVirtualValue = session.headTextureVirtualValue
         if (!tryApplyAndStoreInputItem(event, session, clickedItem.clone())) {
             return true
         }
 
-        val returnItem = materializeValueCarrier(previousItem, previousVirtualValue)
+        val returnItem = previousItem?.clone()
         if (returnItem == null) {
             clickedInventory.setItem(event.slot, null)
         } else {
@@ -196,6 +195,7 @@ class HeadTextureEditPage(
         val emptySlot = findPreferredShiftTargetSlot(playerInventory) ?: return false
 
         playerInventory.setItem(emptySlot, storedBook.clone())
+        restoreEditableTextureFromVirtualValue(session)
         session.headTextureValueInputBook = null
         refreshDynamicButtons(event.player, session, event.menu)
         return true
@@ -242,32 +242,36 @@ class HeadTextureEditPage(
         return textureValueBookSupport.isBookItem(item) || item.type == Material.PLAYER_HEAD
     }
 
-    private fun syncVirtualTextureValue(session: ItemEditSession) {
+    private fun syncVirtualTextureValue(session: ItemEditSession, force: Boolean = false) {
+        if (!force && session.headTextureValueInputBook != null) {
+            return
+        }
+
         val currentTextureValue = mutationSupport.texturesValue(session.editableItem)
         session.headTextureVirtualValue = currentTextureValue?.takeUnless { it.isBlank() }
     }
 
-    private fun materializeStoredValueItem(session: ItemEditSession): ItemStack? {
-        return materializeValueCarrier(session.headTextureValueInputBook, session.headTextureVirtualValue)
+    private fun restoreEditableTextureFromVirtualValue(session: ItemEditSession) {
+        val virtualValue = session.headTextureVirtualValue
+        if (virtualValue.isNullOrBlank()) {
+            mutationSupport.clearProfile(session.editableItem)
+            session.headTextureSource = HeadTextureSource.NONE
+            return
+        }
+
+        when (mutationSupport.applyFromTextureValue(session.editableItem, virtualValue)) {
+            is HeadTextureMutationSupport.MutationResult.Failure -> {
+                mutationSupport.clearProfile(session.editableItem)
+                session.headTextureSource = HeadTextureSource.NONE
+            }
+            HeadTextureMutationSupport.MutationResult.Success -> {
+                session.headTextureSource = HeadTextureSource.TEXTURE_VALUE
+            }
+        }
     }
 
-    private fun materializeValueCarrier(item: ItemStack?, value: String?): ItemStack? {
-        val baseItem = item ?: return null
-        if (value.isNullOrBlank()) {
-            return baseItem.clone()
-        }
-
-        return when {
-            textureValueBookSupport.isBookItem(baseItem) -> textureValueBookSupport.createValueBook(value)
-            baseItem.type == Material.PLAYER_HEAD -> {
-                val headClone = baseItem.clone()
-                when (mutationSupport.applyFromTextureValue(headClone, value)) {
-                    is HeadTextureMutationSupport.MutationResult.Failure -> baseItem.clone()
-                    HeadTextureMutationSupport.MutationResult.Success -> headClone
-                }
-            }
-            else -> baseItem.clone()
-        }
+    private fun materializeStoredValueItem(session: ItemEditSession): ItemStack? {
+        return session.headTextureValueInputBook?.clone()
     }
 
     private fun showTemporaryBarrierWarn(menu: Menu, slot: Int, title: String, restore: () -> Button) {
@@ -365,7 +369,7 @@ class HeadTextureEditPage(
     private fun clearAndRefresh(player: Player, session: ItemEditSession, menu: Menu) {
         mutationSupport.clearProfile(session.editableItem)
         session.headTextureSource = HeadTextureSource.NONE
-        syncVirtualTextureValue(session)
+        syncVirtualTextureValue(session, force = true)
         refreshDynamicButtons(player, session, menu)
     }
 

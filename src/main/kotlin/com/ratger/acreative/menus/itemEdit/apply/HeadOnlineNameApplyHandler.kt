@@ -15,6 +15,7 @@ class HeadOnlineNameApplyHandler(
             is HeadTextureMutationSupport.MutationResult.Failure -> ApplyExecutionResult.InvalidValue
             HeadTextureMutationSupport.MutationResult.Success -> {
                 session.headTextureSource = HeadTextureSource.ONLINE_PLAYER
+                session.headTextureVirtualValue = mutationSupport.texturesValue(session.editableItem)?.takeUnless { it.isBlank() }
                 ApplyExecutionResult.Success
             }
         }

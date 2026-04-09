@@ -43,6 +43,7 @@ class HeadLicensedNameApplyHandler(
                     val applyResult = mutationSupport.applyFromLicensedPayload(onlineSession.editableItem, payload)
                     if (applyResult is HeadTextureMutationSupport.MutationResult.Success) {
                         onlineSession.headTextureSource = HeadTextureSource.LICENSED_NAME
+                        onlineSession.headTextureVirtualValue = mutationSupport.texturesValue(onlineSession.editableItem)?.takeUnless { it.isBlank() }
                     }
                 }
                 onlineSession.headTextureLoadingToken = null
