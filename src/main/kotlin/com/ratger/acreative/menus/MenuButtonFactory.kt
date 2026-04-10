@@ -7,6 +7,7 @@ import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.potion.PotionItemSupport
+import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute
@@ -368,10 +369,9 @@ class MenuButtonFactory(
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit = { }
     ): Button {
         val type = editedItem.type
-        val typeName = type.name
         val lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")
         val buttonItem = when {
-            typeName.endsWith("HELMET") || typeName.endsWith("CHESTPLATE") || typeName.endsWith("LEGGINGS") || typeName.endsWith("BOOTS") ->
+            ArmorTrimSupport.supports(editedItem) ->
                 ItemBuilder(Material.NETHERITE_SCRAP)
                     .name(parser.parse("<!i><#C7A300>₪ <#FFD700>Отделка брони"))
                     .lore(lore.map(parser::parse))
@@ -423,6 +423,113 @@ class MenuButtonFactory(
         }
         return Button.simple(buttonItem).action(action).build()
     }
+
+
+    fun armorTrimRootPatternButton(
+        patternDisplayName: String?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.NETHERITE_SCRAP,
+        name = patternDisplayName?.let {
+            "<!i><#C7A300>◎ <#FFD700>Отделка: <#00FF40>$it"
+        } ?: "<!i><#C7A300>⭘ <#FFD700>Отделка: <#FF1500>Нет",
+        lore = listOf(
+            if (patternDisplayName == null) {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы задать"
+            } else {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
+            }
+        ),
+        itemModifier = {
+            if (patternDisplayName != null) {
+                glint(true)
+                hideAdditionalTooltip().invoke(this)
+            }
+            this
+        },
+        action = action
+    )
+
+    fun armorTrimRootMaterialButton(
+        materialDisplayName: String?,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = materialDisplayName?.let {
+            "<!i><#C7A300>◎ <#FFD700>Материал: <#FFF3E0>$it"
+        } ?: "<!i><#C7A300>⭘ <#FFD700>Материал: <#FF1500>Нет",
+        lore = listOf(
+            if (materialDisplayName == null) {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы задать"
+            } else {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
+            }
+        ),
+        itemModifier = {
+            if (materialDisplayName != null) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
+
+    fun armorTrimPatternOptionButton(
+        icon: Material,
+        displayName: String,
+        selected: Boolean,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = icon,
+        name = if (selected) {
+            "<!i><#C7A300>◎ <#FFD700>Отделка «$displayName»"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Отделка «$displayName»"
+        },
+        lore = listOf(
+            if (selected) {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять"
+            } else {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать"
+            }
+        ),
+        itemModifier = {
+            hideAdditionalTooltip().invoke(this)
+            if (selected) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
+
+    fun armorTrimMaterialOptionButton(
+        icon: Material,
+        displayName: String,
+        selected: Boolean,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = icon,
+        name = if (selected) {
+            "<!i><#C7A300>◎ <#FFD700>$displayName"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>$displayName"
+        },
+        lore = listOf(
+            if (selected) {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять"
+            } else {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать"
+            }
+        ),
+        itemModifier = {
+            if (selected) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
 
     fun decoratedPotPartButton(
         partLabel: String,

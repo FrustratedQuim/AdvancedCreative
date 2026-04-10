@@ -3,11 +3,15 @@ package com.ratger.acreative.menus.itemEdit
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.container.LockItemSupport
+import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
 import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
 import com.ratger.acreative.menus.itemEdit.pages.AttributeEditPage
+import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimEditPage
+import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimMaterialSelectPage
+import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsActivePage
 import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
 import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
@@ -68,6 +72,7 @@ class ItemEditMenu(
         openPotionPage(player, session, openAdvancedPageOneHandler)
     }
     private val openMapPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openMapPage(player, session) }
+    private val openArmorTrimPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openArmorTrimPage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -126,6 +131,13 @@ class ItemEditMenu(
         }
     private val mapEditPage: MapEditPage =
         MapEditPage(support, buttonFactory, requestApplyInput, openAdvancedPageOneHandler)
+
+    private val armorTrimPatternSelectPage: ArmorTrimPatternSelectPage =
+        ArmorTrimPatternSelectPage(support, buttonFactory)
+    private val armorTrimMaterialSelectPage: ArmorTrimMaterialSelectPage =
+        ArmorTrimMaterialSelectPage(support, buttonFactory)
+    private val armorTrimEditPage: ArmorTrimEditPage =
+        ArmorTrimEditPage(support, buttonFactory, this::openArmorTrimPatternPage, this::openArmorTrimMaterialPage)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rememberCategory(player, LastEditorCategory.ROOT)
@@ -218,6 +230,19 @@ class ItemEditMenu(
         mapEditPage.open(player, session)
     }
 
+
+    fun openArmorTrimPage(player: Player, session: ItemEditSession) {
+        armorTrimEditPage.open(player, session, openAdvancedPageOneHandler)
+    }
+
+    fun openArmorTrimPatternPage(player: Player, session: ItemEditSession) {
+        armorTrimPatternSelectPage.open(player, session, this::openArmorTrimPage)
+    }
+
+    fun openArmorTrimMaterialPage(player: Player, session: ItemEditSession) {
+        armorTrimMaterialSelectPage.open(player, session, this::openArmorTrimPage)
+    }
+
     fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
         if (session.editableItem.type == Material.DECORATED_POT) {
             openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
@@ -225,6 +250,10 @@ class ItemEditMenu(
         }
         if (session.editableItem.type == Material.PLAYER_HEAD) {
             headTextureEditPage.open(player, session)
+            return
+        }
+        if (ArmorTrimSupport.supports(session.editableItem)) {
+            openArmorTrimPageHandler(player, session)
             return
         }
         if (LockItemSupport.supports(session.editableItem)) {
