@@ -87,20 +87,12 @@ class EquippableEditPage(
         menu.setButton(40, buildModelButton(session))
     }
 
-    private fun buildDamageOnHurtButton(session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildDamageOnHurtButton(session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.BLAZE_POWDER,
-        name = if (EquippableSupport.effectiveDamageOnHurt(session.editableItem)) {
-            "<!i><#C7A300>◎ <#FFD700>Поломка при уроне: <#00FF40>Вкл"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Поломка при уроне: <#FF1500>Выкл"
-        },
+        enabled = EquippableSupport.effectiveDamageOnHurt(session.editableItem),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Поломка при уроне: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Поломка при уроне: <#FF1500>Выкл",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-        itemModifier = {
-            if (EquippableSupport.effectiveDamageOnHurt(session.editableItem)) {
-                glint(true)
-            }
-            this
-        },
         action = { event ->
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDamageOnHurt = !EquippableSupport.effectiveDamageOnHurt(session.editableItem)
@@ -109,13 +101,11 @@ class EquippableEditPage(
         }
     )
 
-    private fun buildDispensableButton(session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildDispensableButton(session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.REDSTONE,
-        name = if (EquippableSupport.effectiveDispensable(session.editableItem)) {
-            "<!i><#C7A300>◎ <#FFD700>Раздатчик: <#00FF40>Вкл"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Раздатчик: <#FF1500>Выкл"
-        },
+        enabled = EquippableSupport.effectiveDispensable(session.editableItem),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Раздатчик: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Раздатчик: <#FF1500>Выкл",
         lore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
@@ -124,12 +114,6 @@ class EquippableEditPage(
             "<!i><#C7A300> ● <#FFE68A>через раздатчик.",
             ""
         ),
-        itemModifier = {
-            if (EquippableSupport.effectiveDispensable(session.editableItem)) {
-                glint(true)
-            }
-            this
-        },
         action = { event ->
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isDispensable = !EquippableSupport.effectiveDispensable(session.editableItem)
@@ -138,13 +122,11 @@ class EquippableEditPage(
         }
     )
 
-    private fun buildSwappableButton(session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildSwappableButton(session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.WIND_CHARGE,
-        name = if (EquippableSupport.effectiveSwappable(session.editableItem)) {
-            "<!i><#C7A300>◎ <#FFD700>Свап: <#00FF40>Вкл"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Свап: <#FF1500>Выкл"
-        },
+        enabled = EquippableSupport.effectiveSwappable(session.editableItem),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Свап: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Свап: <#FF1500>Выкл",
         lore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
@@ -153,12 +135,6 @@ class EquippableEditPage(
             "<!i><#C7A300> ● <#FFE68A>заменить другой бронёй.",
             ""
         ),
-        itemModifier = {
-            if (EquippableSupport.effectiveSwappable(session.editableItem)) {
-                glint(true)
-            }
-            this
-        },
         action = { event ->
             EquippableSupport.mutateOrCreateForMenu(session.editableItem, EquipmentSlot.HAND) {
                 isSwappable = !EquippableSupport.effectiveSwappable(session.editableItem)

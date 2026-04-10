@@ -107,6 +107,98 @@ class MenuButtonFactory(
         return buttonBuilder.build()
     }
 
+    fun statefulSummaryButton(
+        material: Material,
+        active: Boolean,
+        activeName: String,
+        inactiveName: String,
+        selectedEntriesLore: List<String> = emptyList(),
+        selectedHeader: String = "<!i><#FFD700>Выбрано:",
+        emptyLore: List<String> = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        glintWhenActive: Boolean = true,
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val lore = if (!active) {
+            emptyLore
+        } else {
+            val selectedBlock = buildList {
+                if (selectedEntriesLore.isNotEmpty()) {
+                    add(selectedHeader)
+                    addAll(selectedEntriesLore)
+                    add("<!i>")
+                }
+            }
+            emptyLore + listOf("<!i>") + selectedBlock
+        }
+
+        return actionButton(
+            material = material,
+            name = if (active) activeName else inactiveName,
+            lore = lore,
+            itemModifier = {
+                if (active && glintWhenActive) {
+                    glint(true)
+                }
+                itemModifier?.invoke(this)
+                this
+            },
+            action = action
+        )
+    }
+
+    fun applyResetButton(
+        material: Material,
+        active: Boolean,
+        activeName: String,
+        inactiveName: String,
+        activeLore: List<String>,
+        inactiveLore: List<String>,
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        onApply: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
+        onReset: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = material,
+        name = if (active) activeName else inactiveName,
+        lore = if (active) activeLore else inactiveLore,
+        itemModifier = {
+            if (active) {
+                glint(true)
+            }
+            itemModifier?.invoke(this)
+            this
+        },
+        action = { event ->
+            when {
+                event.isLeft || event.isShiftLeft -> onApply(event)
+                event.isRight || event.isShiftRight -> onReset(event)
+            }
+        }
+    )
+
+    fun toggleButton(
+        material: Material,
+        enabled: Boolean,
+        enabledName: String,
+        disabledName: String,
+        lore: List<String>,
+        glintWhenEnabled: Boolean = true,
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = material,
+        name = if (enabled) enabledName else disabledName,
+        lore = lore,
+        itemModifier = {
+            if (enabled && glintWhenEnabled) {
+                glint(true)
+            }
+            itemModifier?.invoke(this)
+            this
+        },
+        action = action
+    )
+
 
     fun headTextureSourceButton(
         editedItem: ItemStack,
@@ -344,78 +436,6 @@ class MenuButtonFactory(
             material = displayMaterial,
             name = "<!i><#C7A300>$partLabel <#FFD700>Часть: <#FFF3E0>$displayName",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-            action = action
-        )
-    }
-
-    fun potionColorButton(
-        hexColor: String?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ): Button {
-        val active = hexColor != null
-        val name = if (active) {
-            "<!i><#C7A300>◎ <#FFD700>Цвет: <$hexColor>$hexColor"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Цвет: <#FF1500>Обычный"
-        }
-        val lore = listOf(
-            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
-            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
-            "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать",
-            if (active) {
-                "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена"
-            } else {
-                "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
-            },
-            "<!i>"
-        )
-        return actionButton(
-            material = Material.BRUSH,
-            name = name,
-            lore = lore,
-            itemModifier = {
-                if (active) {
-                    glint(true)
-                }
-                this
-            },
-            action = action
-        )
-    }
-
-    fun potionEffectsSummaryButton(
-        count: Int,
-        selectedEffectsLore: List<String>,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ): Button {
-        val active = count > 0
-        val name = if (active) {
-            "<!i><#C7A300>◎ <#FFD700>Эффекты: <#00FF40>$count"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Эффекты: <#FF1500>Нет"
-        }
-        val lore = if (!active) {
-            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
-        } else {
-            listOf(
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-                "<!i>",
-                "<!i><#FFD700>Выбрано:"
-            ) + selectedEffectsLore + listOf("<!i>")
-        }
-
-        return actionButton(
-            material = Material.BREWING_STAND,
-            name = name,
-            lore = lore,
-            itemModifier = {
-                if (active) {
-                    glint(true)
-                }
-                this
-            },
             action = action
         )
     }

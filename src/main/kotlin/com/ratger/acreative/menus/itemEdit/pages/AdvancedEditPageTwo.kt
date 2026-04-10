@@ -82,33 +82,15 @@ class AdvancedEditPageTwo(
 
     private fun buildAttributesButton(player: Player, session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val entries = ItemAttributeMenuSupport.listEffectiveEntries(session.editableItem)
-        if (entries.isEmpty()) {
-            return buttonFactory.actionButton(
-                material = Material.PRISMARINE_CRYSTALS,
-                name = "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет",
-                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-                action = { support.transition(session) { openAttributePage(player, session) } }
-            )
-        }
-
-        val lore = mutableListOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "",
-            "<!i><#FFD700>Выбрано:"
-        )
-        entries.forEach { entry ->
-            lore += "<!i><#C7A300> ● <#FFE68A>${ItemAttributeMenuSupport.displayAttributeName(entry.attribute)} " +
-                "<#FFF3E0>${ItemAttributeMenuSupport.formatAmount(entry.modifier)} " +
-                "<#C7A300>[<#FFD700>${SlotGroupAdapter.displayName(entry.modifier)}<#C7A300>]"
-        }
-        lore += ""
-
-        return buttonFactory.actionButton(
+        return buttonFactory.statefulSummaryButton(
             material = Material.PRISMARINE_CRYSTALS,
-            name = "<!i><#C7A300>◎ <#FFD700>Атрибуты: <#00FF40>${entries.size}",
-            lore = lore,
-            itemModifier = {
-                glint(true)
+            active = entries.isNotEmpty(),
+            activeName = "<!i><#C7A300>◎ <#FFD700>Атрибуты: <#00FF40>${entries.size}",
+            inactiveName = "<!i><#C7A300>⭘ <#FFD700>Атрибуты: <#FF1500>Нет",
+            selectedEntriesLore = entries.map { entry ->
+                "<!i><#C7A300> ● <#FFE68A>${ItemAttributeMenuSupport.displayAttributeName(entry.attribute)} " +
+                    "<#FFF3E0>${ItemAttributeMenuSupport.formatAmount(entry.modifier)} " +
+                    "<#C7A300>[<#FFD700>${SlotGroupAdapter.displayName(entry.modifier)}<#C7A300>]"
             },
             action = { support.transition(session) { openAttributePage(player, session) } }
         )

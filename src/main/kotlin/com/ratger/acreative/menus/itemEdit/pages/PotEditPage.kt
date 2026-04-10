@@ -4,6 +4,7 @@ import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.pages.layout.ItemEditPageLayouts
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
@@ -12,8 +13,6 @@ class PotEditPage(
     private val buttonFactory: MenuButtonFactory,
     private val openPatternSelect: (Player, ItemEditSession, DecoratedPotPartDescriptor, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
-    private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 12, 14)
-
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
         val menu = support.buildMenu(
             title = "<!i>▍ Редактор → Ваза",
@@ -23,7 +22,7 @@ class PotEditPage(
             session = session
         )
 
-        support.fillBase(menu, 45, blackSlots)
+        support.fillBase(menu, 45, ItemEditPageLayouts.standardEditorBlackSlots)
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
 

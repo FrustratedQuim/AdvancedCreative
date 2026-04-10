@@ -5,6 +5,7 @@ import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.pages.layout.ItemEditPageLayouts
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
@@ -14,8 +15,6 @@ class RestrictionsRootPage(
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
     private val openRestrictionsList: (Player, ItemEditSession, RestrictionMode, Int) -> Unit
 ) {
-    private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 12, 14)
-
     fun open(player: Player, session: ItemEditSession) {
         val menu = support.buildMenu(
             title = "<!i>▍ Редактор → Ограничения",
@@ -25,7 +24,7 @@ class RestrictionsRootPage(
             session = session
         )
 
-        support.fillBase(menu, 45, blackSlots)
+        support.fillBase(menu, 45, ItemEditPageLayouts.standardEditorBlackSlots)
 
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { openAdvancedPageTwo(player, session) } })
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
@@ -41,30 +40,13 @@ class RestrictionsRootPage(
         mode: RestrictionMode
     ): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val entries = ItemRestrictionSupport.entries(session.editableItem, mode)
-        if (entries.isEmpty()) {
-            return buttonFactory.actionButton(
-                material = mode.itemMaterialFallback,
-                name = mode.summaryEmptyName,
-                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-                action = { support.transition(session) { openRestrictionsList(player, session, mode, 0) } }
-            )
-        }
-
-        val lore = mutableListOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "",
-            mode.summaryListTitle
-        )
-        entries.forEach { entry ->
-            lore += "<!i><#C7A300> ● <#FFE68A>${entry.displayId}"
-        }
-        lore += ""
-
-        return buttonFactory.actionButton(
+        return buttonFactory.statefulSummaryButton(
             material = mode.itemMaterialFallback,
-            name = mode.summaryFilledName(entries.size),
-            lore = lore,
-            itemModifier = { glint(true) },
+            active = entries.isNotEmpty(),
+            activeName = mode.summaryFilledName(entries.size),
+            inactiveName = mode.summaryEmptyName,
+            selectedHeader = mode.summaryListTitle,
+            selectedEntriesLore = entries.map { entry -> "<!i><#C7A300> ● <#FFE68A>${entry.displayId}" },
             action = { support.transition(session) { openRestrictionsList(player, session, mode, 0) } }
         )
     }

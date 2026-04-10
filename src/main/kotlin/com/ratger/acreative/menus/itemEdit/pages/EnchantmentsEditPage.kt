@@ -4,6 +4,7 @@ import com.ratger.acreative.itemedit.enchant.EnchantmentSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.itemEdit.pages.layout.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
@@ -13,8 +14,6 @@ class EnchantmentsEditPage(
     private val buttonFactory: MenuButtonFactory,
     private val openActivePage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
-    private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 12, 14)
-
     fun open(player: Player, session: ItemEditSession, back: (Player, ItemEditSession) -> Unit) {
         val menu = support.buildMenu(
             title = "<!i>▍ Редактор → Зачарования",
@@ -24,7 +23,7 @@ class EnchantmentsEditPage(
             session = session
         )
 
-        support.fillBase(menu, 45, blackSlots)
+        support.fillBase(menu, 45, ItemEditPageLayouts.standardEditorBlackSlots)
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { back(player, session) } })
         menu.setButton(30, buildGlintButton(session))
@@ -78,30 +77,14 @@ class EnchantmentsEditPage(
         back: (Player, ItemEditSession) -> Unit
     ): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val entries = EnchantmentSupport.entries(session.editableItem.itemMeta)
-        if (entries.isEmpty()) {
-            return buttonFactory.actionButton(
-                material = Material.BOOK,
-                name = "<!i><#C7A300>⭘ <#FFD700>Зачарования: <#FF1500>Нет",
-                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-                action = { support.transition(session) { openActivePage(player, session, 0) { reopenPlayer, reopenSession -> open(reopenPlayer, reopenSession, back) } } }
-            )
-        }
-
-        val lore = mutableListOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "<!i>",
-            "<!i><#FFD700>Выбрано:"
-        )
-        entries.forEach { entry ->
-            lore += "<!i><#C7A300> ● <#FFE68A>${entry.displayName}${EnchantmentSupport.levelDisplay(entry.level, showOne = false)}"
-        }
-        lore += "<!i>"
-
-        return buttonFactory.actionButton(
+        return buttonFactory.statefulSummaryButton(
             material = Material.BOOK,
-            name = "<!i><#C7A300>◎ <#FFD700>Зачарования: <#00FF40>${entries.size}",
-            lore = lore,
-            itemModifier = { glint(true) },
+            active = entries.isNotEmpty(),
+            activeName = "<!i><#C7A300>◎ <#FFD700>Зачарования: <#00FF40>${entries.size}",
+            inactiveName = "<!i><#C7A300>⭘ <#FFD700>Зачарования: <#FF1500>Нет",
+            selectedEntriesLore = entries.map { entry ->
+                "<!i><#C7A300> ● <#FFE68A>${entry.displayName}${EnchantmentSupport.levelDisplay(entry.level, showOne = false)}"
+            },
             action = { support.transition(session) { openActivePage(player, session, 0) { reopenPlayer, reopenSession -> open(reopenPlayer, reopenSession, back) } } }
         )
     }
