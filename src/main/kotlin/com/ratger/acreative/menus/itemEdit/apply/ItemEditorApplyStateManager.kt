@@ -117,7 +117,9 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.HEAD_ONLINE_NAME,
             EditorApplyKind.HEAD_LICENSED_NAME -> MessageKey.EDIT_APPLY_USAGE_NAME
             EditorApplyKind.HEAD_TEXTURE_VALUE -> MessageKey.EDIT_APPLY_USAGE_VALUE
-            EditorApplyKind.POTION_COLOR -> MessageKey.EDIT_APPLY_USAGE_POTION_COLOR
+            EditorApplyKind.POTION_COLOR,
+            EditorApplyKind.MAP_COLOR -> MessageKey.EDIT_APPLY_USAGE_POTION_COLOR
+            EditorApplyKind.MAP_ID -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.POTION_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_POTION_EFFECT
         }
     }

@@ -25,6 +25,7 @@ import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
 import com.ratger.acreative.menus.itemEdit.pages.LockEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotionEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotionEffectsActivePage
+import com.ratger.acreative.menus.itemEdit.pages.MapEditPage
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
@@ -66,6 +67,7 @@ class ItemEditMenu(
     private val openPotionPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session ->
         openPotionPage(player, session, openAdvancedPageOneHandler)
     }
+    private val openMapPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openMapPage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
@@ -122,6 +124,8 @@ class ItemEditMenu(
         PotionEffectsActivePage(support, buttonFactory, requestApplyInput) { player, session ->
             openPotionPage(player, session, openAdvancedPageOneHandler)
         }
+    private val mapEditPage: MapEditPage =
+        MapEditPage(support, buttonFactory, requestApplyInput, openAdvancedPageOneHandler)
 
     fun openRoot(player: Player, session: ItemEditSession) {
         rememberCategory(player, LastEditorCategory.ROOT)
@@ -210,6 +214,10 @@ class ItemEditMenu(
         potionEffectsPage.open(player, session, page)
     }
 
+    fun openMapPage(player: Player, session: ItemEditSession) {
+        mapEditPage.open(player, session)
+    }
+
     fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
         if (session.editableItem.type == Material.DECORATED_POT) {
             openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
@@ -230,6 +238,10 @@ class ItemEditMenu(
             session.editableItem.type == Material.TIPPED_ARROW
         ) {
             openPotionPageFromAdvancedHandler(player, session)
+            return
+        }
+        if (session.editableItem.type == Material.FILLED_MAP) {
+            openMapPageFromAdvancedHandler(player, session)
             return
         }
         openAdvancedPageOne(player, session)

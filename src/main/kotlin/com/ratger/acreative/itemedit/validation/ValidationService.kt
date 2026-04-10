@@ -15,6 +15,7 @@ import org.bukkit.Material
 import org.bukkit.Registry
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 
@@ -26,6 +27,10 @@ class ValidationService {
     }
 
     fun isValidKey(raw: String): Boolean = runCatching { Key.key(raw) }.isSuccess
+
+    fun isMapEditable(item: ItemStack): Boolean = item.type == Material.FILLED_MAP
+
+    fun isValidMapId(value: Int): Boolean = value >= 0
 
     fun validate(action: ItemAction, context: ItemContext, player: Player): ItemResult? {
         val meta = context.item.itemMeta

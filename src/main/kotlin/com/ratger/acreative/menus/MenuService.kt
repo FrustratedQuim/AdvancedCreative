@@ -30,6 +30,8 @@ import com.ratger.acreative.menus.itemEdit.apply.ItemEditorApplyStateManager
 import com.ratger.acreative.menus.itemEdit.apply.ItemIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ItemModelApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MaxDurabilityApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.MapIdApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.MapColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionEffectAddApplyHandler
@@ -60,6 +62,8 @@ class MenuService(
     private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
     private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
     private val potionColorApplyHandler = PotionColorApplyHandler(validationService, editTargetResolver)
+    private val mapColorApplyHandler = MapColorApplyHandler(validationService)
+    private val mapIdApplyHandler = MapIdApplyHandler(validationService)
     private val potionEffectAddApplyHandler = PotionEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
 
     private lateinit var applyStateManager: ItemEditorApplyStateManager
@@ -100,6 +104,8 @@ class MenuService(
                 HeadOnlineNameApplyHandler(headMutationSupport),
                 HeadTextureValueApplyHandler(headMutationSupport),
                 potionColorApplyHandler,
+                mapColorApplyHandler,
+                mapIdApplyHandler,
                 potionEffectAddApplyHandler,
                 HeadLicensedNameApplyHandler(
                     plugin = hooker.plugin,

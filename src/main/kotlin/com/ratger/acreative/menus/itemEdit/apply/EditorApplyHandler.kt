@@ -31,6 +31,8 @@ enum class EditorApplyKind {
     HEAD_TEXTURE_VALUE,
     HEAD_LICENSED_NAME,
     POTION_COLOR,
+    MAP_COLOR,
+    MAP_ID,
     POTION_EFFECT_ADD
 }
 
