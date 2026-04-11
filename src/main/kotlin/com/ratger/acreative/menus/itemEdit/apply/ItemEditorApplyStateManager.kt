@@ -128,6 +128,7 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.FOOD_NUTRITION,
             EditorApplyKind.FOOD_SATURATION,
             EditorApplyKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.CONSUMABLE_CONSUME_SECONDS -> MessageKey.EDIT_APPLY_USAGE_CONSUME_SECONDS
             EditorApplyKind.CONSUMABLE_SOUND -> MessageKey.EDIT_APPLY_USAGE_SOUND
             EditorApplyKind.CONSUMABLE_REMOVE_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_EFFECT
             EditorApplyKind.CONSUMABLE_APPLY_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_POTION_EFFECT

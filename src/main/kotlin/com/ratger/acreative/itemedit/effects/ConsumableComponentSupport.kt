@@ -35,6 +35,20 @@ object ConsumableComponentSupport {
         mutate(item) { builder -> builder.animation(animation) }
     }
 
+    fun consumeSeconds(item: ItemStack): Float? = item.getData(DataComponentTypes.CONSUMABLE)?.consumeSeconds()
+
+    fun defaultConsumeSeconds(item: ItemStack): Float =
+        item.type.getDefaultData(DataComponentTypes.CONSUMABLE)?.consumeSeconds()
+            ?: Consumable.consumable().build().consumeSeconds()
+
+    fun setConsumeSeconds(item: ItemStack, seconds: Float) {
+        mutate(item) { builder -> builder.consumeSeconds(seconds) }
+    }
+
+    fun resetConsumeSeconds(item: ItemStack) {
+        mutate(item) { builder -> builder.consumeSeconds(defaultConsumeSeconds(item)) }
+    }
+
     fun hasParticles(item: ItemStack): Boolean = item.getData(DataComponentTypes.CONSUMABLE)?.hasConsumeParticles() ?: false
 
     fun setHasParticles(item: ItemStack, value: Boolean) {

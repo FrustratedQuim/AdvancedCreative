@@ -4,6 +4,7 @@ import com.ratger.acreative.itemedit.effects.ConsumableComponentSupport
 import com.ratger.acreative.itemedit.effects.EdibleMenuSupport
 import com.ratger.acreative.itemedit.effects.FoodComponentSupport
 import com.ratger.acreative.itemedit.potion.PotionItemSupport
+import com.ratger.acreative.itemedit.usecooldown.UseCooldownSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -22,14 +23,14 @@ class FoodEditPage(
     private val openApplyEffectsPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
-    private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 53)
+    private val blackSlots = setOf(0, 8, 9, 12, 14, 17, 18, 26, 27, 35, 36, 44, 45, 53)
 
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
         val menu = support.buildMenu(
             title = "<!i>▍ Редактор → Съедобность",
             menuSize = 54,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 29, 30, 31, 32, 33, 38, 39, 40, 41, 42, 49),
+            interactiveTopSlots = setOf(18, 27, 29, 30, 31, 32, 33, 38, 39, 40, 41, 42, 48, 50),
             session = session
         )
 
@@ -77,7 +78,8 @@ class FoodEditPage(
             },
             action = { support.transition(session) { openApplyEffectsPage(player, session, openBack) } }
         ))
-        menu.setButton(49, buildAnimationButton(player, session, openBack))
+        menu.setButton(48, buildAnimationButton(player, session, openBack))
+        menu.setButton(50, buildConsumeSecondsButton(player, session, openBack))
     }
 
     private fun buildEdibleToggleButton(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) =
@@ -303,6 +305,38 @@ class FoodEditPage(
         )
     }
 
+    private fun buildConsumeSecondsButton(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit): ru.violence.coreapi.bukkit.api.menu.button.Button {
+        val consumeSeconds = ConsumableComponentSupport.consumeSeconds(session.editableItem)
+        val defaultSeconds = ConsumableComponentSupport.defaultConsumeSeconds(session.editableItem)
+        val active = consumeSeconds != null && kotlin.math.abs(consumeSeconds - defaultSeconds) > 0.0001f
+        return buttonFactory.applyResetButton(
+            material = Material.SUGAR,
+            active = active,
+            activeName = "<!i><#C7A300>◎ <#FFD700>Скорость поедания: <#00FF40>${UseCooldownSupport.displaySeconds(consumeSeconds ?: defaultSeconds)}",
+            inactiveName = "<!i><#C7A300>⭘ <#FFD700>Скорость поедания: <#FF1500>Обычная",
+            activeLore = CONSUME_SECONDS_LORE,
+            inactiveLore = CONSUME_SECONDS_LORE,
+            itemModifier = {
+                buttonFactory.zeroFoodPreview().invoke(this)
+                this
+            },
+            onApply = {
+                support.transition(session) {
+                    requestApplyInput(player, session, EditorApplyKind.CONSUMABLE_CONSUME_SECONDS) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession, openBack)
+                    }
+                }
+            },
+            onReset = { event ->
+                if (!EdibleMenuSupport.isEnabled(session.editableItem)) {
+                    EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
+                }
+                ConsumableComponentSupport.resetConsumeSeconds(session.editableItem)
+                refreshButtons(event.menu, player, session, openBack)
+            }
+        )
+    }
+
     private fun formatFloat(value: Float?): String {
         if (value == null) return "Нет"
         val rounded = value.toInt()
@@ -350,6 +384,16 @@ class FoodEditPage(
             "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            ""
+        )
+
+        private val CONSUME_SECONDS_LORE = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+            "",
+            "<!i><#FFD700>После нажатия:",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <секунд> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
             ""
         )

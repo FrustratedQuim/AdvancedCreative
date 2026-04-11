@@ -21,6 +21,7 @@ import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamageApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamagePerBlockApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ConsumableApplyEffectAddApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.ConsumableConsumeSecondsApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ConsumableRandomTeleportDiameterApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ConsumableRemoveEffectAddApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.ConsumableSoundApplyHandler
@@ -81,6 +82,7 @@ class MenuService(
     private val deathProtectionApplyEffectAddApplyHandler = DeathProtectionApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
     private val foodNutritionApplyHandler = FoodNutritionApplyHandler(validationService, editTargetResolver)
     private val foodSaturationApplyHandler = FoodSaturationApplyHandler(validationService, editTargetResolver)
+    private val consumableConsumeSecondsApplyHandler = ConsumableConsumeSecondsApplyHandler(validationService, editTargetResolver)
     private val consumableSoundApplyHandler = ConsumableSoundApplyHandler(editParsers, validationService, editTargetResolver)
     private val consumableRemoveEffectAddApplyHandler = ConsumableRemoveEffectAddApplyHandler(editParsers)
     private val consumableRandomTeleportApplyHandler = ConsumableRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
@@ -133,6 +135,7 @@ class MenuService(
                 deathProtectionApplyEffectAddApplyHandler,
                 foodNutritionApplyHandler,
                 foodSaturationApplyHandler,
+                consumableConsumeSecondsApplyHandler,
                 consumableSoundApplyHandler,
                 consumableRemoveEffectAddApplyHandler,
                 consumableRandomTeleportApplyHandler,
