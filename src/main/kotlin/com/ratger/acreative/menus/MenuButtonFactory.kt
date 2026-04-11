@@ -354,16 +354,16 @@ class MenuButtonFactory(
         ) + options.map { option ->
             when {
                 option.enabled && option.focused ->
-                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<#00FF40>  » <b><${option.colorTag}>${option.label}<white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+                    "<!i><#00FF40>[<#00FF40>✔<#00FF40>]<#00FF40>  » <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
 
                 option.enabled && !option.focused ->
-                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<b> <#C7A300>» <b><${option.colorTag}>${option.label}<white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<#C7A300><b> </b>» <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
 
                 !option.enabled && option.focused ->
-                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#00FF40>  » <${option.colorTag}>${option.label}"
+                    "<!i><#00FF40>[<#FF1500>✘<#00FF40>]<#00FF40>  » <${option.colorTag}>${option.label}"
 
                 else ->
-                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> <#C7A300>» <${option.colorTag}>${option.label}"
+                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#C7A300><b> </b>» <${option.colorTag}>${option.label}"
             }
         }
 
@@ -402,7 +402,7 @@ class MenuButtonFactory(
             if (option.selected) {
                 "<!i><#00FF40>  » <b><${option.colorTag}>${option.label}"
             } else {
-                "<!i><b> <#C7A300>» <${option.colorTag}>${option.label}"
+                "<!i><#C7A300><b> </b>» <${option.colorTag}>${option.label}"
             }
         }
 
@@ -430,16 +430,28 @@ class MenuButtonFactory(
 
     private fun buildFocusedToggleListLore(options: List<FocusedToggleListOption>, focusedIndex: Int): List<String> {
         return options.mapIndexed { index, option ->
+            val isFocused = index == focusedIndex
+
             val statePrefix = if (option.enabled) {
-                "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]"
+                if (isFocused) {
+                    "<!i><#00FF40>[<#00FF40>✔<#00FF40>]"
+                } else {
+                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]"
+                }
             } else {
-                "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
+                if (isFocused) {
+                    "<!i><#00FF40>[<#FF1500>✘<#00FF40>]"
+                } else {
+                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
+                }
             }
-            val focusSuffix = if (index == focusedIndex) {
+
+            val focusSuffix = if (isFocused) {
                 "  <#00FF40>» ${option.label} "
             } else {
                 "<b> </b><#C7A300>» ${option.label} "
             }
+
             statePrefix + focusSuffix
         }
     }
