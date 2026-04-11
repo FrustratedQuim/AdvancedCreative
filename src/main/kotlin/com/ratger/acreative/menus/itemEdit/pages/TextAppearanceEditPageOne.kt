@@ -257,7 +257,7 @@ class TextAppearanceEditPageOne(
     }
 
     private fun applyNameStyles(session: ItemEditSession) {
-        val base = textStyleService.customName(session.editableItem) ?: textStyleService.materializeVisibleNameIntoCustomName(session.editableItem)
+        val base = textStyleService.customName(session.editableItem) ?: session.editableItem.effectiveName()
         val withColors = textStyleService.applyOrderedColors(base, session.orderedNameColors)
         textStyleService.setCustomName(
             session.editableItem,

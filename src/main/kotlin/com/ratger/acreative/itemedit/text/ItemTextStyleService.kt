@@ -7,7 +7,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
 
-class ItemTextStyleService {
+class ItemTextStyleService() {
     private val mini = MiniMessage.miniMessage()
     private val plain = PlainTextComponentSerializer.plainText()
 
@@ -29,19 +29,6 @@ class ItemTextStyleService {
         val meta = item.itemMeta ?: return
         meta.lore(lore)
         item.itemMeta = meta
-    }
-
-    fun materializeVisibleNameIntoCustomName(item: ItemStack): Component {
-        val meta = item.itemMeta ?: return Component.translatable(item.type)
-        val existing = meta.customName()
-        if (existing != null) {
-            return existing
-        }
-        val materialized = Component.text(prettyMaterialName(item))
-            .decoration(TextDecoration.ITALIC, false)
-        meta.customName(materialized)
-        item.itemMeta = meta
-        return materialized
     }
 
     fun parseMiniMessage(input: String): Component = mini.deserialize(input)
@@ -124,13 +111,6 @@ class ItemTextStyleService {
     private fun containsTranslatable(component: Component): Boolean {
         if (component is TranslatableComponent) return true
         return component.children().any(::containsTranslatable)
-    }
-
-    private fun prettyMaterialName(item: ItemStack): String {
-        val raw = item.type.key.key
-        return raw.split('_')
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { token -> token.replaceFirstChar { ch -> ch.uppercase() } }
     }
 
     private fun prettyMaterialNameFallback(component: Component): String {
