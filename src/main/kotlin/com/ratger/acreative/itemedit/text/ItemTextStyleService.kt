@@ -2,6 +2,8 @@ package com.ratger.acreative.itemedit.text
 
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -46,7 +48,12 @@ class ItemTextStyleService() {
 
         val payload = serializeMiniMessage(normalizeForGradient(stripped))
         return if (normalized.size == 1) {
-            mini.deserialize("<${normalized.first()}>$payload</${normalized.first()}>")
+            val color = resolveNamedColor(normalized.first())
+            if (color == null) {
+                mini.deserialize("<${normalized.first()}>$payload</${normalized.first()}>")
+            } else {
+                mutate(stripped) { style -> style.color(color) }
+            }
         } else {
             mini.deserialize("<gradient:${normalized.joinToString(":")}>$payload</gradient>")
         }
@@ -115,5 +122,9 @@ class ItemTextStyleService() {
 
     private fun prettyMaterialNameFallback(component: Component): String {
         return plain.serialize(component).ifBlank { "Item" }
+    }
+
+    private fun resolveNamedColor(colorKey: String): TextColor? {
+        return NamedTextColor.NAMES.value(colorKey.lowercase())
     }
 }
