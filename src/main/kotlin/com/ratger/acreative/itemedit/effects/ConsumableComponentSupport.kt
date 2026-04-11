@@ -104,12 +104,11 @@ object ConsumableComponentSupport {
     }
 
     private fun effects(item: ItemStack): List<ConsumeEffect> {
-        val consumeEffects = item.getData(DataComponentTypes.CONSUMABLE)?.consumeEffects() ?: return emptyList()
+        val consumable = item.getData(DataComponentTypes.CONSUMABLE) ?: return emptyList()
+        val consumeEffects = consumable.consumeEffects()
         val normalized = ConsumeEffectSetSupport.normalize(consumeEffects)
         if (normalized != consumeEffects) {
-            val builder = consumableBuilder(item)
-            builder.addEffects(normalized)
-            item.setData(DataComponentTypes.CONSUMABLE, builder.build())
+            item.setData(DataComponentTypes.CONSUMABLE, rebuildConsumable(consumable, normalized))
         }
         return normalized
     }
@@ -117,7 +116,8 @@ object ConsumableComponentSupport {
     private fun mutateEffects(item: ItemStack, mapper: (List<ConsumeEffect>) -> List<ConsumeEffect>) {
         val normalized = ConsumeEffectSetSupport.normalize(effects(item))
         val updated = mapper(normalized)
-        mutate(item) { builder -> builder.addEffects(updated) }
+        val current = item.getData(DataComponentTypes.CONSUMABLE) ?: Consumable.consumable().build()
+        item.setData(DataComponentTypes.CONSUMABLE, rebuildConsumable(current, updated))
     }
 
     private fun mutate(item: ItemStack, update: (Consumable.Builder) -> Unit) {
@@ -129,4 +129,14 @@ object ConsumableComponentSupport {
 
     private fun consumableBuilder(item: ItemStack): Consumable.Builder =
         item.getData(DataComponentTypes.CONSUMABLE)?.toBuilder() ?: Consumable.consumable()
+
+    private fun rebuildConsumable(current: Consumable, effects: List<ConsumeEffect>): Consumable {
+        return Consumable.consumable()
+            .consumeSeconds(current.consumeSeconds())
+            .animation(current.animation())
+            .hasConsumeParticles(current.hasConsumeParticles())
+            .sound(current.sound())
+            .addEffects(effects)
+            .build()
+    }
 }
