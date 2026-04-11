@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.itemEdit
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.container.LockItemSupport
+import com.ratger.acreative.itemedit.text.ItemTextStyleService
 import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
@@ -22,6 +23,7 @@ import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.RestrictionsListPage
 import com.ratger.acreative.menus.itemEdit.pages.RestrictionsRootPage
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.TextAppearanceEditPageOne
 import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
@@ -58,6 +60,7 @@ class ItemEditMenu(
 
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
     private val headTextureValueBookSupport = HeadTextureValueBookSupport()
+    private val textStyleService = ItemTextStyleService()
     private val lastCategoryByPlayer = mutableMapOf<java.util.UUID, LastEditorCategory>()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }
@@ -82,17 +85,29 @@ class ItemEditMenu(
     }
     private val openMapPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openMapPage(player, session) }
     private val openArmorTrimPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openArmorTrimPage(player, session) }
+    private val openTextAppearanceFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openTextAppearanceFromSimple(player, session) }
+    private val openTextAppearanceFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openTextAppearanceFromAdvanced(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
-    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler, openFoodPageFromSimpleHandler)
+    private val simplePage: SimpleEditMenu = SimpleEditMenu(
+        support,
+        buttonFactory,
+        openRootHandler,
+        openEnchantmentsFromSimpleHandler,
+        openFoodPageFromSimpleHandler,
+        openTextAppearanceFromSimpleHandler
+    )
     private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
         support = support,
         buttonFactory = buttonFactory,
         openRoot = openRootHandler,
         openAdvancedPageTwo = openAdvancedPageTwoHandler,
         openSpecialParameters = openSpecialParametersFromAdvancedHandler,
+        openTextAppearance = openTextAppearanceFromAdvancedHandler,
         requestApplyInput = requestApplyInput
     )
+    private val textAppearancePageOne: TextAppearanceEditPageOne =
+        TextAppearanceEditPageOne(support, buttonFactory, textStyleService, requestApplyInput)
     private val advancedPageTwo: AdvancedEditPageTwo =
         AdvancedEditPageTwo(
             support,
@@ -296,6 +311,18 @@ class ItemEditMenu(
 
     fun openMapPage(player: Player, session: ItemEditSession) {
         mapEditPage.open(player, session)
+    }
+
+    fun openTextAppearancePage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
+        textAppearancePageOne.open(player, session, openBack)
+    }
+
+    fun openTextAppearanceFromSimple(player: Player, session: ItemEditSession) {
+        openTextAppearancePage(player, session, openSimpleHandler)
+    }
+
+    fun openTextAppearanceFromAdvanced(player: Player, session: ItemEditSession) {
+        openTextAppearancePage(player, session, openAdvancedPageOneHandler)
     }
 
 

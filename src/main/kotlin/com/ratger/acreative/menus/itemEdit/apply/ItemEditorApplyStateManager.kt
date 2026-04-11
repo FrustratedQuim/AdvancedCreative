@@ -100,6 +100,8 @@ class ItemEditorApplyStateManager(
     private fun usageMessageFor(kind: EditorApplyKind): MessageKey {
         return when (kind) {
             EditorApplyKind.ITEM_ID -> MessageKey.EDIT_APPLY_USAGE_ID
+            EditorApplyKind.NAME_TEXT,
+            EditorApplyKind.LORE_TEXT -> MessageKey.EDIT_APPLY_USAGE_TEXT
             EditorApplyKind.AMOUNT -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_USAGE_AMOUNT

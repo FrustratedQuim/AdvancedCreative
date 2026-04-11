@@ -13,6 +13,8 @@ interface EditorApplyHandler {
 
 enum class EditorApplyKind {
     ITEM_ID,
+    NAME_TEXT,
+    LORE_TEXT,
     AMOUNT,
     ITEM_MODEL,
     STACK_SIZE,

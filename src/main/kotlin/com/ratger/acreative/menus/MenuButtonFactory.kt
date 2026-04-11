@@ -34,6 +34,11 @@ class MenuButtonFactory(
         val label: String,
         val enabled: Boolean
     )
+    data class OrderedFocusedToggleListOption(
+        val label: String,
+        val enabled: Boolean,
+        val order: Int?
+    )
 
     enum class FocusedToggleListInteraction {
         NEXT_FOCUS,
@@ -289,6 +294,36 @@ class MenuButtonFactory(
         }.build()
     }
 
+    fun orderedFocusedToggleListButton(
+        material: Material,
+        title: String,
+        options: List<OrderedFocusedToggleListOption>,
+        focusedIndex: Int,
+        beforeOptionsLore: List<String> = emptyList(),
+        afterOptionsLore: List<String> = emptyList(),
+        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
+    ): Button {
+        require(options.isNotEmpty()) { "Ordered focused toggle list options cannot be empty" }
+        val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
+        val lore = beforeOptionsLore + buildOrderedFocusedToggleListLore(options, safeFocusedIndex) + afterOptionsLore
+        val builder = ItemBuilder(material)
+            .name(parser.parse(title))
+            .lore(lore.map(parser::parse))
+        if (itemModifier != null) {
+            builder.itemModifier()
+        }
+        return Button.simple(builder.build()).action { event ->
+            val interaction = when {
+                event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
+                event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
+                isDropClick(event) -> FocusedToggleListInteraction.RESET_ALL
+                else -> return@action
+            }
+            action(event, interaction)
+        }.build()
+    }
+
     private fun <T> buildListButtonLore(options: List<ListButtonOption<T>>, selectedIndex: Int): List<String> {
         return options.mapIndexed { index, option ->
             if (index == selectedIndex) {
@@ -303,6 +338,23 @@ class MenuButtonFactory(
         return options.mapIndexed { index, option ->
             val statePrefix = if (option.enabled) {
                 "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]"
+            } else {
+                "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
+            }
+            val focusSuffix = if (index == focusedIndex) {
+                "  <#00FF40>» ${option.label} "
+            } else {
+                "<b> </b><#C7A300>» ${option.label} "
+            }
+            statePrefix + focusSuffix
+        }
+    }
+
+    private fun buildOrderedFocusedToggleListLore(options: List<OrderedFocusedToggleListOption>, focusedIndex: Int): List<String> {
+        return options.mapIndexed { index, option ->
+            val statePrefix = if (option.enabled) {
+                val orderSuffix = option.order?.let { " <#FFF3E0>[<#00FF40>$it<#FFF3E0>]" } ?: ""
+                "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]$orderSuffix"
             } else {
                 "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
             }

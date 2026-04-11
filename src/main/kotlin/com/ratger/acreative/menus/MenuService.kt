@@ -11,6 +11,7 @@ import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.LicensedProfileLookupService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import com.ratger.acreative.itemedit.text.ItemTextStyleService
 import com.ratger.acreative.itemedit.validation.ValidationService
 import com.ratger.acreative.menus.itemEdit.ItemEditMenu
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -44,6 +45,8 @@ import com.ratger.acreative.menus.itemEdit.apply.MaxDurabilityApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MapIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MapColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.NameTextApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.LoreTextApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionEffectAddApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.RestrictionBlockApplyHandler
@@ -61,6 +64,7 @@ class MenuService(
     private val editParsers = EditParsers()
     private val validationService = ValidationService()
     private val editTargetResolver = EditTargetResolver()
+    private val textStyleService = ItemTextStyleService()
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
     private val headMutationSupport = HeadTextureMutationSupport()
@@ -109,6 +113,8 @@ class MenuService(
             promptService = ApplyPromptService(hooker.messageManager),
             handlers = listOf(
                 itemIdApplyHandler,
+                NameTextApplyHandler(textStyleService),
+                LoreTextApplyHandler(textStyleService),
                 AmountApplyHandler(),
                 ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
                 stackSizeApplyHandler,

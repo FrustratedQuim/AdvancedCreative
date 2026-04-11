@@ -12,7 +12,8 @@ class SimpleEditMenu(
     private val buttonFactory: MenuButtonFactory,
     private val openRoot: (Player, ItemEditSession) -> Unit,
     private val openEnchantments: (Player, ItemEditSession) -> Unit,
-    private val openFoodPage: (Player, ItemEditSession) -> Unit
+    private val openFoodPage: (Player, ItemEditSession) -> Unit,
+    private val openTextAppearance: (Player, ItemEditSession) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         val menuSize = 45
@@ -36,7 +37,12 @@ class SimpleEditMenu(
             action = { support.transition(session) { openFoodPage(player, session) } }
         ))
         menu.setButton(31, buttonFactory.actionButton(Material.IRON_HELMET, "<!i><#C7A300>🔔 <#FFD700>Позволить надевать на голову", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"), buttonFactory.hideAttributes()))
-        menu.setButton(32, buttonFactory.actionButton(Material.NAME_TAG, "<!i><#C7A300>✎ <#FFD700>Изменить название и описание", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
+        menu.setButton(32, buttonFactory.actionButton(
+            Material.NAME_TAG,
+            "<!i><#C7A300>✎ <#FFD700>Изменить название и описание",
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            action = { support.transition(session) { openTextAppearance(player, session) } }
+        ))
         menu.setButton(33, buttonFactory.actionButton(
             material = Material.LAPIS_LAZULI,
             name = "<!i><#C7A300>⭐ <#FFD700>Параметры зачарований",

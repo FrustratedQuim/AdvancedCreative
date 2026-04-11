@@ -17,5 +17,10 @@ data class ItemEditSession(
     var headTextureOpSequence: Long = 0,
     var headTextureSource: HeadTextureSource? = null,
     var headTextureValueInputBook: ItemStack? = null,
-    var headTextureVirtualValue: String? = null
+    var headTextureVirtualValue: String? = null,
+    var nameColorFocusIndex: Int = 0,
+    var loreColorFocusIndex: Int = 0,
+    val orderedNameColors: MutableList<String> = mutableListOf(),
+    val orderedLoreColors: MutableList<String> = mutableListOf(),
+    var textStyleStateInitialized: Boolean = false
 )
