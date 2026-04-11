@@ -17,6 +17,7 @@ import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
+import org.bukkit.potion.PotionEffectType
 import ru.violence.coreapi.bukkit.api.menu.button.Button
 import ru.violence.coreapi.bukkit.api.util.ItemBuilder
 
@@ -572,6 +573,73 @@ class MenuButtonFactory(
                         val meta = item.itemMeta as? PotionMeta ?: return@edit
                         meta.basePotionType = previewPotionType
                         meta.addCustomEffect(entry.effect, true)
+                        item.itemMeta = meta
+                    }
+                }
+                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+                this
+            },
+            action = action
+        )
+    }
+
+    fun deathProtectionRemoveEffectEntryButton(
+        type: PotionEffectType,
+        displayName: String,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val previewPotionType = PotionItemSupport.previewPotionType(type)
+        return actionButton(
+            material = Material.POTION,
+            name = "<!i><#C7A300>◎ <#FFD700>$displayName",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить"),
+            itemModifier = {
+                if (previewPotionType != null) {
+                    edit { item ->
+                        val meta = item.itemMeta as? PotionMeta ?: return@edit
+                        meta.basePotionType = previewPotionType
+                        item.itemMeta = meta
+                    }
+                }
+                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+                this
+            },
+            action = action
+        )
+    }
+
+    fun deathProtectionApplyEffectEntryButton(
+        index: Int,
+        displayName: String,
+        seconds: Int,
+        level: Int,
+        chancePercent: String,
+        showParticles: Boolean,
+        showIcon: Boolean,
+        type: PotionEffectType,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val previewPotionType = PotionItemSupport.previewPotionType(type)
+        return actionButton(
+            material = Material.POTION,
+            name = "<!i><#C7A300>◎ <#FFD700>Эффект №$index",
+            lore = listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
+                "",
+                "<!i><#FFD700>Параметры:",
+                "<!i><#C7A300> ● <#FFE68A>Шанс: <#00FF40>$chancePercent%",
+                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$displayName",
+                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$seconds",
+                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>$level",
+                "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
+                "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
+                ""
+            ),
+            itemModifier = {
+                if (previewPotionType != null) {
+                    edit { item ->
+                        val meta = item.itemMeta as? PotionMeta ?: return@edit
+                        meta.basePotionType = previewPotionType
                         item.itemMeta = meta
                     }
                 }

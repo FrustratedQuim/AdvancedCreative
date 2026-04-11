@@ -20,6 +20,10 @@ import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
 import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamageApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamagePerBlockApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionApplyEffectAddApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionRandomTeleportDiameterApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionRemoveEffectAddApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionSoundApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.apply.EnchantmentApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.EquipSoundApplyHandler
@@ -65,8 +69,12 @@ class MenuService(
     private val mapColorApplyHandler = MapColorApplyHandler(validationService)
     private val mapIdApplyHandler = MapIdApplyHandler(validationService)
     private val potionEffectAddApplyHandler = PotionEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
+    private val deathProtectionSoundApplyHandler = DeathProtectionSoundApplyHandler(editParsers, validationService, editTargetResolver)
+    private val deathProtectionRemoveEffectAddApplyHandler = DeathProtectionRemoveEffectAddApplyHandler(editParsers)
+    private val deathProtectionRandomTeleportApplyHandler = DeathProtectionRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
+    private val deathProtectionApplyEffectAddApplyHandler = DeathProtectionApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
 
-    private lateinit var applyStateManager: ItemEditorApplyStateManager
+    private var applyStateManager: ItemEditorApplyStateManager
 
     private val itemEditMenu = ItemEditMenu(
         hooker = hooker,
@@ -107,6 +115,10 @@ class MenuService(
                 mapColorApplyHandler,
                 mapIdApplyHandler,
                 potionEffectAddApplyHandler,
+                deathProtectionSoundApplyHandler,
+                deathProtectionRemoveEffectAddApplyHandler,
+                deathProtectionRandomTeleportApplyHandler,
+                deathProtectionApplyEffectAddApplyHandler,
                 HeadLicensedNameApplyHandler(
                     plugin = hooker.plugin,
                     sessionManager = sessionManager,

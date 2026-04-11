@@ -23,6 +23,9 @@ import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
 import com.ratger.acreative.menus.itemEdit.pages.DecoratedPotPartDescriptor
+import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionApplyEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionEditPage
+import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionRemoveEffectsListPage
 import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
 import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
@@ -67,6 +70,7 @@ class ItemEditMenu(
     private val openUseCooldownPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openUseCooldownPage(player, session) }
     private val openLockPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openLockPageInternal(player, session) }
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
+    private val openDeathProtectionPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openDeathProtectionPage(player, session) }
     private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
     private val openPotionPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session ->
         openPotionPage(player, session, openAdvancedPageOneHandler)
@@ -95,7 +99,21 @@ class ItemEditMenu(
             openEnchantmentsFromAdvancedHandler,
             openUseRemainderPageHandler,
             openUseCooldownPageHandler,
-            openRestrictionsRootHandler
+            openRestrictionsRootHandler,
+            openDeathProtectionPageHandler
+        )
+    private val deathProtectionRemoveEffectsPage: DeathProtectionRemoveEffectsListPage =
+        DeathProtectionRemoveEffectsListPage(support, buttonFactory, requestApplyInput, openDeathProtectionPageHandler)
+    private val deathProtectionApplyEffectsPage: DeathProtectionApplyEffectsListPage =
+        DeathProtectionApplyEffectsListPage(support, buttonFactory, requestApplyInput, openDeathProtectionPageHandler)
+    private val deathProtectionPage: DeathProtectionEditPage =
+        DeathProtectionEditPage(
+            support = support,
+            buttonFactory = buttonFactory,
+            openAdvancedPageTwo = openAdvancedPageTwoHandler,
+            openRemoveEffectsPage = { player, session -> openDeathProtectionRemoveEffectsPage(player, session, 0) },
+            openApplyEffectsPage = { player, session -> openDeathProtectionApplyEffectsPage(player, session, 0) },
+            requestApplyInput = requestApplyInput
         )
     private val attributePage: AttributeEditPage =
         AttributeEditPage(support, buttonFactory, openAdvancedPageTwoHandler, requestApplyInput)
@@ -205,6 +223,18 @@ class ItemEditMenu(
 
     fun openRestrictionsRoot(player: Player, session: ItemEditSession) {
         restrictionsRootPage.open(player, session)
+    }
+
+    fun openDeathProtectionPage(player: Player, session: ItemEditSession) {
+        deathProtectionPage.open(player, session)
+    }
+
+    fun openDeathProtectionRemoveEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
+        deathProtectionRemoveEffectsPage.open(player, session, page)
+    }
+
+    fun openDeathProtectionApplyEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
+        deathProtectionApplyEffectsPage.open(player, session, page)
     }
 
     fun openRestrictionsList(player: Player, session: ItemEditSession, mode: RestrictionMode, page: Int = 0) {

@@ -109,6 +109,7 @@ enum class MessageKey {
     EDIT_APPLY_USAGE_VALUE,
     EDIT_APPLY_USAGE_POTION_COLOR,
     EDIT_APPLY_USAGE_POTION_EFFECT,
+    EDIT_APPLY_USAGE_EFFECT,
     EDIT_APPLY_PROMPT_TITLE,
     EDIT_APPLY_PROMPT_SUBTITLE,
     EDIT_APPLY_PROMPT_SUBTITLE_ID,
@@ -121,6 +122,7 @@ enum class MessageKey {
     EDIT_APPLY_PROMPT_SUBTITLE_VALUE,
     EDIT_APPLY_PROMPT_SUBTITLE_POTION_COLOR,
     EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT,
+    EDIT_APPLY_PROMPT_SUBTITLE_EFFECT,
     EDIT_PROMPT_CLEAR
 }
 
@@ -245,6 +247,7 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_USAGE_VALUE to "<dark_red>▍ <#FF1500>Используйте: /apply <value>",
         MessageKey.EDIT_APPLY_USAGE_POTION_COLOR to "<dark_red>▍ <#FF1500>Используйте: /apply <#hex>",
         MessageKey.EDIT_APPLY_USAGE_POTION_EFFECT to "<dark_red>▍ <#FF1500>Используйте: /apply <эффект> [уровень]",
+        MessageKey.EDIT_APPLY_USAGE_EFFECT to "<dark_red>▍ <#FF1500>Используйте: /apply <эффект>",
         MessageKey.EDIT_APPLY_PROMPT_TITLE to "<#00FF40>Укажите значение для редактора",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE to "<#7BFF00>/apply <id> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID to "<#7BFF00>/apply <id> - указать <gray>| <#7BFF00>/apply cancel - отмена",
@@ -257,6 +260,7 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_VALUE to "<#7BFF00>/apply <value> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_COLOR to "<#7BFF00>/apply <#hex> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT to "<#7BFF00>/apply <эффект> [уровень] - указать <gray>| <#7BFF00>/apply cancel - отмена",
+        MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_EFFECT to "<#7BFF00>/apply <эффект> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_PROMPT_CLEAR to "<!i>"
     )
 }

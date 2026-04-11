@@ -30,6 +30,10 @@ class ApplyPromptService(
             EditorApplyKind.MAP_COLOR -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_COLOR
             EditorApplyKind.MAP_ID -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
             EditorApplyKind.POTION_EFFECT_ADD -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT
+            EditorApplyKind.DEATH_PROTECTION_SOUND -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_SOUND
+            EditorApplyKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_EFFECT
+            EditorApplyKind.DEATH_PROTECTION_APPLY_EFFECT_ADD -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT
+            EditorApplyKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
         }
         messageManager.sendTitle(
             player = player,
