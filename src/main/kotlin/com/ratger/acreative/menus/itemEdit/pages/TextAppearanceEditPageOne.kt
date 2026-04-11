@@ -42,15 +42,15 @@ class TextAppearanceEditPageOne(
     }
 
     private fun refreshButtons(menu: Menu, player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
-        menu.setButton(29, buildNameColorButton(menu, session))
+        menu.setButton(29, buildNameColorButton(session))
         menu.setButton(30, buildNameApplyButton(player, session, openBack))
         menu.setButton(32, buildLoreApplyButton(player, session, openBack))
-        menu.setButton(33, buildLoreColorButton(menu, session))
-        menu.setButton(39, buildNameShadowButton(menu, session))
-        menu.setButton(41, buildLoreShadowButton(menu, session))
+        menu.setButton(33, buildLoreColorButton(session))
+        menu.setButton(39, buildNameShadowButton(session))
+        menu.setButton(41, buildLoreShadowButton(session))
     }
 
-    private fun buildNameColorButton(menu: Menu, session: ItemEditSession): Button {
+    private fun buildNameColorButton(session: ItemEditSession): Button {
         val active = session.orderedNameColors.isNotEmpty()
         val options = TextStylePalette.colors.mapIndexed { index, option ->
             val order = session.orderedNameColors.indexOf(option.key).takeIf { it >= 0 }?.plus(1)
@@ -87,7 +87,7 @@ class TextAppearanceEditPageOne(
                     updateEditablePreview(event.menu, session)
                 }
             }
-            event.menu.setButton(29, buildNameColorButton(event.menu, session))
+            event.menu.setButton(29, buildNameColorButton(session))
         }
     }
 
@@ -166,7 +166,7 @@ class TextAppearanceEditPageOne(
         )
     }
 
-    private fun buildLoreColorButton(menu: Menu, session: ItemEditSession): Button {
+    private fun buildLoreColorButton(session: ItemEditSession): Button {
         val active = session.orderedLoreColors.isNotEmpty()
         val options = TextStylePalette.colors.mapIndexed { index, option ->
             val order = session.orderedLoreColors.indexOf(option.key).takeIf { it >= 0 }?.plus(1)
@@ -204,11 +204,11 @@ class TextAppearanceEditPageOne(
                     updateEditablePreview(event.menu, session)
                 }
             }
-            event.menu.setButton(33, buildLoreColorButton(event.menu, session))
+            event.menu.setButton(33, buildLoreColorButton(session))
         }
     }
 
-    private fun buildNameShadowButton(menu: Menu, session: ItemEditSession): Button {
+    private fun buildNameShadowButton(session: ItemEditSession): Button {
         val options = TextStylePalette.shadowOptions.map { option ->
             MenuButtonFactory.TextShadowOption(
                 colorTag = option.key,
@@ -216,7 +216,6 @@ class TextAppearanceEditPageOne(
                 selected = option.key == session.nameShadowKey
             )
         }
-        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it.key == session.nameShadowKey }.takeIf { it >= 0 } ?: 0
         val active = session.nameShadowKey != TextStylePalette.ORDINARY_SHADOW_KEY
 
         return buttonFactory.textShadowSelectButton(
@@ -225,16 +224,15 @@ class TextAppearanceEditPageOne(
             inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Тень названия",
             active = active,
             options = options,
-        ) { event ->
-            val newIndex = (selectedIndex + 1) % options.size
+        ) { event, newIndex ->
             session.nameShadowKey = TextStylePalette.shadowOptions[newIndex].key
             applyNameStyles(session)
             updateEditablePreview(event.menu, session)
-            event.menu.setButton(39, buildNameShadowButton(event.menu, session))
+            event.menu.setButton(39, buildNameShadowButton(session))
         }
     }
 
-    private fun buildLoreShadowButton(menu: Menu, session: ItemEditSession): Button {
+    private fun buildLoreShadowButton(session: ItemEditSession): Button {
         val options = TextStylePalette.shadowOptions.map { option ->
             MenuButtonFactory.TextShadowOption(
                 colorTag = option.key,
@@ -242,7 +240,6 @@ class TextAppearanceEditPageOne(
                 selected = option.key == session.loreShadowKey
             )
         }
-        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it.key == session.loreShadowKey }.takeIf { it >= 0 } ?: 0
         val active = session.loreShadowKey != TextStylePalette.ORDINARY_SHADOW_KEY
 
         return buttonFactory.textShadowSelectButton(
@@ -251,12 +248,11 @@ class TextAppearanceEditPageOne(
             inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Тень описания",
             active = active,
             options = options,
-        ) { event ->
-            val newIndex = (selectedIndex + 1) % options.size
+        ) { event, newIndex ->
             session.loreShadowKey = TextStylePalette.shadowOptions[newIndex].key
             applyLoreStyles(session)
             updateEditablePreview(event.menu, session)
-            event.menu.setButton(41, buildLoreShadowButton(event.menu, session))
+            event.menu.setButton(41, buildLoreShadowButton(session))
         }
     }
 

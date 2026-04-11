@@ -365,7 +365,7 @@ class MenuButtonFactory(
                 else ->
                     "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#C7A300><b> </b>» <${option.colorTag}>${option.label}"
             }
-        }
+        } + "<!i>"
 
         return actionButton(
             material = material,
@@ -393,18 +393,22 @@ class MenuButtonFactory(
         inactiveTitle: String,
         active: Boolean,
         options: List<TextShadowOption>,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, Int) -> Unit
     ): Button {
+        require(options.isNotEmpty()) { "Text shadow options cannot be empty" }
+
+        val selectedIndex = options.indexOfFirst { it.selected }.takeIf { it >= 0 } ?: 0
         val lore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "<!i>"
         ) + options.map { option ->
+            val displayColorTag = if (option.colorTag == "ordinary") "white" else option.colorTag
             if (option.selected) {
-                "<!i><#00FF40>  » <b><${option.colorTag}>${option.label}"
+                "<!i><#00FF40>  » <b><$displayColorTag>${option.label}"
             } else {
-                "<!i><#C7A300><b> </b>» <${option.colorTag}>${option.label}"
+                "<!i><#C7A300><b> </b>» <$displayColorTag>${option.label}"
             }
-        }
+        } + listOf("<!i>")
 
         return actionButton(
             material = material,
@@ -414,7 +418,14 @@ class MenuButtonFactory(
                 if (active) glint(true)
                 this
             },
-            action = action
+            action = { event ->
+                val newIndex = when {
+                    event.isRight || event.isShiftRight -> (selectedIndex - 1 + options.size) % options.size
+                    event.isLeft || event.isShiftLeft -> (selectedIndex + 1) % options.size
+                    else -> return@actionButton
+                }
+                action(event, newIndex)
+            }
         )
     }
 
@@ -511,13 +522,10 @@ class MenuButtonFactory(
         placeholderName: String,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
     ): Button {
-        val buttonItem = if (storedItem == null) {
-            ItemBuilder(Material.BARRIER)
+        val buttonItem = storedItem?.clone()
+            ?: ItemBuilder(Material.BARRIER)
                 .name(parser.parse(placeholderName))
                 .build()
-        } else {
-            storedItem.clone()
-        }
 
         return Button.simple(buttonItem).action(action).build()
     }
