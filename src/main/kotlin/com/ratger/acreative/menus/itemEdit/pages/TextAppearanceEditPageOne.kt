@@ -54,27 +54,20 @@ class TextAppearanceEditPageOne(
         val active = session.orderedNameColors.isNotEmpty()
         val options = TextStylePalette.colors.mapIndexed { index, option ->
             val order = session.orderedNameColors.indexOf(option.key).takeIf { it >= 0 }?.plus(1)
-            MenuButtonFactory.OrderedFocusedToggleListOption(
+            MenuButtonFactory.TextColorFocusOption(
+                colorTag = option.key,
                 label = option.maleLabel,
                 enabled = order != null,
+                focused = index == session.nameColorFocusIndex.coerceIn(0, TextStylePalette.colors.lastIndex),
                 order = order
             )
         }
-        return buttonFactory.orderedFocusedToggleListButton(
+        return buttonFactory.textOrderedColorFocusButton(
             material = Material.BRUSH,
-            title = if (active) "<!i><#C7A300>◎ <#FFD700>Цвет названия" else "<!i><#C7A300>⭘ <#FFD700>Цвет названия",
+            activeTitle = "<!i><#C7A300>◎ <#FFD700>Цвет названия",
+            inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Цвет названия",
+            active = active,
             options = options,
-            focusedIndex = session.nameColorFocusIndex,
-            beforeOptionsLore = listOf(
-                "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
-                "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
-                "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
-                "<!i>"
-            ),
-            itemModifier = {
-                if (active) glint(true)
-                this
-            }
         ) { event, interaction ->
             when (interaction) {
                 MenuButtonFactory.FocusedToggleListInteraction.NEXT_FOCUS -> {
@@ -85,12 +78,12 @@ class TextAppearanceEditPageOne(
                     if (!session.orderedNameColors.remove(key)) {
                         session.orderedNameColors.add(key)
                     }
-                    applyNameColors(session)
+                    applyNameStyles(session)
                     updateEditablePreview(event.menu, session)
                 }
                 MenuButtonFactory.FocusedToggleListInteraction.RESET_ALL -> {
                     session.orderedNameColors.clear()
-                    applyNameColors(session)
+                    applyNameStyles(session)
                     updateEditablePreview(event.menu, session)
                 }
             }
@@ -128,6 +121,7 @@ class TextAppearanceEditPageOne(
             onReset = {
                 textStyleService.setCustomName(session.editableItem, null)
                 session.orderedNameColors.clear()
+                session.nameShadowKey = TextStylePalette.ORDINARY_SHADOW_KEY
                 updateEditablePreview(it.menu, session)
                 refreshButtons(it.menu, player, session, openBack)
             }
@@ -165,6 +159,7 @@ class TextAppearanceEditPageOne(
             onReset = {
                 textStyleService.setLore(session.editableItem, null)
                 session.orderedLoreColors.clear()
+                session.loreShadowKey = TextStylePalette.ORDINARY_SHADOW_KEY
                 updateEditablePreview(it.menu, session)
                 refreshButtons(it.menu, player, session, openBack)
             }
@@ -173,30 +168,23 @@ class TextAppearanceEditPageOne(
 
     private fun buildLoreColorButton(menu: Menu, session: ItemEditSession): Button {
         val active = session.orderedLoreColors.isNotEmpty()
-        val options = TextStylePalette.colors.map { option ->
+        val options = TextStylePalette.colors.mapIndexed { index, option ->
             val order = session.orderedLoreColors.indexOf(option.key).takeIf { it >= 0 }?.plus(1)
-            MenuButtonFactory.OrderedFocusedToggleListOption(
+            MenuButtonFactory.TextColorFocusOption(
+                colorTag = option.key,
                 label = option.femaleLabel,
                 enabled = order != null,
+                focused = index == session.loreColorFocusIndex.coerceIn(0, TextStylePalette.colors.lastIndex),
                 order = order
             )
         }
 
-        return buttonFactory.orderedFocusedToggleListButton(
+        return buttonFactory.textOrderedColorFocusButton(
             material = Material.BRUSH,
-            title = if (active) "<!i><#C7A300>◎ <#FFD700>Цвет описания" else "<!i><#C7A300>⭘ <#FFD700>Цвет описания",
+            activeTitle = "<!i><#C7A300>◎ <#FFD700>Цвет описания",
+            inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Цвет описания",
+            active = active,
             options = options,
-            focusedIndex = session.loreColorFocusIndex,
-            beforeOptionsLore = listOf(
-                "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
-                "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
-                "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
-                "<!i>"
-            ),
-            itemModifier = {
-                if (active) glint(true)
-                this
-            }
         ) { event, interaction ->
             when (interaction) {
                 MenuButtonFactory.FocusedToggleListInteraction.NEXT_FOCUS -> {
@@ -207,12 +195,12 @@ class TextAppearanceEditPageOne(
                     if (!session.orderedLoreColors.remove(key)) {
                         session.orderedLoreColors.add(key)
                     }
-                    applyLoreColors(session)
+                    applyLoreStyles(session)
                     updateEditablePreview(event.menu, session)
                 }
                 MenuButtonFactory.FocusedToggleListInteraction.RESET_ALL -> {
                     session.orderedLoreColors.clear()
-                    applyLoreColors(session)
+                    applyLoreStyles(session)
                     updateEditablePreview(event.menu, session)
                 }
             }
@@ -221,93 +209,97 @@ class TextAppearanceEditPageOne(
     }
 
     private fun buildNameShadowButton(menu: Menu, session: ItemEditSession): Button {
-        val name = textStyleService.customName(session.editableItem)
-        val selected = name?.let(textStyleService::detectShadowColor)
-        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it?.key == selected }.takeIf { it >= 0 } ?: 0
-        val active = selected != null
-
         val options = TextStylePalette.shadowOptions.map { option ->
-            val label = option?.maleLabel ?: "Обычная"
-            MenuButtonFactory.ListButtonOption(option?.key, label)
+            MenuButtonFactory.TextShadowOption(
+                colorTag = option.key,
+                label = option.maleLabel,
+                selected = option.key == session.nameShadowKey
+            )
         }
+        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it.key == session.nameShadowKey }.takeIf { it >= 0 } ?: 0
+        val active = session.nameShadowKey != TextStylePalette.ORDINARY_SHADOW_KEY
 
-        return buttonFactory.listButton(
+        return buttonFactory.textShadowSelectButton(
             material = Material.INK_SAC,
+            activeTitle = "<!i><#C7A300>◎ <#FFD700>Тень названия",
+            inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Тень названия",
+            active = active,
             options = options,
-            selectedIndex = selectedIndex,
-            titleBuilder = { _, _ ->
-                if (active) "<!i><#C7A300>◎ <#FFD700>Тень названия" else "<!i><#C7A300>⭘ <#FFD700>Тень названия"
-            },
-            beforeOptionsLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", "<!i>"),
-            itemModifier = {
-                if (active) glint(true)
-                this
-            }
-        ) { event, newIndex ->
-            val shadow = options[newIndex].value
-            val base = textStyleService.customName(session.editableItem) ?: textStyleService.materializeVisibleNameIntoCustomName(session.editableItem)
-            textStyleService.setCustomName(session.editableItem, textStyleService.applyShadow(base, shadow))
+        ) { event ->
+            val newIndex = (selectedIndex + 1) % options.size
+            session.nameShadowKey = TextStylePalette.shadowOptions[newIndex].key
+            applyNameStyles(session)
             updateEditablePreview(event.menu, session)
             event.menu.setButton(39, buildNameShadowButton(event.menu, session))
         }
     }
 
     private fun buildLoreShadowButton(menu: Menu, session: ItemEditSession): Button {
-        val lore = textStyleService.lore(session.editableItem)
-        val selected = lore.firstOrNull()?.let(textStyleService::detectShadowColor)
-        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it?.key == selected }.takeIf { it >= 0 } ?: 0
-        val active = selected != null
         val options = TextStylePalette.shadowOptions.map { option ->
-            val label = option?.femaleLabel ?: "Обычная"
-            MenuButtonFactory.ListButtonOption(option?.key, label)
+            MenuButtonFactory.TextShadowOption(
+                colorTag = option.key,
+                label = option.femaleLabel,
+                selected = option.key == session.loreShadowKey
+            )
         }
+        val selectedIndex = TextStylePalette.shadowOptions.indexOfFirst { it.key == session.loreShadowKey }.takeIf { it >= 0 } ?: 0
+        val active = session.loreShadowKey != TextStylePalette.ORDINARY_SHADOW_KEY
 
-        return buttonFactory.listButton(
+        return buttonFactory.textShadowSelectButton(
             material = Material.INK_SAC,
+            activeTitle = "<!i><#C7A300>◎ <#FFD700>Тень описания",
+            inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Тень описания",
+            active = active,
             options = options,
-            selectedIndex = selectedIndex,
-            titleBuilder = { _, _ ->
-                if (active) "<!i><#C7A300>◎ <#FFD700>Тень описания" else "<!i><#C7A300>⭘ <#FFD700>Тень описания"
-            },
-            beforeOptionsLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", "<!i>"),
-            itemModifier = {
-                if (active) glint(true)
-                this
-            }
-        ) { event, newIndex ->
-            val shadow = options[newIndex].value
-            val currentLore = textStyleService.lore(session.editableItem)
-            if (currentLore.isNotEmpty()) {
-                textStyleService.setLore(session.editableItem, currentLore.map { line -> textStyleService.applyShadow(line, shadow) })
-                updateEditablePreview(event.menu, session)
-            }
+        ) { event ->
+            val newIndex = (selectedIndex + 1) % options.size
+            session.loreShadowKey = TextStylePalette.shadowOptions[newIndex].key
+            applyLoreStyles(session)
+            updateEditablePreview(event.menu, session)
             event.menu.setButton(41, buildLoreShadowButton(event.menu, session))
         }
     }
 
-    private fun applyNameColors(session: ItemEditSession) {
+    private fun applyNameStyles(session: ItemEditSession) {
         val base = textStyleService.customName(session.editableItem) ?: textStyleService.materializeVisibleNameIntoCustomName(session.editableItem)
-        textStyleService.setCustomName(session.editableItem, textStyleService.applyOrderedColors(base, session.orderedNameColors))
+        val withColors = textStyleService.applyOrderedColors(base, session.orderedNameColors)
+        textStyleService.setCustomName(
+            session.editableItem,
+            textStyleService.applyShadow(withColors, textStyleService.resolveShadowColor(session.nameShadowKey))
+        )
     }
 
-    private fun applyLoreColors(session: ItemEditSession) {
+    private fun applyLoreStyles(session: ItemEditSession) {
         val lore = textStyleService.lore(session.editableItem)
         if (lore.isEmpty()) return
-        val transformed = lore.map { line -> textStyleService.applyOrderedColors(line, session.orderedLoreColors) }
+        val shadowColor = textStyleService.resolveShadowColor(session.loreShadowKey)
+        val transformed = lore.map { line ->
+            textStyleService.applyShadow(
+                textStyleService.applyOrderedColors(line, session.orderedLoreColors),
+                shadowColor
+            )
+        }
         textStyleService.setLore(session.editableItem, transformed)
     }
 
     private fun initializeStyleState(session: ItemEditSession) {
         if (session.textStyleStateInitialized) return
-        textStyleService.customName(session.editableItem)?.let { name ->
-            session.orderedNameColors.clear()
-            session.orderedNameColors.addAll(textStyleService.detectOrderedColors(name))
-        }
-        textStyleService.lore(session.editableItem).firstOrNull()?.let { lore ->
-            session.orderedLoreColors.clear()
-            session.orderedLoreColors.addAll(textStyleService.detectOrderedColors(lore))
-        }
+        val name = textStyleService.customName(session.editableItem)
+        session.orderedNameColors.clear()
+        session.orderedNameColors.addAll(name?.let(textStyleService::detectOrderedColors).orEmpty())
+        session.nameShadowKey = normalizeShadowKey(name?.let(textStyleService::detectShadowColor))
+
+        val lore = textStyleService.lore(session.editableItem).firstOrNull()
+        session.orderedLoreColors.clear()
+        session.orderedLoreColors.addAll(lore?.let(textStyleService::detectOrderedColors).orEmpty())
+        session.loreShadowKey = normalizeShadowKey(lore?.let(textStyleService::detectShadowColor))
         session.textStyleStateInitialized = true
+    }
+
+    private fun normalizeShadowKey(detectedKey: String?): String {
+        val key = detectedKey ?: TextStylePalette.ORDINARY_SHADOW_KEY
+        return TextStylePalette.shadowOptions.firstOrNull { it.key == key }?.key
+            ?: TextStylePalette.ORDINARY_SHADOW_KEY
     }
 
     private fun updateEditablePreview(menu: Menu, session: ItemEditSession) {

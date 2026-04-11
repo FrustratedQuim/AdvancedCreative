@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.itemEdit
 
 import com.ratger.acreative.itemedit.head.HeadTextureSource
+import com.ratger.acreative.itemedit.text.TextStylePalette
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
 
@@ -22,5 +23,7 @@ data class ItemEditSession(
     var loreColorFocusIndex: Int = 0,
     val orderedNameColors: MutableList<String> = mutableListOf(),
     val orderedLoreColors: MutableList<String> = mutableListOf(),
+    var nameShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
+    var loreShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
     var textStyleStateInitialized: Boolean = false
 )

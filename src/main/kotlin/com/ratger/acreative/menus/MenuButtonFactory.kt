@@ -40,6 +40,20 @@ class MenuButtonFactory(
         val order: Int?
     )
 
+    data class TextColorFocusOption(
+        val colorTag: String,
+        val label: String,
+        val enabled: Boolean,
+        val focused: Boolean,
+        val order: Int?
+    )
+
+    data class TextShadowOption(
+        val colorTag: String,
+        val label: String,
+        val selected: Boolean
+    )
+
     enum class FocusedToggleListInteraction {
         NEXT_FOCUS,
         TOGGLE_FOCUSED,
@@ -322,6 +336,86 @@ class MenuButtonFactory(
             }
             action(event, interaction)
         }.build()
+    }
+
+    fun textOrderedColorFocusButton(
+        material: Material,
+        activeTitle: String,
+        inactiveTitle: String,
+        active: Boolean,
+        options: List<TextColorFocusOption>,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
+    ): Button {
+        val lore = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
+            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
+            "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
+            "<!i>"
+        ) + options.map { option ->
+            when {
+                option.enabled && option.focused ->
+                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<#00FF40>  » <b><${option.colorTag}>${option.label}<white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+
+                option.enabled && !option.focused ->
+                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<b> <#C7A300>» <b><${option.colorTag}>${option.label}<white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+
+                !option.enabled && option.focused ->
+                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#00FF40>  » <${option.colorTag}>${option.label}"
+
+                else ->
+                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<b> <#C7A300>» <${option.colorTag}>${option.label}"
+            }
+        }
+
+        return actionButton(
+            material = material,
+            name = if (active) activeTitle else inactiveTitle,
+            lore = lore,
+            itemModifier = {
+                if (active) glint(true)
+                this
+            },
+            action = { event ->
+                val interaction = when {
+                    event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
+                    event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
+                    isDropClick(event) -> FocusedToggleListInteraction.RESET_ALL
+                    else -> return@actionButton
+                }
+                action(event, interaction)
+            }
+        )
+    }
+
+    fun textShadowSelectButton(
+        material: Material,
+        activeTitle: String,
+        inactiveTitle: String,
+        active: Boolean,
+        options: List<TextShadowOption>,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val lore = listOf(
+            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
+            "<!i>"
+        ) + options.map { option ->
+            if (option.selected) {
+                "<!i><#00FF40>  » <b><${option.colorTag}>${option.label}"
+            } else {
+                "<!i><b> <#C7A300>» <${option.colorTag}>${option.label}"
+            }
+        }
+
+        return actionButton(
+            material = material,
+            name = if (active) activeTitle else inactiveTitle,
+            lore = lore,
+            itemModifier = {
+                if (active) glint(true)
+                this
+            },
+            action = action
+        )
     }
 
     private fun <T> buildListButtonLore(options: List<ListButtonOption<T>>, selectedIndex: Int): List<String> {

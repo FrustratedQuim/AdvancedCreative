@@ -7,6 +7,8 @@ data class TextStyleOption(
 )
 
 object TextStylePalette {
+    const val ORDINARY_SHADOW_KEY: String = "ordinary"
+
     val colors: List<TextStyleOption> = listOf(
         TextStyleOption("white", "Белый", "Белая"),
         TextStyleOption("gray", "Светло-серый", "Светло-серая"),
@@ -26,5 +28,7 @@ object TextStylePalette {
         TextStyleOption("dark_purple", "Фиолетовый", "Фиолетовая")
     )
 
-    val shadowOptions: List<TextStyleOption?> = listOf(null) + colors
+    val shadowOptions: List<TextStyleOption> = listOf(
+        TextStyleOption(ORDINARY_SHADOW_KEY, "Обычная", "Обычная")
+    ) + colors
 }

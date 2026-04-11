@@ -15,10 +15,9 @@ class NameTextApplyHandler(
         if (raw.isBlank()) {
             return ApplyExecutionResult.InvalidValue
         }
-        val existingShadow = textStyleService.customName(session.editableItem)?.let(textStyleService::detectShadowColor)
         var updated = textStyleService.parseMiniMessage(raw).decoration(TextDecoration.ITALIC, false)
         updated = textStyleService.applyOrderedColors(updated, session.orderedNameColors)
-        updated = textStyleService.applyShadow(updated, existingShadow)
+        updated = textStyleService.applyShadow(updated, textStyleService.resolveShadowColor(session.nameShadowKey))
         textStyleService.setCustomName(session.editableItem, updated)
         return ApplyExecutionResult.Success
     }

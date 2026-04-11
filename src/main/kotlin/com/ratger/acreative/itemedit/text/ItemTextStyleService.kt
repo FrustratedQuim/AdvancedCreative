@@ -72,6 +72,12 @@ class ItemTextStyleService {
         return mini.deserialize("<shadow:$shadowColor:1>$payload</shadow>")
     }
 
+    fun resolveShadowColor(shadowStateKey: String): String? {
+        return shadowStateKey
+            .takeUnless { it == TextStylePalette.ORDINARY_SHADOW_KEY }
+            ?.lowercase()
+    }
+
     fun preview(component: Component?, fallback: String): String {
         if (component == null) return fallback
         val raw = plain.serialize(component).replace('\n', ' ').trim()
