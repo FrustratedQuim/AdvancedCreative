@@ -21,7 +21,8 @@ class AdvancedEditPageTwo(
     private val openUseRemainderPage: (Player, ItemEditSession) -> Unit,
     private val openUseCooldownPage: (Player, ItemEditSession) -> Unit,
     private val openRestrictionsRootPage: (Player, ItemEditSession) -> Unit,
-    private val openDeathProtectionPage: (Player, ItemEditSession) -> Unit
+    private val openDeathProtectionPage: (Player, ItemEditSession) -> Unit,
+    private val openFoodPage: (Player, ItemEditSession) -> Unit
 ) {
     private fun updateEditablePreview(menu: ru.violence.coreapi.bukkit.api.menu.Menu, session: ItemEditSession) {
         menu.setButton(support.editableSlot, buttonFactory.editablePreviewButton(session.editableItem))
@@ -103,7 +104,7 @@ class AdvancedEditPageTwo(
             title = "<!i>▍ Продвинутый редактор [2/2]",
             menuSize = menuSize,
             rows = MenuRows.SIX,
-            interactiveTopSlots = setOf(18, 27, 29, 31, 32, 40, 41, 42),
+            interactiveTopSlots = setOf(18, 27, 29, 30, 31, 32, 33, 38, 39, 40, 41, 42),
             session = session
         )
 
@@ -138,7 +139,13 @@ class AdvancedEditPageTwo(
             ),
             action = { support.transition(session) { openRestrictionsRootPage(player, session) } }
         ))
-        menu.setButton(38, buttonFactory.actionButton(Material.APPLE, "<!i><#C7A300>🍖 <#FFD700>Съедобность", listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"), buttonFactory.zeroFoodPreview()))
+        menu.setButton(38, buttonFactory.actionButton(
+            material = Material.APPLE,
+            name = "<!i><#C7A300>🍖 <#FFD700>Съедобность",
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            itemModifier = buttonFactory.zeroFoodPreview(),
+            action = { support.transition(session) { openFoodPage(player, session) } }
+        ))
         menu.setButton(39, buttonFactory.actionButton(
             material = Material.TOTEM_OF_UNDYING,
             name = "<!i><#C7A300>☠ <#FFD700>Защита от смерти",

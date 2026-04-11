@@ -124,7 +124,13 @@ class ItemEditorApplyStateManager(
             EditorApplyKind.DEATH_PROTECTION_SOUND -> MessageKey.EDIT_APPLY_USAGE_SOUND
             EditorApplyKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_EFFECT
             EditorApplyKind.DEATH_PROTECTION_APPLY_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_POTION_EFFECT
-            EditorApplyKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER,
+            EditorApplyKind.FOOD_NUTRITION,
+            EditorApplyKind.FOOD_SATURATION,
+            EditorApplyKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
+            EditorApplyKind.CONSUMABLE_SOUND -> MessageKey.EDIT_APPLY_USAGE_SOUND
+            EditorApplyKind.CONSUMABLE_REMOVE_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_EFFECT
+            EditorApplyKind.CONSUMABLE_APPLY_EFFECT_ADD -> MessageKey.EDIT_APPLY_USAGE_POTION_EFFECT
         }
     }
 }

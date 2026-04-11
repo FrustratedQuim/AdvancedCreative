@@ -15,6 +15,9 @@ import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimPatternSelectPage
 import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsActivePage
 import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
 import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
+import com.ratger.acreative.menus.itemEdit.pages.FoodApplyEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.FoodRemoveEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.FoodEditPage
 import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.RestrictionsListPage
 import com.ratger.acreative.menus.itemEdit.pages.RestrictionsRootPage
@@ -71,6 +74,8 @@ class ItemEditMenu(
     private val openLockPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openLockPageInternal(player, session) }
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
     private val openDeathProtectionPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openDeathProtectionPage(player, session) }
+    private val openFoodPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openFoodPageFromAdvanced(player, session) }
+    private val openFoodPageFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openFoodPageFromSimple(player, session) }
     private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
     private val openPotionPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session ->
         openPotionPage(player, session, openAdvancedPageOneHandler)
@@ -79,7 +84,7 @@ class ItemEditMenu(
     private val openArmorTrimPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openArmorTrimPage(player, session) }
 
     private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
-    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler)
+    private val simplePage: SimpleEditMenu = SimpleEditMenu(support, buttonFactory, openRootHandler, openEnchantmentsFromSimpleHandler, openFoodPageFromSimpleHandler)
     private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
         support = support,
         buttonFactory = buttonFactory,
@@ -100,7 +105,20 @@ class ItemEditMenu(
             openUseRemainderPageHandler,
             openUseCooldownPageHandler,
             openRestrictionsRootHandler,
-            openDeathProtectionPageHandler
+            openDeathProtectionPageHandler,
+            openFoodPageFromAdvancedHandler
+        )
+    private val foodRemoveEffectsPage: FoodRemoveEffectsListPage =
+        FoodRemoveEffectsListPage(support, buttonFactory, requestApplyInput, this::openFoodPage)
+    private val foodApplyEffectsPage: FoodApplyEffectsListPage =
+        FoodApplyEffectsListPage(support, buttonFactory, requestApplyInput, this::openFoodPage)
+    private val foodPage: FoodEditPage =
+        FoodEditPage(
+            support = support,
+            buttonFactory = buttonFactory,
+            openRemoveEffectsPage = { player, session, openBack -> openFoodRemoveEffectsPage(player, session, openBack, 0) },
+            openApplyEffectsPage = { player, session, openBack -> openFoodApplyEffectsPage(player, session, openBack, 0) },
+            requestApplyInput = requestApplyInput
         )
     private val deathProtectionRemoveEffectsPage: DeathProtectionRemoveEffectsListPage =
         DeathProtectionRemoveEffectsListPage(support, buttonFactory, requestApplyInput, openDeathProtectionPageHandler)
@@ -223,6 +241,26 @@ class ItemEditMenu(
 
     fun openRestrictionsRoot(player: Player, session: ItemEditSession) {
         restrictionsRootPage.open(player, session)
+    }
+
+    fun openFoodPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
+        foodPage.open(player, session, openBack)
+    }
+
+    fun openFoodPageFromAdvanced(player: Player, session: ItemEditSession) {
+        openFoodPage(player, session, openAdvancedPageTwoHandler)
+    }
+
+    fun openFoodPageFromSimple(player: Player, session: ItemEditSession) {
+        openFoodPage(player, session, openSimpleHandler)
+    }
+
+    fun openFoodRemoveEffectsPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit, page: Int = 0) {
+        foodRemoveEffectsPage.open(player, session, openBack, page)
+    }
+
+    fun openFoodApplyEffectsPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit, page: Int = 0) {
+        foodApplyEffectsPage.open(player, session, openBack, page)
     }
 
     fun openDeathProtectionPage(player: Player, session: ItemEditSession) {

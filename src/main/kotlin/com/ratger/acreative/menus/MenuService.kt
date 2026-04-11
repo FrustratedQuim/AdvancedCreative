@@ -20,6 +20,12 @@ import com.ratger.acreative.menus.itemEdit.apply.ApplyPromptService
 import com.ratger.acreative.menus.itemEdit.apply.AttributeApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamageApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DamagePerBlockApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.ConsumableApplyEffectAddApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.ConsumableRandomTeleportDiameterApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.ConsumableRemoveEffectAddApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.ConsumableSoundApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.FoodNutritionApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.FoodSaturationApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionApplyEffectAddApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionRandomTeleportDiameterApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.DeathProtectionRemoveEffectAddApplyHandler
@@ -73,6 +79,12 @@ class MenuService(
     private val deathProtectionRemoveEffectAddApplyHandler = DeathProtectionRemoveEffectAddApplyHandler(editParsers)
     private val deathProtectionRandomTeleportApplyHandler = DeathProtectionRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
     private val deathProtectionApplyEffectAddApplyHandler = DeathProtectionApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
+    private val foodNutritionApplyHandler = FoodNutritionApplyHandler(validationService, editTargetResolver)
+    private val foodSaturationApplyHandler = FoodSaturationApplyHandler(validationService, editTargetResolver)
+    private val consumableSoundApplyHandler = ConsumableSoundApplyHandler(editParsers, validationService, editTargetResolver)
+    private val consumableRemoveEffectAddApplyHandler = ConsumableRemoveEffectAddApplyHandler(editParsers)
+    private val consumableRandomTeleportApplyHandler = ConsumableRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
+    private val consumableApplyEffectAddApplyHandler = ConsumableApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
 
     private var applyStateManager: ItemEditorApplyStateManager
 
@@ -119,6 +131,12 @@ class MenuService(
                 deathProtectionRemoveEffectAddApplyHandler,
                 deathProtectionRandomTeleportApplyHandler,
                 deathProtectionApplyEffectAddApplyHandler,
+                foodNutritionApplyHandler,
+                foodSaturationApplyHandler,
+                consumableSoundApplyHandler,
+                consumableRemoveEffectAddApplyHandler,
+                consumableRandomTeleportApplyHandler,
+                consumableApplyEffectAddApplyHandler,
                 HeadLicensedNameApplyHandler(
                     plugin = hooker.plugin,
                     sessionManager = sessionManager,
