@@ -32,7 +32,7 @@ class SimpleEditMenu(
         menu.setButton(30, buttonFactory.actionButton(
             material = Material.APPLE,
             name = "<!i><#C7A300>🍖 <#FFD700>Сделать предмет съедобным",
-            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"),
             itemModifier = buttonFactory.zeroFoodPreview(),
             action = { support.transition(session) { openFoodPage(player, session) } }
         ))
