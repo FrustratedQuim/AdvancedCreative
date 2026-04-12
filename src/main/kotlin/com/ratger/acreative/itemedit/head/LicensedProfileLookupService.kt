@@ -6,6 +6,9 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
+import java.util.Collections
+import java.util.LinkedHashMap
+import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
@@ -24,17 +27,26 @@ class LicensedProfileLookupService {
     }
 
     fun lookupLicensedProfile(name: String): LicensedProfilePayload {
+        val cacheKey = normalizeName(name)
+        synchronized(licensedProfileCache) {
+            licensedProfileCache[cacheKey]?.let { return it }
+        }
+
         val encoded = URLEncoder.encode(name, StandardCharsets.UTF_8)
         val nameLookup = lookupNameViaMinecraftServices(encoded) ?: lookupNameViaMojang(encoded)
             ?: throw IllegalStateException("Профиль по имени не найден.")
         val session = lookupSessionProfile(nameLookup.uuid)
         val textures = session.texturesValue ?: throw IllegalStateException("Session profile не содержит textures.")
-        return LicensedProfilePayload(
+        val payload = LicensedProfilePayload(
             uuid = session.uuid,
             canonicalName = session.name ?: nameLookup.canonicalName,
             textureValue = textures,
             textureSignature = session.texturesSignature
         )
+        synchronized(licensedProfileCache) {
+            licensedProfileCache[cacheKey] = payload
+        }
+        return payload
     }
 
     private fun lookupNameViaMinecraftServices(encodedName: String): NameLookupPayload? {
@@ -108,6 +120,12 @@ class LicensedProfileLookupService {
         return regex.find(source)?.groupValues?.getOrNull(1)
     }
 
+    private fun normalizeName(name: String): String {
+        val normalized = name.trim().lowercase(Locale.ROOT)
+        if (normalized.isBlank()) throw IllegalArgumentException("Имя игрока не может быть пустым.")
+        return normalized
+    }
+
     private data class NameLookupPayload(
         val uuid: UUID,
         val canonicalName: String
@@ -119,4 +137,16 @@ class LicensedProfileLookupService {
         val texturesValue: String?,
         val texturesSignature: String?
     )
+
+    companion object {
+        private const val MAX_CACHE_SIZE = 512
+
+        private val licensedProfileCache = Collections.synchronizedMap(
+            object : LinkedHashMap<String, LicensedProfilePayload>(MAX_CACHE_SIZE + 1, 1.0f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, LicensedProfilePayload>): Boolean {
+                    return size > MAX_CACHE_SIZE
+                }
+            }
+        )
+    }
 }
