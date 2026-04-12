@@ -41,6 +41,7 @@ import com.ratger.acreative.menus.itemEdit.pages.PotionEffectsActivePage
 import com.ratger.acreative.menus.itemEdit.pages.MapEditPage
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
+import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -354,6 +355,10 @@ class ItemEditMenu(
             openDecoratedPotRoot(player, session, openAdvancedPageOneHandler)
             return
         }
+        if (session.editableItem.type == Material.ITEM_FRAME || session.editableItem.type == Material.GLOW_ITEM_FRAME) {
+            toggleFrameInvisibilityAndReturn(player, session)
+            return
+        }
         if (session.editableItem.type == Material.PLAYER_HEAD) {
             headTextureEditPage.open(player, session)
             return
@@ -379,6 +384,16 @@ class ItemEditMenu(
             openMapPageFromAdvancedHandler(player, session)
             return
         }
+        openAdvancedPageOne(player, session)
+    }
+
+    private fun toggleFrameInvisibilityAndReturn(player: Player, session: ItemEditSession) {
+        val toggledItem = FrameInvisibilitySupport.toggle(session.editableItem) ?: run {
+            openAdvancedPageOne(player, session)
+            return
+        }
+
+        session.editableItem = toggledItem
         openAdvancedPageOne(player, session)
     }
 

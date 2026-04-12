@@ -4,6 +4,7 @@ import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.container.LockItemSupport
 import com.ratger.acreative.itemedit.experimental.ComponentsService
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
+import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.potion.PotionItemSupport
@@ -628,10 +629,7 @@ class MenuButtonFactory(
                     .build()
 
             type == Material.ITEM_FRAME || type == Material.GLOW_ITEM_FRAME ->
-                ItemBuilder(Material.ITEM_FRAME)
-                    .name(parser.parse("<!i><#C7A300>⭘ <#FFD700>Невидимость рамки: <#FF1500>Выкл"))
-                    .lore(listOf(parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
-                    .build()
+                buildFrameInvisibilityButtonItem(editedItem)
 
             type == Material.POTION || type == Material.SPLASH_POTION || type == Material.LINGERING_POTION || type == Material.TIPPED_ARROW ->
                 ItemBuilder(type)
@@ -651,6 +649,27 @@ class MenuButtonFactory(
                 .build()
         }
         return Button.simple(buttonItem).action(action).build()
+    }
+
+    private fun buildFrameInvisibilityButtonItem(editedItem: ItemStack): ItemStack {
+        val enabled = FrameInvisibilitySupport.isEnabled(editedItem)
+        return ItemBuilder(Material.ITEM_FRAME)
+            .name(
+                parser.parse(
+                    if (enabled) {
+                        "<!i><#C7A300>◎ <#FFD700>Невидимость рамки: <#00FF40>Вкл"
+                    } else {
+                        "<!i><#C7A300>⭘ <#FFD700>Невидимость рамки: <#FF1500>Выкл"
+                    }
+                )
+            )
+            .lore(listOf(parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")))
+            .apply {
+                if (enabled) {
+                    glint(true)
+                }
+            }
+            .build()
     }
 
 
