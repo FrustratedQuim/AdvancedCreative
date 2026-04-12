@@ -230,7 +230,7 @@ class MenuButtonFactory(
 
     fun rawMiniMessageNameApplyButton(
         hasName: Boolean,
-        escapedPreview: String,
+        preview: String,
         onApply: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
         onReset: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
     ): Button {
@@ -243,7 +243,7 @@ class MenuButtonFactory(
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$preview", "") + usageLore
 
         return applyResetButton(
             material = Material.PAPER,
@@ -259,7 +259,6 @@ class MenuButtonFactory(
 
     fun advancedRawLoreEditorButton(
         virtualLines: List<String>,
-        escapedVirtualLines: List<String>,
         focusedIndex: Int,
         hasMaterializedLore: Boolean,
         action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, AdvancedLoreInteraction) -> Unit
@@ -271,13 +270,12 @@ class MenuButtonFactory(
             add("<!i><#FFD700>Q, <#FFE68A>очистить текущую")
             add("")
             virtualLines.forEachIndexed { index, line ->
-                val escaped = escapedVirtualLines.getOrNull(index).orEmpty()
                 val prefix = if (index == safeFocusedIndex) {
                     "<!i><#00FF40>  » "
                 } else {
                     "<!i><#C7A300> » "
                 }
-                add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$escaped ")
+                add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$line ")
             }
             add("")
         }

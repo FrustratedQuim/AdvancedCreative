@@ -51,7 +51,7 @@ class TextAppearanceEditPageTwo(
     ): Button {
         return buttonFactory.rawMiniMessageNameApplyButton(
             hasName = textStyleService.hasCustomName(session.editableItem),
-            escapedPreview = escapedNamePreview(session),
+            preview = namePreview(session),
             onApply = {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.NAME_RAW_MINIMESSAGE) { reopenPlayer, reopenSession ->
@@ -75,7 +75,6 @@ class TextAppearanceEditPageTwo(
     ): Button {
         return buttonFactory.advancedRawLoreEditorButton(
             virtualLines = session.virtualLoreRawLines,
-            escapedVirtualLines = session.virtualLoreRawLines.map(textStyleService::escapeMiniMessageForPreview),
             focusedIndex = session.loreRawFocusIndex,
             hasMaterializedLore = textStyleService.hasLore(session.editableItem)
         ) { event, interaction ->
@@ -129,11 +128,10 @@ class TextAppearanceEditPageTwo(
         session.rawTextStyleStateInitialized = true
     }
 
-    private fun escapedNamePreview(session: ItemEditSession): String {
-        val source = session.rawMiniMessageNameInput
+    private fun namePreview(session: ItemEditSession): String {
+        return session.rawMiniMessageNameInput
             ?: textStyleService.customName(session.editableItem)?.let(textStyleService::serializeMiniMessage)
             ?: ""
-        return textStyleService.escapeMiniMessageForPreview(source)
     }
 
     private fun updateEditablePreview(menu: Menu, session: ItemEditSession) {
