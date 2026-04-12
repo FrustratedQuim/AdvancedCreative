@@ -382,7 +382,7 @@ class HeadTextureEditPage(
         "",
         "<!i><#FFD700>После нажатия:",
         "<!i><#C7A300> ● <#FFF3E0>/apply <ник><#FFE68A> <#C7A300>- <#FFE68A>задать ",
-        if (active) "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>- <#FFE68A>отмена" else "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>- <#FFE68A>отменить",
+        if (active) "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>- <#FFE68A>отмена " else "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>- <#FFE68A>отменить ",
         ""
     )
 
@@ -391,8 +391,8 @@ class HeadTextureEditPage(
         "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
         "",
         "<!i><#FFD700>Назначение:",
-        "<!i><#C7A300> ● <#FFE68A>Берёт текстуру от",
-        "<!i><#C7A300> ● <#FFF3E0>лицензионного<#FFE68A> ника.",
+        "<!i><#C7A300> ● <#FFE68A>Берёт текстуру от ",
+        "<!i><#C7A300> ● <#FFF3E0>лицензионного<#FFE68A> ника. ",
         "",
         "<!i><#FFD700>После нажатия:",
         "<!i><#C7A300> ● <#FFF3E0>/apply <ник><#FFE68A> <#C7A300>- <#FFE68A>задать ",

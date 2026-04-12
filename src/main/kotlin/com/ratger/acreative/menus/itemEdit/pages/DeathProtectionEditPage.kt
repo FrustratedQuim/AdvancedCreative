@@ -55,7 +55,7 @@ class DeathProtectionEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Снятие конкретных эффектов: <#FF1500>Нет",
             emptyLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
             selectedEntriesLore = removedEffects.map {
-                "<!i><#C7A300> ● <#FFE68A>${PotionItemSupport.displayName(it)}"
+                "<!i><#C7A300> ● <#FFE68A>${PotionItemSupport.displayName(it)} "
             },
             action = { support.transition(session) { openRemoveEffectsPage(player, session) } }
         ))
@@ -67,7 +67,7 @@ class DeathProtectionEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Наложение эффектов: <#FF1500>Нет",
             emptyLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
             selectedEntriesLore = applyEffects.map { entry ->
-                "<!i><#C7A300> ● <#FFE68A>${PotionItemSupport.displayName(entry.effect.type)} <#FFF3E0>${entry.effect.amplifier + 1} <#C7A300>[<#FFD700>${formatChancePercent(entry.probability)}%<#C7A300>]"
+                "<!i><#C7A300> ● <#FFE68A>${PotionItemSupport.displayName(entry.effect.type)} <#FFF3E0>${entry.effect.amplifier + 1} <#C7A300>[<#FFD700>${formatChancePercent(entry.probability)}%<#C7A300>] "
             },
             action = { support.transition(session) { openApplyEffectsPage(player, session) } }
         ))
@@ -183,8 +183,8 @@ class DeathProtectionEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <звук> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <звук> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
 
@@ -193,12 +193,12 @@ class DeathProtectionEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Телепортирует на <#FFF3E0>случайную",
-            "<!i><#C7A300> ● <#FFE68A>точку в указанном радиусе.",
+            "<!i><#C7A300> ● <#FFE68A>Телепортирует на <#FFF3E0>случайную ",
+            "<!i><#C7A300> ● <#FFE68A>точку в указанном радиусе. ",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
     }

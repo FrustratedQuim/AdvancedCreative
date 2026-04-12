@@ -37,12 +37,12 @@ class PotionEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         val inactiveColorLore = activeColorLore.toMutableList().also {
-            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
+            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить "
         }
         menu.setButton(29, buttonFactory.applyResetButton(
             material = Material.BRUSH,
@@ -94,9 +94,9 @@ class PotionEditPage(
         val entries = PotionItemSupport.effectEntries(session.editableItem)
         val selectedLore = entries.map { entry ->
             if (entry.displayLevel <= 1) {
-                "<!i><#C7A300> ● <#FFE68A>${entry.displayName}"
+                "<!i><#C7A300> ● <#FFE68A>${entry.displayName} "
             } else {
-                "<!i><#C7A300> ● <#FFE68A>${entry.displayName} <#FFF3E0>${entry.displayLevel}"
+                "<!i><#C7A300> ● <#FFE68A>${entry.displayName} <#FFF3E0>${entry.displayLevel} "
             }
         }
         menu.setButton(33, buttonFactory.statefulSummaryButton(

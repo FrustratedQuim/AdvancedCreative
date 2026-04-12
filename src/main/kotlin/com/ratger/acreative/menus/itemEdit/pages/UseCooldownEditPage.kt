@@ -46,16 +46,16 @@ class UseCooldownEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Задержка в <#FFF3E0>секундах<#FFE68A> перед",
+            "<!i><#C7A300> ● <#FFE68A>Задержка в <#FFF3E0>секундах<#FFE68A> перед ",
             "<!i><#C7A300> ● <#FFE68A>следующим использованием. ",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число><#FFE68A> <#C7A300>-<#FFE68A> задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>-<#FFE68A> отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число><#FFE68A> <#C7A300>-<#FFE68A> задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>-<#FFE68A> отмена ",
             ""
         )
         val inactiveLore = activeLore.toMutableList().also {
-            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>-<#FFE68A> отменить"
+            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel<#FFE68A> <#C7A300>-<#FFE68A> отменить "
         }
         return buttonFactory.applyResetButton(
             material = Material.CLOCK,
@@ -85,14 +85,14 @@ class UseCooldownEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Задержка затрагивает",
-            "<!i><#C7A300> ● <#FFE68A>предметы с <#FFF3E0>одинаковым<#FFE68A> ID.",
+            "<!i><#C7A300> ● <#FFE68A>Задержка затрагивает ",
+            "<!i><#C7A300> ● <#FFE68A>предметы с <#FFF3E0>одинаковым<#FFE68A> ID. ",
             "<!i><#C7A300> ● <#FFF3E0>Группы<#FFE68A> разделяют задержки ",
-            "<!i><#C7A300> ● <#FFE68A>между одинаковыми ID.",
+            "<!i><#C7A300> ● <#FFE68A>между одинаковыми ID. ",
             "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <название><#FFE68A> <#C7A300>-<#FFE68A> задать ",
-            "<!i><#C7A300> ● <#FFF3E0>/apply rand<#FFE68A> <#C7A300>-<#FFE68A> случайная",
+            "<!i><#C7A300> ● <#FFF3E0>/apply rand<#FFE68A> <#C7A300>-<#FFE68A> случайная ",
             ""
         )
         return buttonFactory.applyResetButton(

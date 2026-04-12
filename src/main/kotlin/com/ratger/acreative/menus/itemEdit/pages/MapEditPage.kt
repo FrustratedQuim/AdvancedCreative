@@ -37,12 +37,12 @@ class MapEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         val inactiveColorLore = activeColorLore.toMutableList().also {
-            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
+            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить "
         }
         menu.setButton(30, buttonFactory.applyResetButton(
             material = Material.BRUSH,
@@ -70,12 +70,12 @@ class MapEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         val inactiveIdLore = activeIdLore.toMutableList().also {
-            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
+            it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить "
         }
         menu.setButton(32, buttonFactory.applyResetButton(
             material = Material.FILLED_MAP,

@@ -84,10 +84,10 @@ class AttributeEditPage(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
                 "",
                 "<!i><#FFD700>Параметры:",
-                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$attributeDisplayName",
-                "<!i><#C7A300> ● <#FFE68A>Значение: <#FFF3E0>$value",
-                "<!i><#C7A300> ● <#FFE68A>Тип: <#FFF3E0>$operationDisplayName",
-                "<!i><#C7A300> ● <#FFE68A>Слот: <#FFF3E0>$slotDisplayName",
+                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$attributeDisplayName ",
+                "<!i><#C7A300> ● <#FFE68A>Значение: <#FFF3E0>$value ",
+                "<!i><#C7A300> ● <#FFE68A>Тип: <#FFF3E0>$operationDisplayName ",
+                "<!i><#C7A300> ● <#FFE68A>Слот: <#FFF3E0>$slotDisplayName ",
                 ""
             ),
             action = {

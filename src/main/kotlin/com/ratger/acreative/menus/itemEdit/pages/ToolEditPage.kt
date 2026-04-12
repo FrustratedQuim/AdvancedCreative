@@ -50,8 +50,8 @@ class ToolEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         return buttonFactory.applyResetButton(
@@ -84,8 +84,8 @@ class ToolEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
             ""
         )
         return buttonFactory.applyResetButton(
@@ -118,8 +118,8 @@ class ToolEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         return buttonFactory.applyResetButton(
@@ -151,12 +151,12 @@ class ToolEditPage(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>Назначение:",
-            "<!i><#C7A300> ● <#FFE68A>Количество единиц прочности",
-            "<!i><#C7A300> ● <#FFE68A>за поломку <#FFF3E0>1-го <#FFE68A>блока.",
+            "<!i><#C7A300> ● <#FFE68A>Количество единиц прочности ",
+            "<!i><#C7A300> ● <#FFE68A>за поломку <#FFF3E0>1-го <#FFE68A>блока. ",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply max <#C7A300>- <#FFE68A>максимум ",
             ""
         )
         return buttonFactory.applyResetButton(

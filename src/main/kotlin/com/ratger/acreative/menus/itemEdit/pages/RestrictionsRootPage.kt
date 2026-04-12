@@ -46,7 +46,7 @@ class RestrictionsRootPage(
             activeName = mode.summaryFilledName(entries.size),
             inactiveName = mode.summaryEmptyName,
             selectedHeader = mode.summaryListTitle,
-            selectedEntriesLore = entries.map { entry -> "<!i><#C7A300> ● <#FFE68A>${entry.displayId}" },
+            selectedEntriesLore = entries.map { entry -> "<!i><#C7A300> ● <#FFE68A>${entry.displayId} " },
             action = { support.transition(session) { openRestrictionsList(player, session, mode, 0) } }
         )
     }

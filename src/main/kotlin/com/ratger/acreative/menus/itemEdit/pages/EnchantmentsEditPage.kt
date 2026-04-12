@@ -83,7 +83,7 @@ class EnchantmentsEditPage(
             activeName = "<!i><#C7A300>◎ <#FFD700>Зачарования: <#00FF40>${entries.size}",
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Зачарования: <#FF1500>Нет",
             selectedEntriesLore = entries.map { entry ->
-                "<!i><#C7A300> ● <#FFE68A>${entry.displayName}${EnchantmentSupport.levelDisplay(entry.level, showOne = false)}"
+                "<!i><#C7A300> ● <#FFE68A>${entry.displayName}${EnchantmentSupport.levelDisplay(entry.level, showOne = false)} "
             },
             action = { support.transition(session) { openActivePage(player, session, 0) { reopenPlayer, reopenSession -> open(reopenPlayer, reopenSession, back) } } }
         )

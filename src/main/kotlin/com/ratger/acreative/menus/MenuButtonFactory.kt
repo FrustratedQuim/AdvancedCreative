@@ -239,8 +239,8 @@ class MenuButtonFactory(
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
             "",
             "<!i><#FFD700>После нажатия:",
-            "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать",
-            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
         )
         val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "") + usageLore
@@ -277,7 +277,7 @@ class MenuButtonFactory(
                 } else {
                     "<!i><#C7A300> » "
                 }
-                add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$escaped")
+                add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$escaped ")
             }
             add("")
         }
@@ -435,16 +435,16 @@ class MenuButtonFactory(
         ) + options.map { option ->
             when {
                 option.enabled && option.focused ->
-                    "<!i><#00FF40>[<#00FF40>✔<#00FF40>]<#00FF40>  » <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+                    "<!i><#00FF40>[<#00FF40>✔<#00FF40>]<#00FF40>  » <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>] "
 
                 option.enabled && !option.focused ->
-                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<#C7A300><b> </b>» <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>]"
+                    "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]<#C7A300><b> </b>» <b><${option.colorTag}>${option.label}</b><white> <#C7A300>[<#FFD700>${option.order}<#C7A300>] "
 
                 !option.enabled && option.focused ->
-                    "<!i><#00FF40>[<#FF1500>✘<#00FF40>]<#00FF40>  » <${option.colorTag}>${option.label}"
+                    "<!i><#00FF40>[<#FF1500>✘<#00FF40>]<#00FF40>  » <${option.colorTag}>${option.label} "
 
                 else ->
-                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#C7A300><b> </b>» <${option.colorTag}>${option.label}"
+                    "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#C7A300><b> </b>» <${option.colorTag}>${option.label} "
             }
         } + ""
 
@@ -485,9 +485,9 @@ class MenuButtonFactory(
         ) + options.map { option ->
             val displayColorTag = if (option.colorTag == "ordinary") "white" else option.colorTag
             if (option.selected) {
-                "<!i><#00FF40>  » <b><$displayColorTag>${option.label}"
+                "<!i><#00FF40>  » <b><$displayColorTag>${option.label} "
             } else {
-                "<!i><#C7A300><b> </b>» <$displayColorTag>${option.label}"
+                "<!i><#C7A300><b> </b>» <$displayColorTag>${option.label} "
             }
         } + listOf("")
 
@@ -790,9 +790,9 @@ class MenuButtonFactory(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
                 "",
                 "<!i><#FFD700>Параметры:",
-                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName}",
-                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds}",
-                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel}",
+                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName} ",
+                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds} ",
+                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel} ",
                 "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 ""
@@ -857,10 +857,10 @@ class MenuButtonFactory(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
                 "",
                 "<!i><#FFD700>Параметры:",
-                "<!i><#C7A300> ● <#FFE68A>Шанс: <#00FF40>$chancePercent%",
-                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$displayName",
-                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$seconds",
-                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>$level",
+                "<!i><#C7A300> ● <#FFE68A>Шанс: <#00FF40>$chancePercent% ",
+                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$displayName ",
+                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$seconds ",
+                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>$level ",
                 "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 ""

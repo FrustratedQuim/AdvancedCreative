@@ -61,8 +61,8 @@ class EnchantmentsActivePage(
                         "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
                         "",
                         "<!i><#FFD700>Параметры:",
-                        "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName}",
-                        "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.level}",
+                        "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName} ",
+                        "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.level} ",
                         ""
                     ),
                     action = {
