@@ -1,48 +1,16 @@
 package com.ratger.acreative.menus.itemEdit
 
 import com.ratger.acreative.core.FunctionHooker
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.container.LockItemSupport
+import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
+import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
+import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.text.ItemTextStyleService
 import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
-import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageOne
-import com.ratger.acreative.menus.itemEdit.pages.AdvancedEditPageTwo
-import com.ratger.acreative.menus.itemEdit.pages.AttributeEditPage
-import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimEditPage
-import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimMaterialSelectPage
-import com.ratger.acreative.menus.itemEdit.pages.ArmorTrimPatternSelectPage
-import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsActivePage
-import com.ratger.acreative.menus.itemEdit.pages.EnchantmentsEditPage
-import com.ratger.acreative.menus.itemEdit.pages.EquippableEditPage
-import com.ratger.acreative.menus.itemEdit.pages.FoodApplyEffectsListPage
-import com.ratger.acreative.menus.itemEdit.pages.FoodRemoveEffectsListPage
-import com.ratger.acreative.menus.itemEdit.pages.FoodEditPage
-import com.ratger.acreative.menus.itemEdit.pages.RootEditMenu
-import com.ratger.acreative.menus.itemEdit.pages.RestrictionsListPage
-import com.ratger.acreative.menus.itemEdit.pages.RestrictionsRootPage
-import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
-import com.ratger.acreative.menus.itemEdit.pages.TextAppearanceEditPageOne
-import com.ratger.acreative.menus.itemEdit.pages.TextAppearanceEditPageTwo
-import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
-import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
-import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
-import com.ratger.acreative.menus.itemEdit.pages.DecoratedPotPartDescriptor
-import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionApplyEffectsListPage
-import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionEditPage
-import com.ratger.acreative.menus.itemEdit.pages.DeathProtectionRemoveEffectsListPage
-import com.ratger.acreative.menus.itemEdit.pages.PotEditPage
-import com.ratger.acreative.menus.itemEdit.pages.PotPatternSelectPage
-import com.ratger.acreative.menus.itemEdit.pages.HeadTextureEditPage
-import com.ratger.acreative.menus.itemEdit.pages.LockEditPage
-import com.ratger.acreative.menus.itemEdit.pages.PotionEditPage
-import com.ratger.acreative.menus.itemEdit.pages.PotionEffectsActivePage
-import com.ratger.acreative.menus.itemEdit.pages.MapEditPage
-import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
-import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
-import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
-import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import com.ratger.acreative.menus.itemEdit.pages.*
 import org.bukkit.Material
 import org.bukkit.entity.Player
 
@@ -52,8 +20,8 @@ class ItemEditMenu(
     buttonFactory: MenuButtonFactory,
     parser: MiniMessageParser,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val headMutationSupport: HeadTextureMutationSupport,
-    private val textStyleService: ItemTextStyleService
+    headMutationSupport: HeadTextureMutationSupport,
+    textStyleService: ItemTextStyleService
 ) {
     enum class LastEditorCategory {
         ROOT,
@@ -96,7 +64,6 @@ class ItemEditMenu(
         buttonFactory,
         openRootHandler,
         openEnchantmentsFromSimpleHandler,
-        openFoodPageFromSimpleHandler,
         openTextAppearanceFromSimpleHandler
     )
     private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
@@ -246,10 +213,6 @@ class ItemEditMenu(
         useCooldownPage.open(player, session)
     }
 
-    fun openLockPage(player: Player, session: ItemEditSession) {
-        lockPage.open(player, session)
-    }
-
     private fun openLockPageInternal(player: Player, session: ItemEditSession) {
         lockPage.open(player, session)
     }
@@ -293,11 +256,6 @@ class ItemEditMenu(
     fun openDeathProtectionApplyEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
         deathProtectionApplyEffectsPage.open(player, session, page)
     }
-
-    fun openRestrictionsList(player: Player, session: ItemEditSession, mode: RestrictionMode, page: Int = 0) {
-        restrictionsListPage.open(player, session, mode, page)
-    }
-
 
     fun openHeadTexturePage(player: Player, session: ItemEditSession) {
         support.transition(session) {
