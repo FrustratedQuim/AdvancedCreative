@@ -175,7 +175,7 @@ class TextAppearanceEditPageOne(
             val order = session.orderedLoreColors.indexOf(option.key).takeIf { it >= 0 }?.plus(1)
             MenuButtonFactory.TextColorFocusOption(
                 colorTag = option.key,
-                label = option.femaleLabel,
+                label = option.maleLabel,
                 enabled = order != null,
                 focused = index == session.loreColorFocusIndex.coerceIn(0, TextStylePalette.colors.lastIndex),
                 order = order
@@ -215,7 +215,7 @@ class TextAppearanceEditPageOne(
         val options = TextStylePalette.shadowOptions.map { option ->
             MenuButtonFactory.TextShadowOption(
                 colorTag = option.key,
-                label = option.maleLabel,
+                label = option.femaleLabel,
                 selected = option.key == session.nameShadowKey
             )
         }
