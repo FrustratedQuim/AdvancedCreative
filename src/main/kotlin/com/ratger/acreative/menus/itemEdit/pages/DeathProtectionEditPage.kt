@@ -159,7 +159,7 @@ class DeathProtectionEditPage(
         )
     }
 
-    private fun formatSoundKey(soundKey: String?): String = soundKey ?: "Обычный"
+    private fun formatSoundKey(soundKey: String?): String = soundKey?.removePrefix("minecraft:") ?: "Обычный"
 
     private fun formatDiameter(value: Float?): String {
         if (value == null) return "Нет"

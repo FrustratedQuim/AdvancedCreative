@@ -35,6 +35,12 @@ class EditParsers {
         return Registry.MOB_EFFECT.get(key)
     }
     fun parseAdventureKey(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
+    fun parseSoundNamespacedKey(input: String): NamespacedKey? {
+        val normalized = input.trim().lowercase()
+        if (normalized.isEmpty()) return null
+        return NamespacedKey.fromString(normalized) ?: NamespacedKey.fromString("minecraft:$normalized")
+    }
+    fun parseSoundKey(input: String): Key? = parseSoundNamespacedKey(input)?.let { Key.key(it.asString()) }
     fun parseCooldownGroup(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
     fun parseBooleanStrict(input: String?): Boolean? = input?.lowercase()?.let {
         when (it) {
@@ -427,6 +433,17 @@ class EditParsers {
             .filter { it.isBlock && it.isItem }
             .map { it.key.key }
             .filter { it.startsWith(normalizedPrefix, true) }
+            .sorted()
+            .toList()
+    }
+
+    fun soundSuggestions(prefix: String): List<String> {
+        val normalizedPrefix = prefix.removePrefix("minecraft:")
+        return Registry.SOUNDS.iterator().asSequence()
+            .mapNotNull { Registry.SOUNDS.getKey(it)?.asString() }
+            .map { it.removePrefix("minecraft:") }
+            .distinct()
+            .filter { it.startsWith(normalizedPrefix, ignoreCase = true) }
             .sorted()
             .toList()
     }

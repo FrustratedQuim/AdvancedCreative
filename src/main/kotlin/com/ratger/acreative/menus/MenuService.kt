@@ -128,7 +128,7 @@ class MenuService(
                 ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
                 stackSizeApplyHandler,
                 attributeApplyHandler,
-                EquipSoundApplyHandler(),
+                EquipSoundApplyHandler(editParsers),
                 EnchantmentApplyHandler(),
                 MaxDurabilityApplyHandler(validationService, editTargetResolver),
                 DamageApplyHandler(validationService, editTargetResolver),

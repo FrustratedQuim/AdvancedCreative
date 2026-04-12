@@ -274,7 +274,11 @@ class EquippableEditPage(
 
     private fun buildSoundButton(player: Player, session: ItemEditSession): ru.violence.coreapi.bukkit.api.menu.button.Button {
         val isOrdinary = EquippableSupport.isFieldOrdinarySound(session.editableItem)
-        val soundKey = EquippableSupport.effectiveEquipSound(session.editableItem)?.let(Registry.SOUNDS::getKey)?.asString().orEmpty()
+        val soundKey = EquippableSupport.effectiveEquipSound(session.editableItem)
+            ?.let(Registry.SOUNDS::getKey)
+            ?.asString()
+            ?.removePrefix("minecraft:")
+            .orEmpty()
 
         return buttonFactory.actionButton(
             material = Material.MUSIC_DISC_13,

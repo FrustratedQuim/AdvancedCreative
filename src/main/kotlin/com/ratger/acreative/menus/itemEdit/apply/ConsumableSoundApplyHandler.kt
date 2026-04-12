@@ -17,18 +17,10 @@ class ConsumableSoundApplyHandler(
 ) : EditorApplyHandler {
     override val kind: EditorApplyKind = EditorApplyKind.CONSUMABLE_SOUND
 
-    private val presets = listOf(
-        "minecraft:item.totem.use",
-        "minecraft:entity.player.levelup",
-        "minecraft:entity.goat.screaming.ambient",
-        "minecraft:ui.toast.challenge_complete",
-        "minecraft:ambient.cave"
-    )
-
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
 
-        val key = parser.parseAdventureKey(args[0]) ?: return ApplyExecutionResult.InvalidValue
+        val key = parser.parseSoundKey(args[0]) ?: return ApplyExecutionResult.InvalidValue
         val action = ItemAction.ConsumableSound(key)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
         if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
@@ -40,6 +32,6 @@ class ConsumableSoundApplyHandler(
 
     override fun suggestions(args: Array<out String>): List<String> {
         if (args.size != 1) return emptyList()
-        return presets.filter { it.startsWith(args[0], ignoreCase = true) }
+        return parser.soundSuggestions(args[0])
     }
 }

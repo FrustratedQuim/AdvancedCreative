@@ -180,7 +180,7 @@ class FoodEditPage(
         )
 
     private fun buildSoundButton(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit): ru.violence.coreapi.bukkit.api.menu.button.Button {
-        val sound = ConsumableComponentSupport.soundKey(session.editableItem)?.asString()
+        val sound = ConsumableComponentSupport.soundKey(session.editableItem)?.asString()?.removePrefix("minecraft:")
         return buttonFactory.applyResetButton(
             material = Material.MUSIC_DISC_13,
             active = sound != null,
