@@ -48,7 +48,9 @@ import com.ratger.acreative.menus.itemEdit.apply.MapIdApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MapColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.MiningSpeedApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.NameTextApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.NameRawMiniMessageApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.LoreTextApplyHandler
+import com.ratger.acreative.menus.itemEdit.apply.LoreRawMiniMessageLineApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionColorApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.PotionEffectAddApplyHandler
 import com.ratger.acreative.menus.itemEdit.apply.RestrictionBlockApplyHandler
@@ -120,6 +122,8 @@ class MenuService(
                 itemIdApplyHandler,
                 NameTextApplyHandler(textStyleService),
                 LoreTextApplyHandler(textStyleService),
+                NameRawMiniMessageApplyHandler(textStyleService),
+                LoreRawMiniMessageLineApplyHandler(textStyleService),
                 AmountApplyHandler(),
                 ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
                 stackSizeApplyHandler,

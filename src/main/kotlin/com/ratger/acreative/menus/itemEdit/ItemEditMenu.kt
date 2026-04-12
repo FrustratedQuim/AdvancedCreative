@@ -24,6 +24,7 @@ import com.ratger.acreative.menus.itemEdit.pages.RestrictionsListPage
 import com.ratger.acreative.menus.itemEdit.pages.RestrictionsRootPage
 import com.ratger.acreative.menus.itemEdit.pages.SimpleEditMenu
 import com.ratger.acreative.menus.itemEdit.pages.TextAppearanceEditPageOne
+import com.ratger.acreative.menus.itemEdit.pages.TextAppearanceEditPageTwo
 import com.ratger.acreative.menus.itemEdit.pages.ToolEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseCooldownEditPage
 import com.ratger.acreative.menus.itemEdit.pages.UseRemainderEditPage
@@ -106,8 +107,10 @@ class ItemEditMenu(
         openTextAppearance = openTextAppearanceFromAdvancedHandler,
         requestApplyInput = requestApplyInput
     )
+    private val textAppearancePageTwo: TextAppearanceEditPageTwo =
+        TextAppearanceEditPageTwo(support, buttonFactory, textStyleService, requestApplyInput, this::openTextAppearancePageOne)
     private val textAppearancePageOne: TextAppearanceEditPageOne =
-        TextAppearanceEditPageOne(support, buttonFactory, textStyleService, requestApplyInput)
+        TextAppearanceEditPageOne(support, buttonFactory, textStyleService, requestApplyInput, this::openTextAppearancePageTwo)
     private val advancedPageTwo: AdvancedEditPageTwo =
         AdvancedEditPageTwo(
             support,
@@ -314,7 +317,15 @@ class ItemEditMenu(
     }
 
     fun openTextAppearancePage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
+        openTextAppearancePageOne(player, session, openBack)
+    }
+
+    fun openTextAppearancePageOne(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
         textAppearancePageOne.open(player, session, openBack)
+    }
+
+    fun openTextAppearancePageTwo(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
+        textAppearancePageTwo.open(player, session, openBack)
     }
 
     fun openTextAppearanceFromSimple(player: Player, session: ItemEditSession) {

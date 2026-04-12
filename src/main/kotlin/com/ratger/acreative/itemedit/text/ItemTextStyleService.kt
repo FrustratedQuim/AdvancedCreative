@@ -44,16 +44,86 @@ class ItemTextStyleService(
 
     fun parseInputText(input: String, mode: TextInputMode, vararg tagResolvers: TagResolver): Component {
         val normalizedInput = when (mode) {
-            TextInputMode.LITERAL_ESCAPED -> escapeForMiniMessage(input, *tagResolvers)
+            TextInputMode.LITERAL_ESCAPED -> escapeMiniMessageForPreview(input, *tagResolvers)
             TextInputMode.FORMATTED_MINIMESSAGE -> input
         }
         return mini.deserialize(normalizedInput, *tagResolvers)
     }
 
+    fun parseRawMiniMessage(input: String, vararg tagResolvers: TagResolver): Component =
+        mini.deserialize(input, *tagResolvers)
+
     fun escapeForMiniMessage(input: String, vararg tagResolvers: TagResolver): String =
+        escapeMiniMessageForPreview(input, *tagResolvers)
+
+    fun escapeMiniMessageForPreview(input: String, vararg tagResolvers: TagResolver): String =
         mini.escapeTags(input, *tagResolvers)
 
     fun serializeMiniMessage(component: Component): String = mini.serialize(component)
+
+    fun serializeLoreToRawMiniMessageLines(lore: List<Component>): List<String> =
+        lore.map { line ->
+            val serialized = mini.serialize(line)
+            if (plain.serialize(line).isBlank() && serialized.isBlank()) "" else serialized
+        }
+
+    fun setCustomNameRawMiniMessage(item: ItemStack, rawMiniMessage: String): Component {
+        val parsed = parseRawMiniMessage(rawMiniMessage).decoration(TextDecoration.ITALIC, false)
+        setCustomName(item, parsed)
+        return parsed
+    }
+
+    fun materializeLoreFromVirtualLines(virtualLines: List<String>): List<Component> {
+        val lastNonBlankIndex = virtualLines.indexOfLast { it.isNotBlank() }
+        if (lastNonBlankIndex < 0) return emptyList()
+
+        return (0..lastNonBlankIndex).map { index ->
+            val raw = virtualLines[index]
+            if (raw.isBlank()) {
+                Component.empty().decoration(TextDecoration.ITALIC, false)
+            } else {
+                parseRawMiniMessage(raw).decoration(TextDecoration.ITALIC, false)
+            }
+        }
+    }
+
+    fun ensureVirtualLoreLines(lines: List<String>, minimumSize: Int = 3): List<String> {
+        val safeMinimumSize = minimumSize.coerceAtLeast(1)
+        val mutable = lines.toMutableList()
+        val lastNonBlankIndex = mutable.indexOfLast { it.isNotBlank() }
+
+        val targetSize = if (lastNonBlankIndex < 0) {
+            safeMinimumSize
+        } else {
+            maxOf(safeMinimumSize, lastNonBlankIndex + 2)
+        }
+
+        while (mutable.size < targetSize) {
+            mutable.add("")
+        }
+        while (mutable.size > targetSize) {
+            mutable.removeLast()
+        }
+        return mutable
+    }
+
+    fun updateVirtualLoreLine(lines: List<String>, index: Int, rawValue: String, minimumSize: Int = 3): List<String> {
+        val safeIndex = index.coerceAtLeast(0)
+        val mutable = ensureVirtualLoreLines(lines, minimumSize).toMutableList()
+        while (mutable.size <= safeIndex) {
+            mutable.add("")
+        }
+        mutable[safeIndex] = rawValue
+        return ensureVirtualLoreLines(mutable, minimumSize)
+    }
+
+    fun clearVirtualLoreLine(lines: List<String>, index: Int, minimumSize: Int = 3): List<String> =
+        updateVirtualLoreLine(lines, index, "", minimumSize)
+
+    fun setLoreFromVirtualRawLines(item: ItemStack, virtualLines: List<String>) {
+        val materialized = materializeLoreFromVirtualLines(virtualLines)
+        setLore(item, materialized.ifEmpty { null })
+    }
 
     fun stripOnlyColor(component: Component): Component = mutate(component) { style -> style.color(null) }
 
@@ -159,7 +229,6 @@ class ItemTextStyleService(
 
         return Component.empty().children(children).decoration(TextDecoration.ITALIC, false)
     }
-
 
     private fun containsTranslatable(component: Component): Boolean {
         if (component is TranslatableComponent) return true

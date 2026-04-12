@@ -26,5 +26,9 @@ data class ItemEditSession(
     var nameShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
     var loreShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
     var usesVanillaNameBase: Boolean = false,
-    var textStyleStateInitialized: Boolean = false
+    var textStyleStateInitialized: Boolean = false,
+    var rawMiniMessageNameInput: String? = null,
+    val virtualLoreRawLines: MutableList<String> = mutableListOf(),
+    var loreRawFocusIndex: Int = 0,
+    var rawTextStyleStateInitialized: Boolean = false
 )

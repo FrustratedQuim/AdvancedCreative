@@ -16,7 +16,8 @@ class TextAppearanceEditPageOne(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val textStyleService: ItemTextStyleService,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openPageTwo: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
         initializeStyleState(session)
@@ -34,8 +35,8 @@ class TextAppearanceEditPageOne(
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(18, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
         menu.setButton(27, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
-        menu.setButton(26, buttonFactory.forwardButton { })
-        menu.setButton(35, buttonFactory.forwardButton { })
+        menu.setButton(26, buttonFactory.forwardButton { support.transition(session) { openPageTwo(player, session, openBack) } })
+        menu.setButton(35, buttonFactory.forwardButton { support.transition(session) { openPageTwo(player, session, openBack) } })
 
         refreshButtons(menu, player, session, openBack)
         menu.open(player)

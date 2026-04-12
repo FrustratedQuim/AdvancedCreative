@@ -15,6 +15,8 @@ enum class EditorApplyKind {
     ITEM_ID,
     NAME_TEXT,
     LORE_TEXT,
+    NAME_RAW_MINIMESSAGE,
+    LORE_RAW_MINIMESSAGE_LINE,
     AMOUNT,
     ITEM_MODEL,
     STACK_SIZE,

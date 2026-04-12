@@ -12,7 +12,9 @@ class ApplyPromptService(
         val subtitleKey = when (kind) {
             EditorApplyKind.ITEM_ID, EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID
             EditorApplyKind.NAME_TEXT,
-            EditorApplyKind.LORE_TEXT -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_TEXT
+            EditorApplyKind.LORE_TEXT,
+            EditorApplyKind.NAME_RAW_MINIMESSAGE,
+            EditorApplyKind.LORE_RAW_MINIMESSAGE_LINE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_TEXT
             EditorApplyKind.AMOUNT, EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
             EditorApplyKind.ATTRIBUTE -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ATTRIBUTE
             EditorApplyKind.EQUIP_SOUND -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_SOUND

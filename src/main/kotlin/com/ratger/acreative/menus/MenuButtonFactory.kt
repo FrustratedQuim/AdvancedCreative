@@ -60,6 +60,12 @@ class MenuButtonFactory(
         RESET_ALL
     }
 
+    enum class AdvancedLoreInteraction {
+        NEXT_FOCUS,
+        APPLY_FOCUSED,
+        CLEAR_FOCUSED
+    }
+
     fun blackFillerButton() = Button.simple(
         ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
             .name(parser.parse("<!i>"))
@@ -197,6 +203,112 @@ class MenuButtonFactory(
         }
     )
 
+
+    fun textStyleInfoButton(): Button = actionButton(
+        material = Material.OAK_HANGING_SIGN,
+        name = "<!i><#C7A300>ℹ <#FFD700>Стили и Цвета",
+        lore = listOf(
+            "",
+            "<!i><white> \\<white>             <gray>\\<b><white><b>Pepich</b><gray>\\</b>",
+            "<!i><gray> \\<gray>             \\<i><white><i>Pepich</i><gray>\\</i>",
+            "<!i><dark_gray> \\<dark_gray>      <gray>\\<u><white><u>Pepich</u><gray>\\</u>",
+            "<!i><black> \\<black>             <gray>\\<st><white><st>Pepich</st><gray>\\</st>",
+            "<!i><yellow> \\<yellow>            <gray>\\<obf><white><obf>Pepich</obf><gray>\\</obf>",
+            "<!i><gold> \\<gold>",
+            "<!i><red> \\<red>               <gray>\\<#00FF79><#00FF79>Pepich<gray>\\</#00FF79>",
+            "<!i><dark_red> \\<dark_red>        <gray>\\<gradient<red>:<gray>#00FF79<red>:<gray>#FF00D9><gradient:#00FF79:#FF00D9>Pepich</gradient><gray>\\</gradient> ",
+            "<!i><green> \\<green>            <gray>\\<shadow<red>:<gray>#00FF79<red>:<gray>1><shadow:#00FF79:1><white>Pepich</white></shadow><gray>\\</shadow>",
+            "<!i><dark_green> \\<dark_green>",
+            "<!i><aqua> \\<aqua>",
+            "<!i><dark_aqua> \\<dark_aqua>",
+            "<!i><blue> \\<blue>",
+            "<!i><dark_blue> \\<dark_blue>",
+            "<!i><light_purple> \\<light_purple>",
+            "<!i><dark_purple> \\<dark_purple>",
+            ""
+        )
+    )
+
+    fun rawMiniMessageNameApplyButton(
+        hasName: Boolean,
+        escapedPreview: String,
+        onApply: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
+        onReset: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ): Button {
+        val usageLore = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+            "<!i>",
+            "<!i><#FFD700>После нажатия:",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            "<!i>"
+        )
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
+
+        return applyResetButton(
+            material = Material.PAPER,
+            active = hasName,
+            activeName = "<!i><#C7A300>◎ <#FFD700>Название: <#00FF40>Задано",
+            inactiveName = "<!i><#C7A300>⭘ <#FFD700>Название: <#FF1500>Обычное",
+            activeLore = activeLore,
+            inactiveLore = usageLore,
+            onApply = onApply,
+            onReset = onReset
+        )
+    }
+
+    fun advancedRawLoreEditorButton(
+        virtualLines: List<String>,
+        escapedVirtualLines: List<String>,
+        focusedIndex: Int,
+        hasMaterializedLore: Boolean,
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, AdvancedLoreInteraction) -> Unit
+    ): Button {
+        val safeFocusedIndex = focusedIndex.coerceIn(0, virtualLines.lastIndex.coerceAtLeast(0))
+        val loreLines = buildList {
+            add("<!i><#FFD700>ЛКМ, <#FFE68A>следующая строка")
+            add("<!i><#FFD700>ПКМ, <#FFE68A>изменить текущую")
+            add("<!i><#FFD700>Q, <#FFE68A>очистить текущую")
+            add("<!i>")
+            virtualLines.forEachIndexed { index, line ->
+                val escaped = escapedVirtualLines.getOrNull(index).orEmpty()
+                val prefix = if (index == safeFocusedIndex) {
+                    "<!i><#00FF40>  » "
+                } else {
+                    "<!i><#C7A300> » "
+                }
+                add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$escaped")
+            }
+            add("<!i>")
+        }
+
+        return actionButton(
+            material = Material.BOOK,
+            name = if (hasMaterializedLore) {
+                "<!i><#C7A300>◎ <#FFD700>Описание: <#00FF40>Задано"
+            } else {
+                "<!i><#C7A300>⭘ <#FFD700>Описание: <#FF1500>Нет"
+            },
+            lore = loreLines,
+            itemModifier = {
+                if (hasMaterializedLore) {
+                    glint(true)
+                }
+                this
+            },
+            action = { event ->
+                val interaction = when {
+                    event.isLeft || event.isShiftLeft -> AdvancedLoreInteraction.NEXT_FOCUS
+                    event.isRight || event.isShiftRight -> AdvancedLoreInteraction.APPLY_FOCUSED
+                    isDropClick(event) -> AdvancedLoreInteraction.CLEAR_FOCUSED
+                    else -> return@actionButton
+                }
+                action(event, interaction)
+            }
+        )
+    }
+
     fun toggleButton(
         material: Material,
         enabled: Boolean,
@@ -291,36 +403,6 @@ class MenuButtonFactory(
         require(options.isNotEmpty()) { "Focused toggle list options cannot be empty" }
         val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
         val lore = beforeOptionsLore + buildFocusedToggleListLore(options, safeFocusedIndex) + afterOptionsLore
-        val builder = ItemBuilder(material)
-            .name(parser.parse(title))
-            .lore(lore.map(parser::parse))
-        if (itemModifier != null) {
-            builder.itemModifier()
-        }
-        return Button.simple(builder.build()).action { event ->
-            val interaction = when {
-                event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
-                event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
-                isDropClick(event) -> FocusedToggleListInteraction.RESET_ALL
-                else -> return@action
-            }
-            action(event, interaction)
-        }.build()
-    }
-
-    fun orderedFocusedToggleListButton(
-        material: Material,
-        title: String,
-        options: List<OrderedFocusedToggleListOption>,
-        focusedIndex: Int,
-        beforeOptionsLore: List<String> = emptyList(),
-        afterOptionsLore: List<String> = emptyList(),
-        itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
-    ): Button {
-        require(options.isNotEmpty()) { "Ordered focused toggle list options cannot be empty" }
-        val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
-        val lore = beforeOptionsLore + buildOrderedFocusedToggleListLore(options, safeFocusedIndex) + afterOptionsLore
         val builder = ItemBuilder(material)
             .name(parser.parse(title))
             .lore(lore.map(parser::parse))

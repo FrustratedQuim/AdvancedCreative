@@ -101,7 +101,9 @@ class ItemEditorApplyStateManager(
         return when (kind) {
             EditorApplyKind.ITEM_ID -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.NAME_TEXT,
-            EditorApplyKind.LORE_TEXT -> MessageKey.EDIT_APPLY_USAGE_TEXT
+            EditorApplyKind.LORE_TEXT,
+            EditorApplyKind.NAME_RAW_MINIMESSAGE,
+            EditorApplyKind.LORE_RAW_MINIMESSAGE_LINE -> MessageKey.EDIT_APPLY_USAGE_TEXT
             EditorApplyKind.AMOUNT -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
             EditorApplyKind.ITEM_MODEL -> MessageKey.EDIT_APPLY_USAGE_ID
             EditorApplyKind.STACK_SIZE -> MessageKey.EDIT_APPLY_USAGE_AMOUNT
