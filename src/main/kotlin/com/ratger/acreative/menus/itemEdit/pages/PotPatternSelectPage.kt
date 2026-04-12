@@ -65,7 +65,7 @@ class PotPatternSelectPage(
             lore = if (isBrickSelected) {
                 listOf(
                     "<!i><#FFF3E0>Выберите нужный черепок",
-                    "<!i>",
+                    "",
                     "<!i><#00FF40>▍ Выбрано"
                 )
             } else {

@@ -269,6 +269,6 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT to "<#7BFF00>/apply <эффект> [уровень] - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_EFFECT to "<#7BFF00>/apply <эффект> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_CONSUME_SECONDS to "<#7BFF00>/apply <секунд> - указать <gray>| <#7BFF00>/apply cancel - отмена",
-        MessageKey.EDIT_PROMPT_CLEAR to "<!i>"
+        MessageKey.EDIT_PROMPT_CLEAR to ""
     )
 }

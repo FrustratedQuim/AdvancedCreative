@@ -254,7 +254,7 @@ class AdvancedEditPageOne(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
                 ""
             ),
-            afterOptionsLore = listOf("<!i>"),
+            afterOptionsLore = listOf(""),
             itemModifier = { selected ->
                 edit { item ->
                     val meta = item.itemMeta ?: return@edit
@@ -449,7 +449,7 @@ class AdvancedEditPageOne(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
                 ""
             ),
-            afterOptionsLore = listOf("<!i>"),
+            afterOptionsLore = listOf(""),
             itemModifier = { selected ->
                 edit { item ->
                     val meta = item.itemMeta ?: return@edit

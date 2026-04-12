@@ -35,11 +35,11 @@ class PotionEditPage(
         val activeColorLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
+            "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <#hex> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
-            "<!i>"
+            ""
         )
         val inactiveColorLore = activeColorLore.toMutableList().also {
             it[it.lastIndex - 1] = "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
@@ -74,9 +74,9 @@ class PotionEditPage(
                 },
                 beforeOptionsLore = listOf(
                     "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-                    "<!i>"
+                    ""
                 ),
-                afterOptionsLore = listOf("<!i>"),
+                afterOptionsLore = listOf(""),
                 itemModifier = {
                     buttonFactory.hideAdditionalTooltip().invoke(this)
                     this

@@ -99,13 +99,13 @@ class TextAppearanceEditPageOne(
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
+            "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
-            "<!i>"
+            ""
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "") + usageLore
         return buttonFactory.applyResetButton(
             material = Material.PAPER,
             active = hasName,
@@ -138,13 +138,13 @@ class TextAppearanceEditPageOne(
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
+            "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
-            "<!i>"
+            ""
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "") + usageLore
 
         return buttonFactory.applyResetButton(
             material = Material.BOOK,

@@ -107,11 +107,11 @@ class LockEditPage(
         material = Material.OAK_HANGING_SIGN,
         name = "<!i><#C7A300>ℹ <#FFD700>Что это такое?",
         lore = listOf(
-            "<!i>",
+            "",
             "<!i><#C7A300> ◆ <#FFE68A>Шалкер можно будет открыть лишь",
             "<!i><b>  </b><#FFE68A> <#FFF3E0>предметом-ключом<#FFE68A>, который находится",
             "<!i><b>  </b><#FFE68A>в определённом слоте ниже.",
-            "<!i>"
+            ""
         )
     )
 

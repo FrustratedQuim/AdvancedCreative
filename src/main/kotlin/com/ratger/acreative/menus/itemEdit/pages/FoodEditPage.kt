@@ -286,14 +286,14 @@ class FoodEditPage(
             },
             beforeOptionsLore = listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-                "<!i>"
+                ""
             ),
             afterOptionsLore = listOf(
-                "<!i>",
+                "",
                 "<!i><#FFD700>Назначение:",
                 "<!i><#C7A300> ● <#FFE68A>Влияет на анимацию",
                 "<!i><#C7A300> ● <#FFE68A>предмета при <#FFF3E0>поедании.",
-                "<!i>"
+                ""
             ),
             action = { event, newIndex ->
                 if (!EdibleMenuSupport.isEnabled(session.editableItem)) {
@@ -357,11 +357,11 @@ class FoodEditPage(
         private val VALUE_LORE = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
+            "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <число> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
-            "<!i>"
+            ""
         )
 
         private val SOUND_LORE = listOf(

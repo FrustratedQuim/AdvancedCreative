@@ -57,9 +57,9 @@ class EnchantmentsEditPage(
             },
             beforeOptionsLore = listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-                "<!i>"
+                ""
             ),
-            afterOptionsLore = listOf("<!i>"),
+            afterOptionsLore = listOf(""),
             action = { event, newIndex ->
                 val selected = options[newIndex]
                 val mutableMeta = session.editableItem.itemMeta ?: return@listButton

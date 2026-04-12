@@ -34,11 +34,6 @@ class MenuButtonFactory(
         val label: String,
         val enabled: Boolean
     )
-    data class OrderedFocusedToggleListOption(
-        val label: String,
-        val enabled: Boolean,
-        val order: Int?
-    )
 
     data class TextColorFocusOption(
         val colorTag: String,
@@ -68,14 +63,12 @@ class MenuButtonFactory(
 
     fun blackFillerButton() = Button.simple(
         ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
-            .name(parser.parse("<!i>"))
             .hideTooltip(true)
             .build()
     ).build()
 
     fun grayFillerButton() = Button.simple(
         ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
-            .name(parser.parse("<!i>"))
             .hideTooltip(true)
             .build()
     ).build()
@@ -93,7 +86,7 @@ class MenuButtonFactory(
             .lore(
                 listOf(
                     parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
-                    parser.parse("<!i>"),
+                    parser.parse(""),
                     parser.parse("<!i><dark_red>▍ <#FF1500>Если разбираетесь")
                 )
             )
@@ -159,10 +152,10 @@ class MenuButtonFactory(
                 if (selectedEntriesLore.isNotEmpty()) {
                     add(selectedHeader)
                     addAll(selectedEntriesLore)
-                    add("<!i>")
+                    add("")
                 }
             }
-            emptyLore + listOf("<!i>") + selectedBlock
+            emptyLore + listOf("") + selectedBlock
         }
 
         return actionButton(
@@ -244,13 +237,13 @@ class MenuButtonFactory(
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
-            "<!i>",
+            "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
-            "<!i>"
+            ""
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "") + usageLore
 
         return applyResetButton(
             material = Material.PAPER,
@@ -276,7 +269,7 @@ class MenuButtonFactory(
             add("<!i><#FFD700>ЛКМ, <#FFE68A>следующая строка")
             add("<!i><#FFD700>ПКМ, <#FFE68A>изменить текущую")
             add("<!i><#FFD700>Q, <#FFE68A>очистить текущую")
-            add("<!i>")
+            add("")
             virtualLines.forEachIndexed { index, line ->
                 val escaped = escapedVirtualLines.getOrNull(index).orEmpty()
                 val prefix = if (index == safeFocusedIndex) {
@@ -286,7 +279,7 @@ class MenuButtonFactory(
                 }
                 add(if (line.isBlank()) prefix else "$prefix<#FFF3E0>$escaped")
             }
-            add("<!i>")
+            add("")
         }
 
         return actionButton(
@@ -438,7 +431,7 @@ class MenuButtonFactory(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы переключить",
             "<!i><#FFD700>Q, <#FFE68A>чтобы всё сбросить",
-            "<!i>"
+            ""
         ) + options.map { option ->
             when {
                 option.enabled && option.focused ->
@@ -453,7 +446,7 @@ class MenuButtonFactory(
                 else ->
                     "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]<#C7A300><b> </b>» <${option.colorTag}>${option.label}"
             }
-        } + "<!i>"
+        } + ""
 
         return actionButton(
             material = material,
@@ -488,7 +481,7 @@ class MenuButtonFactory(
         val selectedIndex = options.indexOfFirst { it.selected }.takeIf { it >= 0 } ?: 0
         val lore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
-            "<!i>"
+            ""
         ) + options.map { option ->
             val displayColorTag = if (option.colorTag == "ordinary") "white" else option.colorTag
             if (option.selected) {
@@ -496,7 +489,7 @@ class MenuButtonFactory(
             } else {
                 "<!i><#C7A300><b> </b>» <$displayColorTag>${option.label}"
             }
-        } + listOf("<!i>")
+        } + listOf("")
 
         return actionButton(
             material = material,
@@ -551,23 +544,6 @@ class MenuButtonFactory(
                 "<b> </b><#C7A300>» ${option.label} "
             }
 
-            statePrefix + focusSuffix
-        }
-    }
-
-    private fun buildOrderedFocusedToggleListLore(options: List<OrderedFocusedToggleListOption>, focusedIndex: Int): List<String> {
-        return options.mapIndexed { index, option ->
-            val statePrefix = if (option.enabled) {
-                val orderSuffix = option.order?.let { " <#FFF3E0>[<#00FF40>$it<#FFF3E0>]" } ?: ""
-                "<!i><#FFF3E0>[<#00FF40>✔<#FFF3E0>]$orderSuffix"
-            } else {
-                "<!i><#FFF3E0>[<#FF1500>✘<#FFF3E0>]"
-            }
-            val focusSuffix = if (index == focusedIndex) {
-                "  <#00FF40>» ${option.label} "
-            } else {
-                "<b> </b><#C7A300>» ${option.label} "
-            }
             statePrefix + focusSuffix
         }
     }
@@ -812,14 +788,14 @@ class MenuButtonFactory(
             name = "<!i><#C7A300>◎ <#FFD700>Эффект №${entry.index + 1}",
             lore = listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
-                "<!i>",
+                "",
                 "<!i><#FFD700>Параметры:",
                 "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName}",
                 "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds}",
                 "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel}",
                 "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
-                "<!i>"
+                ""
             ),
             itemModifier = {
                 if (previewPotionType != null) {
@@ -914,7 +890,7 @@ class MenuButtonFactory(
         val lore = if (selected) {
             listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять",
-                "<!i>",
+                "",
                 "<!i><#00FF40>▍ Выбрано"
             )
         } else {

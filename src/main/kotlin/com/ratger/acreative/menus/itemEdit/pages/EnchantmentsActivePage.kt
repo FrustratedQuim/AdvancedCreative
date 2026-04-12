@@ -59,11 +59,11 @@ class EnchantmentsActivePage(
                     name = "<!i><#C7A300>◎ <#FFD700>Зачарование №${globalIndex + 1}",
                     lore = listOf(
                         "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
-                        "<!i>",
+                        "",
                         "<!i><#FFD700>Параметры:",
                         "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName}",
                         "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.level}",
-                        "<!i>"
+                        ""
                     ),
                     action = {
                         val meta = entrySession.editableItem.itemMeta ?: return@actionButton
