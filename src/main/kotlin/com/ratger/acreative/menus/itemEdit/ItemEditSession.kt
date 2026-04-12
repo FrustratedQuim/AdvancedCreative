@@ -25,5 +25,6 @@ data class ItemEditSession(
     val orderedLoreColors: MutableList<String> = mutableListOf(),
     var nameShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
     var loreShadowKey: String = TextStylePalette.ORDINARY_SHADOW_KEY,
+    var usesVanillaNameBase: Boolean = false,
     var textStyleStateInitialized: Boolean = false
 )

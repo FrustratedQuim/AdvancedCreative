@@ -12,6 +12,8 @@ import com.ratger.acreative.itemedit.head.LicensedProfileLookupService
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
 import com.ratger.acreative.itemedit.text.ItemTextStyleService
+import com.ratger.acreative.itemedit.text.VanillaNameLocalizationService
+import com.ratger.acreative.itemedit.text.VanillaTranslationResolver
 import com.ratger.acreative.itemedit.validation.ValidationService
 import com.ratger.acreative.menus.itemEdit.ItemEditMenu
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
@@ -64,7 +66,9 @@ class MenuService(
     private val editParsers = EditParsers()
     private val validationService = ValidationService()
     private val editTargetResolver = EditTargetResolver()
-    private val textStyleService = ItemTextStyleService()
+    private val vanillaTranslationResolver = VanillaTranslationResolver(hooker.plugin.dataFolder.toPath(), hooker.plugin.logger)
+    private val vanillaNameLocalizationService = VanillaNameLocalizationService(vanillaTranslationResolver)
+    private val textStyleService = ItemTextStyleService(vanillaNameLocalizationService)
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
     private val headMutationSupport = HeadTextureMutationSupport()
@@ -103,7 +107,8 @@ class MenuService(
             applyStateManager.beginWaiting(player, kind, reopen)
             player.closeInventory()
         },
-        headMutationSupport = headMutationSupport
+        headMutationSupport = headMutationSupport,
+        textStyleService = textStyleService
     )
 
     init {

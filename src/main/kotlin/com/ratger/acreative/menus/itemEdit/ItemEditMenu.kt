@@ -50,7 +50,8 @@ class ItemEditMenu(
     buttonFactory: MenuButtonFactory,
     parser: MiniMessageParser,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val headMutationSupport: HeadTextureMutationSupport
+    private val headMutationSupport: HeadTextureMutationSupport,
+    private val textStyleService: ItemTextStyleService
 ) {
     enum class LastEditorCategory {
         ROOT,
@@ -60,7 +61,6 @@ class ItemEditMenu(
 
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
     private val headTextureValueBookSupport = HeadTextureValueBookSupport()
-    private val textStyleService = ItemTextStyleService()
     private val lastCategoryByPlayer = mutableMapOf<java.util.UUID, LastEditorCategory>()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }

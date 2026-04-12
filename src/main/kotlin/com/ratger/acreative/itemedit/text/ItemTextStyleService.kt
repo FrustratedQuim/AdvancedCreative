@@ -8,8 +8,11 @@ import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
+import java.util.Locale
 
-class ItemTextStyleService() {
+class ItemTextStyleService(
+    private val vanillaNameLocalizationService: VanillaNameLocalizationService
+) {
     private val mini = MiniMessage.miniMessage()
     private val plain = PlainTextComponentSerializer.plainText()
 
@@ -41,21 +44,22 @@ class ItemTextStyleService() {
 
     fun stripOnlyShadow(component: Component): Component = mutate(component) { style -> style.shadowColor(null) }
 
-    fun applyOrderedColors(component: Component, orderedColors: List<String>): Component {
+    fun applyOrderedColors(component: Component, orderedColors: List<String>, locale: Locale? = null): Component {
         val normalized = orderedColors.distinct()
         val stripped = stripOnlyColor(component).decoration(TextDecoration.ITALIC, false)
         if (normalized.isEmpty()) return stripped
 
-        val payload = serializeMiniMessage(normalizeForGradient(stripped))
         return if (normalized.size == 1) {
             val color = resolveNamedColor(normalized.first())
             if (color == null) {
+                val payload = serializeMiniMessage(stripped)
                 mini.deserialize("<${normalized.first()}>$payload</${normalized.first()}>")
             } else {
                 mutate(stripped) { style -> style.color(color) }
             }
         } else {
-            mini.deserialize("<gradient:${normalized.joinToString(":")}>$payload</gradient>")
+            val text = gradientTextPayload(stripped, locale)
+            applyGradient(text, normalized)
         }
     }
 
@@ -107,13 +111,40 @@ class ItemTextStyleService() {
         return component.style(updatedStyle).children(updatedChildren)
     }
 
-    private fun normalizeForGradient(component: Component): Component {
-        if (!containsTranslatable(component)) {
-            return component
+    private fun gradientTextPayload(component: Component, locale: Locale?): String {
+        val plainText = if (locale != null && containsTranslatable(component)) {
+            vanillaNameLocalizationService.localizeToPlainText(component, locale)
+        } else {
+            preview(component, prettyMaterialNameFallback(component))
         }
-        val plainText = preview(component, prettyMaterialNameFallback(component))
-        return Component.text(plainText).decoration(TextDecoration.ITALIC, false)
+        return plainText.ifBlank { prettyMaterialNameFallback(component) }
     }
+
+    private fun applyGradient(text: String, colors: List<String>): Component {
+        if (text.isEmpty()) return Component.empty().decoration(TextDecoration.ITALIC, false)
+
+        val palette = colors.map { key -> resolveNamedColor(key) ?: NamedTextColor.WHITE }
+        if (palette.size < 2) {
+            return Component.text(text).color(palette.first()).decoration(TextDecoration.ITALIC, false)
+        }
+
+        val children = text.mapIndexed { index, symbol ->
+            val progress = if (text.length <= 1) 0.0 else index.toDouble() / (text.length - 1).toDouble()
+            val scaled = progress * (palette.size - 1)
+            val leftIndex = scaled.toInt().coerceIn(0, palette.lastIndex)
+            val rightIndex = (leftIndex + 1).coerceAtMost(palette.lastIndex)
+            val blend = (scaled - leftIndex).toFloat()
+            val color = if (leftIndex == rightIndex) {
+                palette[leftIndex]
+            } else {
+                TextColor.lerp(blend, palette[leftIndex], palette[rightIndex])
+            }
+            Component.text(symbol.toString()).color(color)
+        }
+
+        return Component.empty().children(children).decoration(TextDecoration.ITALIC, false)
+    }
+
 
     private fun containsTranslatable(component: Component): Boolean {
         if (component is TranslatableComponent) return true

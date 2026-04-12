@@ -78,12 +78,12 @@ class TextAppearanceEditPageOne(
                     if (!session.orderedNameColors.remove(key)) {
                         session.orderedNameColors.add(key)
                     }
-                    applyNameStyles(session)
+                    applyNameStyles(event.player, session)
                     updateEditablePreview(event.menu, session)
                 }
                 MenuButtonFactory.FocusedToggleListInteraction.RESET_ALL -> {
                     session.orderedNameColors.clear()
-                    applyNameStyles(session)
+                    applyNameStyles(event.player, session)
                     updateEditablePreview(event.menu, session)
                 }
             }
@@ -122,6 +122,7 @@ class TextAppearanceEditPageOne(
                 textStyleService.setCustomName(session.editableItem, null)
                 session.orderedNameColors.clear()
                 session.nameShadowKey = TextStylePalette.ORDINARY_SHADOW_KEY
+                session.usesVanillaNameBase = true
                 updateEditablePreview(it.menu, session)
                 refreshButtons(it.menu, player, session, openBack)
             }
@@ -226,7 +227,7 @@ class TextAppearanceEditPageOne(
             options = options,
         ) { event, newIndex ->
             session.nameShadowKey = TextStylePalette.shadowOptions[newIndex].key
-            applyNameStyles(session)
+            applyNameStyles(event.player, session)
             updateEditablePreview(event.menu, session)
             event.menu.setButton(39, buildNameShadowButton(session))
         }
@@ -256,9 +257,13 @@ class TextAppearanceEditPageOne(
         }
     }
 
-    private fun applyNameStyles(session: ItemEditSession) {
-        val base = textStyleService.customName(session.editableItem) ?: session.editableItem.effectiveName()
-        val withColors = textStyleService.applyOrderedColors(base, session.orderedNameColors)
+    private fun applyNameStyles(player: Player, session: ItemEditSession) {
+        val base = if (session.usesVanillaNameBase) {
+            session.editableItem.effectiveName()
+        } else {
+            textStyleService.customName(session.editableItem) ?: session.editableItem.effectiveName()
+        }
+        val withColors = textStyleService.applyOrderedColors(base, session.orderedNameColors, player.locale())
         textStyleService.setCustomName(
             session.editableItem,
             textStyleService.applyShadow(withColors, textStyleService.resolveShadowColor(session.nameShadowKey))
@@ -280,6 +285,8 @@ class TextAppearanceEditPageOne(
 
     private fun initializeStyleState(session: ItemEditSession) {
         if (session.textStyleStateInitialized) return
+        val hasCustomName = textStyleService.hasCustomName(session.editableItem)
+        session.usesVanillaNameBase = !hasCustomName
         val name = textStyleService.customName(session.editableItem)
         session.orderedNameColors.clear()
         session.orderedNameColors.addAll(name?.let(textStyleService::detectOrderedColors).orEmpty())

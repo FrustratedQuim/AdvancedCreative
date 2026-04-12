@@ -16,9 +16,10 @@ class NameTextApplyHandler(
             return ApplyExecutionResult.InvalidValue
         }
         var updated = textStyleService.parseMiniMessage(raw).decoration(TextDecoration.ITALIC, false)
-        updated = textStyleService.applyOrderedColors(updated, session.orderedNameColors)
+        updated = textStyleService.applyOrderedColors(updated, session.orderedNameColors, player.locale())
         updated = textStyleService.applyShadow(updated, textStyleService.resolveShadowColor(session.nameShadowKey))
         textStyleService.setCustomName(session.editableItem, updated)
+        session.usesVanillaNameBase = false
         return ApplyExecutionResult.Success
     }
 
