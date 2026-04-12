@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
 import net.kyori.adventure.text.minimessage.MiniMessage
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
 import java.util.Locale
@@ -36,7 +37,21 @@ class ItemTextStyleService(
         item.itemMeta = meta
     }
 
-    fun parseMiniMessage(input: String): Component = mini.deserialize(input)
+    enum class TextInputMode {
+        LITERAL_ESCAPED,
+        FORMATTED_MINIMESSAGE
+    }
+
+    fun parseInputText(input: String, mode: TextInputMode, vararg tagResolvers: TagResolver): Component {
+        val normalizedInput = when (mode) {
+            TextInputMode.LITERAL_ESCAPED -> escapeForMiniMessage(input, *tagResolvers)
+            TextInputMode.FORMATTED_MINIMESSAGE -> input
+        }
+        return mini.deserialize(normalizedInput, *tagResolvers)
+    }
+
+    fun escapeForMiniMessage(input: String, vararg tagResolvers: TagResolver): String =
+        mini.escapeTags(input, *tagResolvers)
 
     fun serializeMiniMessage(component: Component): String = mini.serialize(component)
 

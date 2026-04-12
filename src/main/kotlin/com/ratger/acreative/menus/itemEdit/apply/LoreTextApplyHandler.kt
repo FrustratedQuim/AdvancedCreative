@@ -15,7 +15,9 @@ class LoreTextApplyHandler(
         if (raw.isBlank()) {
             return ApplyExecutionResult.InvalidValue
         }
-        var line = textStyleService.parseMiniMessage(raw).decoration(TextDecoration.ITALIC, false)
+        var line = textStyleService
+            .parseInputText(raw, ItemTextStyleService.TextInputMode.LITERAL_ESCAPED)
+            .decoration(TextDecoration.ITALIC, false)
         line = textStyleService.applyOrderedColors(line, session.orderedLoreColors)
         line = textStyleService.applyShadow(line, textStyleService.resolveShadowColor(session.loreShadowKey))
         textStyleService.setLore(

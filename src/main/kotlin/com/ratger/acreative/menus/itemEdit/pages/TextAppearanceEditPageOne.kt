@@ -94,6 +94,7 @@ class TextAppearanceEditPageOne(
     private fun buildNameApplyButton(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit): Button {
         val hasName = textStyleService.hasCustomName(session.editableItem)
         val preview = textStyleService.preview(textStyleService.customName(session.editableItem), "")
+        val escapedPreview = textStyleService.escapeForMiniMessage(preview)
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
@@ -103,7 +104,7 @@ class TextAppearanceEditPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
             "<!i>"
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$preview", "<!i>") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
         return buttonFactory.applyResetButton(
             material = Material.PAPER,
             active = hasName,
@@ -132,6 +133,7 @@ class TextAppearanceEditPageOne(
     private fun buildLoreApplyButton(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit): Button {
         val hasLore = textStyleService.hasLore(session.editableItem)
         val preview = textStyleService.preview(textStyleService.lore(session.editableItem).firstOrNull(), "")
+        val escapedPreview = textStyleService.escapeForMiniMessage(preview)
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
             "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
@@ -141,7 +143,7 @@ class TextAppearanceEditPageOne(
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
             "<!i>"
         )
-        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$preview", "<!i>") + usageLore
+        val activeLore = listOf("<!i><#C7A300>▍ <#FFF3E0>$escapedPreview", "<!i>") + usageLore
 
         return buttonFactory.applyResetButton(
             material = Material.BOOK,

@@ -15,7 +15,9 @@ class NameTextApplyHandler(
         if (raw.isBlank()) {
             return ApplyExecutionResult.InvalidValue
         }
-        var updated = textStyleService.parseMiniMessage(raw).decoration(TextDecoration.ITALIC, false)
+        var updated = textStyleService
+            .parseInputText(raw, ItemTextStyleService.TextInputMode.LITERAL_ESCAPED)
+            .decoration(TextDecoration.ITALIC, false)
         updated = textStyleService.applyOrderedColors(updated, session.orderedNameColors, player.locale())
         updated = textStyleService.applyShadow(updated, textStyleService.resolveShadowColor(session.nameShadowKey))
         textStyleService.setCustomName(session.editableItem, updated)
