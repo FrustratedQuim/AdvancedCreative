@@ -33,7 +33,7 @@ class TextAppearanceEditPageTwo(
 
         support.fillBase(menu, menuSize, blackSlots)
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
-        menu.setButton(18, buttonFactory.backButton { support.transition(session) { openPageOne(player, session, openBack) } })
+        menu.setButton(18, buttonFactory.backButton("◀ Простой режим") { support.transition(session) { openPageOne(player, session, openBack) } })
         menu.setButton(26, buttonFactory.textStyleInfoButton())
         refreshButtons(menu, player, session, openBack)
         menu.open(player)

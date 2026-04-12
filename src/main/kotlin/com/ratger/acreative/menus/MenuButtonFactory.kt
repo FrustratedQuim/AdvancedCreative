@@ -100,15 +100,21 @@ class MenuButtonFactory(
             .build()
     ).action(action).build()
 
-    fun backButton(action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit) = Button.simple(
+    fun backButton(
+        text: String = "◀ Назад",
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ) = Button.simple(
         ItemBuilder(Material.RED_STAINED_GLASS_PANE)
-            .name(parser.parse("<!i><#FF1500>◀ Назад"))
+            .name(parser.parse("<!i><#FF1500>$text"))
             .build()
     ).action(action).build()
 
-    fun forwardButton(action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit) = Button.simple(
+    fun forwardButton(
+        text: String = "Вперёд ▶",
+        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+    ) = Button.simple(
         ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
-            .name(parser.parse("<!i><#00FF40>Вперёд ▶"))
+            .name(parser.parse("<!i><#00FF40>$text"))
             .build()
     ).action(action).build()
 
