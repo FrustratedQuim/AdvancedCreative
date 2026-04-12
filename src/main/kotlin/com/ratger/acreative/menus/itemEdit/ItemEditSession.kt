@@ -30,5 +30,8 @@ data class ItemEditSession(
     var rawMiniMessageNameInput: String? = null,
     val virtualLoreRawLines: MutableList<String> = mutableListOf(),
     var loreRawFocusIndex: Int = 0,
-    var rawTextStyleStateInitialized: Boolean = false
+    var rawTextStyleStateInitialized: Boolean = false,
+    var simpleThrowableApplied: Boolean = false,
+    var simpleEdibleApplied: Boolean = false,
+    var simpleHeadEquippableApplied: Boolean = false
 )

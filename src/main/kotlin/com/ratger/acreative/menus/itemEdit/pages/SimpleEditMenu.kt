@@ -67,12 +67,14 @@ class SimpleEditMenu(
             this
         },
         action = { event ->
+            if (session.simpleThrowableApplied) return@actionButton
             val previousType = session.editableItem.type
             val converted = session.editableItem.withType(Material.SNOWBALL)
             val convertedMeta = converted.itemMeta ?: return@actionButton
             convertedMeta.itemModel = NamespacedKey.minecraft(previousType.key.key)
             converted.itemMeta = convertedMeta
             session.editableItem = converted
+            session.simpleThrowableApplied = true
             refreshButtons(event.menu, player, session)
         }
     )
@@ -89,10 +91,12 @@ class SimpleEditMenu(
             this
         },
         action = { event ->
+            if (session.simpleEdibleApplied) return@actionButton
             EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
             FoodComponentSupport.setCanAlwaysEat(session.editableItem, true)
             FoodComponentSupport.setSaturation(session.editableItem, 6f)
             FoodComponentSupport.setNutrition(session.editableItem, 5)
+            session.simpleEdibleApplied = true
             refreshButtons(event.menu, player, session)
         }
     )
@@ -109,7 +113,9 @@ class SimpleEditMenu(
             this
         },
         action = { event ->
+            if (session.simpleHeadEquippableApplied) return@actionButton
             EquippableSupport.setSlot(session.editableItem, EquipmentSlot.HEAD)
+            session.simpleHeadEquippableApplied = true
             refreshButtons(event.menu, player, session)
         }
     )
@@ -123,16 +129,9 @@ class SimpleEditMenu(
         )
     }
 
-    private fun throwableConfigured(session: ItemEditSession): Boolean {
-        return session.editableItem.type == Material.SNOWBALL && session.editableItem.itemMeta?.itemModel != null
-    }
+    private fun throwableConfigured(session: ItemEditSession): Boolean = session.simpleThrowableApplied
 
-    private fun edibleConfigured(session: ItemEditSession): Boolean {
-        return FoodComponentSupport.canAlwaysEat(session.editableItem) &&
-            FoodComponentSupport.saturation(session.editableItem) == 6f &&
-            FoodComponentSupport.nutrition(session.editableItem) == 5
-    }
+    private fun edibleConfigured(session: ItemEditSession): Boolean = session.simpleEdibleApplied
 
-    private fun headEquippableConfigured(session: ItemEditSession): Boolean =
-        EquippableSupport.effectiveSlot(session.editableItem) == EquipmentSlot.HEAD
+    private fun headEquippableConfigured(session: ItemEditSession): Boolean = session.simpleHeadEquippableApplied
 }
