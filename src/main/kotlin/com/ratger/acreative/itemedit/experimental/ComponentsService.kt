@@ -23,43 +23,6 @@ import org.bukkit.inventory.ItemStack
 class ComponentsService {
     private val mini = MiniMessage.miniMessage()
 
-    fun supports(action: ItemAction): Boolean {
-        return action is ItemAction.ConsumableToggle ||
-            action is ItemAction.ConsumableAnimation ||
-            action is ItemAction.ConsumableHasParticles ||
-            action is ItemAction.ConsumableConsumeSeconds ||
-            action is ItemAction.ConsumableSound ||
-            action is ItemAction.ConsumableEffectAdd ||
-            action is ItemAction.ConsumableEffectRemove ||
-            action is ItemAction.ConsumableEffectClear ||
-            action is ItemAction.DeathProtectionToggle ||
-            action is ItemAction.DeathProtectionEffectAdd ||
-            action is ItemAction.DeathProtectionEffectRemove ||
-            action is ItemAction.DeathProtectionEffectClear ||
-            action is ItemAction.FoodNutrition ||
-            action is ItemAction.FoodSaturation ||
-            action is ItemAction.FoodCanAlwaysEat ||
-            action is ItemAction.RemainderSetFromOffhand ||
-            action is ItemAction.RemainderClear ||
-            action is ItemAction.EquippableSetSlot ||
-            action is ItemAction.EquippableClear ||
-            action is ItemAction.EquippableSetDispensable ||
-            action is ItemAction.EquippableSetSwappable ||
-            action is ItemAction.EquippableSetDamageOnHurt ||
-            action is ItemAction.EquippableSetEquipSound ||
-            action is ItemAction.EquippableSetCameraOverlay ||
-            action is ItemAction.EquippableSetAssetId ||
-            action is ItemAction.ToolSetDefaultMiningSpeed ||
-            action is ItemAction.ToolSetDamagePerBlock ||
-            action is ItemAction.ToolClear ||
-            action is ItemAction.SetUseCooldown ||
-            action is ItemAction.ClearUseCooldown ||
-            action is ItemAction.ContainerSetSlotFromOffhand ||
-            action is ItemAction.PotClear ||
-            action is ItemAction.PotSet ||
-            action is ItemAction.PotSetSide
-    }
-
     fun apply(player: Player, action: ItemAction, item: ItemStack): ItemResult {
         when (action) {
             is ItemAction.ConsumableToggle -> applyConsumableToggle(item, action.enabled)
@@ -152,17 +115,17 @@ class ComponentsService {
             ItemAction.EquippableClear -> EquippableSupport.clear(item)
             is ItemAction.EquippableSetDispensable -> {
                 if (!EquippableSupport.setDispensable(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetSwappable -> {
                 if (!EquippableSupport.setSwappable(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetDamageOnHurt -> {
                 if (!EquippableSupport.setDamageOnHurt(item, action.value)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetEquipSound -> {
@@ -175,17 +138,17 @@ class ComponentsService {
                         )
                     }
                 } else if (!EquippableSupport.setEquipSound(item, action.keyOrDefault)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetCameraOverlay -> {
                 if (!EquippableSupport.setCameraOverlay(item, action.keyOrNull)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.EquippableSetAssetId -> {
                 if (!EquippableSupport.setAssetId(item, action.keyOrNull)) {
-                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /dedit equippable slot ...")))
+                    return ItemResult(false, listOf(mini.deserialize("<red>Сначала установите slot через /edit equippable slot ...")))
                 }
             }
             is ItemAction.ToolSetDefaultMiningSpeed -> applyToolSpeed(item, action.value, action.scope)
@@ -199,7 +162,7 @@ class ComponentsService {
             ItemAction.ClearUseCooldown -> item.unsetData(DataComponentTypes.USE_COOLDOWN)
             is ItemAction.ContainerSetSlotFromOffhand -> {
                 val snapshot = ContainerSupport.readContainerContents(item)
-                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /dedit container на стабильном BlockState API")))
+                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Этот предмет не поддерживает /edit container на стабильном BlockState API")))
                 snapshot.contents[action.index] = player.inventory.itemInOffHand.clone()
                 if (!ContainerSupport.applyContainerContents(item, snapshot.contents)) {
                     return ItemResult(false, listOf(mini.deserialize("<red>Не удалось применить container через стабильный BlockState API")))

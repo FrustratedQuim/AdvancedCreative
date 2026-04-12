@@ -79,9 +79,6 @@ commands:
   edit:
     description: Open item editor menu
     usage: /edit
-  dedit:
-    description: Edit item in main hand
-    usage: /dedit <show|reset|...>
   apply:
     description: Apply pending editor input
     usage: /apply <value|cancel>
@@ -177,9 +174,6 @@ permissions:
 
   advancedcreative.edit:
     description: Allows using /edit
-    default: op
-  advancedcreative.dedit:
-    description: Allows using /dedit
     default: op
   advancedcreative.apply:
     description: Allows using /apply

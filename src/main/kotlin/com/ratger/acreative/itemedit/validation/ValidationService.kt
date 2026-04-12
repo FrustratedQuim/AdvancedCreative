@@ -186,21 +186,21 @@ class ValidationService {
                 val key = action.keyOrNull
                 if (key != null && !isValidKey(key.asString())) return fail("Некорректный namespaced key для camera_overlay")
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /dedit equippable slot ...")
+                    return fail("Сначала /edit equippable slot ...")
                 }
             }
             is ItemAction.EquippableSetAssetId -> {
                 val key = action.keyOrNull
                 if (key != null && !isValidKey(key.asString())) return fail("Некорректный namespaced key для asset_id")
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /dedit equippable slot ...")
+                    return fail("Сначала /edit equippable slot ...")
                 }
             }
             is ItemAction.EquippableSetDispensable,
             is ItemAction.EquippableSetSwappable,
             is ItemAction.EquippableSetDamageOnHurt -> {
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /dedit equippable slot ...")
+                    return fail("Сначала /edit equippable slot ...")
                 }
             }
             ItemAction.RemainderSetFromOffhand -> {
@@ -227,7 +227,7 @@ class ValidationService {
             }
             is ItemAction.ContainerSetSlotFromOffhand -> {
                 val capacity = ContainerSupport.containerCapacity(context.item.type)
-                    ?: return fail("Этот предмет не поддерживает /dedit container")
+                    ?: return fail("Этот предмет не поддерживает /edit container")
                 if (action.index < 0 || action.index >= capacity) {
                     return fail("Для ${context.item.type.key.asString()} доступно $capacity слотов: 0..${capacity - 1}")
                 }

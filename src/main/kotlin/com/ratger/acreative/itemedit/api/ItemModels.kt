@@ -33,13 +33,10 @@ sealed interface EffectActionSpec {
 
 enum class ToolSpeedScope {
     ALL_BLOCKS,
-    EFFECTIVE_ONLY,
     INEFFECTIVE_ONLY
 }
 
 sealed interface ItemAction {
-    data object Show : ItemAction
-    data class Reset(val scope: String) : ItemAction
     data class NameSet(val miniMessage: String) : ItemAction
     data object NameClear : ItemAction
     data class LoreAdd(val miniMessage: String) : ItemAction
@@ -47,7 +44,6 @@ sealed interface ItemAction {
     data class LoreRemove(val index: Int) : ItemAction
     data object LoreClear : ItemAction
     data class SetItemModel(val key: NamespacedKey?) : ItemAction
-    data class SetItemId(val material: Material) : ItemAction
     data class SetUnbreakable(val value: Boolean) : ItemAction
     data class SetGlider(val value: Boolean) : ItemAction
     data class SetMaxDamage(val value: Int?) : ItemAction
