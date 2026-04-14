@@ -9,8 +9,39 @@ import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.text.ItemTextStyleService
 import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
-import com.ratger.acreative.menus.itemEdit.apply.EditorApplyKind
-import com.ratger.acreative.menus.itemEdit.pages.*
+import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.itemEdit.pages.advanced.AdvancedEditDetailsPage
+import com.ratger.acreative.menus.itemEdit.pages.advanced.AdvancedEditMainPage
+import com.ratger.acreative.menus.itemEdit.pages.appearance.TextAppearanceContentPage
+import com.ratger.acreative.menus.itemEdit.pages.appearance.TextAppearanceStylePage
+import com.ratger.acreative.menus.itemEdit.pages.attributes.AttributeEditPage
+import com.ratger.acreative.menus.itemEdit.pages.attributes.EquippableEditPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.DeathProtectionApplyEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.DeathProtectionEditPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.DeathProtectionRemoveEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.FoodApplyEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.FoodEditPage
+import com.ratger.acreative.menus.itemEdit.pages.effects.FoodRemoveEffectsListPage
+import com.ratger.acreative.menus.itemEdit.pages.enchantments.EnchantmentsActivePage
+import com.ratger.acreative.menus.itemEdit.pages.enchantments.EnchantmentsEditPage
+import com.ratger.acreative.menus.itemEdit.pages.head.HeadTextureEditPage
+import com.ratger.acreative.menus.itemEdit.pages.map.MapEditPage
+import com.ratger.acreative.menus.itemEdit.pages.pot.DecoratedPotPartDescriptor
+import com.ratger.acreative.menus.itemEdit.pages.pot.PotEditPage
+import com.ratger.acreative.menus.itemEdit.pages.pot.PotPatternSelectPage
+import com.ratger.acreative.menus.itemEdit.pages.potion.PotionEditPage
+import com.ratger.acreative.menus.itemEdit.pages.potion.PotionEffectsActivePage
+import com.ratger.acreative.menus.itemEdit.pages.restrictions.RestrictionsListPage
+import com.ratger.acreative.menus.itemEdit.pages.restrictions.RestrictionsRootPage
+import com.ratger.acreative.menus.itemEdit.pages.root.RootEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.root.SimpleEditMenu
+import com.ratger.acreative.menus.itemEdit.pages.tooling.LockEditPage
+import com.ratger.acreative.menus.itemEdit.pages.tooling.ToolEditPage
+import com.ratger.acreative.menus.itemEdit.pages.tooling.UseCooldownEditPage
+import com.ratger.acreative.menus.itemEdit.pages.tooling.UseRemainderEditPage
+import com.ratger.acreative.menus.itemEdit.pages.trim.ArmorTrimEditPage
+import com.ratger.acreative.menus.itemEdit.pages.trim.ArmorTrimMaterialSelectPage
+import com.ratger.acreative.menus.itemEdit.pages.trim.ArmorTrimPatternSelectPage
 import org.bukkit.Material
 import org.bukkit.entity.Player
 
@@ -48,7 +79,6 @@ class ItemEditMenu(
     private val openRestrictionsRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRestrictionsRoot(player, session) }
     private val openDeathProtectionPageHandler: (Player, ItemEditSession) -> Unit = { player, session -> openDeathProtectionPage(player, session) }
     private val openFoodPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openFoodPageFromAdvanced(player, session) }
-    private val openFoodPageFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openFoodPageFromSimple(player, session) }
     private val openSpecialParametersFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSpecialParametersFromAdvanced(player, session) }
     private val openPotionPageFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session ->
         openPotionPage(player, session, openAdvancedPageOneHandler)
@@ -58,7 +88,8 @@ class ItemEditMenu(
     private val openTextAppearanceFromSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openTextAppearanceFromSimple(player, session) }
     private val openTextAppearanceFromAdvancedHandler: (Player, ItemEditSession) -> Unit = { player, session -> openTextAppearanceFromAdvanced(player, session) }
 
-    private val rootPage: RootEditMenu = RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
+    private val rootPage: RootEditMenu =
+        RootEditMenu(support, buttonFactory, openSimpleHandler, openAdvancedPageOneHandler)
     private val simplePage: SimpleEditMenu = SimpleEditMenu(
         support,
         buttonFactory,
@@ -66,7 +97,7 @@ class ItemEditMenu(
         openEnchantmentsFromSimpleHandler,
         openTextAppearanceFromSimpleHandler
     )
-    private val advancedEditPageOne: AdvancedEditPageOne = AdvancedEditPageOne(
+    private val advancedEditPageOne: AdvancedEditMainPage = AdvancedEditMainPage(
         support = support,
         buttonFactory = buttonFactory,
         openRoot = openRootHandler,
@@ -75,12 +106,24 @@ class ItemEditMenu(
         openTextAppearance = openTextAppearanceFromAdvancedHandler,
         requestApplyInput = requestApplyInput
     )
-    private val textAppearancePageTwo: TextAppearanceEditPageTwo =
-        TextAppearanceEditPageTwo(support, buttonFactory, textStyleService, requestApplyInput, this::openTextAppearancePageOne)
-    private val textAppearancePageOne: TextAppearanceEditPageOne =
-        TextAppearanceEditPageOne(support, buttonFactory, textStyleService, requestApplyInput, this::openTextAppearancePageTwo)
-    private val advancedPageTwo: AdvancedEditPageTwo =
-        AdvancedEditPageTwo(
+    private val textAppearancePageTwo: TextAppearanceStylePage =
+        TextAppearanceStylePage(
+            support,
+            buttonFactory,
+            textStyleService,
+            requestApplyInput,
+            this::openTextAppearancePageOne
+        )
+    private val textAppearancePageOne: TextAppearanceContentPage =
+        TextAppearanceContentPage(
+            support,
+            buttonFactory,
+            textStyleService,
+            requestApplyInput,
+            this::openTextAppearancePageTwo
+        )
+    private val advancedPageTwo: AdvancedEditDetailsPage =
+        AdvancedEditDetailsPage(
             support,
             buttonFactory,
             openAdvancedPageOneHandler,
@@ -102,8 +145,22 @@ class ItemEditMenu(
         FoodEditPage(
             support = support,
             buttonFactory = buttonFactory,
-            openRemoveEffectsPage = { player, session, openBack -> openFoodRemoveEffectsPage(player, session, openBack, 0) },
-            openApplyEffectsPage = { player, session, openBack -> openFoodApplyEffectsPage(player, session, openBack, 0) },
+            openRemoveEffectsPage = { player, session, openBack ->
+                openFoodRemoveEffectsPage(
+                    player,
+                    session,
+                    openBack,
+                    0
+                )
+            },
+            openApplyEffectsPage = { player, session, openBack ->
+                openFoodApplyEffectsPage(
+                    player,
+                    session,
+                    openBack,
+                    0
+                )
+            },
             requestApplyInput = requestApplyInput
         )
     private val deathProtectionRemoveEffectsPage: DeathProtectionRemoveEffectsListPage =
@@ -144,7 +201,14 @@ class ItemEditMenu(
     private val potEditPage: PotEditPage =
         PotEditPage(support, buttonFactory, this::openDecoratedPotPattern)
     private val headTextureEditPage: HeadTextureEditPage =
-        HeadTextureEditPage(support, buttonFactory, headMutationSupport, headTextureValueBookSupport, openAdvancedPageOneHandler, requestApplyInput)
+        HeadTextureEditPage(
+            support,
+            buttonFactory,
+            headMutationSupport,
+            headTextureValueBookSupport,
+            openAdvancedPageOneHandler,
+            requestApplyInput
+        )
     private val potionEditPage: PotionEditPage =
         PotionEditPage(support, buttonFactory, requestApplyInput, this::openPotionEffectsPage)
     private val potionEffectsPage: PotionEffectsActivePage =
@@ -231,10 +295,6 @@ class ItemEditMenu(
 
     fun openFoodPageFromAdvanced(player: Player, session: ItemEditSession) {
         openFoodPage(player, session, openAdvancedPageTwoHandler)
-    }
-
-    fun openFoodPageFromSimple(player: Player, session: ItemEditSession) {
-        openFoodPage(player, session, openSimpleHandler)
     }
 
     fun openFoodRemoveEffectsPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit, page: Int = 0) {

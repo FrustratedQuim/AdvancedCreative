@@ -2,13 +2,11 @@ package com.ratger.acreative.itemedit.map
 
 import org.bukkit.Bukkit
 import org.bukkit.Color
-import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.MapMeta
 import org.bukkit.map.MapView
 
 object MapItemSupport {
-    fun supports(item: ItemStack): Boolean = item.type == Material.FILLED_MAP
 
     fun color(item: ItemStack): Color? {
         val meta = item.itemMeta as? MapMeta ?: return null
