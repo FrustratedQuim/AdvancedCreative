@@ -25,8 +25,6 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.50.3.0")
     implementation("com.github.Tofaa2.EntityLib:spigot:2.4.11")
 
-    testImplementation(kotlin("test"))
-
     compileOnly("com.github.retrooper:packetevents-spigot:2.11.2")
     compileOnly("net.kyori:adventure-text-minimessage:4.26.1")
 

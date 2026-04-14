@@ -4,7 +4,6 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.decorationheads.api.MinecraftHeadsHttpClient
 import com.ratger.acreative.decorationheads.api.MinecraftHeadsRequestFactory
 import com.ratger.acreative.decorationheads.api.MinecraftHeadsResponseMapper
-import com.ratger.acreative.decorationheads.api.TextureValueNormalizer
 import com.ratger.acreative.decorationheads.cache.DecorationHeadCache
 import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryRegistry
 import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryResolver
@@ -54,7 +53,7 @@ class DecorationHeadsSubsystem(
         connectTimeoutMs = config.getLong("decoration-heads.api.connect-timeout-ms", 5000L),
         readTimeoutMs = config.getLong("decoration-heads.api.read-timeout-ms", 7000L)
     )
-    private val mapper = MinecraftHeadsResponseMapper(TextureValueNormalizer())
+    private val mapper = MinecraftHeadsResponseMapper()
 
     private val catalogService = DecorationHeadsCatalogService(
         cache = cache,
