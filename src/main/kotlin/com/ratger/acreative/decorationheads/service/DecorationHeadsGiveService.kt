@@ -24,7 +24,7 @@ class DecorationHeadsGiveService(
             clickEvent.isShiftRight ||
             clickEvent.handle.isShiftClick ||
             (player.isSneaking && (clickEvent.isLeft || clickEvent.isRight))
-        val amount = if (clickEvent.isMiddle) 64 else 1
+        val amount = if (clickEvent.isMiddle || clickEvent.type == ClickType.CONTROL_DROP) 64 else 1
         item.amount = amount
 
         when {
