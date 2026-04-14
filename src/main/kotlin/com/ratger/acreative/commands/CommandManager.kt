@@ -2,6 +2,7 @@ package com.ratger.acreative.commands
 
 import com.ratger.acreative.commands.crawl.CrawlCommand
 import com.ratger.acreative.commands.disguise.DisguiseCommand
+import com.ratger.acreative.commands.decorationheads.DecorationHeadsCommand
 import com.ratger.acreative.commands.edit.EditCommand
 import com.ratger.acreative.commands.edit.ApplyCommand
 import com.ratger.acreative.commands.effects.EffectsCommand
@@ -56,6 +57,7 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         SlapCommand(functionHooker),
         SitheadCommand(functionHooker),
         ItemdbCommand(functionHooker),
+        DecorationHeadsCommand(functionHooker),
         EditCommand(functionHooker),
         ApplyCommand(functionHooker)
     ).associateBy { it.type }

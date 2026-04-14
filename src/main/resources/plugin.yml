@@ -76,6 +76,10 @@ commands:
     description: Shows the item String/Numeric ID
     usage: /itemdb
     aliases: [id]
+  decorationheads:
+    description: Opens decoration heads menu
+    usage: /decorationheads
+    aliases: [dh]
   edit:
     description: Open item editor menu
     usage: /edit
@@ -177,4 +181,7 @@ permissions:
     default: op
   advancedcreative.apply:
     description: Allows using /apply
+    default: op
+  advancedcreative.decorationheads:
+    description: Allows using /decorationheads
     default: op

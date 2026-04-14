@@ -213,6 +213,9 @@ class MenuService(
         applyStateManager.cancelWaiting(player, reopenMenu = false)
     }
 
+    fun headMutationSupport(): HeadTextureMutationSupport = headMutationSupport
+    fun buttonFactory(): MenuButtonFactory = buttonFactory
+
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {
         EquippableSupport.normalizeAfterMutation(session.editableItem)
         val item = session.editableItem.clone()

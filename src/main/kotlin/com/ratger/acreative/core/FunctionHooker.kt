@@ -24,6 +24,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
+import com.ratger.acreative.decorationheads.service.DecorationHeadsSubsystem
 import com.ratger.acreative.menus.MenuService
 import com.ratger.acreative.utils.*
 
@@ -91,6 +92,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var menuService: MenuService
         private set
+    lateinit var decorationHeadsSubsystem: DecorationHeadsSubsystem
+        private set
+    val decorationHeadsMenuService get() = decorationHeadsSubsystem.menuService
 
     fun sitManagerOrNull(): SitManager? = if (this::sitManager.isInitialized) sitManager else null
     fun glideManagerOrNull(): GlideManager? = if (this::glideManager.isInitialized) glideManager else null
@@ -144,6 +148,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
         menuService = MenuService(this)
+        decorationHeadsSubsystem = DecorationHeadsSubsystem(this, com.ratger.acreative.itemedit.meta.MiniMessageParser(), menuService.buttonFactory())
+        decorationHeadsSubsystem.init()
 
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }
@@ -204,6 +210,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         }
         if (this::packetHandler.isInitialized) {
             packetHandler.unregister()
+        }
+        if (this::decorationHeadsSubsystem.isInitialized) {
+            decorationHeadsSubsystem.shutdown()
         }
     }
 }

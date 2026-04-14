@@ -17,6 +17,7 @@ cooldowns: # В миллисекундах
   grab:       500
   slap:       500
   itemdb:     500
+  decorationheads: 500
   edit:       300
   id:         500
   freeze:     3500
@@ -52,6 +53,66 @@ permissions:
     sithead: sunny
     spit: horizon
     piss: horizon
+    decorationheads: flare
+
+decoration-heads:
+  api:
+    base-url: "https://minecraft-heads.com"
+    app-uuid: "APP_UUID"
+    api-key: ""
+    demo: false
+    connect-timeout-ms: 5000
+    read-timeout-ms: 7000
+  warm-pages: 1
+  head-cache-size: 4096
+  search-query-cache-size: 128
+  player-recent-limit: 45
+  menu-page-size: 45
+  categories:
+    new:
+      display: "Новые"
+      mode: NEW
+      apiNames: []
+    food:
+      display: "Еда"
+      mode: CATEGORY_GROUP
+      apiNames: ["Food & Drinks"]
+    plants:
+      display: "Растения"
+      mode: CATEGORY_GROUP
+      apiNames: ["Plants"]
+    characters:
+      display: "Персонажи"
+      mode: CATEGORY_GROUP
+      apiNames: ["Humans", "Humanoid"]
+    decoration:
+      display: "Декорации"
+      mode: CATEGORY_GROUP
+      apiNames: ["Decoration"]
+    animals:
+      display: "Животные"
+      mode: CATEGORY_GROUP
+      apiNames: ["Animals"]
+    monsters:
+      display: "Монстры"
+      mode: CATEGORY_GROUP
+      apiNames: ["Monsters"]
+    symbols:
+      display: "Символы"
+      mode: CATEGORY_GROUP
+      apiNames: ["Alphabet"]
+    helmets:
+      display: "Шлемы"
+      mode: CATEGORY_GROUP
+      apiNames: ["Helmets"]
+    blocks:
+      display: "Блоки"
+      mode: CATEGORY_GROUP
+      apiNames: ["Blocks"]
+    miscellaneous:
+      display: "Разное"
+      mode: CATEGORY_GROUP
+      apiNames: ["Miscellaneous"]
 blocked-disguises:
   - ARROW
   - BLOCK_DISPLAY

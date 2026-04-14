@@ -3,6 +3,7 @@ package com.ratger.acreative.menus
 import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.container.LockItemSupport
 import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.decorationheads.model.DecorationHeadEntry
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
@@ -121,6 +122,85 @@ class MenuButtonFactory(
             .build(),
         action
     )
+
+    fun decorationHeadsBackButton(action: () -> Unit): Button = backButton("◀ Назад") { action() }
+
+    fun decorationHeadsForwardButton(action: () -> Unit): Button = forwardButton("Вперёд ▶") { action() }
+
+    fun decorationHeadsMyHeadsButton(count: Int, action: () -> Unit): Button = actionButton(
+        material = Material.CHEST_MINECART,
+        name = "<!i><#FFD700>⭐ Мои головы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+        action = { action() }
+    )
+
+    fun decorationHeadsCategoryButton(options: List<String>, selected: String, action: () -> Unit): Button = actionButton(
+        material = Material.CLOCK,
+        name = "<!i><#FFD700>⚡ Категория",
+        lore = buildList {
+            add("<!i><#FFD700>Нажмите, <#FFE68A>чтобы переключить")
+            add("")
+            add("<!i><#FFD700>Категории:")
+            options.forEach { option ->
+                add(if (option == selected) "<!i><#00FF40>▍ $option" else "<!i><#FFF3E0>▍ $option")
+            }
+        },
+        action = { action() }
+    )
+
+    fun decorationHeadsSearchButton(query: String?, action: () -> Unit): Button = actionButton(
+        material = Material.COMPASS,
+        name = if (query.isNullOrBlank()) {
+            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
+        } else {
+            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>$query<#C7A300>]"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы указать"),
+        itemModifier = {
+            if (!query.isNullOrBlank()) glint(true)
+            this
+        },
+        action = { action() }
+    )
+
+    fun decorationHeadsResultButton(
+        entry: DecorationHeadEntry,
+        categoryName: String,
+        showCategoryLine: Boolean,
+        action: () -> Unit
+    ): Button = actionButton(
+        material = Material.PLAYER_HEAD,
+        name = "<!i><#FFD700>${entry.name}",
+        lore = buildList {
+            if (showCategoryLine) {
+                add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
+            }
+            add("<!i><#FFD700>▍ <#FFE68A>ID: <#FFF3E0>${entry.apiId ?: entry.stableKey}")
+        },
+        action = { action() }
+    ).let {
+        val item = ItemBuilder(Material.PLAYER_HEAD)
+            .name(parser.parse("<!i><#FFD700>${entry.name}"))
+            .lore(
+                buildList {
+                    if (showCategoryLine) {
+                        add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
+                    }
+                    add("<!i><#FFD700>▍ <#FFE68A>ID: <#FFF3E0>${entry.apiId ?: entry.stableKey}")
+                }.map(parser::parse)
+            )
+            .build()
+        (item.itemMeta as? SkullMeta)?.let { skull ->
+            val profile = org.bukkit.Bukkit.createProfile(java.util.UUID.randomUUID())
+            profile.setProperty(com.destroystokyo.paper.profile.ProfileProperty("textures", entry.textureValue))
+            skull.playerProfile = profile
+            item.itemMeta = skull
+        }
+        protectedButton(item) { action() }
+    }
+
+    fun decorationHeadsGrayFiller(): Button = grayFillerButton()
+    fun decorationHeadsBlackFiller(): Button = blackFillerButton()
 
     fun actionButton(
         material: Material,
