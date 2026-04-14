@@ -1,6 +1,7 @@
 package com.ratger.acreative.decorationheads.menu
 
 import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryRegistry
+import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryMode
 import com.ratger.acreative.decorationheads.model.DecorationHeadEntry
 import com.ratger.acreative.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.decorationheads.model.DecorationHeadMenuState
@@ -8,6 +9,7 @@ import com.ratger.acreative.decorationheads.model.DecorationHeadPageResult
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.entity.Player
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
@@ -22,11 +24,13 @@ class DecorationHeadsMenuRenderer(
         state: DecorationHeadMenuState,
         pageResult: DecorationHeadPageResult,
         myCount: Int,
-        onGive: (DecorationHeadEntry) -> Unit,
+        categoryOptions: List<String>,
+        selectedCategoryIndex: Int,
+        onGive: (DecorationHeadEntry, ClickEvent) -> Unit,
         onBack: () -> Unit,
         onForward: () -> Unit,
         onMyHeads: () -> Unit,
-        onSwitchCategory: () -> Unit,
+        onSwitchCategory: (Int) -> Unit,
         onSearch: () -> Unit
     ) {
         val categoryName = categoryRegistry.byKey(state.categoryKey)?.displayName ?: state.categoryKey
@@ -37,12 +41,12 @@ class DecorationHeadsMenuRenderer(
         if (pageResult.page < pageResult.totalPages) menu.setButton(50, buttonFactory.decorationHeadsForwardButton { onForward() })
 
         menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(myCount) { onMyHeads() })
-        menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryRegistry.definitions.map { it.displayName }, categoryName) { onSwitchCategory() })
+        menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch() })
 
         pageResult.entries.forEachIndexed { index, entry ->
-            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode?.name == "NEW") {
-                onGive(entry)
+            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == DecorationHeadCategoryMode.NEW) {
+                onGive(entry, it)
             })
         }
 
@@ -51,17 +55,22 @@ class DecorationHeadsMenuRenderer(
 
     fun renderRecentMenu(
         player: Player,
+        categoryName: String,
+        categoryOptions: List<String>,
+        selectedCategoryIndex: Int,
         entries: List<DecorationHeadEntry>,
         categoryNameResolver: (Int) -> String,
-        onGive: (DecorationHeadEntry) -> Unit,
+        onGive: (DecorationHeadEntry, ClickEvent) -> Unit,
+        onSwitchCategory: (Int) -> Unit,
         onBack: () -> Unit
     ) {
-        val menu = baseMenu("▍ Головы → Мои", setOf(48) + (0..44).toSet())
+        val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(48, 49) + (0..44).toSet())
         fillBase(menu, black = setOf(45, 53), gray = setOf(47, 50, 51, 52))
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
+        menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         entries.take(45).forEachIndexed { index, entry ->
             val categoryName = categoryNameResolver(entry.categoryId)
-            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, true) { onGive(entry) })
+            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, true) { onGive(entry, it) })
         }
         menu.open(player)
     }

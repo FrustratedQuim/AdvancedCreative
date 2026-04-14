@@ -2,6 +2,7 @@ package com.ratger.acreative.decorationheads.menu
 
 import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryRegistry
 import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryResolver
+import com.ratger.acreative.decorationheads.category.DecorationHeadCategoryMode
 import com.ratger.acreative.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.decorationheads.service.DecorationHeadsCatalogService
@@ -22,6 +23,15 @@ class DecorationHeadsMenuService(
     private val renderer: DecorationHeadsMenuRenderer,
     private val executor: ExecutorService
 ) {
+    private data class CategoryOption(
+        val key: String,
+        val displayName: String
+    )
+
+    private companion object {
+        const val ALL_RECENT_CATEGORY_KEY = "__all__"
+    }
+
     private val searchInputService = DecorationHeadsSearchInputService(
         plugin = plugin,
         onSubmit = { player, query ->
@@ -43,6 +53,8 @@ class DecorationHeadsMenuService(
             openRecent(player)
             return
         }
+        val categoryOptions = categoryRegistry.definitions.map { CategoryOption(it.key, it.displayName) }
+        val selectedCategoryIndex = categoryOptions.indexOfFirst { it.key == state.categoryKey }.takeIf { it >= 0 } ?: 0
 
         executor.submit {
             val page = catalogService.page(state)
@@ -54,9 +66,10 @@ class DecorationHeadsMenuService(
                     state = state.copy(page = page.page),
                     pageResult = page,
                     myCount = myCount,
-                    onGive = { entry ->
-                        giveService.give(player, entry)
-                        open(player)
+                    categoryOptions = categoryOptions.map { it.displayName },
+                    selectedCategoryIndex = selectedCategoryIndex,
+                    onGive = { entry, event ->
+                        giveService.give(player, entry, event, trackRecent = true)
                     },
                     onBack = {
                         sessionManager.update(player.uniqueId, state.copy(page = (state.page - 1).coerceAtLeast(1)))
@@ -70,8 +83,8 @@ class DecorationHeadsMenuService(
                         sessionManager.setRecentMode(player.uniqueId)
                         open(player)
                     },
-                    onSwitchCategory = {
-                        val nextCategory = nextCategoryKey(state.categoryKey)
+                    onSwitchCategory = { nextIndex ->
+                        val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: categoryRegistry.firstCategoryKey()
                         sessionManager.update(player.uniqueId, DecorationHeadMenuState(DecorationHeadMenuMode.CATEGORY, nextCategory, 1, null, null))
                         open(player)
                     },
@@ -85,15 +98,36 @@ class DecorationHeadsMenuService(
     }
 
     fun openRecent(player: Player) {
+        val state = sessionManager.getOrCreate(player.uniqueId)
+        val categoryOptions = recentCategoryOptions()
+        val selectedCategoryIndex = categoryOptions.indexOfFirst { it.key == state.categoryKey }.takeIf { it >= 0 } ?: 0
+        val selectedCategoryKey = categoryOptions.getOrNull(selectedCategoryIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
+
         executor.submit {
             val entries = recentService.list(player.uniqueId)
+                .let { allEntries ->
+                    if (selectedCategoryKey == ALL_RECENT_CATEGORY_KEY) {
+                        allEntries
+                    } else {
+                        val apiCategoryIds = categoryResolver.resolveUiCategoryToApiIds(selectedCategoryKey)
+                        allEntries.filter { entry -> entry.categoryId in apiCategoryIds }
+                    }
+                }
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 renderer.renderRecentMenu(
                     player = player,
+                    categoryName = categoryOptions[selectedCategoryIndex].displayName,
+                    categoryOptions = categoryOptions.map { it.displayName },
+                    selectedCategoryIndex = selectedCategoryIndex,
                     entries = entries,
                     categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
-                    onGive = { entry ->
-                        giveService.give(player, entry)
+                    onGive = { entry, event ->
+                        giveService.give(player, entry, event, trackRecent = false)
+                    },
+                    onSwitchCategory = { nextIndex ->
+                        val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
+                        val old = sessionManager.getOrCreate(player.uniqueId)
+                        sessionManager.update(player.uniqueId, old.copy(categoryKey = nextCategory))
                         openRecent(player)
                     },
                     onBack = {
@@ -107,15 +141,15 @@ class DecorationHeadsMenuService(
 
     fun clearPlayer(playerId: java.util.UUID) = sessionManager.clear(playerId)
 
-    private fun nextCategoryKey(current: String): String {
-        val all = categoryRegistry.definitions
-        val currentIndex = all.indexOfFirst { it.key == current }
-        if (currentIndex == -1 || all.isEmpty()) return categoryRegistry.firstCategoryKey()
-        return all[(currentIndex + 1) % all.size].key
-    }
-
     private fun resolveCategoryNameById(categoryId: Int): String {
         val mapped = categoryRegistry.definitions.firstOrNull { categoryId in categoryResolver.resolveUiCategoryToApiIds(it.key) }
         return mapped?.displayName ?: "Unknown"
+    }
+
+    private fun recentCategoryOptions(): List<CategoryOption> {
+        val filtered = categoryRegistry.definitions
+            .filterNot { it.mode == DecorationHeadCategoryMode.NEW }
+            .map { CategoryOption(it.key, it.displayName) }
+        return listOf(CategoryOption(ALL_RECENT_CATEGORY_KEY, "Все")) + filtered
     }
 }

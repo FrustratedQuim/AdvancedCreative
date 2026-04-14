@@ -134,19 +134,24 @@ class MenuButtonFactory(
         action = { action() }
     )
 
-    fun decorationHeadsCategoryButton(options: List<String>, selected: String, action: () -> Unit): Button = actionButton(
+    fun decorationHeadsCategoryButton(
+        options: List<String>,
+        selectedIndex: Int,
+        action: (Int) -> Unit
+    ): Button = listButton(
         material = Material.CLOCK,
-        name = "<!i><#FFD700>⚡ Категория",
-        lore = buildList {
-            add("<!i><#FFD700>Нажмите, <#FFE68A>чтобы переключить")
-            add("")
-            add("<!i><#FFD700>Категории:")
-            options.forEach { option ->
-                add(if (option == selected) "<!i><#00FF40>▍ $option" else "<!i><#FFF3E0>▍ $option")
-            }
-        },
-        action = { action() }
-    )
+        options = options.map { ListButtonOption(it, it) },
+        selectedIndex = selectedIndex,
+        titleBuilder = { _, _ -> "<!i><#FFD700>⚡ Категория" },
+        beforeOptionsLore = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>следующая",
+            "<!i><#FFD700>ПКМ, <#FFE68A>предыдущая",
+            ""
+        ),
+        afterOptionsLore = listOf("")
+    ) { _, newIndex ->
+        action(newIndex)
+    }
 
     fun decorationHeadsSearchButton(query: String?, action: () -> Unit): Button = actionButton(
         material = Material.COMPASS,
@@ -167,7 +172,7 @@ class MenuButtonFactory(
         entry: DecorationHeadEntry,
         categoryName: String,
         showCategoryLine: Boolean,
-        action: () -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = Material.PLAYER_HEAD,
         name = "<!i><#FFD700>${entry.name}",
@@ -177,7 +182,7 @@ class MenuButtonFactory(
             }
             add("<!i><#FFD700>▍ <#FFE68A>ID: <#FFF3E0>${entry.apiId ?: entry.stableKey}")
         },
-        action = { action() }
+        action = { action(it) }
     ).let {
         val item = ItemBuilder(Material.PLAYER_HEAD)
             .name(parser.parse("<!i><#FFD700>${entry.name}"))
@@ -196,7 +201,7 @@ class MenuButtonFactory(
             skull.playerProfile = profile
             item.itemMeta = skull
         }
-        protectedButton(item) { action() }
+        protectedButton(item) { action(it) }
     }
 
     fun decorationHeadsGrayFiller(): Button = grayFillerButton()
