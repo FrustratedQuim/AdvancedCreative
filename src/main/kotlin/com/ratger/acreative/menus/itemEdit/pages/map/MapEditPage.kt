@@ -51,6 +51,7 @@ class MapEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Цвет: <#FF1500>Обычный",
             activeLore = activeColorLore,
             inactiveLore = inactiveColorLore,
+            itemModifier = buttonFactory.hideAdditionalTooltip(),
             onApply = {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.MAP_COLOR) { reopenPlayer, reopenSession ->
@@ -84,6 +85,7 @@ class MapEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>ID карты: <#FF1500>Нет",
             activeLore = activeIdLore,
             inactiveLore = inactiveIdLore,
+            itemModifier = buttonFactory.hideAdditionalTooltip(),
             onApply = {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.MAP_ID) { reopenPlayer, reopenSession ->

@@ -642,6 +642,7 @@ class MenuButtonFactory(
                 ItemBuilder(Material.FILLED_MAP)
                     .name(parser.parse("<!i><#C7A300>🔔 <#FFD700>Параметры карты"))
                     .lore(lore.map(parser::parse))
+                    .flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
                     .build()
 
             else -> ItemBuilder(Material.WHITE_STAINED_GLASS_PANE)
