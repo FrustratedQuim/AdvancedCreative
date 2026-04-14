@@ -2,7 +2,7 @@ package com.ratger.acreative.menus.decorationheads.model
 
 import java.time.LocalDate
 
-data class DecorationHeadEntry(
+data class Entry(
     val apiId: Int?,
     val stableKey: String,
     val name: String,

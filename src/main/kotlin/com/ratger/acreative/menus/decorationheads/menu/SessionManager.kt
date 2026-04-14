@@ -2,11 +2,11 @@ package com.ratger.acreative.menus.decorationheads.menu
 
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadSourcePage
+import com.ratger.acreative.menus.decorationheads.model.SourcePage
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class DecorationHeadsSessionManager(
+class SessionManager(
     private val defaultCategory: String
 ) {
     private val byPlayer = ConcurrentHashMap<UUID, DecorationHeadMenuState>()
@@ -26,13 +26,13 @@ class DecorationHeadsSessionManager(
             categoryKey = old.categoryKey,
             page = 1,
             searchQuery = old.searchQuery,
-            lastNonRecent = DecorationHeadSourcePage(old.mode, old.categoryKey, old.page, old.searchQuery)
+            lastNonRecent = SourcePage(old.mode, old.categoryKey, old.page, old.searchQuery)
         )
     }
 
     fun backFromRecent(playerId: UUID): DecorationHeadMenuState {
         val old = getOrCreate(playerId)
-        val source = old.lastNonRecent ?: DecorationHeadSourcePage(DecorationHeadMenuMode.CATEGORY, defaultCategory, 1, null)
+        val source = old.lastNonRecent ?: SourcePage(DecorationHeadMenuMode.CATEGORY, defaultCategory, 1, null)
         val restored = DecorationHeadMenuState(source.mode, source.categoryKey, source.page, source.searchQuery, null)
         byPlayer[playerId] = restored
         return restored

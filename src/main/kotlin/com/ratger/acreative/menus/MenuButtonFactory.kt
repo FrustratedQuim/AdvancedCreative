@@ -3,7 +3,7 @@ package com.ratger.acreative.menus
 import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.itemedit.container.LockItemSupport
 import com.ratger.acreative.itemedit.experimental.ComponentsService
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.itemedit.meta.MetaActionsApplier
@@ -169,7 +169,7 @@ class MenuButtonFactory(
     )
 
     fun decorationHeadsResultButton(
-        entry: DecorationHeadEntry,
+        entry: Entry,
         categoryName: String,
         showCategoryLine: Boolean,
         action: (ClickEvent) -> Unit

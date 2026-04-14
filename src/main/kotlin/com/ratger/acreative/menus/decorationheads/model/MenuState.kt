@@ -11,5 +11,5 @@ data class DecorationHeadMenuState(
     val categoryKey: String,
     val page: Int,
     val searchQuery: String? = null,
-    val lastNonRecent: DecorationHeadSourcePage? = null
+    val lastNonRecent: SourcePage? = null
 )

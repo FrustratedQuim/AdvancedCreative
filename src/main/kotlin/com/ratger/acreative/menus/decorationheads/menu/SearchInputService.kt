@@ -3,7 +3,7 @@ package com.ratger.acreative.menus.decorationheads.menu
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.input.Input
 
-class DecorationHeadsSearchInputService(
+class SearchInputService(
     private val plugin: org.bukkit.plugin.Plugin,
     private val onSubmit: (Player, String?) -> Unit,
     private val onLeave: (Player) -> Unit

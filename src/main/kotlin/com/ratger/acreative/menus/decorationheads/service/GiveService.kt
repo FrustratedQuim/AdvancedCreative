@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.service
 
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -9,11 +9,11 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
-class DecorationHeadsGiveService(
+class GiveService(
     private val headTextureMutationSupport: HeadTextureMutationSupport,
-    private val recentService: DecorationHeadsRecentService
+    private val recentService: RecentService
 ) {
-    fun give(player: Player, entry: DecorationHeadEntry, clickEvent: ClickEvent, trackRecent: Boolean) {
+    fun give(player: Player, entry: Entry, clickEvent: ClickEvent, trackRecent: Boolean) {
         clickEvent.handle.isCancelled = true
 
         val item = ItemStack(Material.PLAYER_HEAD)

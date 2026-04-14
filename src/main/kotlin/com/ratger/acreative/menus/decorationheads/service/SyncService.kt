@@ -2,20 +2,20 @@ package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.menus.decorationheads.api.MinecraftHeadsHttpClient
 import com.ratger.acreative.menus.decorationheads.api.MinecraftHeadsResponseMapper
-import com.ratger.acreative.menus.decorationheads.cache.DecorationHeadCache
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryMode
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryRegistry
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryResolver
-import com.ratger.acreative.menus.decorationheads.persistence.DecorationHeadCatalogRepository
+import com.ratger.acreative.menus.decorationheads.cache.Cache
+import com.ratger.acreative.menus.decorationheads.category.CategoryMode
+import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
+import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
+import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import java.util.concurrent.ExecutorService
 
-class DecorationHeadsSyncService(
+class SyncService(
     private val client: MinecraftHeadsHttpClient,
     private val mapper: MinecraftHeadsResponseMapper,
-    private val categoryRegistry: DecorationHeadCategoryRegistry,
-    private val categoryResolver: DecorationHeadCategoryResolver,
-    private val cache: DecorationHeadCache,
-    private val catalogRepository: DecorationHeadCatalogRepository,
+    private val categoryRegistry: CategoryRegistry,
+    private val categoryResolver: CategoryResolver,
+    private val cache: Cache,
+    private val catalogRepository: CatalogRepository,
     private val executor: ExecutorService,
     private val logger: java.util.logging.Logger,
     private val warmPages: Int,
@@ -37,9 +37,9 @@ class DecorationHeadsSyncService(
 
         val warmLimit = (warmPages.coerceAtLeast(1)) * menuPageSize
         categoryRegistry.definitions
-            .filter { it.mode == DecorationHeadCategoryMode.CATEGORY_GROUP }
+            .filter { it.mode == CategoryMode.CATEGORY_GROUP }
             .forEach { definition ->
-                val aggregated = mutableListOf<com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry>()
+                val aggregated = mutableListOf<com.ratger.acreative.menus.decorationheads.model.Entry>()
                 categoryResolver.resolveUiCategoryToApiIds(definition.key).forEach { categoryId ->
                     val response = client.fetchCustomHeads(page = 1, categoryId = categoryId)
                     aggregated += mapper.mapHeads(response)
@@ -52,7 +52,7 @@ class DecorationHeadsSyncService(
 
     fun fullSyncAllConfiguredCategories() {
         categoryRegistry.definitions
-            .filter { it.mode == DecorationHeadCategoryMode.CATEGORY_GROUP }
+            .filter { it.mode == CategoryMode.CATEGORY_GROUP }
             .forEach { definition ->
                 categoryResolver.resolveUiCategoryToApiIds(definition.key).forEach { apiCategoryId ->
                     var page = 1

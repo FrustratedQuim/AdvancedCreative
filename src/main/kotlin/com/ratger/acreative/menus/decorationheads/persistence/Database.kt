@@ -4,7 +4,7 @@ import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
 
-class DecorationHeadsDatabase(dataFolder: File) {
+class Database(dataFolder: File) {
     private val databaseFile = File(dataFolder, "decoration-heads.db")
     private val jdbcUrl = "jdbc:sqlite:${databaseFile.absolutePath}"
 

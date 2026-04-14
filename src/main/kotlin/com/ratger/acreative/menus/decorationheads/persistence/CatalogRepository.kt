@@ -1,13 +1,13 @@
 package com.ratger.acreative.menus.decorationheads.persistence
 
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import java.sql.ResultSet
 import java.time.LocalDate
 
-class DecorationHeadCatalogRepository(
-    private val database: DecorationHeadsDatabase
+class CatalogRepository(
+    private val database: Database
 ) {
-    fun upsert(entries: Collection<DecorationHeadEntry>) {
+    fun upsert(entries: Collection<Entry>) {
         if (entries.isEmpty()) return
         database.connection().use { conn ->
             conn.autoCommit = false
@@ -40,7 +40,7 @@ class DecorationHeadCatalogRepository(
         }
     }
 
-    fun findByCategoryIds(categoryIds: Set<Int>): List<DecorationHeadEntry> {
+    fun findByCategoryIds(categoryIds: Set<Int>): List<Entry> {
         if (categoryIds.isEmpty()) return emptyList()
         val placeholders = categoryIds.joinToString(",") { "?" }
         val sql = "SELECT * FROM decoration_head_catalog WHERE category_id IN ($placeholders)"
@@ -52,7 +52,7 @@ class DecorationHeadCatalogRepository(
         }
     }
 
-    fun findRecentPublished(limit: Int): List<DecorationHeadEntry> = database.connection().use { conn ->
+    fun findRecentPublished(limit: Int): List<Entry> = database.connection().use { conn ->
         conn.prepareStatement(
             """
             SELECT * FROM decoration_head_catalog
@@ -65,7 +65,7 @@ class DecorationHeadCatalogRepository(
         }
     }
 
-    fun findBySearch(query: String, limit: Int): List<DecorationHeadEntry> = database.connection().use { conn ->
+    fun findBySearch(query: String, limit: Int): List<Entry> = database.connection().use { conn ->
         conn.prepareStatement(
             "SELECT * FROM decoration_head_catalog WHERE lower(head_name) LIKE ? ORDER BY head_name ASC LIMIT ?"
         ).use { ps ->
@@ -75,10 +75,10 @@ class DecorationHeadCatalogRepository(
         }
     }
 
-    private fun readEntries(rs: ResultSet): List<DecorationHeadEntry> {
-        val out = mutableListOf<DecorationHeadEntry>()
+    private fun readEntries(rs: ResultSet): List<Entry> {
+        val out = mutableListOf<Entry>()
         while (rs.next()) {
-            out += DecorationHeadEntry(
+            out += Entry(
                 apiId = rs.getInt("api_id").takeUnless { rs.wasNull() },
                 stableKey = rs.getString("stable_key"),
                 name = rs.getString("head_name"),

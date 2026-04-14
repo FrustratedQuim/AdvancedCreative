@@ -2,18 +2,18 @@ package com.ratger.acreative.menus.decorationheads.category
 
 import org.bukkit.configuration.file.FileConfiguration
 
-class DecorationHeadCategoryRegistry(config: FileConfiguration) {
-    val definitions: List<DecorationHeadCategoryDefinition>
+class CategoryRegistry(config: FileConfiguration) {
+    val definitions: List<CategoryDefinition>
 
     init {
         val section = config.getConfigurationSection("decoration-heads.categories")
         definitions = section?.getKeys(false)?.map { key ->
             val mode = runCatching {
-                DecorationHeadCategoryMode.valueOf(
+                CategoryMode.valueOf(
                     section.getString("$key.mode", "CATEGORY_GROUP")!!.uppercase()
                 )
-            }.getOrDefault(DecorationHeadCategoryMode.CATEGORY_GROUP)
-            DecorationHeadCategoryDefinition(
+            }.getOrDefault(CategoryMode.CATEGORY_GROUP)
+            CategoryDefinition(
                 key = key,
                 displayName = section.getString("$key.display", key)!!,
                 mode = mode,
@@ -22,6 +22,6 @@ class DecorationHeadCategoryRegistry(config: FileConfiguration) {
         } ?: emptyList()
     }
 
-    fun byKey(key: String): DecorationHeadCategoryDefinition? = definitions.firstOrNull { it.key == key }
+    fun byKey(key: String): CategoryDefinition? = definitions.firstOrNull { it.key == key }
     fun firstCategoryKey(): String = definitions.firstOrNull()?.key ?: "new"
 }

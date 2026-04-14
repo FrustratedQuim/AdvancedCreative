@@ -1,11 +1,11 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryRegistry
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryMode
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
+import com.ratger.acreative.menus.decorationheads.category.CategoryMode
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadPageResult
+import com.ratger.acreative.menus.decorationheads.model.PageResult
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.entity.Player
@@ -13,20 +13,20 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
-class DecorationHeadsMenuRenderer(
+class MenuRenderer(
     private val plugin: org.bukkit.plugin.Plugin,
     private val parser: MiniMessageParser,
     private val buttonFactory: MenuButtonFactory,
-    private val categoryRegistry: DecorationHeadCategoryRegistry
+    private val categoryRegistry: CategoryRegistry
 ) {
     fun renderCategoryMenu(
         player: Player,
         state: DecorationHeadMenuState,
-        pageResult: DecorationHeadPageResult,
+        pageResult: PageResult,
         myCount: Int,
         categoryOptions: List<String>,
         selectedCategoryIndex: Int,
-        onGive: (DecorationHeadEntry, ClickEvent) -> Unit,
+        onGive: (Entry, ClickEvent) -> Unit,
         onBack: () -> Unit,
         onForward: () -> Unit,
         onMyHeads: () -> Unit,
@@ -45,7 +45,7 @@ class DecorationHeadsMenuRenderer(
         menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch() })
 
         pageResult.entries.forEachIndexed { index, entry ->
-            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == DecorationHeadCategoryMode.NEW) {
+            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == CategoryMode.NEW) {
                 onGive(entry, it)
             })
         }
@@ -58,9 +58,9 @@ class DecorationHeadsMenuRenderer(
         categoryName: String,
         categoryOptions: List<String>,
         selectedCategoryIndex: Int,
-        entries: List<DecorationHeadEntry>,
+        entries: List<Entry>,
         categoryNameResolver: (Int) -> String,
-        onGive: (DecorationHeadEntry, ClickEvent) -> Unit,
+        onGive: (Entry, ClickEvent) -> Unit,
         onSwitchCategory: (Int) -> Unit,
         onBack: () -> Unit
     ) {

@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.api
 
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -16,7 +16,7 @@ class MinecraftHeadsResponseMapper {
         val bareTextureHashRegex = Regex("^[0-9a-fA-F]{32,128}$")
     }
 
-    fun mapHeads(response: JsonObject): List<DecorationHeadEntry> {
+    fun mapHeads(response: JsonObject): List<Entry> {
         val list = extractHeadsArray(response)
         return list.mapNotNull { element ->
             val obj = element as? JsonObject ?: return@mapNotNull null
@@ -33,7 +33,7 @@ class MinecraftHeadsResponseMapper {
             val publishedAt = obj["published_at"]?.jsonPrimitive?.contentOrNull?.let {
                 runCatching { LocalDate.parse(it.take(10)) }.getOrNull()
             }
-            DecorationHeadEntry(apiId, stableKey, name, categoryId, textureValue, publishedAt)
+            Entry(apiId, stableKey, name, categoryId, textureValue, publishedAt)
         }
     }
 

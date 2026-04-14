@@ -1,8 +1,8 @@
 package com.ratger.acreative.menus.decorationheads.category
 
-data class DecorationHeadCategoryDefinition(
+data class CategoryDefinition(
     val key: String,
     val displayName: String,
-    val mode: DecorationHeadCategoryMode,
+    val mode: CategoryMode,
     val apiNames: List<String>
 )

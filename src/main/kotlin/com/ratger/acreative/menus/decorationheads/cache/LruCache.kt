@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.cache
 
-class DecorationHeadLruCache<K, V>(
+class LruCache<K, V>(
     private val maxSize: Int
 ) {
     private val map = object : LinkedHashMap<K, V>(16, 0.75f, true) {

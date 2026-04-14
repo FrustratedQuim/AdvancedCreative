@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.category
 
-enum class DecorationHeadCategoryMode {
+enum class CategoryMode {
     NEW,
     CATEGORY_GROUP
 }

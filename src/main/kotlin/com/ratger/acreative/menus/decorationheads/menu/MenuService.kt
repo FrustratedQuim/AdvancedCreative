@@ -1,26 +1,26 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryRegistry
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryResolver
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryMode
+import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
+import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
+import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
-import com.ratger.acreative.menus.decorationheads.service.DecorationHeadsCatalogService
-import com.ratger.acreative.menus.decorationheads.service.DecorationHeadsGiveService
-import com.ratger.acreative.menus.decorationheads.service.DecorationHeadsRecentService
+import com.ratger.acreative.menus.decorationheads.service.CatalogService
+import com.ratger.acreative.menus.decorationheads.service.GiveService
+import com.ratger.acreative.menus.decorationheads.service.RecentService
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.concurrent.ExecutorService
 
-class DecorationHeadsMenuService(
+class MenuService(
     private val plugin: org.bukkit.plugin.Plugin,
-    private val sessionManager: DecorationHeadsSessionManager,
-    private val categoryRegistry: DecorationHeadCategoryRegistry,
-    private val categoryResolver: DecorationHeadCategoryResolver,
-    private val catalogService: DecorationHeadsCatalogService,
-    private val recentService: DecorationHeadsRecentService,
-    private val giveService: DecorationHeadsGiveService,
-    private val renderer: DecorationHeadsMenuRenderer,
+    private val sessionManager: SessionManager,
+    private val categoryRegistry: CategoryRegistry,
+    private val categoryResolver: CategoryResolver,
+    private val catalogService: CatalogService,
+    private val recentService: RecentService,
+    private val giveService: GiveService,
+    private val renderer: MenuRenderer,
     private val executor: ExecutorService
 ) {
     private data class CategoryOption(
@@ -32,7 +32,7 @@ class DecorationHeadsMenuService(
         const val ALL_RECENT_CATEGORY_KEY = "__all__"
     }
 
-    private val searchInputService = DecorationHeadsSearchInputService(
+    private val searchInputService = SearchInputService(
         plugin = plugin,
         onSubmit = { player, query ->
             val base = sessionManager.getOrCreate(player.uniqueId)
@@ -148,7 +148,7 @@ class DecorationHeadsMenuService(
 
     private fun recentCategoryOptions(): List<CategoryOption> {
         val filtered = categoryRegistry.definitions
-            .filterNot { it.mode == DecorationHeadCategoryMode.NEW }
+            .filterNot { it.mode == CategoryMode.NEW }
             .map { CategoryOption(it.key, it.displayName) }
         return listOf(CategoryOption(ALL_RECENT_CATEGORY_KEY, "Все")) + filtered
     }

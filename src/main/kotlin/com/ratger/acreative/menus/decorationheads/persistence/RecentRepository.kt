@@ -1,13 +1,13 @@
 package com.ratger.acreative.menus.decorationheads.persistence
 
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import java.util.UUID
 
-class DecorationHeadRecentRepository(
-    private val database: DecorationHeadsDatabase,
+class RecentRepository(
+    private val database: Database,
     private val limit: Int
 ) {
-    fun push(playerId: UUID, entry: DecorationHeadEntry) {
+    fun push(playerId: UUID, entry: Entry) {
         val player = playerId.toString()
         database.connection().use { conn ->
             conn.autoCommit = false
@@ -44,7 +44,7 @@ class DecorationHeadRecentRepository(
         }
     }
 
-    fun list(playerId: UUID): List<DecorationHeadEntry> {
+    fun list(playerId: UUID): List<Entry> {
         val sql = "SELECT stable_key, api_id, head_name, category_id, texture_value FROM decoration_head_recent WHERE player_uuid=? ORDER BY position ASC"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
@@ -53,7 +53,7 @@ class DecorationHeadRecentRepository(
                     buildList {
                         while (rs.next()) {
                             add(
-                                DecorationHeadEntry(
+                                Entry(
                                     apiId = rs.getInt("api_id").takeUnless { rs.wasNull() },
                                     stableKey = rs.getString("stable_key"),
                                     name = rs.getString("head_name"),

@@ -1,23 +1,23 @@
 package com.ratger.acreative.menus.decorationheads.service
 
-import com.ratger.acreative.menus.decorationheads.cache.DecorationHeadCache
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryMode
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryRegistry
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryResolver
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadEntry
+import com.ratger.acreative.menus.decorationheads.cache.Cache
+import com.ratger.acreative.menus.decorationheads.category.CategoryMode
+import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
+import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
-import com.ratger.acreative.menus.decorationheads.model.DecorationHeadPageResult
-import com.ratger.acreative.menus.decorationheads.persistence.DecorationHeadCatalogRepository
+import com.ratger.acreative.menus.decorationheads.model.PageResult
+import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 
-class DecorationHeadsCatalogService(
-    private val cache: DecorationHeadCache,
-    private val categoryRegistry: DecorationHeadCategoryRegistry,
-    private val categoryResolver: DecorationHeadCategoryResolver,
-    private val catalogRepository: DecorationHeadCatalogRepository,
+class CatalogService(
+    private val cache: Cache,
+    private val categoryRegistry: CategoryRegistry,
+    private val categoryResolver: CategoryResolver,
+    private val catalogRepository: CatalogRepository,
     private val menuPageSize: Int
 ) {
-    fun page(state: DecorationHeadMenuState): DecorationHeadPageResult {
+    fun page(state: DecorationHeadMenuState): PageResult {
         val all = when (state.mode) {
             DecorationHeadMenuMode.CATEGORY -> loadCategoryEntries(state.categoryKey)
             DecorationHeadMenuMode.SEARCH -> loadSearchEntries(state.searchQuery.orEmpty())
@@ -28,12 +28,12 @@ class DecorationHeadsCatalogService(
         val page = state.page.coerceIn(1, totalPages)
         val from = (page - 1) * menuPageSize
         val slice = all.drop(from).take(menuPageSize)
-        return DecorationHeadPageResult(slice, page, totalPages, totalItems)
+        return PageResult(slice, page, totalPages, totalItems)
     }
 
-    private fun loadCategoryEntries(categoryKey: String): List<DecorationHeadEntry> {
+    private fun loadCategoryEntries(categoryKey: String): List<Entry> {
         val definition = categoryRegistry.byKey(categoryKey) ?: return emptyList()
-        return if (definition.mode == DecorationHeadCategoryMode.NEW) {
+        return if (definition.mode == CategoryMode.NEW) {
             catalogRepository.findRecentPublished(10_000)
         } else {
             catalogRepository.findByCategoryIds(categoryResolver.resolveUiCategoryToApiIds(categoryKey))
@@ -41,7 +41,7 @@ class DecorationHeadsCatalogService(
         }
     }
 
-    private fun loadSearchEntries(rawQuery: String): List<DecorationHeadEntry> {
+    private fun loadSearchEntries(rawQuery: String): List<Entry> {
         val normalized = rawQuery.trim().lowercase()
         if (normalized.isBlank()) return emptyList()
         val cachedKeys = cache.searchIndex.get(normalized)

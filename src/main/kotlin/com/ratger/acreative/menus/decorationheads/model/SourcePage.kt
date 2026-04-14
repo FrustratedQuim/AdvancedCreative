@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.model
 
-data class DecorationHeadSourcePage(
+data class SourcePage(
     val mode: DecorationHeadMenuMode,
     val categoryKey: String,
     val page: Int,

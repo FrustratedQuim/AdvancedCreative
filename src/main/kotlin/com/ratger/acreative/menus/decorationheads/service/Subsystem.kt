@@ -4,21 +4,21 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.menus.decorationheads.api.MinecraftHeadsHttpClient
 import com.ratger.acreative.menus.decorationheads.api.MinecraftHeadsRequestFactory
 import com.ratger.acreative.menus.decorationheads.api.MinecraftHeadsResponseMapper
-import com.ratger.acreative.menus.decorationheads.cache.DecorationHeadCache
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryRegistry
-import com.ratger.acreative.menus.decorationheads.category.DecorationHeadCategoryResolver
-import com.ratger.acreative.menus.decorationheads.menu.DecorationHeadsMenuRenderer
-import com.ratger.acreative.menus.decorationheads.menu.DecorationHeadsMenuService
-import com.ratger.acreative.menus.decorationheads.menu.DecorationHeadsSessionManager
-import com.ratger.acreative.menus.decorationheads.persistence.DecorationHeadCatalogRepository
-import com.ratger.acreative.menus.decorationheads.persistence.DecorationHeadRecentRepository
-import com.ratger.acreative.menus.decorationheads.persistence.DecorationHeadsDatabase
+import com.ratger.acreative.menus.decorationheads.cache.Cache
+import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
+import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
+import com.ratger.acreative.menus.decorationheads.menu.MenuRenderer
+import com.ratger.acreative.menus.decorationheads.menu.MenuService
+import com.ratger.acreative.menus.decorationheads.menu.SessionManager
+import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
+import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
+import com.ratger.acreative.menus.decorationheads.persistence.Database
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-class DecorationHeadsSubsystem(
+class Subsystem(
     hooker: FunctionHooker,
     parser: MiniMessageParser,
     buttonFactory: MenuButtonFactory
@@ -28,16 +28,16 @@ class DecorationHeadsSubsystem(
         Thread(r, "acreative-decoration-heads").apply { isDaemon = true }
     }
 
-    private val categoryRegistry = DecorationHeadCategoryRegistry(config)
-    private val categoryResolver = DecorationHeadCategoryResolver()
-    private val cache = DecorationHeadCache(
+    private val categoryRegistry = CategoryRegistry(config)
+    private val categoryResolver = CategoryResolver()
+    private val cache = Cache(
         dynamicLimit = config.getInt("decoration-heads.head-cache-size", 4096),
         searchLimit = config.getInt("decoration-heads.search-query-cache-size", 128)
     )
 
-    private val database = DecorationHeadsDatabase(hooker.plugin.dataFolder)
-    private val catalogRepository = DecorationHeadCatalogRepository(database)
-    private val recentRepository = DecorationHeadRecentRepository(
+    private val database = Database(hooker.plugin.dataFolder)
+    private val catalogRepository = CatalogRepository(database)
+    private val recentRepository = RecentRepository(
         database,
         config.getInt("decoration-heads.player-recent-limit", 45)
     )
@@ -55,19 +55,19 @@ class DecorationHeadsSubsystem(
     )
     private val mapper = MinecraftHeadsResponseMapper()
 
-    private val catalogService = DecorationHeadsCatalogService(
+    private val catalogService = CatalogService(
         cache = cache,
         categoryRegistry = categoryRegistry,
         categoryResolver = categoryResolver,
         catalogRepository = catalogRepository,
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
-    private val recentService = DecorationHeadsRecentService(recentRepository)
-    private val giveService = DecorationHeadsGiveService(hooker.menuService.headMutationSupport(), recentService)
+    private val recentService = RecentService(recentRepository)
+    private val giveService = GiveService(hooker.menuService.headMutationSupport(), recentService)
 
-    private val sessionManager = DecorationHeadsSessionManager(categoryRegistry.firstCategoryKey())
-    private val renderer = DecorationHeadsMenuRenderer(hooker.plugin, parser, buttonFactory, categoryRegistry)
-    val menuService = DecorationHeadsMenuService(
+    private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())
+    private val renderer = MenuRenderer(hooker.plugin, parser, buttonFactory, categoryRegistry)
+    val menuService = MenuService(
         plugin = hooker.plugin,
         sessionManager = sessionManager,
         categoryRegistry = categoryRegistry,
@@ -79,7 +79,7 @@ class DecorationHeadsSubsystem(
         executor = executor
     )
 
-    private val syncService = DecorationHeadsSyncService(
+    private val syncService = SyncService(
         client = httpClient,
         mapper = mapper,
         categoryRegistry = categoryRegistry,
