@@ -6,7 +6,7 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.attributes.AttributeModifierFactory
 import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.itemedit.attributes.SlotGroupSpec
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import java.math.BigDecimal
 import java.util.UUID
 import org.bukkit.NamespacedKey

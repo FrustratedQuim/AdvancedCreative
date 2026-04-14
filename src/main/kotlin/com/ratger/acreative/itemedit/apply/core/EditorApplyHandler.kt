@@ -1,6 +1,6 @@
 package com.ratger.acreative.itemedit.apply.core
 
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 interface EditorApplyHandler {

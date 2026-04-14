@@ -10,7 +10,7 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.effects.ConsumableComponentSupport
 import com.ratger.acreative.itemedit.effects.EdibleMenuSupport
 import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class ConsumableSoundApplyHandler(

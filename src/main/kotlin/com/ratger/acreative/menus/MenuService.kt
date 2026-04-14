@@ -15,9 +15,9 @@ import com.ratger.acreative.itemedit.text.ItemTextStyleService
 import com.ratger.acreative.itemedit.text.VanillaNameLocalizationService
 import com.ratger.acreative.itemedit.text.VanillaTranslationResolver
 import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.itemEdit.ItemEditMenu
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
+import com.ratger.acreative.menus.edit.ItemEditMenu
+import com.ratger.acreative.menus.edit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSessionManager
 import com.ratger.acreative.itemedit.apply.meta.AmountApplyHandler
 import com.ratger.acreative.itemedit.apply.core.ApplyPromptService
 import com.ratger.acreative.itemedit.apply.attributes.AttributeApplyHandler

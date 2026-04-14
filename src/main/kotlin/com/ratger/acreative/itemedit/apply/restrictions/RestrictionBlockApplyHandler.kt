@@ -6,7 +6,7 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyHandler
 import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.restrictions.ItemRestrictionSupport
 import com.ratger.acreative.itemedit.restrictions.RestrictionMode
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class RestrictionBlockApplyHandler(

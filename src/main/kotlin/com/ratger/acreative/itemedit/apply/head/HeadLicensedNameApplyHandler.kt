@@ -6,8 +6,8 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.head.HeadProfileService
 import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
 import com.ratger.acreative.itemedit.head.HeadTextureSource
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
+import com.ratger.acreative.menus.edit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSessionManager
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin

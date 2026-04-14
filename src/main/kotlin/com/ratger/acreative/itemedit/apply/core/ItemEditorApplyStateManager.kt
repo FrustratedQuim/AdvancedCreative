@@ -2,8 +2,8 @@ package com.ratger.acreative.itemedit.apply.core
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
-import com.ratger.acreative.menus.itemEdit.ItemEditSessionManager
+import com.ratger.acreative.menus.edit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSessionManager
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.UUID

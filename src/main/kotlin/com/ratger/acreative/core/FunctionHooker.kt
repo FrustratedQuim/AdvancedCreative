@@ -24,7 +24,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
-import com.ratger.acreative.decorationheads.service.DecorationHeadsSubsystem
+import com.ratger.acreative.menus.decorationheads.service.DecorationHeadsSubsystem
 import com.ratger.acreative.menus.MenuService
 import com.ratger.acreative.utils.*
 

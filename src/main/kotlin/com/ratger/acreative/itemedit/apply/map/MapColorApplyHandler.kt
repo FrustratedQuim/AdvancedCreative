@@ -6,7 +6,7 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.color.ColorInputSupport
 import com.ratger.acreative.itemedit.map.MapItemSupport
 import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class MapColorApplyHandler(

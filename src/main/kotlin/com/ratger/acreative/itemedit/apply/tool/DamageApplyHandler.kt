@@ -8,7 +8,7 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyHandler
 import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.tool.ToolDamageSupport
 import com.ratger.acreative.itemedit.validation.ValidationService
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 import org.bukkit.inventory.meta.Damageable
 

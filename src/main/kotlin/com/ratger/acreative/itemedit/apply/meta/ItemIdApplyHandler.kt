@@ -5,7 +5,7 @@ import com.ratger.acreative.itemedit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.itemedit.apply.core.EditorApplyHandler
 import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.itemedit.meta.ItemStackReplacementSupport
-import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class ItemIdApplyHandler(
