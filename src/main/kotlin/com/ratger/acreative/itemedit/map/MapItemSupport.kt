@@ -21,7 +21,8 @@ object MapItemSupport {
 
     fun mapView(item: ItemStack): MapView? {
         val meta = item.itemMeta as? MapMeta ?: return null
-        return meta.mapView
+        if (!meta.hasMapView()) return null
+        return runCatching { meta.mapView }.getOrNull()
     }
 
     fun mapId(item: ItemStack): Int? = mapView(item)?.id
@@ -30,7 +31,11 @@ object MapItemSupport {
 
     fun setMapView(item: ItemStack, mapView: MapView?) {
         val meta = item.itemMeta as? MapMeta ?: return
-        meta.mapView = mapView
+        runCatching {
+            meta.mapView = mapView
+        }.onFailure {
+            return
+        }
         item.itemMeta = meta
     }
 

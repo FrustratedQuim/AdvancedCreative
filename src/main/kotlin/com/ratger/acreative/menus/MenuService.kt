@@ -72,7 +72,7 @@ class MenuService(
     private val vanillaNameLocalizationService = VanillaNameLocalizationService(vanillaTranslationResolver)
     private val textStyleService = ItemTextStyleService(vanillaNameLocalizationService)
     private val sessionManager = ItemEditSessionManager()
-    private val buttonFactory = MenuButtonFactory(parser, ComponentsService())
+    private val buttonFactory = MenuButtonFactory(parser, ComponentsService(), hooker.tickScheduler)
     private val headMutationSupport = HeadTextureMutationSupport()
     private val headLookupService = LicensedProfileLookupService()
     private val headProfileService = HeadProfileService(hooker.plugin, editTargetResolver, headLookupService, headMutationSupport)

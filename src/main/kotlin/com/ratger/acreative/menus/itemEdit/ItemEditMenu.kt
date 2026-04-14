@@ -49,7 +49,7 @@ class ItemEditMenu(
     hooker: FunctionHooker,
     sessionManager: ItemEditSessionManager,
     buttonFactory: MenuButtonFactory,
-    parser: MiniMessageParser,
+    private val parser: MiniMessageParser,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
     headMutationSupport: HeadTextureMutationSupport,
     textStyleService: ItemTextStyleService
@@ -226,23 +226,31 @@ class ItemEditMenu(
         ArmorTrimEditPage(support, buttonFactory, this::openArmorTrimPatternPage, this::openArmorTrimMaterialPage)
 
     fun openRoot(player: Player, session: ItemEditSession) {
-        rememberCategory(player, LastEditorCategory.ROOT)
-        rootPage.open(player, session)
+        openPageSafely(player) {
+            rememberCategory(player, LastEditorCategory.ROOT)
+            rootPage.open(player, session)
+        }
     }
 
     fun openSimple(player: Player, session: ItemEditSession) {
-        rememberCategory(player, LastEditorCategory.SIMPLE)
-        simplePage.open(player, session)
+        openPageSafely(player) {
+            rememberCategory(player, LastEditorCategory.SIMPLE)
+            simplePage.open(player, session)
+        }
     }
 
     fun openAdvancedPageOne(player: Player, session: ItemEditSession) {
-        rememberCategory(player, LastEditorCategory.ADVANCED)
-        advancedEditPageOne.open(player, session)
+        openPageSafely(player) {
+            rememberCategory(player, LastEditorCategory.ADVANCED)
+            advancedEditPageOne.open(player, session)
+        }
     }
 
     fun openAdvancedPageTwo(player: Player, session: ItemEditSession) {
-        rememberCategory(player, LastEditorCategory.ADVANCED)
-        advancedPageTwo.open(player, session)
+        openPageSafely(player) {
+            rememberCategory(player, LastEditorCategory.ADVANCED)
+            advancedPageTwo.open(player, session)
+        }
     }
 
     fun openLastCategoryOrDefault(player: Player, session: ItemEditSession) {
@@ -254,43 +262,43 @@ class ItemEditMenu(
     }
 
     fun openAttributePage(player: Player, session: ItemEditSession) {
-        attributePage.open(player, session)
+        openPageSafely(player) { attributePage.open(player, session) }
     }
 
     fun openEquippablePage(player: Player, session: ItemEditSession) {
-        equippablePage.open(player, session)
+        openPageSafely(player) { equippablePage.open(player, session) }
     }
 
     fun openEnchantmentsFromSimple(player: Player, session: ItemEditSession) {
-        enchantmentsPage.open(player, session, openSimpleHandler)
+        openPageSafely(player) { enchantmentsPage.open(player, session, openSimpleHandler) }
     }
 
     fun openEnchantmentsFromAdvanced(player: Player, session: ItemEditSession) {
-        enchantmentsPage.open(player, session, openAdvancedPageTwoHandler)
+        openPageSafely(player) { enchantmentsPage.open(player, session, openAdvancedPageTwoHandler) }
     }
 
     fun openUseRemainderPage(player: Player, session: ItemEditSession) {
-        useRemainderPage.open(player, session)
+        openPageSafely(player) { useRemainderPage.open(player, session) }
     }
 
     fun openUseCooldownPage(player: Player, session: ItemEditSession) {
-        useCooldownPage.open(player, session)
+        openPageSafely(player) { useCooldownPage.open(player, session) }
     }
 
     private fun openLockPageInternal(player: Player, session: ItemEditSession) {
-        lockPage.open(player, session)
+        openPageSafely(player) { lockPage.open(player, session) }
     }
 
     fun openToolPage(player: Player, session: ItemEditSession) {
-        toolPage.open(player, session)
+        openPageSafely(player) { toolPage.open(player, session) }
     }
 
     fun openRestrictionsRoot(player: Player, session: ItemEditSession) {
-        restrictionsRootPage.open(player, session)
+        openPageSafely(player) { restrictionsRootPage.open(player, session) }
     }
 
     fun openFoodPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
-        foodPage.open(player, session, openBack)
+        openPageSafely(player) { foodPage.open(player, session, openBack) }
     }
 
     fun openFoodPageFromAdvanced(player: Player, session: ItemEditSession) {
@@ -298,41 +306,43 @@ class ItemEditMenu(
     }
 
     fun openFoodRemoveEffectsPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit, page: Int = 0) {
-        foodRemoveEffectsPage.open(player, session, openBack, page)
+        openPageSafely(player) { foodRemoveEffectsPage.open(player, session, openBack, page) }
     }
 
     fun openFoodApplyEffectsPage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit, page: Int = 0) {
-        foodApplyEffectsPage.open(player, session, openBack, page)
+        openPageSafely(player) { foodApplyEffectsPage.open(player, session, openBack, page) }
     }
 
     fun openDeathProtectionPage(player: Player, session: ItemEditSession) {
-        deathProtectionPage.open(player, session)
+        openPageSafely(player) { deathProtectionPage.open(player, session) }
     }
 
     fun openDeathProtectionRemoveEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
-        deathProtectionRemoveEffectsPage.open(player, session, page)
+        openPageSafely(player) { deathProtectionRemoveEffectsPage.open(player, session, page) }
     }
 
     fun openDeathProtectionApplyEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
-        deathProtectionApplyEffectsPage.open(player, session, page)
+        openPageSafely(player) { deathProtectionApplyEffectsPage.open(player, session, page) }
     }
 
     fun openHeadTexturePage(player: Player, session: ItemEditSession) {
-        support.transition(session) {
-            headTextureEditPage.open(player, session)
+        openPageSafely(player) {
+            support.transition(session) {
+                headTextureEditPage.open(player, session)
+            }
         }
     }
 
     fun openPotionPage(player: Player, session: ItemEditSession, back: (Player, ItemEditSession) -> Unit = openAdvancedPageOneHandler) {
-        potionEditPage.open(player, session, back)
+        openPageSafely(player) { potionEditPage.open(player, session, back) }
     }
 
     fun openPotionEffectsPage(player: Player, session: ItemEditSession, page: Int = 0) {
-        potionEffectsPage.open(player, session, page)
+        openPageSafely(player) { potionEffectsPage.open(player, session, page) }
     }
 
     fun openMapPage(player: Player, session: ItemEditSession) {
-        mapEditPage.open(player, session)
+        openPageSafely(player) { mapEditPage.open(player, session) }
     }
 
     fun openTextAppearancePage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
@@ -340,11 +350,11 @@ class ItemEditMenu(
     }
 
     fun openTextAppearancePageOne(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
-        textAppearancePageOne.open(player, session, openBack)
+        openPageSafely(player) { textAppearancePageOne.open(player, session, openBack) }
     }
 
     fun openTextAppearancePageTwo(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
-        textAppearancePageTwo.open(player, session, openBack)
+        openPageSafely(player) { textAppearancePageTwo.open(player, session, openBack) }
     }
 
     fun openTextAppearanceFromSimple(player: Player, session: ItemEditSession) {
@@ -357,15 +367,15 @@ class ItemEditMenu(
 
 
     fun openArmorTrimPage(player: Player, session: ItemEditSession) {
-        armorTrimEditPage.open(player, session, openAdvancedPageOneHandler)
+        openPageSafely(player) { armorTrimEditPage.open(player, session, openAdvancedPageOneHandler) }
     }
 
     fun openArmorTrimPatternPage(player: Player, session: ItemEditSession) {
-        armorTrimPatternSelectPage.open(player, session, this::openArmorTrimPage)
+        openPageSafely(player) { armorTrimPatternSelectPage.open(player, session, this::openArmorTrimPage) }
     }
 
     fun openArmorTrimMaterialPage(player: Player, session: ItemEditSession) {
-        armorTrimMaterialSelectPage.open(player, session, this::openArmorTrimPage)
+        openPageSafely(player) { armorTrimMaterialSelectPage.open(player, session, this::openArmorTrimPage) }
     }
 
     fun openSpecialParametersFromAdvanced(player: Player, session: ItemEditSession) {
@@ -378,7 +388,7 @@ class ItemEditMenu(
             return
         }
         if (session.editableItem.type == Material.PLAYER_HEAD) {
-            headTextureEditPage.open(player, session)
+            openHeadTexturePage(player, session)
             return
         }
         if (ArmorTrimSupport.supports(session.editableItem)) {
@@ -416,7 +426,7 @@ class ItemEditMenu(
     }
 
     fun openDecoratedPotRoot(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
-        potEditPage.open(player, session, openBack)
+        openPageSafely(player) { potEditPage.open(player, session, openBack) }
     }
 
     fun openDecoratedPotPattern(
@@ -425,10 +435,18 @@ class ItemEditMenu(
         part: DecoratedPotPartDescriptor,
         openBack: (Player, ItemEditSession) -> Unit
     ) {
-        potPatternSelectPage.open(player, session, part, openBack)
+        openPageSafely(player) { potPatternSelectPage.open(player, session, part, openBack) }
     }
 
     private fun rememberCategory(player: Player, category: LastEditorCategory) {
         lastCategoryByPlayer[player.uniqueId] = category
+    }
+
+    private fun openPageSafely(player: Player, openAction: () -> Unit) {
+        runCatching { openAction() }
+            .onFailure {
+                player.closeInventory()
+                player.sendMessage(parser.parse("<!i><dark_red>▍ <#FF1500>Предмет повреждён.."))
+            }
     }
 }

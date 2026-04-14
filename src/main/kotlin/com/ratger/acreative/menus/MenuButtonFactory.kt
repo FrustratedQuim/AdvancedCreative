@@ -9,6 +9,7 @@ import com.ratger.acreative.itemedit.meta.MetaActionsApplier
 import com.ratger.acreative.itemedit.meta.MiniMessageParser
 import com.ratger.acreative.itemedit.potion.PotionItemSupport
 import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
+import com.ratger.acreative.core.TickScheduler
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute
@@ -19,13 +20,40 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.potion.PotionEffectType
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.button.Button
 import ru.violence.coreapi.bukkit.api.util.ItemBuilder
 
 class MenuButtonFactory(
     private val parser: MiniMessageParser,
-    private val componentsService: ComponentsService
+    private val componentsService: ComponentsService,
+    private val tickScheduler: TickScheduler
 ) {
+    private fun protectedButton(
+        item: ItemStack,
+        action: (ClickEvent) -> Unit
+    ): Button {
+        lateinit var restoreButton: Button
+        val wrappedAction: (ClickEvent) -> Unit = { event ->
+            runCatching { action(event) }
+                .onFailure {
+                    val slot = event.rawSlot
+                    if (slot < 0) return@onFailure
+                    val warningButton = actionButton(
+                        material = Material.BARRIER,
+                        name = "<!i><#FF1500>⚠ Предмет повреждён..",
+                        lore = emptyList()
+                    )
+                    event.menu.setButton(slot, warningButton)
+                    tickScheduler.runLater(30L) {
+                        event.menu.setButton(slot, restoreButton)
+                    }
+                }
+        }
+        restoreButton = Button.simple(item).action(wrappedAction).build()
+        return restoreButton
+    }
+
     data class ListButtonOption<T>(
         val value: T,
         val label: String
@@ -74,14 +102,15 @@ class MenuButtonFactory(
             .build()
     ).build()
 
-    fun simpleModeButton(action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit) = Button.simple(
+    fun simpleModeButton(action: (ClickEvent) -> Unit) = protectedButton(
         ItemBuilder(Material.ENDER_PEARL)
             .name(parser.parse("<!i><#C7A300>⏺ <#FFD700>Простой режим"))
             .lore(listOf(parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-            .build()
-    ).action(action).build()
+            .build(),
+        action
+    )
 
-    fun advancedModeButton(action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit) = Button.simple(
+    fun advancedModeButton(action: (ClickEvent) -> Unit) = protectedButton(
         ItemBuilder(Material.ENDER_EYE)
             .name(parser.parse("<!i><#C7A300>⭐ <#FFD700>Продвинутый режим"))
             .lore(
@@ -91,33 +120,36 @@ class MenuButtonFactory(
                     parser.parse("<!i><dark_red>▍ <#FF1500>Если разбираетесь")
                 )
             )
-            .build()
-    ).action(action).build()
+            .build(),
+        action
+    )
 
     fun backButton(
         text: String = "◀ Назад",
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ) = Button.simple(
+        action: (ClickEvent) -> Unit
+    ) = protectedButton(
         ItemBuilder(Material.RED_STAINED_GLASS_PANE)
             .name(parser.parse("<!i><#FF1500>$text"))
-            .build()
-    ).action(action).build()
+            .build(),
+        action
+    )
 
     fun forwardButton(
         text: String = "Вперёд ▶",
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
-    ) = Button.simple(
+        action: (ClickEvent) -> Unit
+    ) = protectedButton(
         ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
             .name(parser.parse("<!i><#00FF40>$text"))
-            .build()
-    ).action(action).build()
+            .build(),
+        action
+    )
 
     fun actionButton(
         material: Material,
         name: String,
         lore: List<String>,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        action: ((ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit)? = null
+        action: ((ClickEvent) -> Unit)? = null
     ): Button {
         val builder = ItemBuilder(material)
             .name(parser.parse(name))
@@ -125,13 +157,7 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        val buttonBuilder = Button.simple(builder.build())
-        if (action != null) {
-            buttonBuilder.action(action)
-        } else {
-            buttonBuilder.action { }
-        }
-        return buttonBuilder.build()
+        return protectedButton(builder.build(), action ?: {})
     }
 
     fun statefulSummaryButton(
@@ -144,7 +170,7 @@ class MenuButtonFactory(
         emptyLore: List<String> = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
         glintWhenActive: Boolean = true,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val lore = if (!active) {
             emptyLore
@@ -182,8 +208,8 @@ class MenuButtonFactory(
         activeLore: List<String>,
         inactiveLore: List<String>,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        onApply: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
-        onReset: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        onApply: (ClickEvent) -> Unit,
+        onReset: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = material,
         name = if (active) activeName else inactiveName,
@@ -232,8 +258,8 @@ class MenuButtonFactory(
     fun rawMiniMessageNameApplyButton(
         hasName: Boolean,
         preview: String,
-        onApply: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
-        onReset: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        onApply: (ClickEvent) -> Unit,
+        onReset: (ClickEvent) -> Unit
     ): Button {
         val usageLore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
@@ -262,7 +288,7 @@ class MenuButtonFactory(
         virtualLines: List<String>,
         focusedIndex: Int,
         hasMaterializedLore: Boolean,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, AdvancedLoreInteraction) -> Unit
+        action: (ClickEvent, AdvancedLoreInteraction) -> Unit
     ): Button {
         val safeFocusedIndex = focusedIndex.coerceIn(0, virtualLines.lastIndex.coerceAtLeast(0))
         val loreLines = buildList {
@@ -315,7 +341,7 @@ class MenuButtonFactory(
         lore: List<String>,
         glintWhenEnabled: Boolean = true,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = material,
         name = if (enabled) enabledName else disabledName,
@@ -335,7 +361,7 @@ class MenuButtonFactory(
         editedItem: ItemStack,
         activeName: String,
         lore: List<String>,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val item = editedItem.clone().also {
             if (it.type != Material.PLAYER_HEAD) {
@@ -350,7 +376,7 @@ class MenuButtonFactory(
             it.setEnchantmentGlintOverride(true)
             item.itemMeta = it
         }
-        return Button.simple(item).action(action).build()
+        return protectedButton(item, action)
     }
 
     fun <T> listButton(
@@ -361,7 +387,7 @@ class MenuButtonFactory(
         beforeOptionsLore: List<String> = emptyList(),
         afterOptionsLore: List<String> = emptyList(),
         itemModifier: (ItemBuilder.(ListButtonOption<T>) -> ItemBuilder)? = null,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, Int) -> Unit
+        action: (ClickEvent, Int) -> Unit
     ): Button {
         require(options.isNotEmpty()) { "List button options cannot be empty" }
 
@@ -376,16 +402,14 @@ class MenuButtonFactory(
             builder.itemModifier(selected)
         }
 
-        return Button.simple(builder.build())
-            .action { event ->
+        return protectedButton(builder.build()) handler@{ event ->
                 val newIndex = when {
                     event.isLeft || event.isShiftLeft -> (safeSelectedIndex + 1) % options.size
                     event.isRight || event.isShiftRight -> (safeSelectedIndex - 1 + options.size) % options.size
-                    else -> return@action
+                    else -> return@handler
                 }
                 action(event, newIndex)
             }
-            .build()
     }
 
     fun focusedToggleListButton(
@@ -396,7 +420,7 @@ class MenuButtonFactory(
         beforeOptionsLore: List<String> = emptyList(),
         afterOptionsLore: List<String> = emptyList(),
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
+        action: (ClickEvent, FocusedToggleListInteraction) -> Unit
     ): Button {
         require(options.isNotEmpty()) { "Focused toggle list options cannot be empty" }
         val safeFocusedIndex = focusedIndex.coerceIn(0, options.lastIndex)
@@ -407,15 +431,15 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return Button.simple(builder.build()).action { event ->
+        return protectedButton(builder.build()) handler@{ event ->
             val interaction = when {
                 event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
                 event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
                 isDropClick(event) -> FocusedToggleListInteraction.RESET_ALL
-                else -> return@action
+                else -> return@handler
             }
             action(event, interaction)
-        }.build()
+        }
     }
 
     fun textOrderedColorFocusButton(
@@ -424,7 +448,7 @@ class MenuButtonFactory(
         inactiveTitle: String,
         active: Boolean,
         options: List<TextColorFocusOption>,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, FocusedToggleListInteraction) -> Unit
+        action: (ClickEvent, FocusedToggleListInteraction) -> Unit
     ): Button {
         val lore = listOf(
             "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы идти дальше",
@@ -473,7 +497,7 @@ class MenuButtonFactory(
         inactiveTitle: String,
         active: Boolean,
         options: List<TextShadowOption>,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent, Int) -> Unit
+        action: (ClickEvent, Int) -> Unit
     ): Button {
         require(options.isNotEmpty()) { "Text shadow options cannot be empty" }
 
@@ -547,15 +571,15 @@ class MenuButtonFactory(
         }
     }
 
-    private fun isDropClick(event: ru.violence.coreapi.bukkit.api.menu.event.ClickEvent): Boolean {
+    private fun isDropClick(event: ClickEvent): Boolean {
         return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
     }
 
-    fun editablePreviewButton(item: ItemStack): Button = Button.simple(item.clone()).action { }.build()
+    fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone()) { }
 
     fun headTextureValueInputSlotButton(
         valueBook: ItemStack?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = itemInputSlotButton(
         storedItem = valueBook,
         placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот для value <#FFD700>←",
@@ -564,7 +588,7 @@ class MenuButtonFactory(
 
     fun lockKeySlotButton(
         keyItem: ItemStack?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = itemInputSlotButton(
         storedItem = keyItem,
         placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот ключа<#FFD700> ←",
@@ -573,7 +597,7 @@ class MenuButtonFactory(
 
     fun useRemainderSlotButton(
         remainder: ItemStack?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = itemInputSlotButton(
         storedItem = remainder,
         placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот предмета<#FFD700> ←",
@@ -583,20 +607,20 @@ class MenuButtonFactory(
     private fun itemInputSlotButton(
         storedItem: ItemStack?,
         placeholderName: String,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val buttonItem = storedItem?.clone()
             ?: ItemBuilder(Material.BARRIER)
                 .name(parser.parse(placeholderName))
                 .build()
 
-        return Button.simple(buttonItem).action(action).build()
+        return protectedButton(buttonItem, action)
     }
 
     fun specialParameterButton(
         editedItem: ItemStack,
         viewer: Player,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit = { }
+        action: (ClickEvent) -> Unit = { }
     ): Button {
         val type = editedItem.type
         val lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")
@@ -649,7 +673,7 @@ class MenuButtonFactory(
                 .name(parser.parse("<!i><#FFD700>Особый параметр"))
                 .build()
         }
-        return Button.simple(buttonItem).action(action).build()
+        return protectedButton(buttonItem, action)
     }
 
     private fun buildFrameInvisibilityButtonItem(editedItem: ItemStack): ItemStack {
@@ -676,7 +700,7 @@ class MenuButtonFactory(
 
     fun armorTrimRootPatternButton(
         patternDisplayName: String?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = Material.NETHERITE_SCRAP,
         name = patternDisplayName?.let {
@@ -701,7 +725,7 @@ class MenuButtonFactory(
 
     fun armorTrimRootMaterialButton(
         materialDisplayName: String?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = Material.STRUCTURE_VOID,
         name = materialDisplayName?.let {
@@ -727,7 +751,7 @@ class MenuButtonFactory(
         icon: Material,
         displayName: String,
         selected: Boolean,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = icon,
         name = if (selected) {
@@ -756,7 +780,7 @@ class MenuButtonFactory(
         icon: Material,
         displayName: String,
         selected: Boolean,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = icon,
         name = if (selected) {
@@ -784,7 +808,7 @@ class MenuButtonFactory(
         partLabel: String,
         material: Material?,
         materialDisplayName: String?,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val displayMaterial = material ?: Material.BRICK
         val displayName = materialDisplayName ?: "Кирпич"
@@ -798,7 +822,7 @@ class MenuButtonFactory(
 
     fun potionEffectEntryButton(
         entry: PotionItemSupport.PotionEffectEntry,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val previewPotionType = PotionItemSupport.previewPotionType(entry.effect.type)
         return actionButton(
@@ -834,7 +858,7 @@ class MenuButtonFactory(
     fun deathProtectionRemoveEffectEntryButton(
         type: PotionEffectType,
         displayName: String,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val previewPotionType = PotionItemSupport.previewPotionType(type)
         return actionButton(
@@ -865,7 +889,7 @@ class MenuButtonFactory(
         showParticles: Boolean,
         showIcon: Boolean,
         type: PotionEffectType,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val previewPotionType = PotionItemSupport.previewPotionType(type)
         return actionButton(
@@ -902,7 +926,7 @@ class MenuButtonFactory(
         material: Material,
         sherdDisplayName: String,
         selected: Boolean,
-        action: (ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit
+        action: (ClickEvent) -> Unit
     ): Button {
         val marker = if (selected) "◎" else "⭘"
         val lore = if (selected) {
