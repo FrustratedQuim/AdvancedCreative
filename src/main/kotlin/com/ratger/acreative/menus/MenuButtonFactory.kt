@@ -102,28 +102,6 @@ class MenuButtonFactory(
             .build()
     ).build()
 
-    fun simpleModeButton(action: (ClickEvent) -> Unit) = protectedButton(
-        ItemBuilder(Material.ENDER_PEARL)
-            .name(parser.parse("<!i><#C7A300>⏺ <#FFD700>Простой режим"))
-            .lore(listOf(parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")))
-            .build(),
-        action
-    )
-
-    fun advancedModeButton(action: (ClickEvent) -> Unit) = protectedButton(
-        ItemBuilder(Material.ENDER_EYE)
-            .name(parser.parse("<!i><#C7A300>⭐ <#FFD700>Продвинутый режим"))
-            .lore(
-                listOf(
-                    parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
-                    parser.parse(""),
-                    parser.parse("<!i><dark_red>▍ <#FF1500>Если разбираетесь")
-                )
-            )
-            .build(),
-        action
-    )
-
     fun backButton(
         text: String = "◀ Назад",
         action: (ClickEvent) -> Unit
@@ -229,31 +207,6 @@ class MenuButtonFactory(
         }
     )
 
-
-    fun textStyleInfoButton(): Button = actionButton(
-        material = Material.OAK_HANGING_SIGN,
-        name = "<!i><#C7A300>ℹ <#FFD700>Стили и Цвета",
-        lore = listOf(
-            "",
-            "<!i><white> \\<white>             <gray>\\<b><white><b>Pepich</b><gray>\\</b>",
-            "<!i><gray> \\<gray>             \\<i><white><i>Pepich</i><gray>\\</i>",
-            "<!i><dark_gray> \\<dark_gray>      <gray>\\<u><white><u>Pepich</u><gray>\\</u>",
-            "<!i><black> \\<black>             <gray>\\<st><white><st>Pepich</st><gray>\\</st>",
-            "<!i><yellow> \\<yellow>            <gray>\\<obf><white><obf>Pepich</obf><gray>\\</obf>",
-            "<!i><gold> \\<gold>",
-            "<!i><red> \\<red>               <gray>\\<#00FF79><#00FF79>Pepich<gray>\\</#00FF79>",
-            "<!i><dark_red> \\<dark_red>        <gray>\\<gradient<red>:<gray>#00FF79<red>:<gray>#FF00D9><gradient:#00FF79:#FF00D9>Pepich</gradient><gray>\\</gradient> ",
-            "<!i><green> \\<green>            <gray>\\<shadow<red>:<gray>#00FF79<red>:<gray>1><shadow:#00FF79:1><white>Pepich</white></shadow><gray>\\</shadow>",
-            "<!i><dark_green> \\<dark_green>",
-            "<!i><aqua> \\<aqua>",
-            "<!i><dark_aqua> \\<dark_aqua>",
-            "<!i><blue> \\<blue>",
-            "<!i><dark_blue> \\<dark_blue>",
-            "<!i><light_purple> \\<light_purple>",
-            "<!i><dark_purple> \\<dark_purple>",
-            ""
-        )
-    )
 
     fun rawMiniMessageNameApplyButton(
         hasName: Boolean,
@@ -700,164 +653,7 @@ class MenuButtonFactory(
     }
 
 
-    fun armorTrimRootPatternButton(
-        patternDisplayName: String?,
-        action: (ClickEvent) -> Unit
-    ): Button = actionButton(
-        material = Material.NETHERITE_SCRAP,
-        name = patternDisplayName?.let {
-            "<!i><#C7A300>◎ <#FFD700>Отделка: <#00FF40>$it"
-        } ?: "<!i><#C7A300>⭘ <#FFD700>Отделка: <#FF1500>Нет",
-        lore = listOf(
-            if (patternDisplayName == null) {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы задать"
-            } else {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
-            }
-        ),
-        itemModifier = {
-            if (patternDisplayName != null) {
-                glint(true)
-                hideAdditionalTooltip().invoke(this)
-            }
-            this
-        },
-        action = action
-    )
-
-    fun armorTrimRootMaterialButton(
-        materialDisplayName: String?,
-        action: (ClickEvent) -> Unit
-    ): Button = actionButton(
-        material = Material.STRUCTURE_VOID,
-        name = materialDisplayName?.let {
-            "<!i><#C7A300>◎ <#FFD700>Материал: <#FFF3E0>$it"
-        } ?: "<!i><#C7A300>⭘ <#FFD700>Материал: <#FF1500>Нет",
-        lore = listOf(
-            if (materialDisplayName == null) {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы задать"
-            } else {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
-            }
-        ),
-        itemModifier = {
-            if (materialDisplayName != null) {
-                glint(true)
-            }
-            this
-        },
-        action = action
-    )
-
-    fun armorTrimPatternOptionButton(
-        icon: Material,
-        displayName: String,
-        selected: Boolean,
-        action: (ClickEvent) -> Unit
-    ): Button = actionButton(
-        material = icon,
-        name = if (selected) {
-            "<!i><#C7A300>◎ <#FFD700>Отделка «$displayName»"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>Отделка «$displayName»"
-        },
-        lore = listOf(
-            if (selected) {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять"
-            } else {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать"
-            }
-        ),
-        itemModifier = {
-            hideAdditionalTooltip().invoke(this)
-            if (selected) {
-                glint(true)
-            }
-            this
-        },
-        action = action
-    )
-
-    fun armorTrimMaterialOptionButton(
-        icon: Material,
-        displayName: String,
-        selected: Boolean,
-        action: (ClickEvent) -> Unit
-    ): Button = actionButton(
-        material = icon,
-        name = if (selected) {
-            "<!i><#C7A300>◎ <#FFD700>$displayName"
-        } else {
-            "<!i><#C7A300>⭘ <#FFD700>$displayName"
-        },
-        lore = listOf(
-            if (selected) {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять"
-            } else {
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать"
-            }
-        ),
-        itemModifier = {
-            if (selected) {
-                glint(true)
-            }
-            this
-        },
-        action = action
-    )
-
-    fun decoratedPotPartButton(
-        partLabel: String,
-        material: Material?,
-        materialDisplayName: String?,
-        action: (ClickEvent) -> Unit
-    ): Button {
-        val displayMaterial = material ?: Material.BRICK
-        val displayName = materialDisplayName ?: "Кирпич"
-        return actionButton(
-            material = displayMaterial,
-            name = "<!i><#C7A300>$partLabel <#FFD700>Часть: <#FFF3E0>$displayName",
-            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
-            action = action
-        )
-    }
-
-    fun potionEffectEntryButton(
-        entry: PotionItemSupport.PotionEffectEntry,
-        action: (ClickEvent) -> Unit
-    ): Button {
-        val previewPotionType = PotionItemSupport.previewPotionType(entry.effect.type)
-        return actionButton(
-            material = Material.POTION,
-            name = "<!i><#C7A300>◎ <#FFD700>Эффект №${entry.index + 1}",
-            lore = listOf(
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
-                "",
-                "<!i><#FFD700>Параметры:",
-                "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName} ",
-                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds} ",
-                "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel} ",
-                "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
-                "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
-                ""
-            ),
-            itemModifier = {
-                if (previewPotionType != null) {
-                    edit { item ->
-                        val meta = item.itemMeta as? PotionMeta ?: return@edit
-                        meta.basePotionType = previewPotionType
-                        meta.addCustomEffect(entry.effect, true)
-                        item.itemMeta = meta
-                    }
-                }
-                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
-                this
-            },
-            action = action
-        )
-    }
-
-    fun deathProtectionRemoveEffectEntryButton(
+    fun potionRemoveEffectEntryButton(
         type: PotionEffectType,
         displayName: String,
         action: (ClickEvent) -> Unit
@@ -882,7 +678,7 @@ class MenuButtonFactory(
         )
     }
 
-    fun deathProtectionApplyEffectEntryButton(
+    fun potionApplyEffectEntryButton(
         index: Int,
         displayName: String,
         seconds: Int,
@@ -918,36 +714,6 @@ class MenuButtonFactory(
                     }
                 }
                 flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
-                this
-            },
-            action = action
-        )
-    }
-
-    fun potterySherdButton(
-        material: Material,
-        sherdDisplayName: String,
-        selected: Boolean,
-        action: (ClickEvent) -> Unit
-    ): Button {
-        val marker = if (selected) "◎" else "⭘"
-        val lore = if (selected) {
-            listOf(
-                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять",
-                "",
-                "<!i><#00FF40>▍ Выбрано"
-            )
-        } else {
-            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать")
-        }
-        return actionButton(
-            material = material,
-            name = "<!i><#C7A300>$marker <#FFD700>Глиняный черепок «$sherdDisplayName»",
-            lore = lore,
-            itemModifier = {
-                if (selected) {
-                    glint(true)
-                }
                 this
             },
             action = action

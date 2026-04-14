@@ -67,7 +67,7 @@ class FoodRemoveEffectsListPage(
     private fun buildEntryButton(
         entry: PotionEffectType,
         action: (ClickEvent) -> Unit
-    ) = buttonFactory.deathProtectionRemoveEffectEntryButton(
+    ) = buttonFactory.potionRemoveEffectEntryButton(
         type = entry,
         displayName = PotionItemSupport.displayName(entry),
         action = action

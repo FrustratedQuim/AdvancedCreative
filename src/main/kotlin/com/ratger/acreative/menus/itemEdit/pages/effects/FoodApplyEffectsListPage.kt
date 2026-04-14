@@ -55,7 +55,7 @@ class FoodApplyEffectsListPage(
                 support.transition(clearSession) { open(clearPlayer, clearSession, openBack, 0) }
             },
             entryButton = { entryPlayer, entrySession, pageWindow, _, entry ->
-                buttonFactory.deathProtectionApplyEffectEntryButton(
+                buttonFactory.potionApplyEffectEntryButton(
                     index = entry.index + 1,
                     displayName = PotionItemSupport.displayName(entry.effect.type),
                     seconds = PotionItemSupport.seconds(entry.effect.duration),

@@ -5,8 +5,10 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.menus.itemEdit.pages.common.ItemEditPageLayouts
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class PotEditPage(
     private val support: ItemEditMenuSupport,
@@ -32,32 +34,43 @@ class PotEditPage(
 
             menu.setButton(
                 descriptor.rootSlot,
-                buttonFactory.decoratedPotPartButton(
+                buildDecoratedPotPartButton(
                     partLabel = descriptor.partLabel,
                     material = sherd,
-                    materialDisplayName = sherdName,
-                    action = { event ->
-                        support.transition(session) {
-                            if ((event.isRight || event.isShiftRight) && !TrimPotSupport.isBrickSelected(session.editableItem, descriptor.side)) {
-                                if (TrimPotSupport.applySide(session.editableItem, descriptor.side, null)) {
-                                    open(player, session, openBack)
-                                }
-                                return@transition
+                    materialDisplayName = sherdName
+                ) { event ->
+                    support.transition(session) {
+                        if ((event.isRight || event.isShiftRight) && !TrimPotSupport.isBrickSelected(session.editableItem, descriptor.side)) {
+                            if (TrimPotSupport.applySide(session.editableItem, descriptor.side, null)) {
+                                open(player, session, openBack)
                             }
+                            return@transition
+                        }
 
-                            if (event.isRight || event.isShiftRight) {
-                                return@transition
-                            }
+                        if (event.isRight || event.isShiftRight) {
+                            return@transition
+                        }
 
-                            openPatternSelect(player, session, descriptor) { reopenPlayer, reopenSession ->
-                                open(reopenPlayer, reopenSession, openBack)
-                            }
+                        openPatternSelect(player, session, descriptor) { reopenPlayer, reopenSession ->
+                            open(reopenPlayer, reopenSession, openBack)
                         }
                     }
-                )
+                }
             )
         }
 
         menu.open(player)
     }
+
+    private fun buildDecoratedPotPartButton(
+        partLabel: String,
+        material: Material?,
+        materialDisplayName: String?,
+        action: (ClickEvent) -> Unit
+    ) = buttonFactory.actionButton(
+        material = material ?: Material.BRICK,
+        name = "<!i><#C7A300>$partLabel <#FFD700>Часть: <#FFF3E0>${materialDisplayName ?: "Кирпич"}",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        action = action
+    )
 }

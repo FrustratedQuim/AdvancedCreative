@@ -8,6 +8,9 @@ import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.itemEdit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemFlag
+import org.bukkit.inventory.meta.PotionMeta
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class PotionEffectsActivePage(
     private val support: ItemEditMenuSupport,
@@ -51,7 +54,7 @@ class PotionEffectsActivePage(
                 support.transition(clearSession) { open(clearPlayer, clearSession, 0) }
             },
             entryButton = { entryPlayer, entrySession, pageWindow, _, entry ->
-                buttonFactory.potionEffectEntryButton(entry) {
+                buildPotionEffectEntryButton(entry) {
                     PotionItemSupport.removeEffect(entrySession.editableItem, entry.effect.type)
                     val afterSize = PotionItemSupport.effectEntries(entrySession.editableItem).size
                     val targetPage = listBuilder.coercePageIndexAfterUpdate(pageWindow.pageIndex, afterSize)
@@ -60,4 +63,37 @@ class PotionEffectsActivePage(
             }
         )
     }
+
+    private fun buildPotionEffectEntryButton(
+        entry: PotionItemSupport.PotionEffectEntry,
+        action: (ClickEvent) -> Unit
+    ) = buttonFactory.actionButton(
+        material = Material.POTION,
+        name = "<!i><#C7A300>◎ <#FFD700>Эффект №${entry.index + 1}",
+        lore = listOf(
+            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
+            "",
+            "<!i><#FFD700>Параметры:",
+            "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName} ",
+            "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds} ",
+            "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel} ",
+            "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
+            "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
+            ""
+        ),
+        itemModifier = {
+            val previewPotionType = PotionItemSupport.previewPotionType(entry.effect.type)
+            if (previewPotionType != null) {
+                edit { item ->
+                    val meta = item.itemMeta as? PotionMeta ?: return@edit
+                    meta.basePotionType = previewPotionType
+                    meta.addCustomEffect(entry.effect, true)
+                    item.itemMeta = meta
+                }
+            }
+            flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+            this
+        },
+        action = action
+    )
 }

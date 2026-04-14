@@ -55,7 +55,7 @@ class DeathProtectionApplyEffectsListPage(
                 support.transition(clearSession) { open(clearPlayer, clearSession, 0) }
             },
             entryButton = { entryPlayer, entrySession, pageWindow, _, entry ->
-                buttonFactory.deathProtectionApplyEffectEntryButton(
+                buttonFactory.potionApplyEffectEntryButton(
                     index = entry.index + 1,
                     displayName = PotionItemSupport.displayName(entry.effect.type),
                     seconds = PotionItemSupport.seconds(entry.effect.duration),

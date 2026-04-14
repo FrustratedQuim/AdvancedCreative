@@ -7,6 +7,7 @@ import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class PotPatternSelectPage(
     private val support: ItemEditMenuSupport,
@@ -38,13 +39,13 @@ class PotPatternSelectPage(
 
             menu.setButton(
                 slot,
-                buttonFactory.potterySherdButton(
+                buildPotterySherdButton(
                     material = sherd.material,
                     sherdDisplayName = sherd.displayName,
                     selected = selected,
                     action = {
                         if (!TrimPotSupport.toggleSideSherd(session.editableItem, part.side, sherd.material)) {
-                            return@potterySherdButton
+                            return@buildPotterySherdButton
                         }
                         support.transition(session) {
                             openBack(player, session)
@@ -89,4 +90,30 @@ class PotPatternSelectPage(
 
         menu.open(player)
     }
+
+    private fun buildPotterySherdButton(
+        material: Material,
+        sherdDisplayName: String,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ) = buttonFactory.actionButton(
+        material = material,
+        name = "<!i><#C7A300>${if (selected) "◎" else "⭘"} <#FFD700>Глиняный черепок «$sherdDisplayName»",
+        lore = if (selected) {
+            listOf(
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять",
+                "",
+                "<!i><#00FF40>▍ Выбрано"
+            )
+        } else {
+            listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать")
+        },
+        itemModifier = {
+            if (selected) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
 }

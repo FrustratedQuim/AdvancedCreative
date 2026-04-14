@@ -6,6 +6,7 @@ import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
 import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
 import org.bukkit.entity.Player
+import org.bukkit.Material
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.button.Button
@@ -34,7 +35,7 @@ class TextAppearanceStylePage(
         support.fillBase(menu, menuSize, blackSlots)
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
         menu.setButton(18, buttonFactory.backButton("◀ Простой режим") { support.transition(session) { openPageOne(player, session, openBack) } })
-        menu.setButton(26, buttonFactory.textStyleInfoButton())
+        menu.setButton(26, buildTextStyleInfoButton())
         refreshButtons(menu, player, session, openBack)
         menu.open(player)
     }
@@ -137,4 +138,29 @@ class TextAppearanceStylePage(
     private fun updateEditablePreview(menu: Menu, session: ItemEditSession) {
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
     }
+
+    private fun buildTextStyleInfoButton(): Button = buttonFactory.actionButton(
+        material = Material.OAK_HANGING_SIGN,
+        name = "<!i><#C7A300>ℹ <#FFD700>Стили и Цвета",
+        lore = listOf(
+            "",
+            "<!i><white> \\<white>             <gray>\\<b><white><b>Pepich</b><gray>\\</b>",
+            "<!i><gray> \\<gray>             \\<i><white><i>Pepich</i><gray>\\</i>",
+            "<!i><dark_gray> \\<dark_gray>      <gray>\\<u><white><u>Pepich</u><gray>\\</u>",
+            "<!i><black> \\<black>             <gray>\\<st><white><st>Pepich</st><gray>\\</st>",
+            "<!i><yellow> \\<yellow>            <gray>\\<obf><white><obf>Pepich</obf><gray>\\</obf>",
+            "<!i><gold> \\<gold>",
+            "<!i><red> \\<red>               <gray>\\<#00FF79><#00FF79>Pepich<gray>\\</#00FF79>",
+            "<!i><dark_red> \\<dark_red>        <gray>\\<gradient<red>:<gray>#00FF79<red>:<gray>#FF00D9><gradient:#00FF79:#FF00D9>Pepich</gradient><gray>\\</gradient> ",
+            "<!i><green> \\<green>            <gray>\\<shadow<red>:<gray>#00FF79<red>:<gray>1><shadow:#00FF79:1><white>Pepich</white></shadow><gray>\\</shadow>",
+            "<!i><dark_green> \\<dark_green>",
+            "<!i><aqua> \\<aqua>",
+            "<!i><dark_aqua> \\<dark_aqua>",
+            "<!i><blue> \\<blue>",
+            "<!i><dark_blue> \\<dark_blue>",
+            "<!i><light_purple> \\<light_purple>",
+            "<!i><dark_purple> \\<dark_purple>",
+            ""
+        )
+    )
 }

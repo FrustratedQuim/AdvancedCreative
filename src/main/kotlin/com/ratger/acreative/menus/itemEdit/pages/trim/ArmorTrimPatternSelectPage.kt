@@ -5,8 +5,10 @@ import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.itemEdit.ItemEditMenuSupport
 import com.ratger.acreative.menus.itemEdit.ItemEditSession
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
+import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class ArmorTrimPatternSelectPage(
     private val support: ItemEditMenuSupport,
@@ -31,13 +33,13 @@ class ArmorTrimPatternSelectPage(
         ArmorTrimCatalog.orderedPatterns.forEach { descriptor ->
             menu.setButton(
                 descriptor.slot,
-                buttonFactory.armorTrimPatternOptionButton(
+                buildPatternOptionButton(
                     icon = descriptor.icon,
                     displayName = descriptor.displayName,
                     selected = currentPattern == descriptor.pattern
                 ) {
                     if (!ArmorTrimSupport.togglePattern(session.editableItem, descriptor.pattern)) {
-                        return@armorTrimPatternOptionButton
+                        return@buildPatternOptionButton
                     }
                     support.transition(session) {
                         openBack(player, session)
@@ -48,4 +50,33 @@ class ArmorTrimPatternSelectPage(
 
         menu.open(player)
     }
+
+    private fun buildPatternOptionButton(
+        icon: Material,
+        displayName: String,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ) = buttonFactory.actionButton(
+        material = icon,
+        name = if (selected) {
+            "<!i><#C7A300>◎ <#FFD700>Отделка «$displayName»"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Отделка «$displayName»"
+        },
+        lore = listOf(
+            if (selected) {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы снять"
+            } else {
+                "<!i><#FFD700>Нажмите, <#FFE68A>чтобы выбрать"
+            }
+        ),
+        itemModifier = {
+            buttonFactory.hideAdditionalTooltip().invoke(this)
+            if (selected) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
 }
