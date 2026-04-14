@@ -363,9 +363,11 @@ class MenuButtonFactory(
         lore: List<String>,
         action: (ClickEvent) -> Unit
     ): Button {
-        val item = editedItem.clone().also {
+        val item = editedItem.clone().let {
             if (it.type != Material.PLAYER_HEAD) {
-                it.type = Material.PLAYER_HEAD
+                it.withType(Material.PLAYER_HEAD)
+            } else {
+                it
             }
         }
         val meta = item.itemMeta
