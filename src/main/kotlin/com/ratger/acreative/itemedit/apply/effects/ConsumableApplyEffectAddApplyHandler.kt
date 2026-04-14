@@ -50,7 +50,7 @@ class ConsumableApplyEffectAddApplyHandler(
 
         val action = ItemAction.ConsumableEffectAdd(EffectActionSpec.ApplyEffects(probability, listOf(entry)))
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         ConsumableComponentSupport.addApplyEffect(session.editableItem, probability, entry)

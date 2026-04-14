@@ -25,7 +25,7 @@ class MiningSpeedApplyHandler(
         val value = args[0].toFloatOrNull() ?: return ApplyExecutionResult.InvalidValue
         val action = ItemAction.ToolSetDefaultMiningSpeed(value, ToolSpeedScope.INEFFECTIVE_ONLY)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) {
+        if (!validationService.validate(action, context, player)) {
             return ApplyExecutionResult.InvalidValue
         }
 

@@ -24,7 +24,7 @@ class DeathProtectionRandomTeleportDiameterApplyHandler(
 
         val action = ItemAction.DeathProtectionEffectAdd(EffectActionSpec.TeleportRandomly(diameter))
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         DeathProtectionMenuSupport.setRandomTeleportDiameter(session.editableItem, diameter)
         return ApplyExecutionResult.Success

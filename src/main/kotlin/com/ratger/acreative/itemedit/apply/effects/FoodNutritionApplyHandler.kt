@@ -27,7 +27,7 @@ class FoodNutritionApplyHandler(
 
         val action = ItemAction.FoodNutrition(value)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         FoodComponentSupport.setNutrition(session.editableItem, value)

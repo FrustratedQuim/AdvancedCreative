@@ -26,7 +26,7 @@ class FoodSaturationApplyHandler(
 
         val action = ItemAction.FoodSaturation(value)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         FoodComponentSupport.setSaturation(session.editableItem, value)

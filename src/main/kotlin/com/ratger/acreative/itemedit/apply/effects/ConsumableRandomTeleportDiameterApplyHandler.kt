@@ -25,7 +25,7 @@ class ConsumableRandomTeleportDiameterApplyHandler(
 
         val action = ItemAction.ConsumableEffectAdd(EffectActionSpec.TeleportRandomly(diameter))
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         ConsumableComponentSupport.setRandomTeleportDiameter(session.editableItem, diameter)

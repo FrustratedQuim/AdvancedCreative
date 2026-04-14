@@ -2,14 +2,12 @@ package com.ratger.acreative.itemedit.validation
 
 import com.ratger.acreative.itemedit.api.ItemAction
 import com.ratger.acreative.itemedit.api.ItemContext
-import com.ratger.acreative.itemedit.api.ItemResult
 import com.ratger.acreative.itemedit.container.ContainerSupport
 import com.ratger.acreative.itemedit.effects.EffectActionsSupport
 import com.ratger.acreative.itemedit.equippable.EquippableSupport
 import com.ratger.acreative.itemedit.experimental.EffectSupport
 import com.ratger.acreative.itemedit.trim.TrimPotSupport
 import net.kyori.adventure.key.Key
-import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.block.Lockable
 import org.bukkit.Material
 import org.bukkit.Registry
@@ -20,228 +18,222 @@ import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
 
 class ValidationService {
-    private val mini = MiniMessage.miniMessage()
-
-    fun fail(message: String): ItemResult {
-        return ItemResult(false, listOf(mini.deserialize("<red>$message")))
-    }
-
     fun isValidKey(raw: String): Boolean = runCatching { Key.key(raw) }.isSuccess
 
     fun isMapEditable(item: ItemStack): Boolean = item.type == Material.FILLED_MAP
 
     fun isValidMapId(value: Int): Boolean = value >= 0
 
-    fun validate(action: ItemAction, context: ItemContext, player: Player): ItemResult? {
+    fun validate(action: ItemAction, context: ItemContext, player: Player): Boolean {
         val meta = context.item.itemMeta
         when (action) {
             is ItemAction.SetDamage -> {
-                if (action.value < 0) return fail("damage не может быть отрицательным")
+                if (action.value < 0) return false
                 val damageable = meta as? Damageable
                 val maxDamage = if (damageable?.hasMaxDamage() == true) damageable.maxDamage else null
-                if (maxDamage != null && action.value > maxDamage) return fail("damage не может быть больше max_damage ($maxDamage)")
+                if (maxDamage != null && action.value > maxDamage) return false
             }
 
             is ItemAction.SetMaxDamage -> {
-                val value = action.value ?: return null
-                if (value <= 0) return fail("max_damage должен быть > 0")
+                val value = action.value ?: return true
+                if (value <= 0) return false
                 val stack = if (meta?.hasMaxStackSize() == true) meta.maxStackSize else null
                 if (stack != null && stack > 1) {
-                    return fail("max_damage конфликтует с max_stack_size > 1")
+                    return false
                 }
             }
 
             is ItemAction.SetMaxStackSize -> {
-                val value = action.value ?: return null
-                if (value <= 0 || value > 99) return fail("max_stack_size должен быть в диапазоне 1..99")
+                val value = action.value ?: return true
+                if (value <= 0 || value > 99) return false
                 val damageable = meta as? Damageable
                 val maxDamage = if (damageable?.hasMaxDamage() == true) damageable.maxDamage else null
-                if (value > 1 && maxDamage != null) return fail("max_stack_size > 1 конфликтует с max_damage")
+                if (value > 1 && maxDamage != null) return false
             }
 
             is ItemAction.EnchantAdd -> {
-                if (action.level <= 0) return fail("уровень чар должен быть > 0")
-                if (action.level > 127) return fail("уровень чар должен быть в диапазоне 1..127")
+                if (action.level <= 0) return false
+                if (action.level > 127) return false
             }
 
             is ItemAction.PotionEffectAdd -> {
-                if (!context.snapshot.isPotion) return fail("Эта ветка только для potion/splash/lingering/tipped_arrow")
-                if (action.duration < 0 || action.amplifier < 0) return fail("duration/amplifier не могут быть отрицательными")
-                if (action.duration > Int.MAX_VALUE / 2) return fail("duration слишком большой")
-                if (action.amplifier > 255) return fail("amplifier > 255 не допускается")
+                if (!context.snapshot.isPotion) return false
+                if (action.duration < 0 || action.amplifier < 0) return false
+                if (action.duration > Int.MAX_VALUE / 2) return false
+                if (action.amplifier > 255) return false
             }
 
             is ItemAction.PotionColor -> {
-                if (!context.snapshot.isPotion) return fail("Цвет зелий доступен только для potion предметов")
+                if (!context.snapshot.isPotion) return false
             }
             is ItemAction.ConsumableConsumeSeconds -> {
-                if (!action.value.isFinite()) return fail("consume_seconds должен быть конечным числом")
-                if (action.value <= 0f) return fail("consume_seconds должен быть > 0")
-                if (action.value > 60f) return fail("consume_seconds слишком большой")
+                if (!action.value.isFinite()) return false
+                if (action.value <= 0f) return false
+                if (action.value > 60f) return false
             }
             is ItemAction.FoodNutrition -> {
-                if (action.value < 0) return fail("nutrition не может быть отрицательным")
-                if (action.value > 1000) return fail("nutrition слишком большой")
+                if (action.value < 0) return false
+                if (action.value > 1000) return false
             }
             is ItemAction.FoodSaturation -> {
-                if (!action.value.isFinite()) return fail("saturation должен быть конечным числом")
-                if (action.value < 0f) return fail("saturation не может быть отрицательным")
-                if (action.value > 1000f) return fail("saturation слишком большой")
+                if (!action.value.isFinite()) return false
+                if (action.value < 0f) return false
+                if (action.value > 1000f) return false
             }
             is ItemAction.ToolSetDefaultMiningSpeed -> {
-                if (!action.value.isFinite()) return fail("tool speed должен быть конечным числом")
-                if (action.value < 0f) return fail("tool speed не может быть отрицательным")
+                if (!action.value.isFinite()) return false
+                if (action.value < 0f) return false
             }
             is ItemAction.ToolSetDamagePerBlock -> {
-                if (action.value < 0) return fail("tool damage_per_block не может быть отрицательным")
+                if (action.value < 0) return false
             }
             is ItemAction.SetUseCooldown -> {
-                if (!action.seconds.isFinite()) return fail("use_cooldown seconds должен быть конечным числом")
-                if (action.seconds <= 0f) return fail("use_cooldown seconds должен быть > 0")
+                if (!action.seconds.isFinite()) return false
+                if (action.seconds <= 0f) return false
                 val group = action.cooldownGroup
-                if (group != null && !isValidKey(group.asString())) return fail("Некорректный namespaced key для use_cooldown group")
+                if (group != null && !isValidKey(group.asString())) return false
             }
             is ItemAction.ConsumableEffectAdd -> {
                 val message = EffectActionsSupport.validateSpec(action.spec, this)
-                if (message != null) return fail(message)
+                if (message != null) return false
             }
             is ItemAction.DeathProtectionEffectAdd -> {
                 val message = EffectActionsSupport.validateSpec(action.spec, this)
-                if (message != null) return fail(message)
+                if (message != null) return false
             }
             is ItemAction.ConsumableEffectRemove -> {
                 val effectCount = EffectSupport.consumableEffectCount(context.item)
-                    ?: return fail("У предмета нет компонента consumable")
-                if (action.index !in 0 until effectCount) return fail("Некорректный индекс effect_remove")
+                    ?: return false
+                if (action.index !in 0 until effectCount) return false
             }
             is ItemAction.DeathProtectionEffectRemove -> {
                 val effectCount = EffectSupport.deathProtectionEffectCount(context.item)
-                    ?: return fail("У предмета нет компонента death_protection")
-                if (action.index !in 0 until effectCount) return fail("Некорректный индекс effect_remove")
+                    ?: return false
+                if (action.index !in 0 until effectCount) return false
             }
 
             is ItemAction.HeadSetFromTexture -> {
-                if (!context.snapshot.isHead) return fail("Эта ветка только для player_head")
-                if (action.base64.isBlank()) return fail("texture base64 пустая")
+                if (!context.snapshot.isHead) return false
+                if (action.base64.isBlank()) return false
             }
 
             ItemAction.HeadClear -> {
-                if (!context.snapshot.isHead) return fail("Эта ветка только для player_head")
+                if (!context.snapshot.isHead) return false
             }
 
             is ItemAction.HeadSetFromName -> {
-                if (!context.snapshot.isHead) return fail("Эта ветка только для player_head")
-                if (!action.name.matches(Regex("^[A-Za-z0-9_]{3,16}$"))) return fail("Некорректный licensed_name (ожидается 3..16: A-Z a-z 0-9 _)")
+                if (!context.snapshot.isHead) return false
+                if (!action.name.matches(Regex("^[A-Za-z0-9_]{3,16}$"))) return false
             }
 
             is ItemAction.HeadSetFromOnline -> {
-                if (!context.snapshot.isHead) return fail("Эта ветка только для player_head")
-                if (action.name.isBlank()) return fail("Укажите ник онлайн-игрока")
+                if (!context.snapshot.isHead) return false
+                if (action.name.isBlank()) return false
             }
 
             ItemAction.TrimClear -> {
-                if (!context.snapshot.isArmor) return fail("Эта ветка только для armor items")
-                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return fail("Item meta не поддерживает ArmorMeta")
+                if (!context.snapshot.isArmor) return false
+                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return false
             }
             is ItemAction.TrimSet -> {
-                if (!context.snapshot.isArmor) return fail("Эта ветка только для armor items")
-                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return fail("Item meta не поддерживает ArmorMeta")
+                if (!context.snapshot.isArmor) return false
+                if (meta !is org.bukkit.inventory.meta.ArmorMeta) return false
             }
             ItemAction.PotClear,
             is ItemAction.PotSet,
             is ItemAction.PotSetSide -> {
-                if (context.item.type != Material.DECORATED_POT) return fail("Эта ветка только для minecraft:decorated_pot")
+                if (context.item.type != Material.DECORATED_POT) return false
                 val materials = when (action) {
                     is ItemAction.PotSet -> listOf(action.back, action.left, action.right, action.front)
                     is ItemAction.PotSetSide -> listOf(action.material)
                     else -> emptyList()
                 }
                 val unsupported = materials.firstOrNull { !TrimPotSupport.potDecorationMaterialIds.contains(it.key.asString()) }
-                if (unsupported != null) return fail("Недопустимый pot item id: ${unsupported.key.asString()}")
+                if (unsupported != null) return false
             }
             is ItemAction.FrameSetInvisibility -> {
                 if (context.item.type != Material.ITEM_FRAME && context.item.type != Material.GLOW_ITEM_FRAME) {
-                    return fail("Эта ветка только для minecraft:item_frame и minecraft:glow_item_frame")
+                    return false
                 }
             }
             is ItemAction.AttributeAdd, is ItemAction.AttributeClear, is ItemAction.AttributeRemove -> {
                 if (!context.snapshot.isArmor) {
-                    return fail("attribute modifiers в этой команде доступны только для armor items")
+                    return false
                 }
             }
             is ItemAction.EquippableSetEquipSound -> {
                 val key = action.keyOrDefault
                 if (key != null) {
-                    if (!isValidKey(key.asString())) return fail("Некорректный namespaced key для equip_sound")
+                    if (!isValidKey(key.asString())) return false
                     val namespaced = NamespacedKey.fromString(key.asString())
                     if (namespaced == null || Registry.SOUND_EVENT.get(namespaced) == null) {
-                        return fail("Неизвестный sound key для equip_sound")
+                        return false
                     }
                 }
                 if (key == null && EquippableSupport.prototypeSnapshot(context.item) == null) {
-                    return fail("Для этого material нельзя восстановить default equip sound")
+                    return false
                 }
             }
             is ItemAction.EquippableSetCameraOverlay -> {
                 val key = action.keyOrNull
-                if (key != null && !isValidKey(key.asString())) return fail("Некорректный namespaced key для camera_overlay")
+                if (key != null && !isValidKey(key.asString())) return false
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /edit equippable slot ...")
+                    return false
                 }
             }
             is ItemAction.EquippableSetAssetId -> {
                 val key = action.keyOrNull
-                if (key != null && !isValidKey(key.asString())) return fail("Некорректный namespaced key для asset_id")
+                if (key != null && !isValidKey(key.asString())) return false
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /edit equippable slot ...")
+                    return false
                 }
             }
             is ItemAction.EquippableSetDispensable,
             is ItemAction.EquippableSetSwappable,
             is ItemAction.EquippableSetDamageOnHurt -> {
                 if (!EquippableSupport.hasExistingOrPrototype(context.item)) {
-                    return fail("Сначала /edit equippable slot ...")
+                    return false
                 }
             }
             ItemAction.RemainderSetFromOffhand -> {
                 val offhand = player.inventory.itemInOffHand
                 if (offhand.type == Material.AIR || offhand.amount <= 0) {
-                    return fail("Для remainder set держите предмет во второй руке.")
+                    return false
                 }
             }
             ItemAction.LockSetFromOffhand -> {
-                if (!context.snapshot.isShulker) return fail("Эта ветка только для shulker box item")
+                if (!context.snapshot.isShulker) return false
                 val offhand = player.inventory.itemInOffHand
                 if (offhand.type == Material.AIR || offhand.amount <= 0) {
-                    return fail("Для lock set держите предмет-ключ во второй руке.")
+                    return false
                 }
-                val blockStateMeta = meta as? BlockStateMeta ?: return fail("Item meta не поддерживает block state (BlockStateMeta)")
+                val blockStateMeta = meta as? BlockStateMeta ?: return false
                 val state = blockStateMeta.blockState
-                if (state !is Lockable) return fail("Block state этого shulker не поддерживает lock API")
+                if (state !is Lockable) return false
             }
             ItemAction.LockClear -> {
-                if (!context.snapshot.isShulker) return fail("Эта ветка только для shulker box item")
-                val blockStateMeta = meta as? BlockStateMeta ?: return fail("Item meta не поддерживает block state (BlockStateMeta)")
+                if (!context.snapshot.isShulker) return false
+                val blockStateMeta = meta as? BlockStateMeta ?: return false
                 val state = blockStateMeta.blockState
-                if (state !is Lockable) return fail("Block state этого shulker не поддерживает lock API")
+                if (state !is Lockable) return false
             }
             is ItemAction.ContainerSetSlotFromOffhand -> {
                 val capacity = ContainerSupport.containerCapacity(context.item.type)
-                    ?: return fail("Этот предмет не поддерживает /edit container")
+                    ?: return false
                 if (action.index < 0 || action.index >= capacity) {
-                    return fail("Для ${context.item.type.key.asString()} доступно $capacity слотов: 0..${capacity - 1}")
+                    return false
                 }
                 if (!ContainerSupport.supportsStableContainerEditing(context.item)) {
-                    return fail("Для ${context.item.type.key.asString()} стабильный BlockState путь контейнера недоступен")
+                    return false
                 }
                 val offhand = player.inventory.itemInOffHand
                 if (ContainerSupport.isEmpty(offhand)) {
-                    return fail("Во второй руке должен быть предмет (не AIR) для установки в container slot")
+                    return false
                 }
             }
 
             else -> Unit
         }
-        return null
+        return true
     }
 }

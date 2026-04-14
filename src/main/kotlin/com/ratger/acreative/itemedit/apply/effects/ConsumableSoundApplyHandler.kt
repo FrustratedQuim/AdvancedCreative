@@ -26,7 +26,7 @@ class ConsumableSoundApplyHandler(
         val key = parser.parseSoundKey(args[0]) ?: return ApplyExecutionResult.InvalidValue
         val action = ItemAction.ConsumableSound(key)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         ConsumableComponentSupport.setSound(session.editableItem, key)

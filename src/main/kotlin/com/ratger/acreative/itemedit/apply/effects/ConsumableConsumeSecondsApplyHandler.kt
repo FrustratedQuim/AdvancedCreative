@@ -29,7 +29,7 @@ class ConsumableConsumeSecondsApplyHandler(
 
         val action = ItemAction.ConsumableConsumeSeconds(seconds)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
         ConsumableComponentSupport.setConsumeSeconds(session.editableItem, seconds)

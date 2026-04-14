@@ -28,7 +28,7 @@ class DamageApplyHandler(
 
         val action = ItemAction.SetDamage(value)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) {
+        if (!validationService.validate(action, context, player)) {
             return ApplyExecutionResult.InvalidValue
         }
 

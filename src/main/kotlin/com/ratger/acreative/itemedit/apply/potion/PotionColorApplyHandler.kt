@@ -24,7 +24,7 @@ class PotionColorApplyHandler(
 
         val action = ItemAction.PotionColor(color.asRGB())
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) return ApplyExecutionResult.InvalidValue
+        if (!validationService.validate(action, context, player)) return ApplyExecutionResult.InvalidValue
 
         PotionItemSupport.setColor(session.editableItem, color)
         return ApplyExecutionResult.Success

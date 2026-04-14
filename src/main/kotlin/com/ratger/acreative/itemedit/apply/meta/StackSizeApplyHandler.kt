@@ -29,7 +29,7 @@ class StackSizeApplyHandler(
 
         val action = ItemAction.SetMaxStackSize(stackSize)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) {
+        if (!validationService.validate(action, context, player)) {
             return ApplyExecutionResult.InvalidValue
         }
 

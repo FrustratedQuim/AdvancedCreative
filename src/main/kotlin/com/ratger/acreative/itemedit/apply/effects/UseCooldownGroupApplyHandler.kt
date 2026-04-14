@@ -38,7 +38,7 @@ class UseCooldownGroupApplyHandler(
 
         val action = ItemAction.SetUseCooldown(currentSeconds, group)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
-        if (validationService.validate(action, context, player) != null) {
+        if (!validationService.validate(action, context, player)) {
             return ApplyExecutionResult.InvalidValue
         }
 
