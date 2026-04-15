@@ -62,7 +62,7 @@ class Subsystem(
         catalogRepository = catalogRepository,
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
-    private val recentService = RecentService(recentRepository)
+    private val recentService = RecentService(recentRepository, executor)
     private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
 
     private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())

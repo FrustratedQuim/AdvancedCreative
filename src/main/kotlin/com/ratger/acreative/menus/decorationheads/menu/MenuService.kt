@@ -115,6 +115,7 @@ class MenuService(
                     }
                 }
             Bukkit.getScheduler().runTask(plugin, Runnable {
+                if (!player.isOnline) return@Runnable
                 renderer.renderRecentMenu(
                     player = player,
                     categoryName = categoryOptions[selectedCategoryIndex].displayName,
