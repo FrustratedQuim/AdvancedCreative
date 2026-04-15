@@ -1,10 +1,10 @@
 package com.ratger.acreative.menus.edit.pages.tooling
 
-import com.ratger.acreative.itemedit.usecooldown.UseCooldownSupport
+import com.ratger.acreative.menus.edit.usecooldown.UseCooldownSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.pages.common.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player

@@ -1,6 +1,6 @@
 package com.ratger.acreative.commands.edit
 
-import com.ratger.acreative.itemedit.attributes.SlotGroupSpec
+import com.ratger.acreative.menus.edit.attributes.SlotGroupSpec
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -23,7 +23,7 @@ class EditParsers {
         val key = NamespacedKey.fromString(input.lowercase()) ?: NamespacedKey.minecraft(input.lowercase())
         return Registry.MOB_EFFECT.get(key)
     }
-    fun parseAdventureKey(input: String): Key? = runCatching { Key.key(input.lowercase()) }.getOrNull()
+
     fun parseSoundNamespacedKey(input: String): NamespacedKey? {
         val normalized = input.trim().lowercase()
         if (normalized.isEmpty()) return null

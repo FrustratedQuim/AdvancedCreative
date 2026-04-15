@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.trim
 
-import com.ratger.acreative.itemedit.trim.ArmorTrimCatalog
-import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
+import com.ratger.acreative.menus.edit.trim.ArmorTrimCatalog
+import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession

@@ -2,11 +2,11 @@
 
 package com.ratger.acreative.menus.edit.pages.attributes
 
-import com.ratger.acreative.itemedit.equippable.EquippableSupport
+import com.ratger.acreative.menus.edit.equippable.EquippableSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry

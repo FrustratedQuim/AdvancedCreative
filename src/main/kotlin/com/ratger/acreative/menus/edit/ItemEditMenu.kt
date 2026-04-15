@@ -1,13 +1,13 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.core.FunctionHooker
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
-import com.ratger.acreative.itemedit.container.LockItemSupport
-import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
-import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
-import com.ratger.acreative.itemedit.text.ItemTextStyleService
-import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.container.LockItemSupport
+import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
+import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.text.ItemTextStyleService
+import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.pages.pot.DecoratedPotPartDescriptor
 import org.bukkit.Material

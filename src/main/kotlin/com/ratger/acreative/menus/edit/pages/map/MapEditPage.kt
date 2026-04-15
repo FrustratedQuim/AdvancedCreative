@@ -1,11 +1,11 @@
 package com.ratger.acreative.menus.edit.pages.map
 
-import com.ratger.acreative.itemedit.color.ColorInputSupport
-import com.ratger.acreative.itemedit.map.MapItemSupport
+import com.ratger.acreative.menus.edit.color.ColorInputSupport
+import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.pages.common.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player

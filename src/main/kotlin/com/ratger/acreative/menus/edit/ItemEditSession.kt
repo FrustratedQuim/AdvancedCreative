@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.edit
 
-import com.ratger.acreative.itemedit.head.HeadTextureSource
-import com.ratger.acreative.itemedit.text.TextStylePalette
+import com.ratger.acreative.menus.edit.head.HeadTextureSource
+import com.ratger.acreative.menus.edit.text.TextStylePalette
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
 

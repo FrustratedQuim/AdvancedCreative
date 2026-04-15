@@ -1,15 +1,15 @@
 package com.ratger.acreative.menus
 
 import com.google.common.collect.LinkedHashMultimap
-import com.ratger.acreative.itemedit.container.LockItemSupport
-import com.ratger.acreative.itemedit.experimental.ComponentsService
+import com.ratger.acreative.menus.edit.container.LockItemSupport
+import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.decorationheads.model.Entry
-import com.ratger.acreative.itemedit.head.PlayerProfileCopyHelper
-import com.ratger.acreative.itemedit.invisibility.FrameInvisibilitySupport
-import com.ratger.acreative.itemedit.meta.MetaActionsApplier
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
-import com.ratger.acreative.itemedit.potion.PotionItemSupport
-import com.ratger.acreative.itemedit.trim.ArmorTrimSupport
+import com.ratger.acreative.menus.edit.head.PlayerProfileCopyHelper
+import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
+import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.potion.PotionItemSupport
+import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.core.TickScheduler
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material

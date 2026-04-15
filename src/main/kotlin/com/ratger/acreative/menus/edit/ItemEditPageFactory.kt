@@ -1,9 +1,9 @@
 package com.ratger.acreative.menus.edit
 
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
-import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
-import com.ratger.acreative.itemedit.head.HeadTextureValueBookSupport
-import com.ratger.acreative.itemedit.text.ItemTextStyleService
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
+import com.ratger.acreative.menus.edit.head.HeadTextureValueBookSupport
+import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.pages.advanced.AdvancedEditDetailsPage
 import com.ratger.acreative.menus.edit.pages.advanced.AdvancedEditMainPage

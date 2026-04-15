@@ -1,11 +1,11 @@
 package com.ratger.acreative.menus.edit.pages.effects
 
-import com.ratger.acreative.itemedit.effects.DeathProtectionMenuSupport
-import com.ratger.acreative.itemedit.potion.PotionItemSupport
+import com.ratger.acreative.menus.edit.effects.DeathProtectionMenuSupport
+import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player

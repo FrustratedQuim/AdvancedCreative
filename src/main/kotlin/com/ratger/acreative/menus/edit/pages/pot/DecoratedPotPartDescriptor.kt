@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.pot
 
-import com.ratger.acreative.itemedit.trim.DecoratedPotSide
+import com.ratger.acreative.menus.edit.trim.DecoratedPotSide
 
 enum class DecoratedPotPartDescriptor(
     val rootSlot: Int,

@@ -1,11 +1,11 @@
 package com.ratger.acreative.menus.edit.pages.appearance
 
-import com.ratger.acreative.itemedit.text.ItemTextStyleService
-import com.ratger.acreative.itemedit.text.TextStylePalette
+import com.ratger.acreative.menus.edit.text.ItemTextStyleService
+import com.ratger.acreative.menus.edit.text.TextStylePalette
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.Menu

@@ -1,7 +1,7 @@
 package com.ratger.acreative.commands.edit
 
-import com.ratger.acreative.itemedit.api.ItemContext
-import com.ratger.acreative.itemedit.api.ItemSnapshot
+import com.ratger.acreative.menus.edit.api.ItemContext
+import com.ratger.acreative.menus.edit.api.ItemSnapshot
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.entity.Player

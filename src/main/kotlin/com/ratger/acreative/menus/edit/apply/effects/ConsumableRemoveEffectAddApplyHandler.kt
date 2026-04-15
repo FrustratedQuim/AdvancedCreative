@@ -1,0 +1,31 @@
+package com.ratger.acreative.menus.edit.apply.effects
+
+import com.ratger.acreative.commands.edit.EditParsers
+import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.effects.ConsumableComponentSupport
+import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
+import com.ratger.acreative.menus.edit.potion.PotionItemSupport
+import com.ratger.acreative.menus.edit.ItemEditSession
+import org.bukkit.entity.Player
+
+class ConsumableRemoveEffectAddApplyHandler(
+    private val parser: EditParsers
+) : EditorApplyHandler {
+    override val kind: EditorApplyKind = EditorApplyKind.CONSUMABLE_REMOVE_EFFECT_ADD
+
+    override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
+        if (args.size != 1) return ApplyExecutionResult.InvalidValue
+        val effectType = parser.effectFromToken(args[0]) ?: return ApplyExecutionResult.UnknownValue
+
+        EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
+        ConsumableComponentSupport.addRemovedEffect(session.editableItem, effectType)
+        return ApplyExecutionResult.Success
+    }
+
+    override fun suggestions(args: Array<out String>): List<String> {
+        if (args.size != 1) return emptyList()
+        return PotionItemSupport.effectSuggestions(args[0])
+    }
+}

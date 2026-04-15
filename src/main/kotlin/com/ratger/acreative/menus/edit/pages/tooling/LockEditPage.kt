@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.tooling
 
-import com.ratger.acreative.itemedit.container.LockItemSupport
+import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession

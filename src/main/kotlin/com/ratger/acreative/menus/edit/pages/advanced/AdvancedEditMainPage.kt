@@ -1,9 +1,9 @@
 package com.ratger.acreative.menus.edit.pages.advanced
 
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
-import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
-import com.ratger.acreative.itemedit.meta.MetaActionsApplier
-import com.ratger.acreative.itemedit.meta.MaxStackSizeSupport
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
+import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
+import com.ratger.acreative.menus.edit.meta.MaxStackSizeSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.MenuButtonFactory

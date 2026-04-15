@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.core.FunctionHooker
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows

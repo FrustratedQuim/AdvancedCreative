@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
-import com.ratger.acreative.itemedit.head.HeadTextureMutationSupport
+import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType

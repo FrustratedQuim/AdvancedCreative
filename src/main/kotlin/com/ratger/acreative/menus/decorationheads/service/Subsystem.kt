@@ -13,7 +13,7 @@ import com.ratger.acreative.menus.decorationheads.menu.SessionManager
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
 import com.ratger.acreative.menus.decorationheads.persistence.Database
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors

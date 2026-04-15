@@ -1,12 +1,12 @@
 package com.ratger.acreative.menus.edit.pages.attributes
 
 import com.google.common.collect.LinkedHashMultimap
-import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
-import com.ratger.acreative.itemedit.attributes.SlotGroupAdapter
+import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
+import com.ratger.acreative.menus.edit.attributes.SlotGroupAdapter
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute

@@ -6,7 +6,7 @@ import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.menus.decorationheads.model.PageResult
-import com.ratger.acreative.itemedit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent

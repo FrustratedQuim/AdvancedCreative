@@ -148,7 +148,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
         menuService = MenuService(this)
-        subsystem = Subsystem(this, com.ratger.acreative.itemedit.meta.MiniMessageParser(), menuService.buttonFactory())
+        subsystem = Subsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
         subsystem.init()
 
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }

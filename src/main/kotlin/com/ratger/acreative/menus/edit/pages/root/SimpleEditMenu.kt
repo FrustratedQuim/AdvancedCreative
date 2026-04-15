@@ -3,9 +3,9 @@ package com.ratger.acreative.menus.edit.pages.root
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.itemedit.effects.EdibleMenuSupport
-import com.ratger.acreative.itemedit.effects.FoodComponentSupport
-import com.ratger.acreative.itemedit.equippable.EquippableSupport
+import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
+import com.ratger.acreative.menus.edit.effects.FoodComponentSupport
+import com.ratger.acreative.menus.edit.equippable.EquippableSupport
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player

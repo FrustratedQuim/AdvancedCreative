@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.advanced
 
-import com.ratger.acreative.itemedit.attributes.ItemAttributeMenuSupport
-import com.ratger.acreative.itemedit.attributes.SlotGroupAdapter
+import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
+import com.ratger.acreative.menus.edit.attributes.SlotGroupAdapter
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession

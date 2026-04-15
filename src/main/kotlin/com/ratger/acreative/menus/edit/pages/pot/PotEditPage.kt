@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.pot
 
-import com.ratger.acreative.itemedit.trim.TrimPotSupport
+import com.ratger.acreative.menus.edit.trim.TrimPotSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession

@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.restrictions
 
-import com.ratger.acreative.itemedit.restrictions.ItemRestrictionSupport
-import com.ratger.acreative.itemedit.restrictions.RestrictionMode
+import com.ratger.acreative.menus.edit.restrictions.ItemRestrictionSupport
+import com.ratger.acreative.menus.edit.restrictions.RestrictionMode
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
