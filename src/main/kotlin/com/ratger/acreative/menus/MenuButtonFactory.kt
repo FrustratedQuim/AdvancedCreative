@@ -180,7 +180,6 @@ class MenuButtonFactory(
             if (showCategoryLine) {
                 add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
             }
-            add("<!i><#FFD700>▍ <#FFE68A>ID: <#FFF3E0>${entry.apiId ?: entry.stableKey}")
         },
         action = { action(it) }
     ).let {
@@ -191,7 +190,6 @@ class MenuButtonFactory(
                     if (showCategoryLine) {
                         add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
                     }
-                    add("<!i><#FFD700>▍ <#FFE68A>ID: <#FFF3E0>${entry.apiId ?: entry.stableKey}")
                 }.map(parser::parse)
             )
             .build()

@@ -68,8 +68,9 @@ class MenuService(
                     myCount = myCount,
                     categoryOptions = categoryOptions.map { it.displayName },
                     selectedCategoryIndex = selectedCategoryIndex,
-                    onGive = { entry, event ->
-                        giveService.give(player, entry, event, trackRecent = true)
+                    categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
+                    onGive = { entry, categoryName, event ->
+                        giveService.give(player, entry, categoryName, event, trackRecent = true)
                     },
                     onBack = {
                         sessionManager.update(player.uniqueId, state.copy(page = (state.page - 1).coerceAtLeast(1)))
@@ -121,8 +122,8 @@ class MenuService(
                     selectedCategoryIndex = selectedCategoryIndex,
                     entries = entries,
                     categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
-                    onGive = { entry, event ->
-                        giveService.give(player, entry, event, trackRecent = false)
+                    onGive = { entry, categoryName, event ->
+                        giveService.give(player, entry, categoryName, event, trackRecent = false)
                     },
                     onSwitchCategory = { nextIndex ->
                         val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: ALL_RECENT_CATEGORY_KEY

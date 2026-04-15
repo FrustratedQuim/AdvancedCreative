@@ -63,7 +63,7 @@ class Subsystem(
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
     private val recentService = RecentService(recentRepository)
-    private val giveService = GiveService(hooker.menuService.headMutationSupport(), recentService)
+    private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
 
     private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())
     private val renderer = MenuRenderer(hooker.plugin, parser, buttonFactory, categoryRegistry)

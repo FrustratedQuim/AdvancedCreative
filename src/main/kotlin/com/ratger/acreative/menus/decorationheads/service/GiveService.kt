@@ -2,23 +2,35 @@ package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
+import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.PlayerInventory
+import org.bukkit.inventory.meta.SkullMeta
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class GiveService(
     private val headTextureMutationSupport: HeadTextureMutationSupport,
+    private val parser: MiniMessageParser,
     private val recentService: RecentService
 ) {
-    fun give(player: Player, entry: Entry, clickEvent: ClickEvent, trackRecent: Boolean) {
+    fun give(player: Player, entry: Entry, categoryName: String, clickEvent: ClickEvent, trackRecent: Boolean) {
         clickEvent.handle.isCancelled = true
 
         val item = ItemStack(Material.PLAYER_HEAD)
         val result = headTextureMutationSupport.applyFromTextureValue(item, entry.textureValue)
         if (result !is HeadTextureMutationSupport.MutationResult.Success) return
+        (item.itemMeta as? SkullMeta)?.let { skull ->
+            skull.displayName(parser.parse("<!i><#FFD700>${entry.name}"))
+            skull.lore(
+                listOf(
+                    parser.parse("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
+                )
+            )
+            item.itemMeta = skull
+        }
 
         val isShiftClick = clickEvent.isShiftLeft ||
             clickEvent.isShiftRight ||

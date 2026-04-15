@@ -26,7 +26,8 @@ class MenuRenderer(
         myCount: Int,
         categoryOptions: List<String>,
         selectedCategoryIndex: Int,
-        onGive: (Entry, ClickEvent) -> Unit,
+        categoryNameResolver: (Int) -> String,
+        onGive: (Entry, String, ClickEvent) -> Unit,
         onBack: () -> Unit,
         onForward: () -> Unit,
         onMyHeads: () -> Unit,
@@ -36,7 +37,7 @@ class MenuRenderer(
         val categoryName = categoryRegistry.byKey(state.categoryKey)?.displayName ?: state.categoryKey
         val menu = baseMenu("▍ Головы → $categoryName [${pageResult.page}/${pageResult.totalPages}]", setOf(0, 53, 46, 48, 49, 50, 52) + (0..44).toSet())
 
-        fillBase(menu, black = setOf(45, 53), gray = setOf(47, 51))
+        fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 48, 50, 51))
         if (pageResult.page > 1) menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         if (pageResult.page < pageResult.totalPages) menu.setButton(50, buttonFactory.decorationHeadsForwardButton { onForward() })
 
@@ -44,9 +45,11 @@ class MenuRenderer(
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch() })
 
+        val showRealCategory = state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == CategoryMode.NEW
         pageResult.entries.forEachIndexed { index, entry ->
-            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == CategoryMode.NEW) {
-                onGive(entry, it)
+            val entryCategoryName = if (showRealCategory) categoryNameResolver(entry.categoryId) else categoryName
+            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, entryCategoryName, showRealCategory) {
+                onGive(entry, entryCategoryName, it)
             })
         }
 
@@ -60,17 +63,17 @@ class MenuRenderer(
         selectedCategoryIndex: Int,
         entries: List<Entry>,
         categoryNameResolver: (Int) -> String,
-        onGive: (Entry, ClickEvent) -> Unit,
+        onGive: (Entry, String, ClickEvent) -> Unit,
         onSwitchCategory: (Int) -> Unit,
         onBack: () -> Unit
     ) {
         val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(48, 49) + (0..44).toSet())
-        fillBase(menu, black = setOf(45, 53), gray = setOf(47, 50, 51, 52))
+        fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 50, 51, 52))
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         entries.take(45).forEachIndexed { index, entry ->
             val categoryName = categoryNameResolver(entry.categoryId)
-            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, true) { onGive(entry, it) })
+            menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, true) { onGive(entry, categoryName, it) })
         }
         menu.open(player)
     }
@@ -87,15 +90,7 @@ class MenuRenderer(
     private fun fillBase(menu: Menu, black: Set<Int>, gray: Set<Int>) {
         val blackButton = buttonFactory.decorationHeadsBlackFiller()
         val grayButton = buttonFactory.decorationHeadsGrayFiller()
-        for (slot in 0..53) {
-            menu.setButton(
-                slot,
-                when {
-                    slot in black -> blackButton
-                    slot in gray -> grayButton
-                    else -> grayButton
-                }
-            )
-        }
+        black.forEach { slot -> menu.setButton(slot, blackButton) }
+        gray.forEach { slot -> menu.setButton(slot, grayButton) }
     }
 }
