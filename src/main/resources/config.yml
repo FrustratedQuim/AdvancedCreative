@@ -113,6 +113,7 @@ decoration-heads:
       display: "Разное"
       mode: CATEGORY_GROUP
       apiNames: ["Miscellaneous"]
+
 blocked-disguises:
   - ARROW
   - BLOCK_DISPLAY
