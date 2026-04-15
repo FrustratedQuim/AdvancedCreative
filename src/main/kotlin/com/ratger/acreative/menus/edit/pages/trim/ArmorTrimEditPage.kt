@@ -41,7 +41,10 @@ class ArmorTrimEditPage(
             }
         })
 
-        menu.setButton(32, buildMaterialButton(materialName) {
+        val materialIcon = currentMaterial
+            ?.let { ArmorTrimCatalog.materialByKey[it]?.icon }
+            ?: Material.STRUCTURE_VOID
+        menu.setButton(32, buildMaterialButton(materialName, materialIcon) {
             support.transition(session) {
                 openMaterialSelect(player, session)
             }
@@ -73,9 +76,9 @@ class ArmorTrimEditPage(
             action = action
         )
 
-    private fun buildMaterialButton(materialDisplayName: String?, action: (ClickEvent) -> Unit) =
+    private fun buildMaterialButton(materialDisplayName: String?, icon: Material, action: (ClickEvent) -> Unit) =
         buttonFactory.actionButton(
-            material = Material.STRUCTURE_VOID,
+            material = icon,
             name = materialDisplayName?.let {
                 "<!i><#C7A300>◎ <#FFD700>Материал: <#FFF3E0>$it"
             } ?: "<!i><#C7A300>⭘ <#FFD700>Материал: <#FF1500>Нет",

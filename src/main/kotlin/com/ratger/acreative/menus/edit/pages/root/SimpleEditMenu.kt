@@ -68,11 +68,29 @@ class SimpleEditMenu(
         },
         action = { event ->
             if (session.simpleThrowableApplied) return@actionButton
+            val previousMeta = session.editableItem.itemMeta
             val previousType = session.editableItem.type
+            val previousAmount = session.editableItem.amount
+            val previousDefaultMaxStack = previousType.maxStackSize
+            val previousCustomMaxStack = if (previousMeta != null && previousMeta.hasMaxStackSize()) {
+                previousMeta.maxStackSize
+            } else {
+                null
+            }
+            val previousTargetMaxStack = previousCustomMaxStack ?: previousDefaultMaxStack
             val converted = session.editableItem.withType(Material.SNOWBALL)
             val convertedMeta = converted.itemMeta ?: return@actionButton
             convertedMeta.itemModel = NamespacedKey.minecraft(previousType.key.key)
+            if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
+                convertedMeta.setMaxStackSize(previousTargetMaxStack)
+            }
             converted.itemMeta = convertedMeta
+            val targetMaxStack = if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
+                previousTargetMaxStack
+            } else {
+                Material.SNOWBALL.maxStackSize
+            }
+            converted.amount = previousAmount.coerceIn(1, targetMaxStack)
             session.editableItem = converted
             session.simpleThrowableApplied = true
             refreshButtons(event.menu, player, session)

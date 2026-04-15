@@ -30,6 +30,7 @@ class ItemEditMenu(
 
     private val support = ItemEditMenuSupport(hooker, sessionManager, buttonFactory, parser)
     private val lastCategoryByPlayer = mutableMapOf<java.util.UUID, LastEditorCategory>()
+    private val lastAdvancedPageByPlayer = mutableMapOf<java.util.UUID, Int>()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }
     private val openSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSimple(player, session) }
@@ -116,6 +117,7 @@ class ItemEditMenu(
     fun openAdvancedPageOne(player: Player, session: ItemEditSession) {
         openPageSafely(player) {
             rememberCategory(player, LastEditorCategory.ADVANCED)
+            rememberAdvancedPage(player, 1)
             pages.advancedMain.open(player, session)
         }
     }
@@ -123,6 +125,7 @@ class ItemEditMenu(
     fun openAdvancedPageTwo(player: Player, session: ItemEditSession) {
         openPageSafely(player) {
             rememberCategory(player, LastEditorCategory.ADVANCED)
+            rememberAdvancedPage(player, 2)
             pages.advancedDetails.open(player, session)
         }
     }
@@ -131,7 +134,12 @@ class ItemEditMenu(
         when (lastCategoryByPlayer[player.uniqueId] ?: LastEditorCategory.ROOT) {
             LastEditorCategory.ROOT -> openRoot(player, session)
             LastEditorCategory.SIMPLE -> openSimple(player, session)
-            LastEditorCategory.ADVANCED -> openAdvancedPageOne(player, session)
+            LastEditorCategory.ADVANCED -> {
+                when (lastAdvancedPageByPlayer[player.uniqueId] ?: 1) {
+                    2 -> openAdvancedPageTwo(player, session)
+                    else -> openAdvancedPageOne(player, session)
+                }
+            }
         }
     }
 
@@ -313,6 +321,10 @@ class ItemEditMenu(
 
     private fun rememberCategory(player: Player, category: LastEditorCategory) {
         lastCategoryByPlayer[player.uniqueId] = category
+    }
+
+    private fun rememberAdvancedPage(player: Player, page: Int) {
+        lastAdvancedPageByPlayer[player.uniqueId] = page
     }
 
     private fun openPageSafely(player: Player, openAction: () -> Unit) {

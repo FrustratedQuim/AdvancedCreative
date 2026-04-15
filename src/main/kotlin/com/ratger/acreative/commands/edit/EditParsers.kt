@@ -29,7 +29,11 @@ class EditParsers {
         if (normalized.isEmpty()) return null
         return NamespacedKey.fromString(normalized) ?: NamespacedKey.fromString("minecraft:$normalized")
     }
-    fun parseSoundKey(input: String): Key? = parseSoundNamespacedKey(input)?.let { Key.key(it.asString()) }
+    fun parseSoundKey(input: String): Key? {
+        val namespacedKey = parseSoundNamespacedKey(input) ?: return null
+        if (Registry.SOUNDS.get(namespacedKey) == null) return null
+        return Key.key(namespacedKey.asString())
+    }
     fun parseBooleanStrict(input: String?): Boolean? = input?.lowercase()?.let {
         when (it) {
             "true" -> true
