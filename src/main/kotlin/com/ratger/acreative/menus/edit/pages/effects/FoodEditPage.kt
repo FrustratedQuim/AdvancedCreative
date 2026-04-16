@@ -113,6 +113,10 @@ class FoodEditPage(
             enabledName = "<!i><#C7A300>◎ <#FFD700>Можно съесть всегда: <#00FF40>Вкл",
             disabledName = "<!i><#C7A300>⭘ <#FFD700>Можно съесть всегда: <#FF1500>Выкл",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            itemModifier = {
+                buttonFactory.zeroFoodPreview().invoke(this)
+                this
+            },
             action = { event ->
                 val next = !FoodComponentSupport.canAlwaysEat(session.editableItem)
                 if (next && !EdibleMenuSupport.isEnabled(session.editableItem)) {
@@ -131,6 +135,10 @@ class FoodEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Сытость: <#FF1500>Обычная",
             activeLore = VALUE_LORE,
             inactiveLore = VALUE_LORE,
+            itemModifier = {
+                buttonFactory.zeroFoodPreview().invoke(this)
+                this
+            },
             onApply = {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.FOOD_NUTRITION) { reopenPlayer, reopenSession ->
@@ -152,6 +160,10 @@ class FoodEditPage(
             inactiveName = "<!i><#C7A300>⭘ <#FFD700>Насыщение: <#FF1500>Обычное",
             activeLore = VALUE_LORE,
             inactiveLore = VALUE_LORE,
+            itemModifier = {
+                buttonFactory.zeroFoodPreview().invoke(this)
+                this
+            },
             onApply = {
                 support.transition(session) {
                     requestApplyInput(player, session, EditorApplyKind.FOOD_SATURATION) { reopenPlayer, reopenSession ->
@@ -172,6 +184,10 @@ class FoodEditPage(
             enabledName = "<!i><#C7A300>◎ <#FFD700>Партиклы еды: <#00FF40>Вкл",
             disabledName = "<!i><#C7A300>⭘ <#FFD700>Партиклы еды: <#FF1500>Выкл",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+            itemModifier = {
+                buttonFactory.zeroFoodPreview().invoke(this)
+                this
+            },
             action = { event ->
                 val next = !ConsumableComponentSupport.hasParticles(session.editableItem)
                 if (next && !EdibleMenuSupport.isEnabled(session.editableItem)) {
