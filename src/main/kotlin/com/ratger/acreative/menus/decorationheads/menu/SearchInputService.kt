@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.decorationheads.menu
 
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.input.Input
+import ru.violence.coreapi.bukkit.api.input.InputRegisterResult
 
 class SearchInputService(
     private val plugin: org.bukkit.plugin.Plugin,
@@ -11,7 +12,7 @@ class SearchInputService(
     fun open(player: Player) {
         val templateLines = arrayOf("", "↑ Что ищем? ↑", "Укажите на", "английском.")
 
-        Input.sign().builder(plugin, player)
+        val registerResult = Input.sign().builder(plugin, player)
             .lines(templateLines)
             .onInput { p, lines ->
                 val firstLine = lines.firstOrNull()?.trim().orEmpty()
@@ -28,6 +29,10 @@ class SearchInputService(
             }
             .onLeave(onLeave)
             .async(true)
-            .register()
+            .register(true)
+
+        if (registerResult != InputRegisterResult.SUCCESS) {
+            onLeave(player)
+        }
     }
 }

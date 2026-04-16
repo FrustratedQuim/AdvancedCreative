@@ -80,7 +80,6 @@ class MenuRenderer(
 
     private fun baseMenu(title: String, interactiveTopSlots: Set<Int>): Menu = Menu.newBuilder(plugin)
         .title(parser.parse(title))
-        .size(54)
         .rows(MenuRows.SIX)
         .postClickRefresh(false)
         .clickListener { event -> event.rawSlot !in 0..53 || event.rawSlot in interactiveTopSlots }

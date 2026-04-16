@@ -28,7 +28,6 @@ class ItemEditMenuSupport(
         allowPlayerInventoryClicks: Boolean = false
     ): Menu = Menu.newBuilder(hooker.plugin)
         .title(parser.parse(title))
-        .size(menuSize)
         .rows(rows)
         .postClickRefresh(false)
         .clickListener(editorClickListener(menuSize, interactiveTopSlots, allowPlayerInventoryClicks))
