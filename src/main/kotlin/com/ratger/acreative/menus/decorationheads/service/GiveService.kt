@@ -43,17 +43,23 @@ class GiveService(
             clickEvent.isShiftRight ||
             clickEvent.handle.isShiftClick ||
             (player.isSneaking && (clickEvent.isLeft || clickEvent.isRight))
-        val amount = if (clickEvent.isMiddle || clickEvent.type == ClickType.CONTROL_DROP) 64 else 1
-        item.amount = amount
+        val giveAmount = if (clickEvent.isMiddle || clickEvent.type == ClickType.CONTROL_DROP) 64 else 1
+        item.amount = giveAmount
 
         when {
             isDropClick(clickEvent) -> dropItem(player, item)
             isShiftClick -> {
-                val targetSlot = findPreferredShiftTargetSlot(player.inventory)
-                if (targetSlot != null) {
-                    player.inventory.setItem(targetSlot, item)
-                } else {
-                    dropItem(player, item)
+                val remainingAmount = tryAddToExistingStacks(player.inventory, item)
+                if (remainingAmount > 0) {
+                    val remainingItem = item.clone().also { clonedItem ->
+                        clonedItem.amount = remainingAmount
+                    }
+                    val targetSlot = findPreferredShiftTargetSlot(player.inventory)
+                    if (targetSlot != null) {
+                        player.inventory.setItem(targetSlot, remainingItem)
+                    } else {
+                        dropItem(player, remainingItem)
+                    }
                 }
             }
             else -> player.setItemOnCursor(item)
@@ -62,6 +68,42 @@ class GiveService(
         if (trackRecent) {
             recentService.push(player.uniqueId, entry, onRecentCountUpdated)
         }
+    }
+
+
+    private fun tryAddToExistingStacks(inventory: PlayerInventory, item: ItemStack): Int {
+        var remaining = item.amount
+        for (slot in 8 downTo 0) {
+            remaining = tryAddToStackAtSlot(inventory, item, slot, remaining)
+            if (remaining <= 0) return 0
+        }
+        for (slot in 35 downTo 9) {
+            remaining = tryAddToStackAtSlot(inventory, item, slot, remaining)
+            if (remaining <= 0) return 0
+        }
+        return remaining
+    }
+
+    private fun tryAddToStackAtSlot(
+        inventory: PlayerInventory,
+        item: ItemStack,
+        slot: Int,
+        remaining: Int
+    ): Int {
+        var newRemaining = remaining
+
+        val stack = inventory.getItem(slot) ?: return newRemaining
+        if (!stack.isSimilar(item)) return newRemaining
+
+        val maxForStack = stack.maxStackSize.coerceAtLeast(1)
+        if (stack.amount >= maxForStack) return newRemaining
+
+        val canAdd = (maxForStack - stack.amount).coerceAtMost(newRemaining)
+        stack.amount += canAdd
+        inventory.setItem(slot, stack)
+        newRemaining -= canAdd
+
+        return newRemaining
     }
 
     private fun findPreferredShiftTargetSlot(inventory: PlayerInventory): Int? {
