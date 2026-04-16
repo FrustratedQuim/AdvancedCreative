@@ -29,6 +29,12 @@ class Database(dataFolder: File) {
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_category_id ON decoration_head_catalog(category_id)")
                 st.executeUpdate(
                     """
+                    CREATE INDEX IF NOT EXISTS idx_catalog_recent_order
+                    ON decoration_head_catalog(published_at DESC, api_id DESC, head_name COLLATE NOCASE)
+                    """.trimIndent()
+                )
+                st.executeUpdate(
+                    """
                     CREATE TABLE IF NOT EXISTS decoration_head_recent (
                         player_uuid TEXT NOT NULL,
                         position INTEGER NOT NULL,
@@ -43,6 +49,15 @@ class Database(dataFolder: File) {
                     """.trimIndent()
                 )
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_recent_player_pos ON decoration_head_recent(player_uuid, position)")
+                st.executeUpdate(
+                    """
+                    CREATE TABLE IF NOT EXISTS decoration_head_sync_state (
+                        state_key TEXT PRIMARY KEY,
+                        state_value TEXT NOT NULL,
+                        updated_at INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                )
             }
         }
     }

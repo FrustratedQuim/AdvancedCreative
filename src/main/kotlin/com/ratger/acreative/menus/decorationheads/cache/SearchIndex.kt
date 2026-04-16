@@ -1,9 +1,17 @@
 package com.ratger.acreative.menus.decorationheads.cache
 
-class SearchIndex(limit: Int) {
-    private val cache = LruCache<String, List<String>>(limit)
+import com.ratger.acreative.menus.decorationheads.model.Entry
 
-    fun put(query: String, stableKeys: List<String>) = cache.put(query, stableKeys)
-    fun get(query: String): List<String>? = cache.get(query)
+class SearchIndex(limit: Int) {
+    private val cache = LruCache<String, List<Entry>>(limit)
+
+    fun put(query: String, page: Int, pageSize: Int, entries: List<Entry>) =
+        cache.put(key(query, page, pageSize), entries)
+
+    fun get(query: String, page: Int, pageSize: Int): List<Entry>? =
+        cache.get(key(query, page, pageSize))
+
     fun clear() = cache.clear()
+
+    private fun key(query: String, page: Int, pageSize: Int): String = "$query:$page:$pageSize"
 }

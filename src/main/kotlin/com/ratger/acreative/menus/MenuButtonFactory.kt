@@ -158,7 +158,7 @@ class MenuButtonFactory(
         name = if (query.isNullOrBlank()) {
             "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
         } else {
-            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>$query<#C7A300>]"
+            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>${sanitizeMiniMessageText(query)}<#C7A300>]"
         },
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы указать"),
         itemModifier = {
@@ -175,20 +175,20 @@ class MenuButtonFactory(
         action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = Material.PLAYER_HEAD,
-        name = "<!i><#FFD700>${entry.name}",
+        name = "<!i><#FFD700>${sanitizeMiniMessageText(entry.name)}",
         lore = buildList {
             if (showCategoryLine) {
-                add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
+                add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${sanitizeMiniMessageText(categoryName)}")
             }
         },
         action = { action(it) }
     ).let {
         val item = ItemBuilder(Material.PLAYER_HEAD)
-            .name(parser.parse("<!i><#FFD700>${entry.name}"))
+            .name(parser.parse("<!i><#FFD700>${sanitizeMiniMessageText(entry.name)}"))
             .lore(
                 buildList {
                     if (showCategoryLine) {
-                        add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>$categoryName")
+                        add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${sanitizeMiniMessageText(categoryName)}")
                     }
                 }.map(parser::parse)
             )
@@ -204,6 +204,13 @@ class MenuButtonFactory(
 
     fun decorationHeadsGrayFiller(): Button = grayFillerButton()
     fun decorationHeadsBlackFiller(): Button = blackFillerButton()
+
+
+    private fun sanitizeMiniMessageText(input: String): String =
+        input
+            .replace("§", "§\u200B")
+                        .replace("<", "\\<")
+                        .replace(">", "\\>")
 
     fun actionButton(
         material: Material,

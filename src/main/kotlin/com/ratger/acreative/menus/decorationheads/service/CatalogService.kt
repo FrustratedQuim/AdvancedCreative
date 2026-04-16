@@ -4,8 +4,8 @@ import com.ratger.acreative.menus.decorationheads.cache.Cache
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
-import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.menus.decorationheads.model.PageResult
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
@@ -18,40 +18,68 @@ class CatalogService(
     private val menuPageSize: Int
 ) {
     fun page(state: DecorationHeadMenuState): PageResult {
-        val all = when (state.mode) {
-            DecorationHeadMenuMode.CATEGORY -> loadCategoryEntries(state.categoryKey)
-            DecorationHeadMenuMode.SEARCH -> loadSearchEntries(state.searchQuery.orEmpty())
-            DecorationHeadMenuMode.RECENT -> emptyList()
+        if (state.mode == DecorationHeadMenuMode.RECENT) {
+            return PageResult(entries = emptyList(), page = 1, totalPages = 1, totalItems = 0)
         }
-        val totalItems = all.size
+
+        val initialPage = state.page.coerceAtLeast(1)
+        val totalItems = count(state)
         val totalPages = if (totalItems == 0) 1 else ((totalItems + menuPageSize - 1) / menuPageSize)
-        val page = state.page.coerceIn(1, totalPages)
-        val from = (page - 1) * menuPageSize
-        val slice = all.drop(from).take(menuPageSize)
-        return PageResult(slice, page, totalPages, totalItems)
+        val page = initialPage.coerceIn(1, totalPages)
+        val offset = (page - 1) * menuPageSize
+        val entries = findPage(state, page, offset)
+
+        return PageResult(entries = entries, page = page, totalPages = totalPages, totalItems = totalItems)
     }
 
-    private fun loadCategoryEntries(categoryKey: String): List<Entry> {
-        val definition = categoryRegistry.byKey(categoryKey) ?: return emptyList()
+    private fun count(state: DecorationHeadMenuState): Int = when (state.mode) {
+        DecorationHeadMenuMode.CATEGORY -> countCategory(state.categoryKey)
+        DecorationHeadMenuMode.SEARCH -> countSearch(state.searchQuery.orEmpty())
+        DecorationHeadMenuMode.RECENT -> 0
+    }
+
+    private fun findPage(state: DecorationHeadMenuState, page: Int, offset: Int) = when (state.mode) {
+        DecorationHeadMenuMode.CATEGORY -> findCategoryPage(state.categoryKey, offset)
+        DecorationHeadMenuMode.SEARCH -> findSearchPage(state.searchQuery.orEmpty(), page, offset)
+        DecorationHeadMenuMode.RECENT -> emptyList()
+    }
+
+    private fun countCategory(categoryKey: String): Int {
+        val definition = categoryRegistry.byKey(categoryKey) ?: return 0
         return if (definition.mode == CategoryMode.NEW) {
-            catalogRepository.findRecentPublished(10_000)
+            catalogRepository.countRecentPublished()
         } else {
-            catalogRepository.findByCategoryIds(categoryResolver.resolveUiCategoryToApiIds(categoryKey))
-                .sortedBy { it.name.lowercase() }
+            catalogRepository.countByCategoryIds(categoryResolver.resolveUiCategoryToApiIds(categoryKey))
         }
     }
 
-    private fun loadSearchEntries(rawQuery: String): List<Entry> {
-        val normalized = rawQuery.trim().lowercase()
-        if (normalized.isBlank()) return emptyList()
-        val cachedKeys = cache.searchIndex.get(normalized)
-        if (cachedKeys != null) {
-            return cachedKeys.mapNotNull { cache.get(it) }
+    private fun findCategoryPage(categoryKey: String, offset: Int) =
+        when (categoryRegistry.byKey(categoryKey)?.mode) {
+            CategoryMode.NEW -> catalogRepository.findRecentPublishedPage(menuPageSize, offset)
+            CategoryMode.CATEGORY_GROUP -> {
+                val ids = categoryResolver.resolveUiCategoryToApiIds(categoryKey)
+                catalogRepository.findPageByCategoryIds(ids, menuPageSize, offset)
+            }
+            null -> emptyList()
         }
 
-        val persisted = catalogRepository.findBySearch(normalized, 10_000)
-        cache.putAll(persisted)
-        cache.searchIndex.put(normalized, persisted.map { it.stableKey })
-        return persisted
+    private fun countSearch(rawQuery: String): Int {
+        val normalized = normalizeQuery(rawQuery) ?: return 0
+        return catalogRepository.countBySearch(normalized)
     }
+
+    private fun findSearchPage(rawQuery: String, page: Int, offset: Int): List<Entry> {
+        val normalized = normalizeQuery(rawQuery) ?: return emptyList()
+        cache.searchIndex.get(normalized, page, menuPageSize)?.let { cached ->
+            cache.putAll(cached)
+            return cached
+        }
+
+        val entries = catalogRepository.findSearchPage(normalized, menuPageSize, offset)
+        cache.putAll(entries)
+        cache.searchIndex.put(normalized, page, menuPageSize, entries)
+        return entries
+    }
+
+    private fun normalizeQuery(rawQuery: String): String? = rawQuery.trim().lowercase().takeIf { it.isNotBlank() }
 }
