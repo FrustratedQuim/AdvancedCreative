@@ -4,9 +4,10 @@ import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
+import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.inventory.PlayerInventory
+import org.bukkit.inventory.ItemStack
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -53,27 +54,10 @@ class LockEditPage(
         session: ItemEditSession
     ): Boolean {
         val key = LockItemSupport.preview(session.editableItem) ?: return false
-        val playerInventory = event.player.inventory
-        val emptySlot = findPreferredShiftTargetSlot(playerInventory) ?: return false
-
-        playerInventory.setItem(emptySlot, key.clone())
+        giveToInventoryOrDrop(event.player, key.clone())
         LockItemSupport.clear(session.editableItem)
         refreshDynamicButtons(event.menu, session)
         return true
-    }
-
-    private fun findPreferredShiftTargetSlot(inventory: PlayerInventory): Int? {
-        for (slot in 8 downTo 0) {
-            if (LockItemSupport.isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        for (slot in 35 downTo 9) {
-            if (LockItemSupport.isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        return null
     }
 
     private fun handleShiftLeftFromPlayerInventory(
@@ -86,13 +70,19 @@ class LockEditPage(
             return false
         }
 
+        val extractedKey = clickedItem.clone().apply { amount = 1 }
+        val remainingAmount = clickedItem.amount - 1
         val previousKey = LockItemSupport.preview(session.editableItem)
-        LockItemSupport.set(session.editableItem, clickedItem.clone())
+        LockItemSupport.set(session.editableItem, extractedKey)
 
-        if (previousKey == null) {
-            clickedInventory.setItem(event.slot, null)
+        if (remainingAmount > 0) {
+            clickedInventory.setItem(event.slot, clickedItem.clone().apply { amount = remainingAmount })
         } else {
-            clickedInventory.setItem(event.slot, previousKey.clone())
+            clickedInventory.setItem(event.slot, null)
+        }
+
+        if (previousKey != null) {
+            giveToInventoryOrDrop(event.player, previousKey.clone())
         }
 
         refreshDynamicButtons(event.menu, session)
@@ -138,8 +128,8 @@ class LockEditPage(
                 return@lockKeySlotButton
             }
 
-            LockItemSupport.set(session.editableItem, cursorItem.clone())
-            player.setItemOnCursor(null)
+            LockItemSupport.set(session.editableItem, cursorItem.clone().apply { amount = 1 })
+            updateCursorAfterTakingOne(player, cursorItem)
             refreshDynamicButtons(event.menu, session)
             return@lockKeySlotButton
         }
@@ -151,9 +141,36 @@ class LockEditPage(
             return@lockKeySlotButton
         }
 
-        val nextKey = cursorItem.clone()
-        player.setItemOnCursor(currentKey.clone())
+        val sourceStackAmount = cursorItem.amount
+        val nextKey = cursorItem.clone().apply { amount = 1 }
+        updateCursorAfterTakingOne(player, cursorItem)
         LockItemSupport.set(session.editableItem, nextKey)
+
+        if (sourceStackAmount > 1) {
+            giveToInventoryOrDrop(player, currentKey.clone())
+        } else {
+            player.setItemOnCursor(currentKey.clone())
+        }
+
         refreshDynamicButtons(event.menu, session)
+    }
+
+    private fun updateCursorAfterTakingOne(player: Player, cursorItem: ItemStack) {
+        val remainingAmount = cursorItem.amount - 1
+        if (remainingAmount > 0) {
+            player.setItemOnCursor(cursorItem.clone().apply { amount = remainingAmount })
+        } else {
+            player.setItemOnCursor(null)
+        }
+    }
+
+    private fun giveToInventoryOrDrop(player: Player, item: ItemStack) {
+        val remaining = PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, item)
+        if (remaining <= 0) {
+            return
+        }
+
+        val dropItem = item.clone().apply { amount = remaining }
+        player.world.dropItemNaturally(player.location.clone().add(0.0, 1.0, 0.0), dropItem)
     }
 }

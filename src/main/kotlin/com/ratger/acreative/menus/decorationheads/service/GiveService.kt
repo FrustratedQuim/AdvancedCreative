@@ -3,11 +3,11 @@ package com.ratger.acreative.menus.decorationheads.service
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.PlayerInventory
 import org.bukkit.inventory.meta.SkullMeta
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
@@ -49,12 +49,12 @@ class GiveService(
         when {
             isDropClick(clickEvent) -> dropItem(player, item)
             isShiftClick -> {
-                val remainingAmount = tryAddToExistingStacks(player.inventory, item)
+                val remainingAmount = PlayerInventoryTransferSupport.tryAddToExistingStacks(player.inventory, item)
                 if (remainingAmount > 0) {
                     val remainingItem = item.clone().also { clonedItem ->
                         clonedItem.amount = remainingAmount
                     }
-                    val targetSlot = findPreferredShiftTargetSlot(player.inventory)
+                    val targetSlot = PlayerInventoryTransferSupport.findPreferredEmptySlot(player.inventory)
                     if (targetSlot != null) {
                         player.inventory.setItem(targetSlot, remainingItem)
                     } else {
@@ -71,61 +71,8 @@ class GiveService(
     }
 
 
-    private fun tryAddToExistingStacks(inventory: PlayerInventory, item: ItemStack): Int {
-        var remaining = item.amount
-        for (slot in 8 downTo 0) {
-            remaining = tryAddToStackAtSlot(inventory, item, slot, remaining)
-            if (remaining <= 0) return 0
-        }
-        for (slot in 35 downTo 9) {
-            remaining = tryAddToStackAtSlot(inventory, item, slot, remaining)
-            if (remaining <= 0) return 0
-        }
-        return remaining
-    }
-
-    private fun tryAddToStackAtSlot(
-        inventory: PlayerInventory,
-        item: ItemStack,
-        slot: Int,
-        remaining: Int
-    ): Int {
-        var newRemaining = remaining
-
-        val stack = inventory.getItem(slot) ?: return newRemaining
-        if (!stack.isSimilar(item)) return newRemaining
-
-        val maxForStack = stack.maxStackSize.coerceAtLeast(1)
-        if (stack.amount >= maxForStack) return newRemaining
-
-        val canAdd = (maxForStack - stack.amount).coerceAtMost(newRemaining)
-        stack.amount += canAdd
-        inventory.setItem(slot, stack)
-        newRemaining -= canAdd
-
-        return newRemaining
-    }
-
-    private fun findPreferredShiftTargetSlot(inventory: PlayerInventory): Int? {
-        for (slot in 8 downTo 0) {
-            if (isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        for (slot in 35 downTo 9) {
-            if (isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        return null
-    }
-
     private fun isDropClick(event: ClickEvent): Boolean {
         return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
-    }
-
-    private fun isEmpty(item: ItemStack?): Boolean {
-        return item == null || item.type == Material.AIR || item.amount <= 0
     }
 
     private fun dropItem(player: Player, item: ItemStack) {

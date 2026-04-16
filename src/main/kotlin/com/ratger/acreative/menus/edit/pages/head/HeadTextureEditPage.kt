@@ -8,6 +8,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -179,11 +180,9 @@ class HeadTextureEditPage(
             return true
         }
 
-        val returnItem = previousItem?.clone()
-        if (returnItem == null) {
-            clickedInventory.setItem(event.slot, null)
-        } else {
-            clickedInventory.setItem(event.slot, returnItem)
+        clickedInventory.setItem(event.slot, null)
+        if (previousItem != null) {
+            giveToInventoryOrDrop(event.player, previousItem.clone())
         }
 
         return true
@@ -191,28 +190,12 @@ class HeadTextureEditPage(
 
     private fun moveStoredValueBookToPreferredEmptyInventorySlot(event: ClickEvent, session: ItemEditSession): Boolean {
         val storedBook = materializeStoredValueItem(session) ?: return false
-        val playerInventory = event.player.inventory
-        val emptySlot = findPreferredShiftTargetSlot(playerInventory) ?: return false
 
-        playerInventory.setItem(emptySlot, storedBook.clone())
+        giveToInventoryOrDrop(event.player, storedBook.clone())
         restoreEditableTextureFromVirtualValue(session)
         session.headTextureValueInputBook = null
         refreshDynamicButtons(event.player, session, event.menu)
         return true
-    }
-
-    private fun findPreferredShiftTargetSlot(inventory: PlayerInventory): Int? {
-        for (slot in 8 downTo 0) {
-            if (isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        for (slot in 35 downTo 9) {
-            if (isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        return null
     }
 
     private data class TextureValueCandidate(
@@ -240,6 +223,16 @@ class HeadTextureEditPage(
 
     private fun isSupportedValueInputItem(item: ItemStack): Boolean {
         return textureValueBookSupport.isBookItem(item) || item.type == Material.PLAYER_HEAD
+    }
+
+    private fun giveToInventoryOrDrop(player: Player, item: ItemStack) {
+        val remaining = PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, item)
+        if (remaining <= 0) {
+            return
+        }
+
+        val dropItem = item.clone().apply { amount = remaining }
+        player.world.dropItemNaturally(player.location.clone().add(0.0, 1.0, 0.0), dropItem)
     }
 
     private fun syncVirtualTextureValue(session: ItemEditSession, force: Boolean = false) {

@@ -4,9 +4,10 @@ import com.ratger.acreative.menus.edit.remainder.UseRemainderSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
+import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import org.bukkit.inventory.PlayerInventory
+import org.bukkit.inventory.ItemStack
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -55,28 +56,11 @@ class UseRemainderEditPage(
         session: ItemEditSession
     ): Boolean {
         val remainder = UseRemainderSupport.get(session.editableItem) ?: return false
-        val playerInventory = event.player.inventory
-        val emptySlot = findPreferredShiftTargetSlot(playerInventory) ?: return false
 
-        playerInventory.setItem(emptySlot, remainder.clone())
+        giveToInventoryOrDrop(event.player, remainder.clone())
         UseRemainderSupport.clear(session.editableItem)
         refreshDynamicButtons(event.menu, session)
         return true
-    }
-
-
-    private fun findPreferredShiftTargetSlot(inventory: PlayerInventory): Int? {
-        for (slot in 8 downTo 0) {
-            if (UseRemainderSupport.isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        for (slot in 35 downTo 9) {
-            if (UseRemainderSupport.isEmpty(inventory.getItem(slot))) {
-                return slot
-            }
-        }
-        return null
     }
 
     private fun handleShiftLeftFromPlayerInventory(
@@ -92,10 +76,9 @@ class UseRemainderEditPage(
         val previousRemainder = UseRemainderSupport.get(session.editableItem)
         UseRemainderSupport.set(session.editableItem, clickedItem.clone())
 
-        if (previousRemainder == null) {
-            clickedInventory.setItem(event.slot, null)
-        } else {
-            clickedInventory.setItem(event.slot, previousRemainder.clone())
+        clickedInventory.setItem(event.slot, null)
+        if (previousRemainder != null) {
+            giveToInventoryOrDrop(event.player, previousRemainder.clone())
         }
 
         refreshDynamicButtons(event.menu, session)
@@ -158,8 +141,18 @@ class UseRemainderEditPage(
         }
 
         val nextRemainder = cursorItem.clone()
-        player.setItemOnCursor(currentRemainder.clone())
         UseRemainderSupport.set(session.editableItem, nextRemainder)
+        giveToInventoryOrDrop(player, currentRemainder.clone())
         refreshDynamicButtons(event.menu, session)
+    }
+
+    private fun giveToInventoryOrDrop(player: Player, item: ItemStack) {
+        val remaining = PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, item)
+        if (remaining <= 0) {
+            return
+        }
+
+        val dropItem = item.clone().apply { amount = remaining }
+        player.world.dropItemNaturally(player.location.clone().add(0.0, 1.0, 0.0), dropItem)
     }
 }
