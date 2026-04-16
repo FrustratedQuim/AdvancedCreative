@@ -194,7 +194,7 @@ class MenuButtonFactory(
             )
             .build()
         (item.itemMeta as? SkullMeta)?.let { skull ->
-            val profile = org.bukkit.Bukkit.createProfile(java.util.UUID.randomUUID())
+            val profile = org.bukkit.Bukkit.createProfile(null as java.util.UUID?, null)
             profile.setProperty(com.destroystokyo.paper.profile.ProfileProperty("textures", entry.textureValue))
             skull.playerProfile = profile
             item.itemMeta = skull

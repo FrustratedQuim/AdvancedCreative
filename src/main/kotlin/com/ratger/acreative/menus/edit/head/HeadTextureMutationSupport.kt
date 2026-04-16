@@ -24,7 +24,7 @@ class HeadTextureMutationSupport {
     fun applyFromTextureValue(item: ItemStack, textureValue: String): MutationResult {
         if (textureValue.isBlank()) return MutationResult.Failure("Value текстуры не может быть пустым.")
         val skull = skullMeta(item) ?: return MutationResult.Failure("Не player head")
-        val profile = Bukkit.createProfile(UUID.randomUUID())
+        val profile = Bukkit.createProfile(null as UUID?, null)
         profile.setProperty(ProfileProperty("textures", textureValue))
         skull.playerProfile = profile
         item.itemMeta = skull
