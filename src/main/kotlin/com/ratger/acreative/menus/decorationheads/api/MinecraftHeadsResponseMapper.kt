@@ -33,7 +33,14 @@ class MinecraftHeadsResponseMapper {
             val publishedAt = obj["published_at"]?.jsonPrimitive?.contentOrNull?.let {
                 runCatching { LocalDate.parse(it.take(10)) }.getOrNull()
             }
-            Entry(apiId, stableKey, name, categoryId, textureValue, publishedAt)
+            Entry(
+                stableKey = stableKey,
+                name = name,
+                russianAlias = null,
+                categoryId = categoryId,
+                textureValue = textureValue,
+                publishedAt = publishedAt
+            )
         }
     }
 

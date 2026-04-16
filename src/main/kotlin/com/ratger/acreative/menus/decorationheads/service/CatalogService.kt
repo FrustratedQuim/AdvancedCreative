@@ -17,6 +17,10 @@ class CatalogService(
     private val catalogRepository: CatalogRepository,
     private val menuPageSize: Int
 ) {
+    private companion object {
+        val cyrillicRegex = Regex("\\p{IsCyrillic}")
+    }
+
     fun page(state: DecorationHeadMenuState): PageResult {
         if (state.mode == DecorationHeadMenuMode.RECENT) {
             return PageResult(entries = emptyList(), page = 1, totalPages = 1, totalItems = 0)
@@ -65,21 +69,24 @@ class CatalogService(
 
     private fun countSearch(rawQuery: String): Int {
         val normalized = normalizeQuery(rawQuery) ?: return 0
-        return catalogRepository.countBySearch(normalized)
+        return catalogRepository.countBySearch(normalized, containsCyrillic(rawQuery))
     }
 
     private fun findSearchPage(rawQuery: String, page: Int, offset: Int): List<Entry> {
         val normalized = normalizeQuery(rawQuery) ?: return emptyList()
+        val searchByRussianAlias = containsCyrillic(rawQuery)
         cache.searchIndex.get(normalized, page, menuPageSize)?.let { cached ->
             cache.putAll(cached)
             return cached
         }
 
-        val entries = catalogRepository.findSearchPage(normalized, menuPageSize, offset)
+        val entries = catalogRepository.findSearchPage(normalized, menuPageSize, offset, searchByRussianAlias)
         cache.putAll(entries)
         cache.searchIndex.put(normalized, page, menuPageSize, entries)
         return entries
     }
 
     private fun normalizeQuery(rawQuery: String): String? = rawQuery.trim().lowercase().takeIf { it.isNotBlank() }
+
+    private fun containsCyrillic(rawQuery: String): Boolean = cyrillicRegex.containsMatchIn(rawQuery)
 }

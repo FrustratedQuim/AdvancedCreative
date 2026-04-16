@@ -13,11 +13,11 @@ class CatalogRepository(
             conn.autoCommit = false
             conn.prepareStatement(
                 """
-                INSERT INTO decoration_head_catalog (stable_key, api_id, head_name, category_id, texture_value, published_at, updated_at)
+                INSERT INTO decoration_head_catalog (stable_key, head_name, head_name_ru_alias, category_id, texture_value, published_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(stable_key) DO UPDATE SET
-                api_id=excluded.api_id,
                 head_name=excluded.head_name,
+                head_name_ru_alias=COALESCE(excluded.head_name_ru_alias, decoration_head_catalog.head_name_ru_alias),
                 category_id=excluded.category_id,
                 texture_value=excluded.texture_value,
                 published_at=excluded.published_at,
@@ -26,8 +26,8 @@ class CatalogRepository(
             ).use { ps ->
                 entries.forEach { e ->
                     ps.setString(1, e.stableKey)
-                    ps.setObject(2, e.apiId)
-                    ps.setString(3, e.name)
+                    ps.setString(2, e.name)
+                    ps.setString(3, e.russianAlias)
                     ps.setInt(4, e.categoryId)
                     ps.setString(5, e.textureValue)
                     ps.setString(6, e.publishedAt?.toString())
@@ -87,7 +87,7 @@ class CatalogRepository(
         conn.prepareStatement(
             """
             SELECT * FROM decoration_head_catalog
-            ORDER BY (published_at IS NULL), published_at DESC, (api_id IS NULL), api_id DESC, head_name COLLATE NOCASE ASC
+            ORDER BY (published_at IS NULL), published_at DESC, head_name COLLATE NOCASE ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -97,18 +97,20 @@ class CatalogRepository(
         }
     }
 
-    fun countBySearch(query: String): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog WHERE lower(head_name) LIKE ?").use { ps ->
+    fun countBySearch(query: String, searchByRussianAlias: Boolean): Int = database.connection().use { conn ->
+        val column = if (searchByRussianAlias) "head_name_ru_alias" else "head_name"
+        conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog WHERE lower(COALESCE($column, '')) LIKE ?").use { ps ->
             ps.setString(1, "%${query.lowercase()}%")
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
 
-    fun findSearchPage(query: String, limit: Int, offset: Int): List<Entry> = database.connection().use { conn ->
+    fun findSearchPage(query: String, limit: Int, offset: Int, searchByRussianAlias: Boolean): List<Entry> = database.connection().use { conn ->
+        val column = if (searchByRussianAlias) "head_name_ru_alias" else "head_name"
         conn.prepareStatement(
             """
             SELECT * FROM decoration_head_catalog
-            WHERE lower(head_name) LIKE ?
+            WHERE lower(COALESCE($column, '')) LIKE ?
             ORDER BY head_name COLLATE NOCASE ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
@@ -132,9 +134,9 @@ class CatalogRepository(
         val out = mutableListOf<Entry>()
         while (rs.next()) {
             out += Entry(
-                apiId = rs.getInt("api_id").takeUnless { rs.wasNull() },
                 stableKey = rs.getString("stable_key"),
                 name = rs.getString("head_name"),
+                russianAlias = rs.getString("head_name_ru_alias"),
                 categoryId = rs.getInt("category_id"),
                 textureValue = rs.getString("texture_value"),
                 publishedAt = rs.getString("published_at")?.let { LocalDate.parse(it) }
