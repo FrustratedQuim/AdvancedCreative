@@ -9,10 +9,21 @@ class SearchInputService(
     private val onLeave: (Player) -> Unit
 ) {
     fun open(player: Player) {
+        val templateLines = arrayOf("", "↑ Что ищем? ↑", "Укажите на", "английском.")
+
         Input.sign().builder(plugin, player)
-            .lines(arrayOf("", "↑ Что ищем? ↑", "Укажите на", "английском."))
+            .lines(templateLines)
             .onInput { p, lines ->
-                val query = lines.firstOrNull { it.isNotBlank() }?.trim()
+                val firstLine = lines.firstOrNull()?.trim().orEmpty()
+                val query = firstLine.takeIf { it.isNotEmpty() }
+                    ?: lines
+                        .mapIndexedNotNull { index, line ->
+                            line.trim()
+                                .takeIf { it.isNotEmpty() }
+                                ?.takeUnless { it == templateLines.getOrNull(index) }
+                        }
+                        .firstOrNull()
+
                 onSubmit(p, query)
             }
             .onLeave(onLeave)
