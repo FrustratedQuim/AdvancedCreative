@@ -19,7 +19,6 @@ class MinecraftHeadsRequestFactory(
         if (categoryId != null) pairs += "category_id=$categoryId"
         pairs += "value=true"
         pairs += "id=true"
-        pairs += "published_at=true"
         return URI.create("$baseUrl/api/heads/custom-heads?${pairs.joinToString("&")}")
     }
 

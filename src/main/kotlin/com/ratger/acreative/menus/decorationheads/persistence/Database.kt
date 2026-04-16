@@ -18,10 +18,9 @@ class Database(dataFolder: File) {
                     CREATE TABLE IF NOT EXISTS decoration_head_catalog (
                         stable_key TEXT PRIMARY KEY,
                         head_name TEXT NOT NULL,
-                        head_name_ru_alias TEXT,
+                        head_name_ru TEXT,
                         category_id INTEGER NOT NULL,
                         texture_value TEXT NOT NULL,
-                        published_at TEXT,
                         updated_at INTEGER NOT NULL
                     )
                     """.trimIndent()
@@ -54,12 +53,12 @@ class Database(dataFolder: File) {
             migrateRecentSchema(conn)
             conn.createStatement().use { st ->
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_name_lower ON decoration_head_catalog(lower(head_name))")
-                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_ru_alias_lower ON decoration_head_catalog(lower(head_name_ru_alias))")
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_ru_lower ON decoration_head_catalog(lower(head_name_ru))")
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_category_id ON decoration_head_catalog(category_id)")
                 st.executeUpdate(
                     """
                     CREATE INDEX IF NOT EXISTS idx_catalog_recent_order
-                    ON decoration_head_catalog(published_at DESC, head_name COLLATE NOCASE)
+                    ON decoration_head_catalog(head_name COLLATE NOCASE)
                     """.trimIndent()
                 )
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_recent_player_pos ON decoration_head_recent(player_uuid, position)")
@@ -72,9 +71,12 @@ class Database(dataFolder: File) {
 
     private fun migrateCatalogSchema(conn: Connection) {
         val columns = tableColumns(conn, "decoration_head_catalog")
-        val hasApiId = "api_id" in columns
-        val hasRussianAlias = "head_name_ru_alias" in columns
-        if (!hasApiId && hasRussianAlias) return
+        val requiresMigration =
+            "api_id" in columns ||
+                "published_at" in columns ||
+                "head_name_ru_alias" in columns ||
+                "head_name_ru" !in columns
+        if (!requiresMigration) return
 
         conn.createStatement().use { st ->
             st.executeUpdate(
@@ -82,18 +84,26 @@ class Database(dataFolder: File) {
                 CREATE TABLE decoration_head_catalog_new (
                     stable_key TEXT PRIMARY KEY,
                     head_name TEXT NOT NULL,
-                    head_name_ru_alias TEXT,
+                    head_name_ru TEXT,
                     category_id INTEGER NOT NULL,
                     texture_value TEXT NOT NULL,
-                    published_at TEXT,
                     updated_at INTEGER NOT NULL
                 )
                 """.trimIndent()
             )
+
+            val russianNameExpr = when {
+                "head_name_ru" in columns && "head_name_ru_alias" in columns -> "COALESCE(head_name_ru, head_name_ru_alias)"
+                "head_name_ru" in columns -> "head_name_ru"
+                "head_name_ru_alias" in columns -> "head_name_ru_alias"
+                else -> "NULL"
+            }
+            val updatedAtExpr = if ("updated_at" in columns) "updated_at" else "0"
+
             st.executeUpdate(
                 """
-                INSERT INTO decoration_head_catalog_new (stable_key, head_name, head_name_ru_alias, category_id, texture_value, published_at, updated_at)
-                SELECT stable_key, head_name, NULL, category_id, texture_value, published_at, updated_at
+                INSERT INTO decoration_head_catalog_new (stable_key, head_name, head_name_ru, category_id, texture_value, updated_at)
+                SELECT stable_key, head_name, $russianNameExpr, category_id, texture_value, $updatedAtExpr
                 FROM decoration_head_catalog
                 """.trimIndent()
             )

@@ -2,7 +2,6 @@ package com.ratger.acreative.menus.decorationheads.persistence
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import java.sql.ResultSet
-import java.time.LocalDate
 
 class CatalogRepository(
     private val database: Database
@@ -13,14 +12,13 @@ class CatalogRepository(
             conn.autoCommit = false
             conn.prepareStatement(
                 """
-                INSERT INTO decoration_head_catalog (stable_key, head_name, head_name_ru_alias, category_id, texture_value, published_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO decoration_head_catalog (stable_key, head_name, head_name_ru, category_id, texture_value, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(stable_key) DO UPDATE SET
                 head_name=excluded.head_name,
-                head_name_ru_alias=COALESCE(excluded.head_name_ru_alias, decoration_head_catalog.head_name_ru_alias),
+                head_name_ru=COALESCE(excluded.head_name_ru, decoration_head_catalog.head_name_ru),
                 category_id=excluded.category_id,
                 texture_value=excluded.texture_value,
-                published_at=excluded.published_at,
                 updated_at=excluded.updated_at
                 """.trimIndent()
             ).use { ps ->
@@ -30,8 +28,7 @@ class CatalogRepository(
                     ps.setString(3, e.russianAlias)
                     ps.setInt(4, e.categoryId)
                     ps.setString(5, e.textureValue)
-                    ps.setString(6, e.publishedAt?.toString())
-                    ps.setLong(7, System.currentTimeMillis())
+                    ps.setLong(6, System.currentTimeMillis())
                     ps.addBatch()
                 }
                 ps.executeBatch()
@@ -87,7 +84,7 @@ class CatalogRepository(
         conn.prepareStatement(
             """
             SELECT * FROM decoration_head_catalog
-            ORDER BY (published_at IS NULL), published_at DESC, head_name COLLATE NOCASE ASC
+            ORDER BY head_name COLLATE NOCASE ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -98,7 +95,7 @@ class CatalogRepository(
     }
 
     fun countBySearch(query: String, searchByRussianAlias: Boolean): Int = database.connection().use { conn ->
-        val column = if (searchByRussianAlias) "head_name_ru_alias" else "head_name"
+        val column = if (searchByRussianAlias) "head_name_ru" else "head_name"
         conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog WHERE lower(COALESCE($column, '')) LIKE ?").use { ps ->
             ps.setString(1, "%${query.lowercase()}%")
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
@@ -106,7 +103,7 @@ class CatalogRepository(
     }
 
     fun findSearchPage(query: String, limit: Int, offset: Int, searchByRussianAlias: Boolean): List<Entry> = database.connection().use { conn ->
-        val column = if (searchByRussianAlias) "head_name_ru_alias" else "head_name"
+        val column = if (searchByRussianAlias) "head_name_ru" else "head_name"
         conn.prepareStatement(
             """
             SELECT * FROM decoration_head_catalog
@@ -136,10 +133,9 @@ class CatalogRepository(
             out += Entry(
                 stableKey = rs.getString("stable_key"),
                 name = rs.getString("head_name"),
-                russianAlias = rs.getString("head_name_ru_alias"),
+                russianAlias = rs.getString("head_name_ru"),
                 categoryId = rs.getInt("category_id"),
-                textureValue = rs.getString("texture_value"),
-                publishedAt = rs.getString("published_at")?.let { LocalDate.parse(it) }
+                textureValue = rs.getString("texture_value")
             )
         }
         return out

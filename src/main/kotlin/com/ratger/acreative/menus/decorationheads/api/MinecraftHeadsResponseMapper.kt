@@ -7,7 +7,6 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 import java.nio.charset.StandardCharsets
-import java.time.LocalDate
 import java.util.Base64
 
 class MinecraftHeadsResponseMapper {
@@ -30,16 +29,12 @@ class MinecraftHeadsResponseMapper {
             val stableKey = apiId?.toString() ?: fallbackStableKey(
                 obj["u"]?.jsonPrimitive?.contentOrNull ?: textureValue.take(24)
             )
-            val publishedAt = obj["published_at"]?.jsonPrimitive?.contentOrNull?.let {
-                runCatching { LocalDate.parse(it.take(10)) }.getOrNull()
-            }
             Entry(
                 stableKey = stableKey,
                 name = name,
                 russianAlias = null,
                 categoryId = categoryId,
-                textureValue = textureValue,
-                publishedAt = publishedAt
+                textureValue = textureValue
             )
         }
     }

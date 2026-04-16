@@ -57,8 +57,7 @@ class RecentRepository(
                                     name = rs.getString("head_name"),
                                     russianAlias = null,
                                     categoryId = rs.getInt("category_id"),
-                                    textureValue = rs.getString("texture_value"),
-                                    publishedAt = null
+                                    textureValue = rs.getString("texture_value")
                                 )
                             )
                         }
