@@ -9,9 +9,10 @@ class RecentService(
     private val recentRepository: RecentRepository,
     private val executor: ExecutorService
 ) {
-    fun push(playerId: UUID, entry: Entry) {
+    fun push(playerId: UUID, entry: Entry, onCountUpdated: ((Int) -> Unit)? = null) {
         executor.submit {
             recentRepository.push(playerId, entry)
+            onCountUpdated?.invoke(recentRepository.list(playerId).size)
         }
     }
 

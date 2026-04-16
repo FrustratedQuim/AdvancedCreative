@@ -16,7 +16,14 @@ class GiveService(
     private val parser: MiniMessageParser,
     private val recentService: RecentService
 ) {
-    fun give(player: Player, entry: Entry, categoryName: String, clickEvent: ClickEvent, trackRecent: Boolean) {
+    fun give(
+        player: Player,
+        entry: Entry,
+        categoryName: String,
+        clickEvent: ClickEvent,
+        trackRecent: Boolean,
+        onRecentCountUpdated: ((Int) -> Unit)? = null
+    ) {
         clickEvent.handle.isCancelled = true
 
         val item = ItemStack(Material.PLAYER_HEAD)
@@ -53,7 +60,7 @@ class GiveService(
         }
 
         if (trackRecent) {
-            recentService.push(player.uniqueId, entry)
+            recentService.push(player.uniqueId, entry, onRecentCountUpdated)
         }
     }
 

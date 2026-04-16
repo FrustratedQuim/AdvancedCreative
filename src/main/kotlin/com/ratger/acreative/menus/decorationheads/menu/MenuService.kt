@@ -8,6 +8,7 @@ import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.menus.decorationheads.service.CatalogService
 import com.ratger.acreative.menus.decorationheads.service.GiveService
 import com.ratger.acreative.menus.decorationheads.service.RecentService
+import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.concurrent.ExecutorService
@@ -20,6 +21,7 @@ class MenuService(
     private val catalogService: CatalogService,
     private val recentService: RecentService,
     private val giveService: GiveService,
+    private val buttonFactory: MenuButtonFactory,
     private val renderer: MenuRenderer,
     private val executor: ExecutorService
 ) {
@@ -70,7 +72,22 @@ class MenuService(
                     selectedCategoryIndex = selectedCategoryIndex,
                     categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
                     onGive = { entry, categoryName, event ->
-                        giveService.give(player, entry, categoryName, event, trackRecent = true)
+                        giveService.give(
+                            player = player,
+                            entry = entry,
+                            categoryName = categoryName,
+                            clickEvent = event,
+                            trackRecent = true,
+                            onRecentCountUpdated = { updatedCount ->
+                                Bukkit.getScheduler().runTask(plugin, Runnable {
+                                    if (!player.isOnline) return@Runnable
+                                    event.menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(updatedCount) {
+                                        sessionManager.setRecentMode(player.uniqueId)
+                                        open(player)
+                                    })
+                                })
+                            }
+                        )
                     },
                     onBack = {
                         sessionManager.update(player.uniqueId, state.copy(page = (state.page - 1).coerceAtLeast(1)))

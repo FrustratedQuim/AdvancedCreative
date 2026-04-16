@@ -77,6 +77,7 @@ class Subsystem(
         catalogService = catalogService,
         recentService = recentService,
         giveService = giveService,
+        buttonFactory = buttonFactory,
         renderer = renderer,
         executor = executor
     )
