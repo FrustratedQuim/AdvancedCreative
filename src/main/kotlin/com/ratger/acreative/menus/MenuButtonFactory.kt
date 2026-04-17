@@ -144,8 +144,7 @@ class MenuButtonFactory(
         selectedIndex = selectedIndex,
         titleBuilder = { _, _ -> "<!i><#FFD700>⚡ Категория" },
         beforeOptionsLore = listOf(
-            "<!i><#FFD700>ЛКМ, <#FFE68A>следующая",
-            "<!i><#FFD700>ПКМ, <#FFE68A>предыдущая",
+            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             ""
         ),
         afterOptionsLore = listOf("")
@@ -166,6 +165,24 @@ class MenuButtonFactory(
             this
         },
         action = { action() }
+    )
+
+    fun decorationHeadsReminderButton(): Button = actionButton(
+        material = Material.FIRE_CHARGE,
+        name = "<!i><#FFD700>ℹ Важно!",
+        lore = listOf(
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Здесь хранятся полученные вами",
+            "<!i><#FFE68A>  головы за <#FFD700>последнюю<#FFE68A> неделю.",
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Новые головы <#FFD700>автоматически",
+            "<!i><#FFE68A>  заменяют старые.",
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Если голова не была взята <#FFD700>ни разу ",
+            "<!i><#FFE68A>  в <#FFD700>течение<#FFE68A> недели, то она будет",
+            "<!i><#FFE68A>  удалена отсюда.",
+            ""
+        )
     )
 
     fun decorationHeadsResultButton(

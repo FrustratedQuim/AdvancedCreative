@@ -16,6 +16,7 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.*
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.*
 import org.bukkit.inventory.EquipmentSlot
@@ -282,6 +283,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.layManager.onViewerJoin(joiningPlayer)
         hooker.jarManager.onViewerJoin(joiningPlayer)
         hideManager.reapplyAllHides(joiningPlayer)
+        hooker.decorationHeadsMenuService.onPlayerJoin(joiningPlayer.uniqueId)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -293,6 +295,12 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
         hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
         hooker.layManager.onViewerJoin(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onInventoryClose(event: InventoryCloseEvent) {
+        val player = event.player as? Player ?: return
+        hooker.decorationHeadsMenuService.onInventoryClosed(player, event.view.title)
     }
 
     @EventHandler(priority = EventPriority.HIGH)

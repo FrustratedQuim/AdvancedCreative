@@ -16,6 +16,8 @@ import com.ratger.acreative.menus.decorationheads.persistence.Database
 import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
+import org.bukkit.Bukkit
+import org.bukkit.scheduler.BukkitTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -25,6 +27,7 @@ class Subsystem(
     buttonFactory: MenuButtonFactory
 ) {
     private val config = hooker.configManager.config
+    private val plugin = hooker.plugin
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { r ->
         Thread(r, "acreative-decoration-heads").apply { isDaemon = true }
     }
@@ -38,10 +41,8 @@ class Subsystem(
 
     private val database = Database(hooker.plugin.dataFolder)
     private val catalogRepository = CatalogRepository(database)
-    private val recentRepository = RecentRepository(
-        database,
-        config.getInt("decoration-heads.player-recent-limit", 45)
-    )
+    private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
+    private val recentRepository = RecentRepository(database, playerRecentLimit)
     private val syncStateRepository = SyncStateRepository(database)
 
     private val requestFactory = MinecraftHeadsRequestFactory(
@@ -64,7 +65,7 @@ class Subsystem(
         catalogRepository = catalogRepository,
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
-    private val recentService = RecentService(recentRepository, executor)
+    private val recentService = RecentService(recentRepository, syncStateRepository, executor, playerRecentLimit)
     private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
 
     private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())
@@ -95,12 +96,24 @@ class Subsystem(
         warmPages = config.getInt("decoration-heads.warm-pages", 1)
     )
 
+    private var periodicRecentFlushTask: BukkitTask? = null
+
     fun init() {
         database.init()
+        recentService.init()
         syncService.start()
+        val flushIntervalTicks = 6L * 60L * 60L * 20L
+        periodicRecentFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+            plugin,
+            Runnable { recentService.flushDirtyToDatabase() },
+            flushIntervalTicks,
+            flushIntervalTicks
+        )
     }
 
     fun shutdown() {
+        periodicRecentFlushTask?.cancel()
+        recentService.flushDirtyToDatabase()
         executor.shutdownNow()
     }
 }

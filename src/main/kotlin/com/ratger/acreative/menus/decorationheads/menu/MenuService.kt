@@ -32,6 +32,7 @@ class MenuService(
 
     private companion object {
         const val ALL_RECENT_CATEGORY_KEY = "__all__"
+        const val MENU_TITLE_PREFIX = "▍ Головы"
     }
 
     private val searchInputService = SearchInputService(
@@ -141,6 +142,7 @@ class MenuService(
                     entries = entries,
                     categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
                     onGive = { entry, categoryName, event ->
+                        recentService.rememberInteractionForDeferredPromotion(player.uniqueId, entry.stableKey)
                         giveService.give(player, entry, categoryName, event, trackRecent = false)
                     },
                     onSwitchCategory = { nextIndex ->
@@ -158,7 +160,28 @@ class MenuService(
         }
     }
 
-    fun clearPlayer(playerId: java.util.UUID) = sessionManager.clear(playerId)
+    fun onPlayerJoin(playerId: java.util.UUID) {
+        recentService.pruneExpiredOnFirstJoin(playerId)
+    }
+
+    fun onInventoryClosed(player: Player, closedTitle: String) {
+        if (!closedTitle.contains(MENU_TITLE_PREFIX)) {
+            return
+        }
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            if (!player.isOnline) return@Runnable
+            val currentTitle = player.openInventory.title
+            if (currentTitle.contains(MENU_TITLE_PREFIX)) {
+                return@Runnable
+            }
+            recentService.commitDeferredPromotions(player.uniqueId)
+        })
+    }
+
+    fun clearPlayer(playerId: java.util.UUID) {
+        recentService.commitDeferredPromotions(playerId)
+        sessionManager.clear(playerId)
+    }
 
     private fun resolveCategoryNameById(categoryId: Int): String {
         val mapped = categoryRegistry.definitions.firstOrNull { categoryId in categoryResolver.resolveUiCategoryToApiIds(it.key) }

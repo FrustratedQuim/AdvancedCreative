@@ -3,18 +3,24 @@ package com.ratger.acreative.menus.decorationheads.persistence
 class SyncStateRepository(
     private val database: Database
 ) {
-    fun isInitialSyncCompleted(): Boolean = database.connection().use { conn ->
+    fun isInitialSyncCompleted(): Boolean = getState(INITIAL_SYNC_COMPLETED)?.toBoolean() == true
+
+    fun markInitialSyncCompleted() {
+        setState(INITIAL_SYNC_COMPLETED, true.toString())
+    }
+
+    fun getState(key: String): String? = database.connection().use { conn ->
         conn.prepareStatement(
             "SELECT state_value FROM decoration_head_sync_state WHERE state_key = ?"
         ).use { ps ->
-            ps.setString(1, INITIAL_SYNC_COMPLETED)
+            ps.setString(1, key)
             ps.executeQuery().use { rs ->
-                rs.next() && rs.getString("state_value").toBoolean()
+                if (rs.next()) rs.getString("state_value") else null
             }
         }
     }
 
-    fun markInitialSyncCompleted() {
+    fun setState(key: String, value: String) {
         database.connection().use { conn ->
             conn.prepareStatement(
                 """
@@ -25,8 +31,8 @@ class SyncStateRepository(
                 updated_at = excluded.updated_at
                 """.trimIndent()
             ).use { ps ->
-                ps.setString(1, INITIAL_SYNC_COMPLETED)
-                ps.setString(2, true.toString())
+                ps.setString(1, key)
+                ps.setString(2, value)
                 ps.setLong(3, System.currentTimeMillis())
                 ps.executeUpdate()
             }

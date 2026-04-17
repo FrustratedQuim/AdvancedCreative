@@ -68,9 +68,10 @@ class MenuRenderer(
         onBack: () -> Unit
     ) {
         val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(48, 49) + (0..44).toSet())
-        fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 50, 51, 52))
+        fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 50, 51))
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
+        menu.setButton(52, buttonFactory.decorationHeadsReminderButton())
         entries.take(45).forEachIndexed { index, entry ->
             val categoryName = categoryNameResolver(entry.categoryId)
             menu.setButton(index, buttonFactory.decorationHeadsResultButton(entry, categoryName, true) { onGive(entry, categoryName, it) })

@@ -10,7 +10,7 @@ class SearchInputService(
     private val onLeave: (Player) -> Unit
 ) {
     fun open(player: Player) {
-        val templateLines = arrayOf("", "↑ Что ищем? ↑", "Укажите на", "английском.")
+        val templateLines = arrayOf("", "↑ Что ищем? ↑", "", "")
 
         val registerResult = Input.sign().builder(plugin, player)
             .lines(templateLines)
