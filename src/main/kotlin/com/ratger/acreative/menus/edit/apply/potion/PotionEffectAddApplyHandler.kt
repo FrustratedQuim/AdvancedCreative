@@ -40,10 +40,12 @@ class PotionEffectAddApplyHandler(
         if (level < 1) return ApplyExecutionResult.InvalidValue
 
         val amplifier = level - 1
+        val itemType = session.editableItem.type
+        val storedDurationTicks = PotionItemSupport.denormalizeDurationForItemForm(itemType, effectType, durationTicks)
 
         val action = ItemAction.PotionEffectAdd(
             type = effectType,
-            duration = durationTicks,
+            duration = storedDurationTicks,
             amplifier = amplifier,
             ambient = false,
             particles = showParticles,
@@ -54,7 +56,7 @@ class PotionEffectAddApplyHandler(
 
         PotionItemSupport.addEffect(
             session.editableItem,
-            PotionEffect(effectType, durationTicks, amplifier, false, showParticles, showIcon)
+            PotionEffect(effectType, storedDurationTicks, amplifier, false, showParticles, showIcon)
         )
         return ApplyExecutionResult.Success
     }

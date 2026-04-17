@@ -109,23 +109,36 @@ object PotionItemSupport {
         item.itemMeta = meta
     }
 
-    fun effects(item: ItemStack): List<PotionEffect> = potionMeta(item)?.customEffects ?: emptyList()
+    fun effects(item: ItemStack): List<PotionEffect> {
+        val meta = potionMeta(item) ?: return emptyList()
+        val customEffects = meta.customEffects
+        val baseEffects = basePotionEffects(meta)
+        if (customEffects.isEmpty()) return baseEffects
+        val customKeys = customEffects.map { keyPath(it.type) }.toSet()
+        return buildList {
+            baseEffects.forEach { presetEffect ->
+                if (!customKeys.contains(keyPath(presetEffect.type))) {
+                    add(presetEffect)
+                }
+            }
+            addAll(customEffects)
+        }
+    }
 
     fun effectEntries(item: ItemStack): List<PotionEffectEntry> {
         return effects(item).mapIndexed { index, effect ->
+            val normalizedDuration = normalizeDurationForItemForm(item.type, effect.type, effect.duration)
             PotionEffectEntry(
                 index = index,
                 effect = effect,
                 displayName = displayName(effect.type),
-                durationLabel = durationLabel(effect.duration),
+                durationLabel = durationLabel(normalizedDuration),
                 displayLevel = displayLevel(effect.amplifier),
                 showParticles = effect.hasParticles(),
                 showIcon = effect.hasIcon()
             )
         }
     }
-
-    fun countEffects(item: ItemStack): Int = effects(item).size
 
     fun addEffect(item: ItemStack, effect: PotionEffect) {
         val meta = potionMeta(item) ?: return
@@ -135,13 +148,17 @@ object PotionItemSupport {
 
     fun removeEffect(item: ItemStack, type: PotionEffectType) {
         val meta = potionMeta(item) ?: return
-        meta.removeCustomEffect(type)
+        val hadCustom = meta.removeCustomEffect(type)
+        if (!hadCustom && basePotionEffects(meta).any { it.type == type }) {
+            meta.basePotionType = PotionType.WATER
+        }
         item.itemMeta = meta
     }
 
     fun clearEffects(item: ItemStack) {
         val meta = potionMeta(item) ?: return
         meta.customEffects.map { it.type }.forEach(meta::removeCustomEffect)
+        meta.basePotionType = PotionType.WATER
         item.itemMeta = meta
     }
 
@@ -182,7 +199,36 @@ object PotionItemSupport {
         return previewPotionTypeByEffect[path]
     }
 
+    fun denormalizeDurationForItemForm(itemType: Material, effectType: PotionEffectType, visibleDuration: Int): Int {
+        if (visibleDuration == PotionEffect.INFINITE_DURATION) return visibleDuration
+        if (effectType.isInstant) return visibleDuration
+
+        val multiplier = durationStorageMultiplier(itemType)
+        if (multiplier == 1) return visibleDuration
+        return (visibleDuration.toLong() * multiplier.toLong())
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
+    }
+
     private fun potionMeta(item: ItemStack): PotionMeta? = item.itemMeta as? PotionMeta
+    private fun basePotionEffects(meta: PotionMeta): List<PotionEffect> = meta.basePotionType?.potionEffects ?: emptyList()
+
+    private fun normalizeDurationForItemForm(itemType: Material, effectType: PotionEffectType, duration: Int): Int {
+        if (duration == PotionEffect.INFINITE_DURATION) return duration
+        if (effectType.isInstant) return duration
+
+        val multiplier = durationStorageMultiplier(itemType)
+        if (multiplier == 1) return duration
+        return (duration / multiplier).coerceAtLeast(1)
+    }
+
+    private fun durationStorageMultiplier(itemType: Material): Int {
+        return when (itemType) {
+            Material.LINGERING_POTION -> 4
+            Material.TIPPED_ARROW -> 8
+            else -> 1
+        }
+    }
 
     private fun humanize(path: String): String {
         return path.split('_').joinToString(" ") {
