@@ -20,6 +20,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 
 class MenuService(
@@ -47,6 +48,7 @@ class MenuService(
     }
 
     private val signInputService = SignInputService(plugin)
+    private val savedPagesFilterByPlayer = ConcurrentHashMap<UUID, String>()
     private val searchInputService = SearchInputService(
         signInputService = signInputService,
         onSubmit = { player, query ->
@@ -140,7 +142,7 @@ class MenuService(
                         open(player)
                     },
                     onMyPages = {
-                        openSavedPages(player, state.copy(page = page.page), ALL_SAVED_PAGES_FILTER_KEY)
+                        openSavedPages(player, state.copy(page = page.page))
                     },
                     onToggleSavePage = { event ->
                         toggleSaveCurrentPage(player, state.copy(page = page.page), event.menu)
@@ -162,7 +164,8 @@ class MenuService(
     fun openRecent(player: Player) {
         val state = sessionManager.getOrCreate(player.uniqueId)
         val categoryOptions = recentCategoryOptions()
-        val selectedCategoryIndex = categoryOptions.indexOfFirst { it.key == state.categoryKey }.takeIf { it >= 0 } ?: 0
+        val recentCategoryKey = sessionManager.getRecentCategory(player.uniqueId)
+        val selectedCategoryIndex = categoryOptions.indexOfFirst { it.key == recentCategoryKey }.takeIf { it >= 0 } ?: 0
         val selectedCategoryKey = categoryOptions.getOrNull(selectedCategoryIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
 
         executor.submit {
@@ -188,11 +191,10 @@ class MenuService(
                         recentService.rememberInteractionForDeferredPromotion(player.uniqueId, entry.stableKey)
                         giveService.give(player, entry, categoryName, event, trackRecent = false)
                     },
-                    onMyPages = { openSavedPages(player, state, ALL_SAVED_PAGES_FILTER_KEY) },
+                    onMyPages = { openSavedPages(player, state) },
                     onSwitchCategory = { nextIndex ->
                         val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
-                        val old = sessionManager.getOrCreate(player.uniqueId)
-                        sessionManager.update(player.uniqueId, old.copy(categoryKey = nextCategory))
+                        sessionManager.setRecentCategory(player.uniqueId, nextCategory)
                         openRecent(player)
                     },
                     onBack = {
@@ -204,10 +206,14 @@ class MenuService(
         }
     }
 
-    fun openSavedPages(player: Player, originState: DecorationHeadMenuState, selectedFilterKey: String) {
+    fun openSavedPages(player: Player, originState: DecorationHeadMenuState, selectedFilterKeyOverride: String? = null) {
         val filterOptions = savedPagesFilterOptions()
+        val selectedFilterKey = selectedFilterKeyOverride
+            ?: savedPagesFilterByPlayer[player.uniqueId]
+            ?: originState.categoryKey
         val selectedIndex = filterOptions.indexOfFirst { it.key == selectedFilterKey }.takeIf { it >= 0 } ?: 0
         val selected = filterOptions[selectedIndex]
+        savedPagesFilterByPlayer[player.uniqueId] = selected.key
         executor.submit {
             val entries = if (selected.key == ALL_SAVED_PAGES_FILTER_KEY) {
                 savedPagesService.listByPlayer(player.uniqueId)
@@ -228,6 +234,7 @@ class MenuService(
                     },
                     onFilter = { nextIndex ->
                         val nextKey = filterOptions.getOrNull(nextIndex)?.key ?: ALL_SAVED_PAGES_FILTER_KEY
+                        savedPagesFilterByPlayer[player.uniqueId] = nextKey
                         openSavedPages(player, originState, nextKey)
                     },
                     onOpenEntry = { entry ->
@@ -274,7 +281,15 @@ class MenuService(
                             onSubmit = { submitPlayer, input ->
                                 val pageNumber = input?.toIntOrNull()?.takeIf { it >= 1 }
                                 executor.submit {
-                                    if (pageNumber != null) savedPagesService.updateSourcePage(submitPlayer.uniqueId, pageId, pageNumber)
+                                    if (pageNumber != null) {
+                                        val targetEntry = savedPagesService.findById(submitPlayer.uniqueId, pageId)
+                                        if (targetEntry != null) {
+                                            val sourceState = savedPagesService.toMenuState(targetEntry)
+                                            val totalPages = catalogService.page(sourceState).totalPages.coerceAtLeast(1)
+                                            val clampedPage = pageNumber.coerceIn(1, totalPages)
+                                            savedPagesService.updateSourcePage(submitPlayer.uniqueId, pageId, clampedPage)
+                                        }
+                                    }
                                     Bukkit.getScheduler().runTask(plugin, Runnable { if (submitPlayer.isOnline) openSavedPageEditor(submitPlayer, originState, selectedFilterKey, pageId) })
                                 }
                             },
@@ -319,7 +334,7 @@ class MenuService(
                         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isSaved) { event -> toggleSaveCurrentPage(player, state, event.menu) })
                     }
                 }
-                menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(count) { openSavedPages(player, state, ALL_SAVED_PAGES_FILTER_KEY) })
+                menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(count) { openSavedPages(player, state) })
             })
         }
     }
@@ -341,6 +356,7 @@ class MenuService(
     fun clearPlayer(playerId: UUID) {
         recentService.commitDeferredPromotions(playerId)
         sessionManager.clear(playerId)
+        savedPagesFilterByPlayer.remove(playerId)
     }
 
     private fun resolveCategoryNameById(categoryId: Int): String {

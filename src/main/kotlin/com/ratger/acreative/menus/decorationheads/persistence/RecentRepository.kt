@@ -79,17 +79,4 @@ class RecentRepository(
         }
     }
 
-    fun migrateTimestampFormatToEpochSeconds() {
-        database.connection().use { conn ->
-            conn.prepareStatement(
-                """
-                UPDATE decoration_head_recent
-                SET last_used_at = CAST(last_used_at / 1000 AS INTEGER)
-                WHERE last_used_at > 9999999999
-                """.trimIndent()
-            ).use { ps ->
-                ps.executeUpdate()
-            }
-        }
-    }
 }

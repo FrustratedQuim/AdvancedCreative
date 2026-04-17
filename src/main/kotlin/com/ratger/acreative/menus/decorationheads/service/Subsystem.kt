@@ -69,7 +69,7 @@ class Subsystem(
         catalogRepository = catalogRepository,
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
-    private val recentService = RecentService(recentRepository, syncStateRepository, executor, playerRecentLimit)
+    private val recentService = RecentService(recentRepository, executor, playerRecentLimit)
     private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
     private val savedPagesService = SavedPagesService(savedPagesRepository, 45)
 

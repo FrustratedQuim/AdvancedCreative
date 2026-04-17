@@ -2,7 +2,6 @@ package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
-import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -10,7 +9,6 @@ import java.util.concurrent.ExecutorService
 
 class RecentService(
     private val recentRepository: RecentRepository,
-    private val syncStateRepository: SyncStateRepository,
     private val executor: ExecutorService,
     private val limit: Int
 ) {
@@ -24,9 +22,7 @@ class RecentService(
     private val playersWithDeferredPromotions = ConcurrentHashMap<UUID, MutableSet<String>>()
     private val playersWithPruneCheck = ConcurrentHashMap.newKeySet<UUID>()
 
-    fun init() {
-        runRecentTimestampMigrationOnce()
-    }
+    fun init() = Unit
 
     fun push(playerId: UUID, entry: Entry, onCountUpdated: ((Int) -> Unit)? = null) {
         executor.submit {
@@ -115,18 +111,9 @@ class RecentService(
         }
     }
 
-    private fun runRecentTimestampMigrationOnce() {
-        if (syncStateRepository.getState(RECENT_TIMESTAMP_MIGRATION_KEY) == "done") {
-            return
-        }
-        recentRepository.migrateTimestampFormatToEpochSeconds()
-        syncStateRepository.setState(RECENT_TIMESTAMP_MIGRATION_KEY, "done")
-    }
-
     private fun nowEpochSeconds(): Long = Instant.now().epochSecond
 
     private companion object {
         const val WEEK_SECONDS = 7L * 24L * 60L * 60L
-        const val RECENT_TIMESTAMP_MIGRATION_KEY = "recent_timestamp_epoch_seconds_migration_v1"
     }
 }

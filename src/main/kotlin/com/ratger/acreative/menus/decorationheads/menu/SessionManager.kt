@@ -10,6 +10,7 @@ class SessionManager(
     private val defaultCategory: String
 ) {
     private val byPlayer = ConcurrentHashMap<UUID, DecorationHeadMenuState>()
+    private val recentCategoryByPlayer = ConcurrentHashMap<UUID, String>()
 
     fun getOrCreate(playerId: UUID): DecorationHeadMenuState = byPlayer.computeIfAbsent(playerId) {
         DecorationHeadMenuState(DecorationHeadMenuMode.CATEGORY, defaultCategory, 1, null, null)
@@ -30,6 +31,12 @@ class SessionManager(
         )
     }
 
+    fun getRecentCategory(playerId: UUID): String = recentCategoryByPlayer[playerId] ?: defaultCategory
+
+    fun setRecentCategory(playerId: UUID, categoryKey: String) {
+        recentCategoryByPlayer[playerId] = categoryKey
+    }
+
     fun backFromRecent(playerId: UUID): DecorationHeadMenuState {
         val old = getOrCreate(playerId)
         val source = old.lastNonRecent ?: SourcePage(DecorationHeadMenuMode.CATEGORY, defaultCategory, 1, null)
@@ -40,5 +47,6 @@ class SessionManager(
 
     fun clear(playerId: UUID) {
         byPlayer.remove(playerId)
+        recentCategoryByPlayer.remove(playerId)
     }
 }
