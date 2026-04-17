@@ -6,29 +6,24 @@ import org.bukkit.potion.PotionEffect
 
 object EffectActionsSupport {
 
-    fun validateSpec(spec: EffectActionSpec, validation: ValidationService): String? {
+    fun validateSpec(spec: EffectActionSpec, validation: ValidationService): Boolean {
         return when (spec) {
-            EffectActionSpec.ClearAllEffects -> null
-            is EffectActionSpec.PlaySound -> if (!validation.isValidKey(spec.key.asString())) "Некорректный sound key" else null
-            is EffectActionSpec.RemoveEffects -> if (spec.effects.isEmpty()) "remove_effects требует минимум 1 эффект" else null
+            EffectActionSpec.ClearAllEffects -> true
+            is EffectActionSpec.PlaySound -> validation.isValidKey(spec.key.asString())
+            is EffectActionSpec.RemoveEffects -> spec.effects.isNotEmpty()
             is EffectActionSpec.TeleportRandomly -> {
-                if (!spec.diameter.isFinite()) "diameter должен быть конечным числом"
-                else if (spec.diameter <= 0f) "diameter должен быть > 0"
-                else null
+                spec.diameter.isFinite() && spec.diameter > 0f
             }
 
             is EffectActionSpec.ApplyEffects -> {
-                if (!spec.probability.isFinite()) return "probability должен быть конечным числом"
-                if (spec.probability !in 0f..1f) return "probability должен быть в диапазоне 0.0..1.0"
-                if (spec.effects.isEmpty()) return "apply_effects требует минимум 1 effect entry"
+                if (!spec.probability.isFinite()) return false
+                if (spec.probability !in 0f..1f) return false
+                if (spec.effects.isEmpty()) return false
                 val bad = spec.effects.firstOrNull {
                     val isInfinite = it.duration == PotionEffect.INFINITE_DURATION
                     (!isInfinite && it.duration <= 0) || it.amplifier < 0
                 }
-                if (bad != null) {
-                    val isInfinite = bad.duration == PotionEffect.INFINITE_DURATION
-                    if (!isInfinite && bad.duration <= 0) "duration должен быть > 0 или равен inf" else "amplifier не может быть отрицательным"
-                } else null
+                bad == null
             }
         }
     }

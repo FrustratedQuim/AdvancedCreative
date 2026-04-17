@@ -97,12 +97,10 @@ class ValidationService {
                 if (group != null && !isValidKey(group.asString())) return false
             }
             is ItemAction.ConsumableEffectAdd -> {
-                val message = EffectActionsSupport.validateSpec(action.spec, this)
-                if (message != null) return false
+                if (!EffectActionsSupport.validateSpec(action.spec, this)) return false
             }
             is ItemAction.DeathProtectionEffectAdd -> {
-                val message = EffectActionsSupport.validateSpec(action.spec, this)
-                if (message != null) return false
+                if (!EffectActionsSupport.validateSpec(action.spec, this)) return false
             }
             is ItemAction.ConsumableEffectRemove -> {
                 val effectCount = EffectSupport.consumableEffectCount(context.item)
