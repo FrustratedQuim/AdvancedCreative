@@ -2,6 +2,7 @@ package com.ratger.acreative.utils
 
 import com.ratger.acreative.commands.sit.SitStyle
 import com.ratger.acreative.core.FunctionHooker
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.block.data.type.Bed
@@ -300,7 +301,8 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onInventoryClose(event: InventoryCloseEvent) {
         val player = event.player as? Player ?: return
-        hooker.decorationHeadsMenuService.onInventoryClosed(player, event.view.title)
+        val closedTitle = PlainTextComponentSerializer.plainText().serialize(event.view.title())
+        hooker.decorationHeadsMenuService.onInventoryClosed(player, closedTitle)
     }
 
     @EventHandler(priority = EventPriority.HIGH)

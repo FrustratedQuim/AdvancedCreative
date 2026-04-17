@@ -9,6 +9,7 @@ import com.ratger.acreative.menus.decorationheads.service.CatalogService
 import com.ratger.acreative.menus.decorationheads.service.GiveService
 import com.ratger.acreative.menus.decorationheads.service.RecentService
 import com.ratger.acreative.menus.MenuButtonFactory
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.concurrent.ExecutorService
@@ -170,7 +171,7 @@ class MenuService(
         }
         Bukkit.getScheduler().runTask(plugin, Runnable {
             if (!player.isOnline) return@Runnable
-            val currentTitle = player.openInventory.title
+            val currentTitle = PlainTextComponentSerializer.plainText().serialize(player.openInventory.title())
             if (currentTitle.contains(MENU_TITLE_PREFIX)) {
                 return@Runnable
             }
