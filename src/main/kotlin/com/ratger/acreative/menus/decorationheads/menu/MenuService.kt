@@ -1,17 +1,23 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
+import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
-import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.menus.decorationheads.service.CatalogService
 import com.ratger.acreative.menus.decorationheads.service.GiveService
 import com.ratger.acreative.menus.decorationheads.service.RecentService
-import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.decorationheads.service.SavedPagesService
+import com.ratger.acreative.menus.decorationheads.support.SignInputService
+import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
+import org.bukkit.Material
 import org.bukkit.entity.Player
+import java.util.UUID
 import java.util.concurrent.ExecutorService
 
 class MenuService(
@@ -21,23 +27,24 @@ class MenuService(
     private val categoryResolver: CategoryResolver,
     private val catalogService: CatalogService,
     private val recentService: RecentService,
+    private val savedPagesService: SavedPagesService,
     private val giveService: GiveService,
     private val buttonFactory: MenuButtonFactory,
     private val renderer: MenuRenderer,
-    private val executor: ExecutorService
+    private val executor: ExecutorService,
+    private val temporaryOverrideSupport: TemporaryMenuButtonOverrideSupport
 ) {
-    private data class CategoryOption(
-        val key: String,
-        val displayName: String
-    )
+    private data class CategoryOption(val key: String, val displayName: String)
 
     private companion object {
         const val ALL_RECENT_CATEGORY_KEY = "__all__"
+        const val ALL_SAVED_PAGES_FILTER_KEY = "__all_saved__"
         const val MENU_TITLE_PREFIX = "▍ Головы"
     }
 
+    private val signInputService = SignInputService(plugin)
     private val searchInputService = SearchInputService(
-        plugin = plugin,
+        signInputService = signInputService,
         onSubmit = { player, query ->
             val base = sessionManager.getOrCreate(player.uniqueId)
             val next = if (query.isNullOrBlank()) {
@@ -51,6 +58,25 @@ class MenuService(
         onLeave = { player -> open(player) }
     )
 
+    private val noteApplyStateManager = SavedPageNoteApplyStateManager(
+        plugin = plugin,
+        onApply = { player, pageId, note ->
+            executor.submit {
+                savedPagesService.updateNote(player.uniqueId, pageId, note)
+                Bukkit.getScheduler().runTask(plugin, Runnable {
+                    if (player.isOnline) {
+                        openSavedPageEditor(player, sessionManager.getOrCreate(player.uniqueId), ALL_SAVED_PAGES_FILTER_KEY, pageId)
+                    }
+                })
+            }
+        },
+        onReopen = { player, pageId ->
+            openSavedPageEditor(player, sessionManager.getOrCreate(player.uniqueId), ALL_SAVED_PAGES_FILTER_KEY, pageId)
+        }
+    )
+
+    fun applyTarget(): ApplyCommandTarget = noteApplyStateManager
+
     fun open(player: Player) {
         val state = sessionManager.getOrCreate(player.uniqueId)
         if (state.mode == DecorationHeadMenuMode.RECENT) {
@@ -63,6 +89,8 @@ class MenuService(
         executor.submit {
             val page = catalogService.page(state)
             val myCount = recentService.list(player.uniqueId).size
+            val myPagesCount = savedPagesService.countByPlayer(player.uniqueId)
+            val isSaved = savedPagesService.findByCurrentSource(player.uniqueId, state.copy(page = page.page)) != null
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 if (!player.isOnline) return@Runnable
                 renderer.renderCategoryMenu(
@@ -70,9 +98,11 @@ class MenuService(
                     state = state.copy(page = page.page),
                     pageResult = page,
                     myCount = myCount,
+                    myPagesCount = myPagesCount,
+                    isCurrentPageSaved = isSaved,
                     categoryOptions = categoryOptions.map { it.displayName },
                     selectedCategoryIndex = selectedCategoryIndex,
-                    categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
+                    categoryNameResolver = ::resolveCategoryNameById,
                     onGive = { entry, categoryName, event ->
                         giveService.give(
                             player = player,
@@ -103,6 +133,12 @@ class MenuService(
                         sessionManager.setRecentMode(player.uniqueId)
                         open(player)
                     },
+                    onMyPages = {
+                        openSavedPages(player, state.copy(page = page.page), ALL_SAVED_PAGES_FILTER_KEY)
+                    },
+                    onToggleSavePage = { event ->
+                        toggleSaveCurrentPage(player, state.copy(page = page.page), event.menu)
+                    },
                     onSwitchCategory = { nextIndex ->
                         val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: categoryRegistry.firstCategoryKey()
                         sessionManager.update(player.uniqueId, DecorationHeadMenuState(DecorationHeadMenuMode.CATEGORY, nextCategory, 1, null, null))
@@ -126,26 +162,27 @@ class MenuService(
         executor.submit {
             val entries = recentService.list(player.uniqueId)
                 .let { allEntries ->
-                    if (selectedCategoryKey == ALL_RECENT_CATEGORY_KEY) {
-                        allEntries
-                    } else {
+                    if (selectedCategoryKey == ALL_RECENT_CATEGORY_KEY) allEntries else {
                         val apiCategoryIds = categoryResolver.resolveUiCategoryToApiIds(selectedCategoryKey)
-                        allEntries.filter { entry -> entry.categoryId in apiCategoryIds }
+                        allEntries.filter { it.categoryId in apiCategoryIds }
                     }
                 }
+            val pagesCount = savedPagesService.countByPlayer(player.uniqueId)
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 if (!player.isOnline) return@Runnable
                 renderer.renderRecentMenu(
                     player = player,
                     categoryName = categoryOptions[selectedCategoryIndex].displayName,
+                    myPagesCount = pagesCount,
                     categoryOptions = categoryOptions.map { it.displayName },
                     selectedCategoryIndex = selectedCategoryIndex,
                     entries = entries,
-                    categoryNameResolver = { categoryId -> resolveCategoryNameById(categoryId) },
+                    categoryNameResolver = ::resolveCategoryNameById,
                     onGive = { entry, categoryName, event ->
                         recentService.rememberInteractionForDeferredPromotion(player.uniqueId, entry.stableKey)
                         giveService.give(player, entry, categoryName, event, trackRecent = false)
                     },
+                    onMyPages = { openSavedPages(player, state, ALL_SAVED_PAGES_FILTER_KEY) },
                     onSwitchCategory = { nextIndex ->
                         val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
                         val old = sessionManager.getOrCreate(player.uniqueId)
@@ -161,25 +198,142 @@ class MenuService(
         }
     }
 
-    fun onPlayerJoin(playerId: java.util.UUID) {
+    fun openSavedPages(player: Player, originState: DecorationHeadMenuState, selectedFilterKey: String) {
+        val filterOptions = savedPagesFilterOptions()
+        val selectedIndex = filterOptions.indexOfFirst { it.key == selectedFilterKey }.takeIf { it >= 0 } ?: 0
+        val selected = filterOptions[selectedIndex]
+        executor.submit {
+            val entries = if (selected.key == ALL_SAVED_PAGES_FILTER_KEY) {
+                savedPagesService.listByPlayer(player.uniqueId)
+            } else {
+                savedPagesService.listByPlayerAndCategory(player.uniqueId, selected.key)
+            }
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                if (!player.isOnline) return@Runnable
+                renderer.renderSavedPagesMenu(
+                    player = player,
+                    selectedFilterTitle = selected.displayName,
+                    filterOptions = filterOptions.map { it.displayName },
+                    selectedFilterIndex = selectedIndex,
+                    entries = entries,
+                    categoryTitleResolver = { entry -> categoryRegistry.byKey(entry.categoryKey)?.displayName ?: entry.categoryKey },
+                    onBack = {
+                        sessionManager.update(player.uniqueId, originState)
+                        open(player)
+                    },
+                    onFilter = { nextIndex ->
+                        val nextKey = filterOptions.getOrNull(nextIndex)?.key ?: ALL_SAVED_PAGES_FILTER_KEY
+                        openSavedPages(player, originState, nextKey)
+                    },
+                    onOpenEntry = { entry ->
+                        val restored = savedPagesService.toMenuState(entry)
+                        sessionManager.update(player.uniqueId, restored)
+                        open(player)
+                    },
+                    onEditEntry = { entry ->
+                        openSavedPageEditor(player, originState, selected.key, entry.id)
+                    }
+                )
+            })
+        }
+    }
+
+    fun openSavedPageEditor(player: Player, originState: DecorationHeadMenuState, selectedFilterKey: String, pageId: Long) {
+        executor.submit {
+            val entry = savedPagesService.findById(player.uniqueId, pageId)
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                if (!player.isOnline) return@Runnable
+                if (entry == null) {
+                    openSavedPages(player, originState, selectedFilterKey)
+                    return@Runnable
+                }
+                renderer.renderSavedPageEditor(
+                    player = player,
+                    entry = entry,
+                    onBack = { openSavedPages(player, originState, selectedFilterKey) },
+                    onEditNote = {
+                        noteApplyStateManager.begin(player, pageId)
+                        player.closeInventory()
+                    },
+                    onResetNote = {
+                        executor.submit {
+                            savedPagesService.updateNote(player.uniqueId, pageId, null)
+                            Bukkit.getScheduler().runTask(plugin, Runnable { if (player.isOnline) openSavedPageEditor(player, originState, selectedFilterKey, pageId) })
+                        }
+                    },
+                    onEditPage = {
+                        player.closeInventory()
+                        signInputService.open(
+                            player = player,
+                            templateLines = arrayOf("", "↑ Страница ↑", "", ""),
+                            onSubmit = { submitPlayer, input ->
+                                val pageNumber = input?.toIntOrNull()?.takeIf { it >= 1 }
+                                executor.submit {
+                                    if (pageNumber != null) savedPagesService.updateSourcePage(submitPlayer.uniqueId, pageId, pageNumber)
+                                    Bukkit.getScheduler().runTask(plugin, Runnable { if (submitPlayer.isOnline) openSavedPageEditor(submitPlayer, originState, selectedFilterKey, pageId) })
+                                }
+                            },
+                            onLeave = { leavePlayer -> openSavedPageEditor(leavePlayer, originState, selectedFilterKey, pageId) }
+                        )
+                    },
+                    onChangeColor = { forward ->
+                        executor.submit {
+                            savedPagesService.cycleMapColorKey(player.uniqueId, pageId, forward)
+                            Bukkit.getScheduler().runTask(plugin, Runnable { if (player.isOnline) openSavedPageEditor(player, originState, selectedFilterKey, pageId) })
+                        }
+                    },
+                    onDelete = {
+                        executor.submit {
+                            savedPagesService.delete(player.uniqueId, pageId)
+                            Bukkit.getScheduler().runTask(plugin, Runnable { if (player.isOnline) openSavedPages(player, originState, selectedFilterKey) })
+                        }
+                    }
+                )
+            })
+        }
+    }
+
+    private fun toggleSaveCurrentPage(player: Player, state: DecorationHeadMenuState, menu: ru.violence.coreapi.bukkit.api.menu.Menu) {
+        executor.submit {
+            val result = savedPagesService.toggleForCurrentState(player.uniqueId, state)
+            val count = savedPagesService.countByPlayer(player.uniqueId)
+            val isSaved = savedPagesService.findByCurrentSource(player.uniqueId, state) != null
+            Bukkit.getScheduler().runTask(plugin, Runnable {
+                if (!player.isOnline) return@Runnable
+                when (result) {
+                    SavedPagesService.ToggleResult.LIMIT_REACHED -> {
+                        temporaryOverrideSupport.replaceSlotTemporarily(
+                            menu = menu,
+                            slot = 51,
+                            temporaryButton = buttonFactory.actionButton(Material.BARRIER, "<!i><#FF1500>⚠ Превышен лимит", emptyList()),
+                            restoreAfterTicks = 30L,
+                            restoreButton = { buttonFactory.decorationHeadsSavePageButton(isSaved) { event -> toggleSaveCurrentPage(player, state, event.menu) } }
+                        )
+                    }
+                    else -> {
+                        menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isSaved) { event -> toggleSaveCurrentPage(player, state, event.menu) })
+                    }
+                }
+                menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(count) { openSavedPages(player, state, ALL_SAVED_PAGES_FILTER_KEY) })
+            })
+        }
+    }
+
+    fun onPlayerJoin(playerId: UUID) {
         recentService.pruneExpiredOnFirstJoin(playerId)
     }
 
     fun onInventoryClosed(player: Player, closedTitle: String) {
-        if (!closedTitle.contains(MENU_TITLE_PREFIX)) {
-            return
-        }
+        if (!closedTitle.contains(MENU_TITLE_PREFIX)) return
         Bukkit.getScheduler().runTask(plugin, Runnable {
             if (!player.isOnline) return@Runnable
             val currentTitle = PlainTextComponentSerializer.plainText().serialize(player.openInventory.title())
-            if (currentTitle.contains(MENU_TITLE_PREFIX)) {
-                return@Runnable
-            }
+            if (currentTitle.contains(MENU_TITLE_PREFIX)) return@Runnable
             recentService.commitDeferredPromotions(player.uniqueId)
         })
     }
 
-    fun clearPlayer(playerId: java.util.UUID) {
+    fun clearPlayer(playerId: UUID) {
         recentService.commitDeferredPromotions(playerId)
         sessionManager.clear(playerId)
     }
@@ -194,5 +348,10 @@ class MenuService(
             .filterNot { it.mode == CategoryMode.NEW }
             .map { CategoryOption(it.key, it.displayName) }
         return listOf(CategoryOption(ALL_RECENT_CATEGORY_KEY, "Все")) + filtered
+    }
+
+    private fun savedPagesFilterOptions(): List<CategoryOption> {
+        return listOf(CategoryOption(ALL_SAVED_PAGES_FILTER_KEY, "Все")) +
+            categoryRegistry.definitions.map { CategoryOption(it.key, it.displayName) }
     }
 }

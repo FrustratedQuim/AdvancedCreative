@@ -48,6 +48,25 @@ class Database(dataFolder: File) {
                     )
                     """.trimIndent()
                 )
+
+                st.executeUpdate(
+                    """
+                    CREATE TABLE IF NOT EXISTS decoration_head_saved_pages (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        player_uuid TEXT NOT NULL,
+                        source_mode TEXT NOT NULL,
+                        category_key TEXT NOT NULL,
+                        source_page INTEGER NOT NULL,
+                        search_query TEXT,
+                        search_query_key TEXT NOT NULL,
+                        note TEXT,
+                        map_color_key TEXT,
+                        created_at INTEGER NOT NULL,
+                        updated_at INTEGER NOT NULL,
+                        UNIQUE(player_uuid, source_mode, category_key, source_page, search_query_key)
+                    )
+                    """.trimIndent()
+                )
             }
             conn.createStatement().use { st ->
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_catalog_name_lower ON decoration_head_catalog(lower(head_name))")
@@ -60,6 +79,8 @@ class Database(dataFolder: File) {
                     """.trimIndent()
                 )
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_recent_player_pos ON decoration_head_recent(player_uuid, position)")
+st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_saved_pages_player ON decoration_head_saved_pages(player_uuid)")
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_saved_pages_player_category ON decoration_head_saved_pages(player_uuid, category_key)")
             }
             conn.commit()
         }

@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import ru.violence.coreapi.bukkit.api.menu.Menu
@@ -14,7 +15,9 @@ class ItemEditMenuSupport(
     private val sessionManager: ItemEditSessionManager,
     private val buttonFactory: MenuButtonFactory,
     private val parser: MiniMessageParser
-) {
+ ) {
+    private val temporaryOverrideSupport = TemporaryMenuButtonOverrideSupport(hooker.tickScheduler)
+
     val rootBlackSlots = setOf(0, 8, 9, 12, 14, 17, 18, 26, 27, 35, 36, 44)
     val advancedBlackSlots = setOf(0, 8, 9, 12, 14, 17, 18, 26, 27, 35, 36, 44, 45, 53)
     val editableSlot = 13
@@ -52,10 +55,7 @@ class ItemEditMenuSupport(
         restoreAfterTicks: Long,
         restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
     ) {
-        menu.setButton(slot, temporaryButton)
-        hooker.tickScheduler.runLater(restoreAfterTicks.coerceAtLeast(1L)) {
-            restoreButton().let { menu.setButton(slot, it) }
-        }
+        temporaryOverrideSupport.replaceSlotTemporarily(menu, slot, temporaryButton, restoreAfterTicks, restoreButton)
     }
 
     fun transition(session: ItemEditSession, action: () -> Unit) {

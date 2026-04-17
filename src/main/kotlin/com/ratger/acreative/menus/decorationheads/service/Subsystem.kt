@@ -12,8 +12,10 @@ import com.ratger.acreative.menus.decorationheads.menu.MenuService
 import com.ratger.acreative.menus.decorationheads.menu.SessionManager
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
+import com.ratger.acreative.menus.decorationheads.persistence.SavedPagesRepository
 import com.ratger.acreative.menus.decorationheads.persistence.Database
 import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
+import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Bukkit
@@ -44,6 +46,7 @@ class Subsystem(
     private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
     private val recentRepository = RecentRepository(database, playerRecentLimit)
     private val syncStateRepository = SyncStateRepository(database)
+    private val savedPagesRepository = SavedPagesRepository(database)
 
     private val requestFactory = MinecraftHeadsRequestFactory(
         baseUrl = config.getString("decoration-heads.api.base-url", "https://minecraft-heads.com")!!,
@@ -67,9 +70,11 @@ class Subsystem(
     )
     private val recentService = RecentService(recentRepository, syncStateRepository, executor, playerRecentLimit)
     private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
+    private val savedPagesService = SavedPagesService(savedPagesRepository, 45)
 
     private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())
     private val renderer = MenuRenderer(hooker.plugin, parser, buttonFactory, categoryRegistry)
+    private val temporaryMenuButtonOverrideSupport = TemporaryMenuButtonOverrideSupport(hooker.tickScheduler)
     val menuService = MenuService(
         plugin = hooker.plugin,
         sessionManager = sessionManager,
@@ -77,11 +82,17 @@ class Subsystem(
         categoryResolver = categoryResolver,
         catalogService = catalogService,
         recentService = recentService,
+        savedPagesService = savedPagesService,
         giveService = giveService,
         buttonFactory = buttonFactory,
         renderer = renderer,
-        executor = executor
+        executor = executor,
+        temporaryOverrideSupport = temporaryMenuButtonOverrideSupport
     )
+
+    init {
+        hooker.menuService.registerApplyTarget(menuService.applyTarget())
+    }
 
     private val syncService = SyncService(
         client = httpClient,

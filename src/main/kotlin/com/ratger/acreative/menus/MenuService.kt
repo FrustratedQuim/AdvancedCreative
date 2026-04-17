@@ -4,6 +4,8 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.commands.edit.EditTargetResolver
+import com.ratger.acreative.menus.apply.ApplyCommandCoordinator
+import com.ratger.acreative.menus.apply.ApplyCommandTarget
 import com.ratger.acreative.menus.edit.equippable.EquippableSupport
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.edit.head.HeadProfileService
@@ -99,6 +101,7 @@ class MenuService(
     private val consumableApplyEffectAddApplyHandler = ConsumableApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
 
     private var applyStateManager: ItemEditorApplyStateManager
+    private val applyCoordinator = ApplyCommandCoordinator()
 
     private val itemEditMenu = ItemEditMenu(
         hooker = hooker,
@@ -170,6 +173,16 @@ class MenuService(
             )
         )
 
+        applyCoordinator.registerTarget(object : ApplyCommandTarget {
+            override fun isWaiting(player: Player): Boolean = applyStateManager.isWaiting(player)
+            override fun handle(player: Player, args: Array<out String>): Boolean {
+                applyStateManager.handleApplyCommand(player, args)
+                return true
+            }
+            override fun tabComplete(player: Player, args: Array<out String>): List<String> = applyStateManager.tabComplete(player, args)
+            override fun cancel(player: Player) = applyStateManager.cancelWaiting(player, reopenMenu = false)
+        })
+
         sessionManager.addCloseListener { player, _ ->
             applyStateManager.cancelWaiting(player, reopenMenu = false)
         }
@@ -198,19 +211,23 @@ class MenuService(
     }
 
     fun handleApply(player: Player, args: Array<out String>) {
-        if (!applyStateManager.isWaiting(player)) {
+        if (!applyCoordinator.isWaiting(player)) {
             openItemEditor(player)
             return
         }
-        applyStateManager.handleApplyCommand(player, args)
+        applyCoordinator.handle(player, args)
     }
 
     fun tabCompleteApply(player: Player, args: Array<out String>): List<String> {
-        return applyStateManager.tabComplete(player, args)
+        return applyCoordinator.tabComplete(player, args)
     }
 
     fun handlePlayerDisconnect(player: Player) {
-        applyStateManager.cancelWaiting(player, reopenMenu = false)
+        applyCoordinator.cancel(player)
+    }
+
+    fun registerApplyTarget(target: ApplyCommandTarget) {
+        applyCoordinator.registerTarget(target)
     }
 
     fun headMutationSupport(): HeadTextureMutationSupport = headMutationSupport

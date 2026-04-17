@@ -4,6 +4,9 @@ import com.google.common.collect.LinkedHashMultimap
 import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.decorationheads.model.Entry
+import com.ratger.acreative.menus.decorationheads.model.SavedPageEntry
+import com.ratger.acreative.menus.decorationheads.support.MapPreviewColorPalette
+import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.edit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
@@ -167,6 +170,29 @@ class MenuButtonFactory(
         action = { action() }
     )
 
+
+    fun decorationHeadsMyPagesButton(count: Int, action: () -> Unit): Button = actionButton(
+        material = Material.BOOK,
+        name = "<!i><#FFD700>⭐ Мои страницы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
+        action = { action() }
+    )
+
+    fun decorationHeadsSavePageButton(isSaved: Boolean, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.PAPER,
+        name = if (isSaved) "<!i><#FFD700>✎ Страница сохранена" else "<!i><#FFD700>✎ Сохранить страницу",
+        lore = listOf(
+            if (isSaved) "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить" else "<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"
+        ),
+        itemModifier = {
+            if (isSaved) {
+                glint(true)
+            }
+            this
+        },
+        action = action
+    )
+
     fun decorationHeadsReminderButton(): Button = actionButton(
         material = Material.FIRE_CHARGE,
         name = "<!i><#FFD700>ℹ Важно!",
@@ -183,6 +209,96 @@ class MenuButtonFactory(
             "<!i><#FFE68A>  удалена отсюда.",
             ""
         )
+    )
+
+
+    fun decorationHeadsSavedPageButton(
+        entry: SavedPageEntry,
+        displayCategory: String,
+        action: (ClickEvent) -> Unit
+    ): Button {
+        val item = ItemBuilder(Material.FILLED_MAP)
+            .name(parser.parse("<!i><#FFD700>Страница #${entry.id}"))
+            .lore(
+                buildList {
+                    add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${sanitizeMiniMessageText(displayCategory)}")
+                    entry.note?.let { add("<!i><#FFD700>▍ <#FFE68A>Пометка: <#FFF3E0>${sanitizeMiniMessageText(it)}") }
+                    add("")
+                    add("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы перейти")
+                    add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы изменить")
+                }.map(parser::parse)
+            )
+            .flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+            .build()
+
+        MapItemSupport.setColor(item, MapPreviewColorPalette.colorFor(entry.mapColorKey))
+        return protectedButton(item, action)
+    }
+
+    fun decorationHeadsSavedPageNoteButton(note: String?, onApply: (ClickEvent) -> Unit, onReset: (ClickEvent) -> Unit): Button {
+        val usageLore = listOf(
+            "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+            "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить",
+            "",
+            "<!i><#FFD700>После нажатия:",
+            "<!i><#C7A300> ● <#FFF3E0>/apply <текст> <#C7A300>- <#FFE68A>задать ",
+            "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена",
+            ""
+        )
+        val active = !note.isNullOrBlank()
+        val activeLore = if (note.isNullOrBlank()) usageLore else listOf("<!i><#C7A300>▍ <#FFF3E0>${sanitizeMiniMessageText(note)}", "") + usageLore
+        return applyResetButton(
+            material = Material.WRITABLE_BOOK,
+            active = active,
+            activeName = "<!i><#C7A300>◎ <#FFD700>Пометка: <#00FF40>Задана",
+            inactiveName = "<!i><#C7A300>⭘ <#FFD700>Пометка: <#FF1500>Пусто",
+            activeLore = activeLore,
+            inactiveLore = usageLore,
+            onApply = onApply,
+            onReset = onReset
+        )
+    }
+
+    fun decorationHeadsSavedPageNumberButton(sourcePage: Int, action: () -> Unit): Button = actionButton(
+        material = Material.SPYGLASS,
+        name = "<!i><#C7A300>₪ <#FFD700>Страница: <#00FF40>$sourcePage",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        action = { action() }
+    )
+
+    fun decorationHeadsSavedPageColorButton(
+        mapColorKey: String?,
+        onChange: (ClickEvent, Boolean) -> Unit
+    ): Button {
+        val selected = MapPreviewColorPalette.optionFor(mapColorKey)
+        val active = selected.key != MapPreviewColorPalette.ORDINARY_KEY
+        val lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", "") +
+            MapPreviewColorPalette.options.map { option ->
+                val prefix = if (option.key == selected.key) "<!i>  <#00FF40>» " else "<!i><b> </b><#C7A300>» "
+                "$prefix<${option.labelMiniColor}>${option.label}"
+            }
+        return actionButton(
+            material = Material.BRUSH,
+            name = if (active) "<!i><#C7A300>◎ <#FFD700>Цвет предмета" else "<!i><#C7A300>⭘ <#FFD700>Цвет предмета",
+            lore = lore,
+            itemModifier = {
+                if (active) glint(true)
+                this
+            },
+            action = { event ->
+                when {
+                    event.isLeft || event.isShiftLeft -> onChange(event, true)
+                    event.isRight || event.isShiftRight -> onChange(event, false)
+                }
+            }
+        )
+    }
+
+    fun decorationHeadsSavedPageDeleteButton(action: () -> Unit): Button = actionButton(
+        material = Material.BARRIER,
+        name = "<!i><#FF1500>⚠ Удалить страницу",
+        lore = emptyList(),
+        action = { action() }
     )
 
     fun decorationHeadsResultButton(

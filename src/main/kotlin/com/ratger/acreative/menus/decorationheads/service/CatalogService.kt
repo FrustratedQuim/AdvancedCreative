@@ -9,6 +9,7 @@ import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuState
 import com.ratger.acreative.menus.decorationheads.model.PageResult
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
+import com.ratger.acreative.menus.decorationheads.support.SearchQueryNormalizer
 
 class CatalogService(
     private val cache: Cache,
@@ -86,7 +87,7 @@ class CatalogService(
         return entries
     }
 
-    private fun normalizeQuery(rawQuery: String): String? = rawQuery.trim().lowercase().takeIf { it.isNotBlank() }
+    private fun normalizeQuery(rawQuery: String): String? = SearchQueryNormalizer.normalize(rawQuery)
 
     private fun containsCyrillic(rawQuery: String): Boolean = cyrillicRegex.containsMatchIn(rawQuery)
 }
