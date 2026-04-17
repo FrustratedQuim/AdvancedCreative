@@ -21,7 +21,7 @@ object PotionItemSupport {
         val index: Int,
         val effect: PotionEffect,
         val displayName: String,
-        val seconds: Int,
+        val durationLabel: String,
         val displayLevel: Int,
         val showParticles: Boolean,
         val showIcon: Boolean
@@ -117,7 +117,7 @@ object PotionItemSupport {
                 index = index,
                 effect = effect,
                 displayName = displayName(effect.type),
-                seconds = seconds(effect.duration),
+                durationLabel = durationLabel(effect.duration),
                 displayLevel = displayLevel(effect.amplifier),
                 showParticles = effect.hasParticles(),
                 showIcon = effect.hasIcon()
@@ -171,6 +171,11 @@ object PotionItemSupport {
     fun displayLevel(amplifier: Int): Int = amplifier + 1
 
     fun seconds(ticks: Int): Int = (ticks / 20).coerceAtLeast(1)
+
+    fun durationLabel(ticks: Int): String {
+        if (ticks == PotionEffect.INFINITE_DURATION) return "∞"
+        return seconds(ticks).toString()
+    }
 
     fun previewPotionType(type: PotionEffectType): PotionType? {
         val path = keyPath(type)

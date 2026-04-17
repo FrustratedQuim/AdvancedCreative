@@ -58,7 +58,7 @@ class DeathProtectionApplyEffectsListPage(
                 buttonFactory.potionApplyEffectEntryButton(
                     index = entry.index + 1,
                     displayName = PotionItemSupport.displayName(entry.effect.type),
-                    seconds = PotionItemSupport.seconds(entry.effect.duration),
+                    durationLabel = PotionItemSupport.durationLabel(entry.effect.duration),
                     level = entry.effect.amplifier + 1,
                     chancePercent = formatChancePercent(entry.probability),
                     showParticles = entry.effect.showParticles,

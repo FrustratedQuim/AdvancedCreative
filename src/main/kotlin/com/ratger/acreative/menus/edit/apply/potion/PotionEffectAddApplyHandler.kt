@@ -25,7 +25,7 @@ class PotionEffectAddApplyHandler(
 
         val effectType = parser.effectFromToken(args[0]) ?: return ApplyExecutionResult.UnknownValue
         val level = args.getOrNull(1)?.toIntOrNull() ?: 1
-        val durationSeconds = args.getOrNull(2)?.toIntOrNull() ?: 30
+        val durationTicks = parseDurationTicks(args.getOrNull(2)) ?: return ApplyExecutionResult.InvalidValue
         val showParticlesInput = args.getOrNull(3)
         val showIconInput = args.getOrNull(4)
         val showParticles = when {
@@ -37,12 +37,9 @@ class PotionEffectAddApplyHandler(
             else -> parser.parseBooleanStrict(showIconInput) ?: return ApplyExecutionResult.InvalidValue
         }
 
-        if (level < 1 || durationSeconds <= 0) return ApplyExecutionResult.InvalidValue
+        if (level < 1) return ApplyExecutionResult.InvalidValue
 
         val amplifier = level - 1
-        val ticksLong = durationSeconds.toLong() * 20L
-        if (ticksLong > Int.MAX_VALUE) return ApplyExecutionResult.InvalidValue
-        val durationTicks = ticksLong.toInt()
 
         val action = ItemAction.PotionEffectAdd(
             type = effectType,
@@ -62,11 +59,24 @@ class PotionEffectAddApplyHandler(
         return ApplyExecutionResult.Success
     }
 
+    private fun parseDurationTicks(raw: String?): Int? {
+        if (raw == null) return 30 * 20
+        if (raw.equals("inf", ignoreCase = true)) return PotionEffect.INFINITE_DURATION
+
+        val seconds = raw.toIntOrNull() ?: return null
+        if (seconds <= 0) return null
+
+        val ticksLong = seconds.toLong() * 20L
+        if (ticksLong > Int.MAX_VALUE) return null
+
+        return ticksLong.toInt()
+    }
+
     override fun suggestions(args: Array<out String>): List<String> {
         return when (args.size) {
             1 -> PotionItemSupport.effectSuggestions(args[0])
             2 -> listOf("1", "2", "5", "10").filter { it.startsWith(args[1], ignoreCase = true) }
-            3 -> listOf("30", "60", "120", "300").filter { it.startsWith(args[2], ignoreCase = true) }
+            3 -> listOf("30", "60", "120", "300", "inf").filter { it.startsWith(args[2], ignoreCase = true) }
             4, 5 -> listOf("true", "false").filter { it.startsWith(args.last(), ignoreCase = true) }
             else -> emptyList()
         }

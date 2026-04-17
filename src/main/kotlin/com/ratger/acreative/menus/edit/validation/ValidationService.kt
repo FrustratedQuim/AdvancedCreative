@@ -16,6 +16,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.inventory.meta.Damageable
+import org.bukkit.potion.PotionEffect
 
 class ValidationService {
     fun isValidKey(raw: String): Boolean = runCatching { Key.key(raw) }.isSuccess
@@ -58,8 +59,10 @@ class ValidationService {
 
             is ItemAction.PotionEffectAdd -> {
                 if (!context.snapshot.isPotion) return false
-                if (action.duration < 0 || action.amplifier < 0) return false
-                if (action.duration > Int.MAX_VALUE / 2) return false
+                val isInfinite = action.duration == PotionEffect.INFINITE_DURATION
+                if (!isInfinite && action.duration <= 0) return false
+                if (action.amplifier < 0) return false
+                if (!isInfinite && action.duration > Int.MAX_VALUE / 2) return false
                 if (action.amplifier > 255) return false
             }
 

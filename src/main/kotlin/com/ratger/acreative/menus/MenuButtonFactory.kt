@@ -771,7 +771,7 @@ class MenuButtonFactory(
     fun potionApplyEffectEntryButton(
         index: Int,
         displayName: String,
-        seconds: Int,
+        durationLabel: String,
         level: Int,
         chancePercent: String,
         showParticles: Boolean,
@@ -789,7 +789,7 @@ class MenuButtonFactory(
                 "<!i><#FFD700>Параметры:",
                 "<!i><#C7A300> ● <#FFE68A>Шанс: <#00FF40>$chancePercent% ",
                 "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$displayName ",
-                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$seconds ",
+                "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$durationLabel ",
                 "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>$level ",
                 "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
                 "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",

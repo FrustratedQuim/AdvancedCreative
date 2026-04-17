@@ -75,7 +75,7 @@ class PotionEffectsActivePage(
             "",
             "<!i><#FFD700>Параметры:",
             "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>${entry.displayName} ",
-            "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.seconds} ",
+            "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>${entry.durationLabel} ",
             "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.displayLevel} ",
             "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (entry.showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
             "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (entry.showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
