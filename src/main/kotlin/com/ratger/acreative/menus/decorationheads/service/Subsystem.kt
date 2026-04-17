@@ -16,6 +16,7 @@ import com.ratger.acreative.menus.decorationheads.persistence.SavedPagesReposito
 import com.ratger.acreative.menus.decorationheads.persistence.Database
 import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
+import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import org.bukkit.Bukkit
@@ -87,7 +88,9 @@ class Subsystem(
         buttonFactory = buttonFactory,
         renderer = renderer,
         executor = executor,
-        temporaryOverrideSupport = temporaryMenuButtonOverrideSupport
+        temporaryOverrideSupport = temporaryMenuButtonOverrideSupport,
+        messageManager = hooker.messageManager,
+        promptService = ApplyPromptService(hooker.messageManager)
     )
 
     init {

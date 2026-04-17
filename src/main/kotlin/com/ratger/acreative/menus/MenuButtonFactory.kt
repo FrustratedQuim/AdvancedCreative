@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.model.SavedPageEntry
+import com.ratger.acreative.menus.decorationheads.model.SavedPageSourceMode
 import com.ratger.acreative.menus.decorationheads.support.MapPreviewColorPalette
 import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.edit.head.PlayerProfileCopyHelper
@@ -218,11 +219,16 @@ class MenuButtonFactory(
         action: (ClickEvent) -> Unit
     ): Button {
         val item = ItemBuilder(Material.FILLED_MAP)
-            .name(parser.parse("<!i><#FFD700>Страница #${entry.id}"))
+            .name(parser.parse("<!i><#FFD700>Страница #${entry.sourcePage}"))
             .lore(
                 buildList {
                     add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${sanitizeMiniMessageText(displayCategory)}")
-                    entry.note?.let { add("<!i><#FFD700>▍ <#FFE68A>Пометка: <#FFF3E0>${sanitizeMiniMessageText(it)}") }
+                    if (entry.sourceMode == SavedPageSourceMode.SEARCH) {
+                        entry.searchQuery?.takeIf { it.isNotBlank() }?.let {
+                            add("<!i><#FFD700>▍ <#FFE68A>Запрос: <#FFF3E0>${sanitizeMiniMessageText(it)}")
+                        }
+                    }
+                    entry.note?.let { add("<!i><#FFD700>▍ <#FFE68A>Пометка: <#FFF3E0>${allowMiniMessageColors(it)}") }
                     add("")
                     add("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы перейти")
                     add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы изменить")
@@ -246,7 +252,7 @@ class MenuButtonFactory(
             ""
         )
         val active = !note.isNullOrBlank()
-        val activeLore = if (note.isNullOrBlank()) usageLore else listOf("<!i><#C7A300>▍ <#FFF3E0>${sanitizeMiniMessageText(note)}", "") + usageLore
+        val activeLore = if (note.isNullOrBlank()) usageLore else listOf("<!i><#C7A300>▍ <#FFF3E0>${allowMiniMessageColors(note)}", "") + usageLore
         return applyResetButton(
             material = Material.WRITABLE_BOOK,
             active = active,
@@ -271,27 +277,24 @@ class MenuButtonFactory(
         onChange: (ClickEvent, Boolean) -> Unit
     ): Button {
         val selected = MapPreviewColorPalette.optionFor(mapColorKey)
-        val active = selected.key != MapPreviewColorPalette.ORDINARY_KEY
-        val lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", "") +
-            MapPreviewColorPalette.options.map { option ->
-                val prefix = if (option.key == selected.key) "<!i>  <#00FF40>» " else "<!i><b> </b><#C7A300>» "
-                "$prefix<${option.labelMiniColor}>${option.label}"
-            }
-        return actionButton(
+        val options = MapPreviewColorPalette.options.map { option ->
+            TextShadowOption(
+                colorTag = if (option.key == MapPreviewColorPalette.ORDINARY_KEY) "ordinary" else option.legacyMiniColorTag,
+                label = option.label,
+                selected = option.key == selected.key
+            )
+        }
+        val selectedIndex = options.indexOfFirst { it.selected }.takeIf { it >= 0 } ?: 0
+        return textShadowSelectButton(
             material = Material.BRUSH,
-            name = if (active) "<!i><#C7A300>◎ <#FFD700>Цвет предмета" else "<!i><#C7A300>⭘ <#FFD700>Цвет предмета",
-            lore = lore,
-            itemModifier = {
-                if (active) glint(true)
-                this
-            },
-            action = { event ->
-                when {
-                    event.isLeft || event.isShiftLeft -> onChange(event, true)
-                    event.isRight || event.isShiftRight -> onChange(event, false)
-                }
-            }
-        )
+            activeTitle = "<!i><#C7A300>◎ <#FFD700>Цвет предмета",
+            inactiveTitle = "<!i><#C7A300>⭘ <#FFD700>Цвет предмета",
+            active = selected.key != MapPreviewColorPalette.ORDINARY_KEY,
+            options = options
+        ) { event, newIndex ->
+            val isForward = newIndex == (selectedIndex + 1) % options.size
+            onChange(event, isForward)
+        }
     }
 
     fun decorationHeadsSavedPageDeleteButton(action: () -> Unit): Button = actionButton(
@@ -344,6 +347,9 @@ class MenuButtonFactory(
             .replace("§", "§\u200B")
                         .replace("<", "\\<")
                         .replace(">", "\\>")
+
+    private fun allowMiniMessageColors(input: String): String =
+        input.replace("§", "§\u200B")
 
     fun actionButton(
         material: Material,

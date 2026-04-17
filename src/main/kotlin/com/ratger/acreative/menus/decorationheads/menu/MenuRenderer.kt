@@ -40,7 +40,10 @@ class MenuRenderer(
         onSearch: () -> Unit
     ) {
         val categoryName = categoryRegistry.byKey(state.categoryKey)?.displayName ?: state.categoryKey
-        val menu = baseMenu("▍ Головы → $categoryName [${pageResult.page}/${pageResult.totalPages}]", setOf(46, 47, 48, 49, 50, 51, 52) + (0..44).toSet())
+        val menu = baseMenu(
+            "▍ Головы → $categoryName [${pageResult.page}/${pageResult.totalPages}]",
+            setOf(46, 47, 48, 49, 50, 51, 52) + contentSlots(pageResult.entries.size)
+        )
 
         fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 48, 50, 51, 52))
         if (pageResult.page > 1) menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
@@ -76,7 +79,7 @@ class MenuRenderer(
         onSwitchCategory: (Int) -> Unit,
         onBack: () -> Unit
     ) {
-        val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(47, 48, 49, 52) + (0..44).toSet())
+        val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(47, 48, 49, 52) + contentSlots(entries.size))
         fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 50, 51, 52))
         menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { onMyPages() })
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
@@ -91,7 +94,6 @@ class MenuRenderer(
 
     fun renderSavedPagesMenu(
         player: Player,
-        selectedFilterTitle: String,
         filterOptions: List<String>,
         selectedFilterIndex: Int,
         entries: List<SavedPageEntry>,
@@ -101,7 +103,7 @@ class MenuRenderer(
         onOpenEntry: (SavedPageEntry) -> Unit,
         onEditEntry: (SavedPageEntry) -> Unit
     ) {
-        val menu = baseMenu("▍ Головы → Мои страницы", setOf(48, 49) + (0..44).toSet())
+        val menu = baseMenu("▍ Головы → Мои страницы", setOf(48, 49) + contentSlots(entries.size))
         fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 48, 50, 51, 52))
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(filterOptions, selectedFilterIndex) { onFilter(it) })
@@ -131,7 +133,13 @@ class MenuRenderer(
             .title(parser.parse("▍ Страница #${entry.id} → Редактор"))
             .rows(MenuRows.THREE)
             .postClickRefresh(false)
-            .clickListener { event -> event.rawSlot !in 0..26 || event.rawSlot in setOf(11, 12, 13, 15, 18) }
+            .clickListener { event ->
+                allowClick(
+                    event = event,
+                    menuTopRange = 0..26,
+                    interactiveTopSlots = setOf(9, 11, 12, 13, 15)
+                )
+            }
             .dragListener { event -> event.rawSlots.none { it in 0..26 } }
             .build()
 
@@ -144,7 +152,7 @@ class MenuRenderer(
         menu.setButton(12, buttonFactory.decorationHeadsSavedPageNumberButton(entry.sourcePage) { onEditPage() })
         menu.setButton(13, buttonFactory.decorationHeadsSavedPageColorButton(entry.mapColorKey) { _, forward -> onChangeColor(forward) })
         menu.setButton(15, buttonFactory.decorationHeadsSavedPageDeleteButton { onDelete() })
-        menu.setButton(18, buttonFactory.decorationHeadsBackButton { onBack() })
+        menu.setButton(9, buttonFactory.decorationHeadsBackButton { onBack() })
 
         menu.open(player)
     }
@@ -153,7 +161,13 @@ class MenuRenderer(
         .title(parser.parse(title))
         .rows(MenuRows.SIX)
         .postClickRefresh(false)
-        .clickListener { event -> event.rawSlot !in 0..53 || event.rawSlot in interactiveTopSlots }
+        .clickListener { event ->
+            allowClick(
+                event = event,
+                menuTopRange = 0..53,
+                interactiveTopSlots = interactiveTopSlots
+            )
+        }
         .dragListener { event -> event.rawSlots.none { it in 0..53 } }
         .build()
 
@@ -162,5 +176,21 @@ class MenuRenderer(
         val grayButton = buttonFactory.decorationHeadsGrayFiller()
         black.forEach { slot -> menu.setButton(slot, blackButton) }
         gray.forEach { slot -> menu.setButton(slot, grayButton) }
+    }
+
+    private fun contentSlots(entryCount: Int): Set<Int> {
+        val safeCount = entryCount.coerceIn(0, 45)
+        return (0 until safeCount).toSet()
+    }
+
+    private fun allowClick(
+        event: ClickEvent,
+        menuTopRange: IntRange,
+        interactiveTopSlots: Set<Int>
+    ): Boolean {
+        if ((event.isShiftLeft || event.isShiftRight) && event.rawSlot !in menuTopRange) {
+            return false
+        }
+        return event.rawSlot !in menuTopRange || event.rawSlot in interactiveTopSlots
     }
 }

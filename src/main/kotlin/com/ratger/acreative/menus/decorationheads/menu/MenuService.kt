@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
+import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
@@ -13,6 +14,7 @@ import com.ratger.acreative.menus.decorationheads.service.RecentService
 import com.ratger.acreative.menus.decorationheads.service.SavedPagesService
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
+import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -32,7 +34,9 @@ class MenuService(
     private val buttonFactory: MenuButtonFactory,
     private val renderer: MenuRenderer,
     private val executor: ExecutorService,
-    private val temporaryOverrideSupport: TemporaryMenuButtonOverrideSupport
+    private val temporaryOverrideSupport: TemporaryMenuButtonOverrideSupport,
+    private val messageManager: MessageManager,
+    private val promptService: ApplyPromptService
 ) {
     private data class CategoryOption(val key: String, val displayName: String)
 
@@ -60,6 +64,8 @@ class MenuService(
 
     private val noteApplyStateManager = SavedPageNoteApplyStateManager(
         plugin = plugin,
+        messageManager = messageManager,
+        promptService = promptService,
         onApply = { player, pageId, note ->
             executor.submit {
                 savedPagesService.updateNote(player.uniqueId, pageId, note)
@@ -212,7 +218,6 @@ class MenuService(
                 if (!player.isOnline) return@Runnable
                 renderer.renderSavedPagesMenu(
                     player = player,
-                    selectedFilterTitle = selected.displayName,
                     filterOptions = filterOptions.map { it.displayName },
                     selectedFilterIndex = selectedIndex,
                     entries = entries,
