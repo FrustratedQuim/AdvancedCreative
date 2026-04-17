@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
@@ -129,24 +130,24 @@ class MenuRenderer(
         onChangeColor: (Boolean) -> Unit,
         onDelete: () -> Unit
     ) {
-        val menu = Menu.newBuilder(plugin)
-            .title(parser.parse("▍ Страница #${entry.id} → Редактор"))
-            .rows(MenuRows.THREE)
-            .postClickRefresh(false)
-            .clickListener { event ->
-                allowClick(
-                    event = event,
-                    menuTopRange = 0..26,
-                    interactiveTopSlots = setOf(9, 11, 12, 13, 15)
-                )
-            }
-            .dragListener { event -> event.rawSlots.none { it in 0..26 } }
-            .build()
+        val menu = MenuUiSupport.buildMenu(
+            plugin = plugin,
+            parser = parser,
+            title = "▍ Страница #${entry.id} → Редактор",
+            rows = MenuRows.THREE,
+            menuTopRange = 0..26,
+            interactiveTopSlots = setOf(9, 11, 12, 13, 15),
+            allowPlayerInventoryClicks = true,
+            blockShiftClickFromPlayerInventory = true
+        )
 
-        val black = buttonFactory.decorationHeadsBlackFiller()
-        val gray = buttonFactory.decorationHeadsGrayFiller()
-        val blackSlots = setOf(0, 8, 9, 17, 26)
-        (0..26).forEach { slot -> menu.setButton(slot, if (slot in blackSlots) black else gray) }
+        MenuUiSupport.fillByMask(
+            menu = menu,
+            menuSize = 27,
+            primarySlots = setOf(0, 8, 9, 17, 26),
+            primaryButton = buttonFactory.decorationHeadsBlackFiller(),
+            secondaryButton = buttonFactory.decorationHeadsGrayFiller()
+        )
 
         menu.setButton(11, buttonFactory.decorationHeadsSavedPageNoteButton(entry.note, onApply = { onEditNote() }, onReset = { onResetNote() }))
         menu.setButton(12, buttonFactory.decorationHeadsSavedPageNumberButton(entry.sourcePage) { onEditPage() })
@@ -157,19 +158,16 @@ class MenuRenderer(
         menu.open(player)
     }
 
-    private fun baseMenu(title: String, interactiveTopSlots: Set<Int>): Menu = Menu.newBuilder(plugin)
-        .title(parser.parse(title))
-        .rows(MenuRows.SIX)
-        .postClickRefresh(false)
-        .clickListener { event ->
-            allowClick(
-                event = event,
-                menuTopRange = 0..53,
-                interactiveTopSlots = interactiveTopSlots
-            )
-        }
-        .dragListener { event -> event.rawSlots.none { it in 0..53 } }
-        .build()
+    private fun baseMenu(title: String, interactiveTopSlots: Set<Int>): Menu = MenuUiSupport.buildMenu(
+        plugin = plugin,
+        parser = parser,
+        title = title,
+        rows = MenuRows.SIX,
+        menuTopRange = 0..53,
+        interactiveTopSlots = interactiveTopSlots,
+        allowPlayerInventoryClicks = true,
+        blockShiftClickFromPlayerInventory = true
+    )
 
     private fun fillBase(menu: Menu, black: Set<Int>, gray: Set<Int>) {
         val blackButton = buttonFactory.decorationHeadsBlackFiller()
@@ -181,16 +179,5 @@ class MenuRenderer(
     private fun contentSlots(entryCount: Int): Set<Int> {
         val safeCount = entryCount.coerceIn(0, 45)
         return (0 until safeCount).toSet()
-    }
-
-    private fun allowClick(
-        event: ClickEvent,
-        menuTopRange: IntRange,
-        interactiveTopSlots: Set<Int>
-    ): Boolean {
-        if ((event.isShiftLeft || event.isShiftRight) && event.rawSlot !in menuTopRange) {
-            return false
-        }
-        return event.rawSlot !in menuTopRange || event.rawSlot in interactiveTopSlots
     }
 }

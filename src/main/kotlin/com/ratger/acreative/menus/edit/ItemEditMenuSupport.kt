@@ -1,14 +1,13 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.MenuButtonFactory
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
-import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
-import ru.violence.coreapi.bukkit.api.menu.event.DragEvent
 
 class ItemEditMenuSupport(
     private val hooker: FunctionHooker,
@@ -29,22 +28,26 @@ class ItemEditMenuSupport(
         interactiveTopSlots: Set<Int>,
         session: ItemEditSession,
         allowPlayerInventoryClicks: Boolean = false
-    ): Menu = Menu.newBuilder(hooker.plugin)
-        .title(parser.parse(title))
-        .rows(rows)
-        .postClickRefresh(false)
-        .clickListener(editorClickListener(menuSize, interactiveTopSlots, allowPlayerInventoryClicks))
-        .dragListener(editorDragListener(menuSize))
-        .openListener { session.isInternalTransition = false }
-        .closeListener(editorCloseListener(session))
-        .build()
+    ): Menu = MenuUiSupport.buildMenu(
+        plugin = hooker.plugin,
+        parser = parser,
+        title = title,
+        rows = rows,
+        menuTopRange = 0 until menuSize,
+        interactiveTopSlots = interactiveTopSlots,
+        allowPlayerInventoryClicks = allowPlayerInventoryClicks,
+        onOpen = { session.isInternalTransition = false },
+        onClose = editorCloseListener(session)
+    )
 
     fun fillBase(menu: Menu, menuSize: Int, blackSlots: Set<Int>) {
-        val blackFiller = buttonFactory.blackFillerButton()
-        val grayFiller = buttonFactory.grayFillerButton()
-        for (slot in 0 until menuSize) {
-            menu.setButton(slot, if (slot in blackSlots) blackFiller else grayFiller)
-        }
+        MenuUiSupport.fillByMask(
+            menu = menu,
+            menuSize = menuSize,
+            primarySlots = blackSlots,
+            primaryButton = buttonFactory.blackFillerButton(),
+            secondaryButton = buttonFactory.grayFillerButton()
+        )
     }
 
 
@@ -63,22 +66,6 @@ class ItemEditMenuSupport(
         action()
     }
 
-    private fun editorClickListener(
-        menuSize: Int,
-        interactiveTopSlots: Set<Int>,
-        allowPlayerInventoryClicks: Boolean
-    ) = { event: ClickEvent ->
-        val rawSlot = event.rawSlot
-        if (rawSlot in 0 until menuSize) {
-            rawSlot in interactiveTopSlots
-        } else {
-            allowPlayerInventoryClicks
-        }
-    }
-
-    private fun editorDragListener(menuSize: Int) = { event: DragEvent ->
-        event.rawSlots.none { it in 0 until menuSize }
-    }
 
     private fun editorCloseListener(session: ItemEditSession) = { event: CloseEvent ->
         if (event.player.uniqueId == session.playerId && !session.isInternalTransition) {
