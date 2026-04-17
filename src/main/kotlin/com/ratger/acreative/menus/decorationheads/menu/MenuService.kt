@@ -210,7 +210,7 @@ class MenuService(
         val filterOptions = savedPagesFilterOptions()
         val selectedFilterKey = selectedFilterKeyOverride
             ?: savedPagesFilterByPlayer[player.uniqueId]
-            ?: originState.categoryKey
+            ?: ALL_SAVED_PAGES_FILTER_KEY
         val selectedIndex = filterOptions.indexOfFirst { it.key == selectedFilterKey }.takeIf { it >= 0 } ?: 0
         val selected = filterOptions[selectedIndex]
         savedPagesFilterByPlayer[player.uniqueId] = selected.key
