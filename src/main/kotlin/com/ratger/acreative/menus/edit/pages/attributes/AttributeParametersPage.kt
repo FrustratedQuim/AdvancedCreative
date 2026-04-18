@@ -101,7 +101,10 @@ class AttributeParametersPage(
                     "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
                     ""
                 ),
-                afterOptionsLore = listOf("")
+                afterOptionsLore = listOf(""),
+                itemModifier = {
+                    buttonFactory.hideAttributes().invoke(this)
+                }
             ) { _, newIndex ->
                 flowService.setSlotByIndex(session, newIndex)
                 support.transition(session) { open(player, session, openParent, openTypePage) }

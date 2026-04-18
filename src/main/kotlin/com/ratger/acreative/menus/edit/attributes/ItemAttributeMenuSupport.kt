@@ -197,15 +197,26 @@ object ItemAttributeMenuSupport {
     }
 
     fun formatAmount(modifier: AttributeModifier): String {
-        val value = when (modifier.operation) {
-            AttributeModifier.Operation.ADD_NUMBER -> BigDecimal.valueOf(modifier.amount)
-            AttributeModifier.Operation.ADD_SCALAR,
-            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> BigDecimal.valueOf(modifier.amount).multiply(BigDecimal.valueOf(100))
-        }
+        val value = toDisplayAmount(modifier.amount, modifier.operation)
         val plain = value.stripTrailingZeros().toPlainString()
         val sign = if (value.signum() >= 0) "+" else ""
         val suffix = if (modifier.operation == AttributeModifier.Operation.ADD_NUMBER) "" else "%"
         return "$sign$plain$suffix"
+    }
+
+    fun normalizeInputAmount(parsed: BigDecimal, operation: AttributeModifier.Operation): Double {
+        val clampedInput = clampInputAmount(parsed, operation)
+        val normalized = when (operation) {
+            AttributeModifier.Operation.ADD_NUMBER -> clampedInput
+            AttributeModifier.Operation.ADD_SCALAR,
+            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> clampedInput.divide(BigDecimal("100"))
+        }
+        val (min, max) = attributeRange()
+        return normalized.coerceIn(min, max).toDouble()
+    }
+
+    fun clampInputAmount(parsed: BigDecimal, operation: AttributeModifier.Operation): BigDecimal {
+        return parsed.coerceInPercentAwareRange(operation)
     }
 
     fun attributeTokenMap(): Map<String, Attribute> {
@@ -230,11 +241,6 @@ object ItemAttributeMenuSupport {
             if (seen.add(it)) ordered.add(it)
         }
         return ordered
-    }
-
-    fun clampAmount(parsed: BigDecimal): Double {
-        val (min, max) = attributeRange()
-        return parsed.coerceIn(min, max).toDouble()
     }
 
     fun suggestedValues(attribute: Attribute): List<String> {
@@ -271,4 +277,28 @@ object ItemAttributeMenuSupport {
     private infix fun String.bd(max: String): Pair<BigDecimal, BigDecimal> {
         return BigDecimal(this) to BigDecimal(max)
     }
+
+    private fun toDisplayAmount(amount: Double, operation: AttributeModifier.Operation): BigDecimal {
+        val stored = BigDecimal.valueOf(amount)
+        return when (operation) {
+            AttributeModifier.Operation.ADD_NUMBER -> stored
+            AttributeModifier.Operation.ADD_SCALAR,
+            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> stored.multiply(BigDecimal.valueOf(100))
+        }
+    }
+
+    private fun BigDecimal.coerceInPercentAwareRange(operation: AttributeModifier.Operation): BigDecimal {
+        val (min, max) = when (operation) {
+            AttributeModifier.Operation.ADD_NUMBER -> attributeRange()
+            AttributeModifier.Operation.ADD_SCALAR,
+            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> percentInputRange()
+        }
+        return coerceIn(min, max)
+    }
+
+    private fun percentInputRange(): Pair<BigDecimal, BigDecimal> {
+        val (min, max) = attributeRange()
+        return min.multiply(BigDecimal("100")) to max.multiply(BigDecimal("100"))
+    }
+
 }

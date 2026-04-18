@@ -4,7 +4,6 @@ import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
-import java.math.BigDecimal
 import java.util.UUID
 
 class AttributeMenuFlowService {
@@ -25,8 +24,7 @@ class AttributeMenuFlowService {
         SlotGroupSpec.HEAD,
         SlotGroupSpec.CHEST,
         SlotGroupSpec.LEGS,
-        SlotGroupSpec.FEET,
-        SlotGroupSpec.BODY
+        SlotGroupSpec.FEET
     )
 
     fun begin(session: ItemEditSession) {
@@ -54,8 +52,8 @@ class AttributeMenuFlowService {
         val sanitized = rawInput?.trim().orEmpty()
         if (sanitized.isBlank()) return
         val parsed = sanitized.toBigDecimalOrNull() ?: return
-        val clamped = ItemAttributeMenuSupport.clampAmount(parsed)
-        session.attributeDraftAmount = BigDecimal.valueOf(clamped).stripTrailingZeros().toPlainString()
+        val clamped = ItemAttributeMenuSupport.clampInputAmount(parsed, session.attributeDraftOperation)
+        session.attributeDraftAmount = clamped.stripTrailingZeros().toPlainString()
     }
 
     fun setOperationByIndex(session: ItemEditSession, index: Int) {
@@ -95,14 +93,14 @@ class AttributeMenuFlowService {
     fun apply(session: ItemEditSession): Boolean {
         val attribute = resolveSelected(session) ?: return false
         val amount = session.attributeDraftAmount.toBigDecimalOrNull() ?: return false
-        val clampedAmount = ItemAttributeMenuSupport.clampAmount(amount)
+        val normalizedAmount = ItemAttributeMenuSupport.normalizeInputAmount(amount, session.attributeDraftOperation)
 
         val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(session.editableItem)
         explicit.put(
             attribute,
             AttributeModifierFactory.create(
                 key = randomModifierKey(),
-                amount = clampedAmount,
+                amount = normalizedAmount,
                 operation = session.attributeDraftOperation,
                 slotGroupSpec = session.attributeDraftSlot
             )

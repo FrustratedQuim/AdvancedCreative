@@ -42,15 +42,15 @@ class AttributeApplyHandler : EditorApplyHandler {
 
         val attribute = attributeTokenMap[args[0].lowercase()] ?: return ApplyExecutionResult.InvalidValue
         val parsedAmount = args[1].toBigDecimalOrNull() ?: return ApplyExecutionResult.InvalidValue
-        val clampedAmount = ItemAttributeMenuSupport.clampAmount(parsedAmount)
 
         val slotSpec = if (args.size >= 3) slotTokens[args[2].lowercase()] ?: return ApplyExecutionResult.InvalidValue else SlotGroupSpec.ANY
         val operation = if (args.size >= 4) operationTokens[args[3].lowercase()] ?: return ApplyExecutionResult.InvalidValue else AttributeModifier.Operation.ADD_NUMBER
+        val normalizedAmount = ItemAttributeMenuSupport.normalizeInputAmount(parsedAmount, operation)
 
         val item = session.editableItem
         val explicit = ItemAttributeMenuSupport.currentEffectiveAttributes(item)
         val key = randomModifierKey()
-        val modifier = AttributeModifierFactory.create(key, clampedAmount, operation, slotSpec)
+        val modifier = AttributeModifierFactory.create(key, normalizedAmount, operation, slotSpec)
 
         explicit.put(attribute, modifier)
         ItemAttributeMenuSupport.writeExplicitAttributes(item, explicit)
