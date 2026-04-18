@@ -1013,6 +1013,27 @@ class MenuButtonFactory(
         action = action
     )
 
+    fun attributeTypeEntryButton(
+        displayName: String,
+        modelId: String,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = if (selected) "<!i><#00FF40>$displayName" else "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
+            if (selected) glint(true)
+            this
+        },
+        action = action
+    )
+
     fun enchantmentSelectedPreviewButton(displayName: String, modelId: String): Button = actionButton(
         material = Material.STRUCTURE_VOID,
         name = "<!i><#FFD700>$displayName",
@@ -1131,7 +1152,46 @@ class MenuButtonFactory(
         action = action
     )
 
+    fun attributeValueButton(value: String, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.GLOWSTONE_DUST,
+        name = if (value != "1") {
+            "<!i><#C7A300>◎ <#FFD700>Значение:<#FFF3E0> $value"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Значение:<#FFF3E0> 1"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (value != "1") glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun attributeConfirmCreateButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.LIME_DYE,
+        name = "<!i><#00FF40>✔ Подтвердить создание",
+        lore = emptyList(),
+        action = action
+    )
+
     fun visualEffectSelectedPreviewButton(
+        displayName: String,
+        modelId: String
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
+            this
+        }
+    )
+
+    fun attributeSelectedPreviewButton(
         displayName: String,
         modelId: String
     ): Button = actionButton(

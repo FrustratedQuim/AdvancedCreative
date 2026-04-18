@@ -1,9 +1,11 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
+import com.ratger.acreative.menus.edit.attributes.SlotGroupSpec
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectDraft
 import com.ratger.acreative.menus.edit.text.TextStylePalette
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
 
@@ -41,5 +43,10 @@ data class ItemEditSession(
     var visualEffectLastTypePage: Int = 0,
     var enchantmentDraftKey: String? = null,
     var enchantmentDraftLevel: Int = 1,
-    var enchantmentDraftLastTypePage: Int = 0
+    var enchantmentDraftLastTypePage: Int = 0,
+    var attributeDraftKey: String? = null,
+    var attributeDraftAmount: String = "1",
+    var attributeDraftOperation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+    var attributeDraftSlot: SlotGroupSpec = SlotGroupSpec.ANY,
+    var attributeDraftLastTypePage: Int = 0
 )

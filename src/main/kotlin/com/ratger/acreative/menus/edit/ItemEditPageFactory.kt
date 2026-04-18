@@ -12,7 +12,10 @@ import com.ratger.acreative.menus.edit.pages.advanced.AdvancedEditMainPage
 import com.ratger.acreative.menus.edit.pages.appearance.TextAppearanceContentPage
 import com.ratger.acreative.menus.edit.pages.appearance.TextAppearanceStylePage
 import com.ratger.acreative.menus.edit.pages.attributes.AttributeEditPage
+import com.ratger.acreative.menus.edit.pages.attributes.AttributeParametersPage
+import com.ratger.acreative.menus.edit.pages.attributes.AttributeTypeSelectPage
 import com.ratger.acreative.menus.edit.pages.attributes.EquippableEditPage
+import com.ratger.acreative.menus.edit.attributes.AttributeMenuFlowService
 import com.ratger.acreative.menus.edit.pages.effects.DeathProtectionApplyEffectsListPage
 import com.ratger.acreative.menus.edit.pages.effects.DeathProtectionEditPage
 import com.ratger.acreative.menus.edit.pages.effects.DeathProtectionRemoveEffectsListPage
@@ -248,7 +251,40 @@ internal class ItemEditPageFactory(
             requestApplyInput = requestApplyInput
         )
 
-        val attributePage = AttributeEditPage(support, buttonFactory, handlers.openAdvancedPageTwo, requestApplyInput)
+        val attributeMenuFlowService = AttributeMenuFlowService()
+        val attributeTypeSelectPage = AttributeTypeSelectPage(support, buttonFactory, attributeMenuFlowService)
+        val attributeParametersPage = AttributeParametersPage(support, buttonFactory, attributeMenuFlowService, requestSignInput)
+        lateinit var openAttributeTypePage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
+        lateinit var openAttributeParametersPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
+        openAttributeTypePage = { player, session, page, openParent ->
+            attributeTypeSelectPage.open(
+                player = player,
+                session = session,
+                page = page,
+                openParent = openParent,
+                openParams = { paramsPlayer, paramsSession ->
+                    openAttributeParametersPage(paramsPlayer, paramsSession, openParent)
+                }
+            )
+        }
+        openAttributeParametersPage = { player, session, openParent ->
+            attributeParametersPage.open(
+                player = player,
+                session = session,
+                openParent = openParent,
+                openTypePage = { backPlayer, backSession, targetPage ->
+                    openAttributeTypePage(backPlayer, backSession, targetPage, openParent)
+                }
+            )
+        }
+
+        val attributePage = AttributeEditPage(
+            support = support,
+            buttonFactory = buttonFactory,
+            openAdvancedPageTwo = handlers.openAdvancedPageTwo,
+            requestApplyInput = requestApplyInput,
+            openTypeSelectPage = openAttributeTypePage
+        )
         val equippablePage = EquippableEditPage(support, buttonFactory, handlers.openAdvancedPageTwo, requestApplyInput)
         val useRemainderPage = UseRemainderEditPage(support, buttonFactory, handlers.openAdvancedPageTwo)
         val useCooldownPage = UseCooldownEditPage(support, buttonFactory, handlers.openAdvancedPageTwo, requestApplyInput)

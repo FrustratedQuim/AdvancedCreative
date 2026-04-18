@@ -95,6 +95,41 @@ object ItemAttributeMenuSupport {
         Attribute.SPAWN_REINFORCEMENTS to listOf("0.05", "0.1", "0.25", "0.5", "1")
     )
 
+    private val preferredAttributeOrder = listOf(
+        "max_health",
+        "armor",
+        "armor_toughness",
+        "max_absorption",
+        "attack_damage",
+        "attack_speed",
+        "attack_knockback",
+        "sweeping_damage_ratio",
+        "knockback_resistance",
+        "explosion_knockback_resistance",
+        "movement_speed",
+        "flying_speed",
+        "sneaking_speed",
+        "jump_strength",
+        "step_height",
+        "gravity",
+        "scale",
+        "safe_fall_distance",
+        "fall_damage_multiplier",
+        "burning_time",
+        "oxygen_bonus",
+        "movement_efficiency",
+        "water_movement_efficiency",
+        "follow_range",
+        "tempt_range",
+        "entity_interaction_range",
+        "block_interaction_range",
+        "block_break_speed",
+        "mining_efficiency",
+        "submerged_mining_speed",
+        "luck",
+        "spawn_reinforcements"
+    )
+
     fun listEffectiveEntries(item: ItemStack): List<AttributeEntry> {
         val effective = currentEffectiveAttributes(item)
         return effective.entries().map { AttributeEntry(it.key, it.value) }
@@ -157,7 +192,7 @@ object ItemAttributeMenuSupport {
         return when (operation) {
             AttributeModifier.Operation.ADD_NUMBER -> "Число"
             AttributeModifier.Operation.ADD_SCALAR -> "Процент"
-            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> "Процент (Общий)"
+            AttributeModifier.Operation.MULTIPLY_SCALAR_1 -> "Общий процент"
         }
     }
 
@@ -180,6 +215,21 @@ object ItemAttributeMenuSupport {
                 valueTransform = { it }
             )
             .toSortedMap()
+    }
+
+    fun orderedAttributesForMenu(): List<Attribute> {
+        val byToken = attributeTokenMap()
+        val seen = linkedSetOf<Attribute>()
+        val ordered = mutableListOf<Attribute>()
+        preferredAttributeOrder.forEach { key ->
+            byToken[key]?.let {
+                if (seen.add(it)) ordered.add(it)
+            }
+        }
+        byToken.values.forEach {
+            if (seen.add(it)) ordered.add(it)
+        }
+        return ordered
     }
 
     fun clampAmount(parsed: BigDecimal): Double {

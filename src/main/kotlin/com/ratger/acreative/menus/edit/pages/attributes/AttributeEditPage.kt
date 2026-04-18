@@ -18,7 +18,8 @@ class AttributeEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openTypeSelectPage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
 
@@ -44,6 +45,16 @@ class AttributeEditPage(
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.ATTRIBUTE) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession, pageIndex)
+                    }
+                }
+            },
+            addMenuAction = PagedListPageBuilder.ActionSlot(
+                material = Material.MAGENTA_DYE,
+                name = "<!i><#FF00FF>₪ Добавить атрибут <#FF66FF>[Меню]"
+            ) { addPlayer, addSession, pageIndex ->
+                support.transition(addSession) {
+                    openTypeSelectPage(addPlayer, addSession, 0) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex)
                     }
                 }

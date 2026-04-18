@@ -53,6 +53,10 @@ object SlotGroupAdapter {
 
     fun displayName(modifier: AttributeModifier): String {
         val spec = fromPaperGroup(modifier.slotGroup)
+        return displayName(spec)
+    }
+
+    fun displayName(spec: SlotGroupSpec): String {
         return slotDisplayNames[spec] ?: toReadableName(spec.name)
     }
 

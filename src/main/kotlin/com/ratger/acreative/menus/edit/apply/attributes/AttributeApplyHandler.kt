@@ -26,7 +26,8 @@ class AttributeApplyHandler : EditorApplyHandler {
         "helmet" to SlotGroupSpec.HEAD,
         "chest" to SlotGroupSpec.CHEST,
         "legs" to SlotGroupSpec.LEGS,
-        "feet" to SlotGroupSpec.FEET
+        "feet" to SlotGroupSpec.FEET,
+        "body" to SlotGroupSpec.BODY
     )
     private val operationTokens = mapOf(
         "add" to AttributeModifier.Operation.ADD_NUMBER,
