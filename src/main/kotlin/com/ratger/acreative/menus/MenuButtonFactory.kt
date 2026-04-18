@@ -1008,7 +1008,7 @@ class MenuButtonFactory(
         material = Material.CLOCK,
         name = when {
             durationSeconds == -1 -> "<!i><#C7A300>◎ <#FFD700>Длительность:<#FFF3E0> ∞"
-            durationSeconds > 30 -> "<!i><#C7A300>◎ <#FFD700>Длительность:<#FFF3E0> $durationSeconds сек"
+            durationSeconds != 30 -> "<!i><#C7A300>◎ <#FFD700>Длительность:<#FFF3E0> $durationSeconds сек"
             else -> "<!i><#C7A300>⭘ <#FFD700>Длительность:<#FFF3E0> $durationSeconds сек"
         },
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
