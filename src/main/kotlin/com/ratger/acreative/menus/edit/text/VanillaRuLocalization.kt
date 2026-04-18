@@ -18,6 +18,9 @@ object VanillaRuLocalization {
     fun potionEffectName(path: String): String =
         resolve("effect.minecraft.$path") ?: humanize(path)
 
+    fun blockName(path: String): String =
+        resolve("block.minecraft.$path") ?: humanize(path)
+
     private fun resolve(key: String): String? = resolver?.resolve(key, ruLocale)
 
     private fun humanize(path: String): String {

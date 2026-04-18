@@ -40,7 +40,7 @@ class DeathProtectionRemoveEffectsListPage(
             backOnFirstPage = openDeathProtectionRoot,
             addAction = PagedListPageBuilder.ActionSlot(
                 material = Material.LIME_DYE,
-                name = "<!i><#00FF40>₪ Добавить эффект"
+                name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD) { reopenPlayer, reopenSession ->

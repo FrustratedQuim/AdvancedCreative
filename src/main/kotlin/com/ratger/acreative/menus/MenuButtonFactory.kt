@@ -950,27 +950,6 @@ class MenuButtonFactory(
         )
     }
 
-    fun effectListAddByCommandButton(action: (ClickEvent) -> Unit): Button = actionButton(
-        material = Material.LIME_DYE,
-        name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]",
-        lore = emptyList(),
-        action = action
-    )
-
-    fun effectListAddByMenuButton(action: (ClickEvent) -> Unit): Button = actionButton(
-        material = Material.MAGENTA_DYE,
-        name = "<!i><#FF00FF>₪ Добавить эффект <#FF66FF>[Меню]",
-        lore = emptyList(),
-        action = action
-    )
-
-    fun effectListClearAllButton(action: (ClickEvent) -> Unit): Button = actionButton(
-        material = Material.RED_DYE,
-        name = "<!i><#FF1500>⚠ Удалить всё",
-        lore = emptyList(),
-        action = action
-    )
-
     fun visualEffectTypeEntryButton(
         displayName: String,
         modelId: String,
@@ -1031,6 +1010,34 @@ class MenuButtonFactory(
             if (selected) glint(true)
             this
         },
+        action = action
+    )
+
+    fun restrictionBlockTypeEntryButton(
+        displayName: String,
+        modelId: String,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = if (selected) "<!i><#00FF40>$displayName" else "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
+            if (selected) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun restrictionBlockPageButton(page: Int, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.BOOK,
+        name = "<!i><#C7A300>🔔 <#FFD700>Страница: <#FFF3E0>$page",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
         action = action
     )
 

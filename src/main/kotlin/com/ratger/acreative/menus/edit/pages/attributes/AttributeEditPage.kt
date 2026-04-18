@@ -41,7 +41,7 @@ class AttributeEditPage(
             backOnFirstPage = openAdvancedPageTwo,
             addAction = PagedListPageBuilder.ActionSlot(
                 material = Material.LIME_DYE,
-                name = "<!i><#00FF40>₪ Добавить атрибут"
+                name = "<!i><#00FF40>₪ Добавить атрибут <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.ATTRIBUTE) { reopenPlayer, reopenSession ->

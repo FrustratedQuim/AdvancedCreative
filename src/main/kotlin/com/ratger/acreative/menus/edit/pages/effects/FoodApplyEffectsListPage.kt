@@ -41,7 +41,7 @@ class FoodApplyEffectsListPage(
             backOnFirstPage = { backPlayer, backSession -> openFoodRoot(backPlayer, backSession, openBack) },
             addAction = PagedListPageBuilder.ActionSlot(
                 material = Material.LIME_DYE,
-                name = "<!i><#00FF40>₪ Добавить эффект"
+                name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.CONSUMABLE_APPLY_EFFECT_ADD) { reopenPlayer, reopenSession ->

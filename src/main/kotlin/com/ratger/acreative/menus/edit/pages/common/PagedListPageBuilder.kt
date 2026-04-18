@@ -77,37 +77,28 @@ class PagedListPageBuilder(
             })
         }
 
+        menu.setButton(layout.addCommandSlot, buttonFactory.actionButton(
+            material = addAction.material,
+            name = addAction.name,
+            lore = addAction.lore,
+            action = { addAction.onClick(player, session, pageIndex) }
+        ))
         if (addMenuAction != null) {
-            menu.setButton(layout.addCommandSlot, buttonFactory.effectListAddByCommandButton {
-                addAction.onClick(player, session, pageIndex)
-            })
-        } else {
-            menu.setButton(layout.addCommandSlot, buttonFactory.actionButton(
-                material = addAction.material,
-                name = addAction.name,
-                lore = addAction.lore,
-                action = { addAction.onClick(player, session, pageIndex) }
+            menu.setButton(layout.addMenuSlot, buttonFactory.actionButton(
+                material = addMenuAction.material,
+                name = addMenuAction.name,
+                lore = addMenuAction.lore,
+                action = { addMenuAction.onClick(player, session, pageIndex) }
             ))
-        }
-        if (addMenuAction != null) {
-            menu.setButton(layout.addMenuSlot, buttonFactory.effectListAddByMenuButton {
-                addMenuAction.onClick(player, session, pageIndex)
-            })
         } else {
             menu.setButton(layout.addMenuSlot, grayFiller)
         }
-        if (addMenuAction != null) {
-            menu.setButton(layout.clearSlot, buttonFactory.effectListClearAllButton {
-                clearAction.onClick(player, session, pageIndex)
-            })
-        } else {
-            menu.setButton(layout.clearSlot, buttonFactory.actionButton(
-                material = clearAction.material,
-                name = clearAction.name,
-                lore = clearAction.lore,
-                action = { clearAction.onClick(player, session, pageIndex) }
-            ))
-        }
+        menu.setButton(layout.clearSlot, buttonFactory.actionButton(
+            material = clearAction.material,
+            name = clearAction.name,
+            lore = clearAction.lore,
+            action = { clearAction.onClick(player, session, pageIndex) }
+        ))
 
         pageEntries.forEachIndexed { localIndex, entry ->
             val globalIndex = from + localIndex

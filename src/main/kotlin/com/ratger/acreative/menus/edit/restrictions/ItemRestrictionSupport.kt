@@ -1,10 +1,13 @@
 package com.ratger.acreative.menus.edit.restrictions
 
 import com.ratger.acreative.menus.edit.meta.LegacyMetaKeySupport
+import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
 import org.bukkit.inventory.ItemStack
+import java.text.Collator
+import java.util.Locale
 
 object ItemRestrictionSupport {
     data class RestrictionEntry(
@@ -12,6 +15,14 @@ object ItemRestrictionSupport {
         val displayId: String,
         val material: Material?
     )
+
+    data class BlockOption(
+        val key: NamespacedKey,
+        val displayName: String,
+        val modelId: String
+    )
+
+    private val russianCollator: Collator = Collator.getInstance(Locale.forLanguageTag("ru-RU"))
 
     fun entries(item: ItemStack, mode: RestrictionMode): List<RestrictionEntry> {
         return keys(item, mode)
@@ -67,5 +78,24 @@ object ItemRestrictionSupport {
 
     fun displayId(key: NamespacedKey): String {
         return if (key.namespace.equals("minecraft", ignoreCase = true)) key.key else key.asString()
+    }
+
+    fun blockOptions(): List<BlockOption> {
+        return Registry.MATERIAL.iterator().asSequence()
+            .filter { it.isBlock && it.isItem }
+            .map { material ->
+                val key = material.key
+                val displayName = when {
+                    key.namespace.equals("minecraft", ignoreCase = true) -> VanillaRuLocalization.blockName(key.key)
+                    else -> key.asString()
+                }
+                BlockOption(
+                    key = key,
+                    displayName = displayName,
+                    modelId = key.asString()
+                )
+            }
+            .sortedWith { left, right -> russianCollator.compare(left.displayName, right.displayName) }
+            .toList()
     }
 }

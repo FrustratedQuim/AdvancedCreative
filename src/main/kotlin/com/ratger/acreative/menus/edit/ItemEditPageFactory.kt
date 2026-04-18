@@ -37,6 +37,7 @@ import com.ratger.acreative.menus.edit.pages.pot.PotPatternSelectPage
 import com.ratger.acreative.menus.edit.pages.potion.PotionEditPage
 import com.ratger.acreative.menus.edit.pages.potion.PotionEffectsActivePage
 import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionsListPage
+import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionBlockSelectPage
 import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionsRootPage
 import com.ratger.acreative.menus.edit.pages.root.RootEditMenu
 import com.ratger.acreative.menus.edit.pages.root.SimpleEditMenu
@@ -320,7 +321,17 @@ internal class ItemEditPageFactory(
         val enchantmentsActivePage = EnchantmentsActivePage(support, buttonFactory, requestApplyInput, openEnchantmentTypePage)
         val enchantmentsPage = EnchantmentsEditPage(support, buttonFactory, enchantmentsActivePage::open)
 
-        val restrictionsListPage = RestrictionsListPage(support, buttonFactory, handlers.openRestrictionsRoot, requestApplyInput)
+        val restrictionBlockSelectPage = RestrictionBlockSelectPage(support, buttonFactory, requestSignInput)
+        val restrictionsListPage = RestrictionsListPage(
+            support,
+            buttonFactory,
+            handlers.openRestrictionsRoot,
+            requestApplyInput
+        ) { player, session, mode, page, openParent ->
+            restrictionBlockSelectPage.open(player, session, mode, page, openParent) { selectedPlayer, selectedSession ->
+                openParent(selectedPlayer, selectedSession)
+            }
+        }
         val restrictionsRootPage = RestrictionsRootPage(support, buttonFactory, handlers.openAdvancedPageTwo, restrictionsListPage::open)
 
         val potPatternSelectPage = PotPatternSelectPage(support, buttonFactory)

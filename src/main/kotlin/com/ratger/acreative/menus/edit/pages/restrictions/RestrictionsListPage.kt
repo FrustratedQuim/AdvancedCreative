@@ -14,7 +14,8 @@ class RestrictionsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openRestrictionsRoot: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openBlockSelectPage: (Player, ItemEditSession, RestrictionMode, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
 
@@ -36,6 +37,16 @@ class RestrictionsListPage(
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, applyKind(mode)) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession, mode, pageIndex)
+                    }
+                }
+            },
+            addMenuAction = PagedListPageBuilder.ActionSlot(
+                material = Material.MAGENTA_DYE,
+                name = mode.addMenuButtonTitle
+            ) { addPlayer, addSession, pageIndex ->
+                support.transition(addSession) {
+                    openBlockSelectPage(addPlayer, addSession, mode, 0) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, mode, pageIndex)
                     }
                 }
