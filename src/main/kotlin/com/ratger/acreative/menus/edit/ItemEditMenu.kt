@@ -14,6 +14,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.pages.pot.DecoratedPotPartDescriptor
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.potion.PotionEffectType
 
 class ItemEditMenu(
     hooker: FunctionHooker,
@@ -102,6 +103,7 @@ class ItemEditMenu(
             openPotionEffectsPage = this::openPotionEffectsPage,
             openPotionPageWithBack = this::openPotionPage,
             openVisualEffectTypePage = this::openVisualEffectTypePage,
+            openVisualEffectTypeOnlyPage = this::openVisualEffectTypeOnlyPage,
             openVisualEffectParametersPage = this::openVisualEffectParametersPage,
             openArmorTrimPatternPage = this::openArmorTrimPatternPage,
             openArmorTrimMaterialPage = this::openArmorTrimMaterialPage
@@ -270,6 +272,27 @@ class ItemEditMenu(
     ) {
         openPageSafely(player) {
             pages.visualEffectParameters.open(player, session, openParent, openTypePage)
+        }
+    }
+
+    fun openVisualEffectTypeOnlyPage(
+        player: Player,
+        session: ItemEditSession,
+        contextKey: VisualEffectContextKey,
+        page: Int,
+        openParent: (Player, ItemEditSession) -> Unit,
+        onTypeSelected: (Player, ItemEditSession, PotionEffectType) -> Unit
+    ) {
+        openPageSafely(player) {
+            pages.visualEffectTypeSelect.open(
+                player = player,
+                session = session,
+                contextKey = contextKey,
+                page = page,
+                openParent = openParent,
+                openParams = openParent,
+                onTypeSelected = onTypeSelected
+            )
         }
     }
 

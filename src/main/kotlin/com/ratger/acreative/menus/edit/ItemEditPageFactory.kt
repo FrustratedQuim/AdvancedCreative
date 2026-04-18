@@ -42,6 +42,7 @@ import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimEditPage
 import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimMaterialSelectPage
 import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimPatternSelectPage
 import org.bukkit.entity.Player
+import org.bukkit.potion.PotionEffectType
 
 internal data class ItemEditPages(
     val root: RootEditMenu,
@@ -110,6 +111,7 @@ internal data class ItemEditNavigationHandlers(
     val openPotionEffectsPage: (Player, ItemEditSession, Int) -> Unit,
     val openPotionPageWithBack: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
     val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
+    val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
     val openVisualEffectParametersPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, Int) -> Unit) -> Unit,
     val openArmorTrimPatternPage: (Player, ItemEditSession) -> Unit,
     val openArmorTrimMaterialPage: (Player, ItemEditSession) -> Unit
@@ -190,6 +192,7 @@ internal class ItemEditPageFactory(
             support = support,
             buttonFactory = buttonFactory,
             requestApplyInput = requestApplyInput,
+            openVisualEffectTypeOnlyPage = handlers.openVisualEffectTypeOnlyPage,
             openFoodRoot = handlers.openFoodPage
         )
 
@@ -217,6 +220,7 @@ internal class ItemEditPageFactory(
             support = support,
             buttonFactory = buttonFactory,
             requestApplyInput = requestApplyInput,
+            openVisualEffectTypeOnlyPage = handlers.openVisualEffectTypeOnlyPage,
             openDeathProtectionRoot = handlers.openDeathProtectionPage
         )
 

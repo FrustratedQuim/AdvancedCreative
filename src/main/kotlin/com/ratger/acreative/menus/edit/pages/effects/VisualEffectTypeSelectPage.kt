@@ -56,7 +56,8 @@ class VisualEffectTypeSelectPage(
         contextKey: VisualEffectContextKey,
         page: Int,
         openParent: (Player, ItemEditSession) -> Unit,
-        openParams: (Player, ItemEditSession) -> Unit
+        openParams: (Player, ItemEditSession) -> Unit,
+        onTypeSelected: ((Player, ItemEditSession, PotionEffectType) -> Unit)? = null
     ) {
         flowService.begin(session, contextKey)
         val totalPages = maxOf(1, (orderedTypes.size + workSlots.size - 1) / workSlots.size)
@@ -79,6 +80,7 @@ class VisualEffectTypeSelectPage(
         val gray = buttonFactory.grayFillerButton()
         blackSlots.forEach { menu.setButton(it, black) }
         graySlots.forEach { menu.setButton(it, gray) }
+        val selectedType = flowService.resolveType(session.visualEffectDraft.effectTypeKey)
 
         menu.setButton(18, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
@@ -87,17 +89,27 @@ class VisualEffectTypeSelectPage(
             }
         })
 
-        menu.setButton(26, buttonFactory.forwardButton("Вперёд ▶") {
-            support.transition(session) {
-                if (pageIndex + 1 < totalPages) {
-                    open(player, session, contextKey, pageIndex + 1, openParent, openParams)
-                } else {
-                    openParams(player, session)
+        val hideForwardOnLastTypeOnlyPage = onTypeSelected != null && pageIndex + 1 >= totalPages
+        if (!hideForwardOnLastTypeOnlyPage) {
+            menu.setButton(26, buttonFactory.forwardButton("Вперёд ▶") {
+                support.transition(session) {
+                    if (pageIndex + 1 < totalPages) {
+                        open(player, session, contextKey, pageIndex + 1, openParent, openParams, onTypeSelected)
+                    } else {
+                        if (onTypeSelected != null) {
+                            if (selectedType != null) {
+                                onTypeSelected(player, session, selectedType)
+                            } else {
+                                openParent(player, session)
+                            }
+                        } else {
+                            openParams(player, session)
+                        }
+                    }
                 }
-            }
-        })
+            })
+        }
 
-        val selectedType = flowService.resolveType(session.visualEffectDraft.effectTypeKey)
         pageEntries.forEachIndexed { index, type ->
             val slot = workSlots[index]
             val isSelected = selectedType == type
@@ -108,11 +120,17 @@ class VisualEffectTypeSelectPage(
             ) {
                 if (isSelected) {
                     session.visualEffectDraft = session.visualEffectDraft.copy(effectTypeKey = null)
-                    support.transition(session) { open(player, session, contextKey, pageIndex, openParent, openParams) }
+                    support.transition(session) { open(player, session, contextKey, pageIndex, openParent, openParams, onTypeSelected) }
                     return@visualEffectTypeEntryButton
                 }
                 session.visualEffectDraft = session.visualEffectDraft.copy(effectTypeKey = type.key.key)
-                support.transition(session) { openParams(player, session) }
+                support.transition(session) {
+                    if (onTypeSelected != null) {
+                        onTypeSelected(player, session, type)
+                    } else {
+                        openParams(player, session)
+                    }
+                }
             })
         }
 

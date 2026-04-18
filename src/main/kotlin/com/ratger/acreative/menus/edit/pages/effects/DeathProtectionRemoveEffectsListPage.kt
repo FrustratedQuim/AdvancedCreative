@@ -6,6 +6,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -16,6 +17,7 @@ class DeathProtectionRemoveEffectsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
     private val openDeathProtectionRoot: (Player, ItemEditSession) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -43,6 +45,27 @@ class DeathProtectionRemoveEffectsListPage(
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex)
+                    }
+                }
+            },
+            addMenuAction = PagedListPageBuilder.ActionSlot(
+                material = Material.MAGENTA_DYE,
+                name = "<!i><#FF00FF>₪ Добавить эффект <#FF66FF>[Меню]"
+            ) { addPlayer, addSession, pageIndex ->
+                support.transition(addSession) {
+                    openVisualEffectTypeOnlyPage(
+                        addPlayer,
+                        addSession,
+                        VisualEffectContextKey.DEATH_PROTECTION,
+                        0,
+                        { backPlayer, backSession -> open(backPlayer, backSession, pageIndex) }
+                    ) { selectedPlayer, selectedSession, selectedType ->
+                        support.transition(selectedSession) {
+                            DeathProtectionMenuSupport.addRemovedEffect(selectedSession.editableItem, selectedType)
+                            val afterSize = DeathProtectionMenuSupport.removedEffects(selectedSession.editableItem).size
+                            val targetPage = listBuilder.coercePageIndexAfterUpdate(pageIndex, afterSize)
+                            open(selectedPlayer, selectedSession, targetPage)
+                        }
                     }
                 }
             },
