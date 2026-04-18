@@ -60,6 +60,9 @@ import com.ratger.acreative.menus.edit.apply.restrictions.RestrictionBlockApplyH
 import com.ratger.acreative.menus.edit.apply.meta.StackSizeApplyHandler
 import com.ratger.acreative.menus.edit.apply.effects.UseCooldownGroupApplyHandler
 import com.ratger.acreative.menus.edit.apply.effects.UseCooldownSecondsApplyHandler
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
+import com.ratger.acreative.menus.decorationheads.support.SignInputService
+import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -71,11 +74,13 @@ class MenuService(
     private val editParsers = EditParsers()
     private val validationService = ValidationService()
     private val editTargetResolver = EditTargetResolver()
+    private val visualEffectFlowService = VisualEffectFlowService(validationService, editTargetResolver)
     private val vanillaTranslationResolver = VanillaTranslationResolver(hooker.plugin.dataFolder.toPath(), hooker.plugin.logger)
     private val vanillaNameLocalizationService = VanillaNameLocalizationService(vanillaTranslationResolver)
     private val textStyleService = ItemTextStyleService(vanillaNameLocalizationService)
     private val sessionManager = ItemEditSessionManager()
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService(), hooker.tickScheduler)
+    private val signInputService = SignInputService(hooker.plugin)
     private val headMutationSupport = HeadTextureMutationSupport()
     private val headLookupService = LicensedProfileLookupService()
     private val headProfileService = HeadProfileService(headLookupService)
@@ -100,7 +105,6 @@ class MenuService(
     private val consumableRemoveEffectAddApplyHandler = ConsumableRemoveEffectAddApplyHandler(editParsers)
     private val consumableRandomTeleportApplyHandler = ConsumableRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
     private val consumableApplyEffectAddApplyHandler = ConsumableApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
-
     private var applyStateManager: ItemEditorApplyStateManager
     private val applyCoordinator = ApplyCommandCoordinator()
 
@@ -114,7 +118,20 @@ class MenuService(
             player.closeInventory()
         },
         headMutationSupport = headMutationSupport,
-        textStyleService = textStyleService
+        textStyleService = textStyleService,
+        visualEffectFlowService = visualEffectFlowService,
+        requestSignInput = { player, templateLines, onSubmit, onLeave ->
+            signInputService.open(
+                player = player,
+                templateLines = templateLines,
+                onSubmit = { submitPlayer, input ->
+                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onSubmit(submitPlayer, input) })
+                },
+                onLeave = { leavePlayer ->
+                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onLeave(leavePlayer) })
+                }
+            )
+        }
     )
 
     init {

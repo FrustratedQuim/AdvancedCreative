@@ -1,6 +1,8 @@
 package com.ratger.acreative.menus.edit
 
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectDraft
 import com.ratger.acreative.menus.edit.text.TextStylePalette
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
@@ -33,5 +35,8 @@ data class ItemEditSession(
     var rawTextStyleStateInitialized: Boolean = false,
     var simpleThrowableApplied: Boolean = false,
     var simpleEdibleApplied: Boolean = false,
-    var simpleHeadEquippableApplied: Boolean = false
+    var simpleHeadEquippableApplied: Boolean = false,
+    var visualEffectContext: VisualEffectContextKey? = null,
+    var visualEffectDraft: VisualEffectDraft = VisualEffectDraft(),
+    var visualEffectLastTypePage: Int = 0
 )

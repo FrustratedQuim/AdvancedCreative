@@ -6,6 +6,8 @@ import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
@@ -19,8 +21,10 @@ class ItemEditMenu(
     buttonFactory: MenuButtonFactory,
     private val parser: MiniMessageParser,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestSignInput: (Player, Array<String>, (Player, String?) -> Unit, (Player) -> Unit) -> Unit,
     headMutationSupport: HeadTextureMutationSupport,
-    textStyleService: ItemTextStyleService
+    textStyleService: ItemTextStyleService,
+    private val visualEffectFlowService: VisualEffectFlowService
 ) {
     enum class LastEditorCategory {
         ROOT,
@@ -60,8 +64,10 @@ class ItemEditMenu(
         support = support,
         buttonFactory = buttonFactory,
         requestApplyInput = requestApplyInput,
+        requestSignInput = requestSignInput,
         headMutationSupport = headMutationSupport,
-        textStyleService = textStyleService
+        textStyleService = textStyleService,
+        visualEffectFlowService = visualEffectFlowService
     ).create(
         ItemEditNavigationHandlers(
             openRoot = openRootHandler,
@@ -95,6 +101,8 @@ class ItemEditMenu(
             openDecoratedPotPattern = this::openDecoratedPotPattern,
             openPotionEffectsPage = this::openPotionEffectsPage,
             openPotionPageWithBack = this::openPotionPage,
+            openVisualEffectTypePage = this::openVisualEffectTypePage,
+            openVisualEffectParametersPage = this::openVisualEffectParametersPage,
             openArmorTrimPatternPage = this::openArmorTrimPatternPage,
             openArmorTrimMaterialPage = this::openArmorTrimMaterialPage
         )
@@ -225,6 +233,44 @@ class ItemEditMenu(
 
     fun openMapPage(player: Player, session: ItemEditSession) {
         openPageSafely(player) { pages.mapEdit.open(player, session) }
+    }
+
+    fun openVisualEffectTypePage(
+        player: Player,
+        session: ItemEditSession,
+        contextKey: VisualEffectContextKey,
+        page: Int,
+        openParent: (Player, ItemEditSession) -> Unit
+    ) {
+        openPageSafely(player) {
+            pages.visualEffectTypeSelect.open(
+                player = player,
+                session = session,
+                contextKey = contextKey,
+                page = page,
+                openParent = openParent,
+                openParams = { paramsPlayer, paramsSession ->
+                    openVisualEffectParametersPage(
+                        paramsPlayer,
+                        paramsSession,
+                        openParent
+                    ) { backPlayer, backSession, targetPage ->
+                        openVisualEffectTypePage(backPlayer, backSession, contextKey, targetPage, openParent)
+                    }
+                }
+            )
+        }
+    }
+
+    fun openVisualEffectParametersPage(
+        player: Player,
+        session: ItemEditSession,
+        openParent: (Player, ItemEditSession) -> Unit,
+        openTypePage: (Player, ItemEditSession, Int) -> Unit
+    ) {
+        openPageSafely(player) {
+            pages.visualEffectParameters.open(player, session, openParent, openTypePage)
+        }
     }
 
     fun openTextAppearancePage(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {

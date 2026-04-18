@@ -7,6 +7,7 @@ import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectInputSupport
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -24,8 +25,9 @@ class PotionEffectAddApplyHandler(
         if (args.isEmpty() || args.size > 5) return ApplyExecutionResult.InvalidValue
 
         val effectType = parser.effectFromToken(args[0]) ?: return ApplyExecutionResult.UnknownValue
-        val level = args.getOrNull(1)?.toIntOrNull() ?: 1
-        val durationTicks = parseDurationTicks(args.getOrNull(2)) ?: return ApplyExecutionResult.InvalidValue
+        val level = VisualEffectInputSupport.parseLevel(args.getOrNull(1)) ?: 1
+        val durationSeconds = VisualEffectInputSupport.parseDurationSeconds(args.getOrNull(2)) ?: return ApplyExecutionResult.InvalidValue
+        val durationTicks = VisualEffectInputSupport.visibleTicksFromDurationSeconds(durationSeconds)
         val showParticlesInput = args.getOrNull(3)
         val showIconInput = args.getOrNull(4)
         val showParticles = when {
@@ -36,9 +38,6 @@ class PotionEffectAddApplyHandler(
             showIconInput == null -> true
             else -> parser.parseBooleanStrict(showIconInput) ?: return ApplyExecutionResult.InvalidValue
         }
-
-        if (level < 1) return ApplyExecutionResult.InvalidValue
-
         val amplifier = level - 1
         val itemType = session.editableItem.type
         val storedDurationTicks = PotionItemSupport.denormalizeDurationForItemForm(itemType, effectType, durationTicks)
@@ -59,19 +58,6 @@ class PotionEffectAddApplyHandler(
             PotionEffect(effectType, storedDurationTicks, amplifier, false, showParticles, showIcon)
         )
         return ApplyExecutionResult.Success
-    }
-
-    private fun parseDurationTicks(raw: String?): Int? {
-        if (raw == null) return 30 * 20
-        if (raw.equals("inf", ignoreCase = true)) return PotionEffect.INFINITE_DURATION
-
-        val seconds = raw.toIntOrNull() ?: return null
-        if (seconds <= 0) return null
-
-        val ticksLong = seconds.toLong() * 20L
-        if (ticksLong > Int.MAX_VALUE) return null
-
-        return ticksLong.toInt()
     }
 
     override fun suggestions(args: Array<out String>): List<String> {

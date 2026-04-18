@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -16,6 +17,7 @@ class PotionEffectsActivePage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openPotionRoot: (Player, ItemEditSession) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -43,6 +45,21 @@ class PotionEffectsActivePage(
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.POTION_EFFECT_ADD) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex)
+                    }
+                }
+            },
+            addMenuAction = PagedListPageBuilder.ActionSlot(
+                material = Material.MAGENTA_DYE,
+                name = "<!i><#FF00FF>₪ Добавить эффект <#FF66FF>[Меню]"
+            ) { addPlayer, addSession, pageIndex ->
+                support.transition(addSession) {
+                    openVisualEffectTypePage(
+                        addPlayer,
+                        addSession,
+                        VisualEffectContextKey.POTION,
+                        0
+                    ) { backPlayer, backSession ->
+                        open(backPlayer, backSession, pageIndex)
                     }
                 }
             },

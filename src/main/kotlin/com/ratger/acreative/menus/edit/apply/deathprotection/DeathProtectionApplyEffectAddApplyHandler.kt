@@ -10,11 +10,11 @@ import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.effects.DeathProtectionMenuSupport
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectInputSupport
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
-import org.bukkit.potion.PotionEffect
 
 class DeathProtectionApplyEffectAddApplyHandler(
     private val parser: EditParsers,
@@ -27,15 +27,15 @@ class DeathProtectionApplyEffectAddApplyHandler(
         if (args.isEmpty() || args.size > 6) return ApplyExecutionResult.InvalidValue
 
         val effectType = parser.effectFromToken(args[0]) ?: return ApplyExecutionResult.UnknownValue
-        val level = args.getOrNull(1)?.toIntOrNull() ?: 1
-        val durationTicks = parseDurationTicks(args.getOrNull(2)) ?: return ApplyExecutionResult.InvalidValue
-        val probability = parseProbability(args.getOrNull(3)) ?: 1f
+        val level = VisualEffectInputSupport.parseLevel(args.getOrNull(1)) ?: 1
+        val durationSeconds = VisualEffectInputSupport.parseDurationSeconds(args.getOrNull(2)) ?: return ApplyExecutionResult.InvalidValue
+        val durationTicks = VisualEffectInputSupport.visibleTicksFromDurationSeconds(durationSeconds)
+        val probabilityPercent = VisualEffectInputSupport.parseProbabilityPercent(args.getOrNull(3)) ?: return ApplyExecutionResult.InvalidValue
+        val probability = probabilityPercent / 100f
         val showParticlesInput = args.getOrNull(4)
         val showParticles = if (showParticlesInput == null) true else parser.parseBooleanStrict(showParticlesInput) ?: return ApplyExecutionResult.InvalidValue
         val showIconInput = args.getOrNull(5)
         val showIcon = if (showIconInput == null) true else parser.parseBooleanStrict(showIconInput) ?: return ApplyExecutionResult.InvalidValue
-
-        if (level < 1 || probability !in 0f..1f) return ApplyExecutionResult.InvalidValue
 
         val entry = EffectApplyEntrySpec(
             type = effectType,
@@ -53,19 +53,6 @@ class DeathProtectionApplyEffectAddApplyHandler(
         return ApplyExecutionResult.Success
     }
 
-    private fun parseDurationTicks(raw: String?): Int? {
-        if (raw == null) return 30 * 20
-        if (raw.equals("inf", ignoreCase = true)) return PotionEffect.INFINITE_DURATION
-
-        val seconds = raw.toIntOrNull() ?: return null
-        if (seconds <= 0) return null
-
-        val ticksLong = seconds.toLong() * 20L
-        if (ticksLong > Int.MAX_VALUE) return null
-
-        return ticksLong.toInt()
-    }
-
     override fun suggestions(args: Array<out String>): List<String> {
         return when (args.size) {
             1 -> PotionItemSupport.effectSuggestions(args[0])
@@ -75,12 +62,5 @@ class DeathProtectionApplyEffectAddApplyHandler(
             5, 6 -> listOf("true", "false").filter { it.startsWith(args.last(), ignoreCase = true) }
             else -> emptyList()
         }
-    }
-
-    private fun parseProbability(raw: String?): Float? {
-        if (raw == null) return null
-        val normalized = raw.removeSuffix("%").trim()
-        val percent = normalized.toFloatOrNull() ?: return null
-        return percent / 100f
     }
 }

@@ -3,7 +3,6 @@ package com.ratger.acreative.menus.edit.pages.common
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.button.Button
 
@@ -22,7 +21,7 @@ class PagedListPageBuilder(
     )
 
     data class ActionSlot(
-        val material: Material,
+        val material: org.bukkit.Material,
         val name: String,
         val lore: List<String> = emptyList(),
         val onClick: (Player, ItemEditSession, Int) -> Unit
@@ -38,6 +37,7 @@ class PagedListPageBuilder(
         backOnFirstPage: (Player, ItemEditSession) -> Unit,
         addAction: ActionSlot,
         clearAction: ActionSlot,
+        addMenuAction: ActionSlot? = null,
         entryButton: (player: Player, session: ItemEditSession, pageWindow: PageWindow<T>, globalIndex: Int, entry: T) -> Button
     ) {
         val pageSize = layout.workSlots.size
@@ -77,19 +77,37 @@ class PagedListPageBuilder(
             })
         }
 
-        menu.setButton(layout.addSlot, buttonFactory.actionButton(
-            material = addAction.material,
-            name = addAction.name,
-            lore = addAction.lore,
-            action = { addAction.onClick(player, session, pageIndex) }
-        ))
-
-        menu.setButton(layout.clearSlot, buttonFactory.actionButton(
-            material = clearAction.material,
-            name = clearAction.name,
-            lore = clearAction.lore,
-            action = { clearAction.onClick(player, session, pageIndex) }
-        ))
+        if (addMenuAction != null) {
+            menu.setButton(layout.addCommandSlot, buttonFactory.effectListAddByCommandButton {
+                addAction.onClick(player, session, pageIndex)
+            })
+        } else {
+            menu.setButton(layout.addCommandSlot, buttonFactory.actionButton(
+                material = addAction.material,
+                name = addAction.name,
+                lore = addAction.lore,
+                action = { addAction.onClick(player, session, pageIndex) }
+            ))
+        }
+        if (addMenuAction != null) {
+            menu.setButton(layout.addMenuSlot, buttonFactory.effectListAddByMenuButton {
+                addMenuAction.onClick(player, session, pageIndex)
+            })
+        } else {
+            menu.setButton(layout.addMenuSlot, grayFiller)
+        }
+        if (addMenuAction != null) {
+            menu.setButton(layout.clearSlot, buttonFactory.effectListClearAllButton {
+                clearAction.onClick(player, session, pageIndex)
+            })
+        } else {
+            menu.setButton(layout.clearSlot, buttonFactory.actionButton(
+                material = clearAction.material,
+                name = clearAction.name,
+                lore = clearAction.lore,
+                action = { clearAction.onClick(player, session, pageIndex) }
+            ))
+        }
 
         pageEntries.forEachIndexed { localIndex, entry ->
             val globalIndex = from + localIndex

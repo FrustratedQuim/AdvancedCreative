@@ -3,6 +3,8 @@ package com.ratger.acreative.menus.edit
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureValueBookSupport
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.pages.advanced.AdvancedEditDetailsPage
@@ -17,6 +19,8 @@ import com.ratger.acreative.menus.edit.pages.effects.DeathProtectionRemoveEffect
 import com.ratger.acreative.menus.edit.pages.effects.FoodApplyEffectsListPage
 import com.ratger.acreative.menus.edit.pages.effects.FoodEditPage
 import com.ratger.acreative.menus.edit.pages.effects.FoodRemoveEffectsListPage
+import com.ratger.acreative.menus.edit.pages.effects.VisualEffectParametersPage
+import com.ratger.acreative.menus.edit.pages.effects.VisualEffectTypeSelectPage
 import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentsActivePage
 import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentsEditPage
 import com.ratger.acreative.menus.edit.pages.head.HeadTextureEditPage
@@ -68,7 +72,9 @@ internal data class ItemEditPages(
     val mapEdit: MapEditPage,
     val armorTrimPatternSelect: ArmorTrimPatternSelectPage,
     val armorTrimMaterialSelect: ArmorTrimMaterialSelectPage,
-    val armorTrimEdit: ArmorTrimEditPage
+    val armorTrimEdit: ArmorTrimEditPage,
+    val visualEffectTypeSelect: VisualEffectTypeSelectPage,
+    val visualEffectParameters: VisualEffectParametersPage
 )
 
 internal data class ItemEditNavigationHandlers(
@@ -103,6 +109,8 @@ internal data class ItemEditNavigationHandlers(
     val openDecoratedPotPattern: (Player, ItemEditSession, DecoratedPotPartDescriptor, (Player, ItemEditSession) -> Unit) -> Unit,
     val openPotionEffectsPage: (Player, ItemEditSession, Int) -> Unit,
     val openPotionPageWithBack: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
+    val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
+    val openVisualEffectParametersPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, Int) -> Unit) -> Unit,
     val openArmorTrimPatternPage: (Player, ItemEditSession) -> Unit,
     val openArmorTrimMaterialPage: (Player, ItemEditSession) -> Unit
 )
@@ -111,8 +119,10 @@ internal class ItemEditPageFactory(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestSignInput: (Player, Array<String>, (Player, String?) -> Unit, (Player) -> Unit) -> Unit,
     private val headMutationSupport: HeadTextureMutationSupport,
-    private val textStyleService: ItemTextStyleService
+    private val textStyleService: ItemTextStyleService,
+    private val visualEffectFlowService: VisualEffectFlowService
 ) {
     fun create(handlers: ItemEditNavigationHandlers): ItemEditPages {
         val headTextureValueBookSupport = HeadTextureValueBookSupport()
@@ -173,6 +183,9 @@ internal class ItemEditPageFactory(
             openFoodPage = handlers.openFoodPageFromAdvanced
         )
 
+        val visualEffectTypePage = VisualEffectTypeSelectPage(support, buttonFactory, visualEffectFlowService)
+        val visualEffectParametersPage = VisualEffectParametersPage(support, buttonFactory, visualEffectFlowService, requestSignInput)
+
         val foodRemoveEffectsPage = FoodRemoveEffectsListPage(
             support = support,
             buttonFactory = buttonFactory,
@@ -184,6 +197,7 @@ internal class ItemEditPageFactory(
             support = support,
             buttonFactory = buttonFactory,
             requestApplyInput = requestApplyInput,
+            openVisualEffectTypePage = handlers.openVisualEffectTypePage,
             openFoodRoot = handlers.openFoodPage
         )
 
@@ -210,6 +224,7 @@ internal class ItemEditPageFactory(
             support = support,
             buttonFactory = buttonFactory,
             requestApplyInput = requestApplyInput,
+            openVisualEffectTypePage = handlers.openVisualEffectTypePage,
             openDeathProtectionRoot = handlers.openDeathProtectionPage
         )
 
@@ -254,7 +269,7 @@ internal class ItemEditPageFactory(
         val potionEditPage = PotionEditPage(support, buttonFactory, requestApplyInput) { player, session ->
             handlers.openPotionEffectsPage(player, session, 0)
         }
-        val potionEffectsPage = PotionEffectsActivePage(support, buttonFactory, requestApplyInput) { player, session ->
+        val potionEffectsPage = PotionEffectsActivePage(support, buttonFactory, requestApplyInput, handlers.openVisualEffectTypePage) { player, session ->
             handlers.openPotionPageWithBack(player, session, handlers.openAdvancedPageOne)
         }
 
@@ -298,7 +313,9 @@ internal class ItemEditPageFactory(
             mapEdit = mapEditPage,
             armorTrimPatternSelect = armorTrimPatternSelectPage,
             armorTrimMaterialSelect = armorTrimMaterialSelectPage,
-            armorTrimEdit = armorTrimEditPage
+            armorTrimEdit = armorTrimEditPage,
+            visualEffectTypeSelect = visualEffectTypePage,
+            visualEffectParameters = visualEffectParametersPage
         )
     }
 }

@@ -19,8 +19,9 @@ object ItemEditPageLayouts {
         workSlots = listOf(11, 12, 13, 14, 15, 20, 21, 22, 23, 24, 29, 30, 31, 32, 33),
         backSlot = 18,
         forwardSlot = 26,
-        addSlot = 39,
-        clearSlot = 41
+        addCommandSlot = 38,
+        addMenuSlot = 40,
+        clearSlot = 42
     )
 }
 
@@ -32,9 +33,10 @@ data class PagedListLayout(
     val workSlots: List<Int>,
     val backSlot: Int,
     val forwardSlot: Int,
-    val addSlot: Int,
+    val addCommandSlot: Int,
+    val addMenuSlot: Int,
     val clearSlot: Int
 ) {
     val interactiveTopSlots: Set<Int>
-        get() = setOf(backSlot, forwardSlot, addSlot, clearSlot) + workSlots
+        get() = setOf(backSlot, forwardSlot, addCommandSlot, addMenuSlot, clearSlot) + workSlots
 }

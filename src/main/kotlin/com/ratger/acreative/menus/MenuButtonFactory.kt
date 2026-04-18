@@ -949,6 +949,143 @@ class MenuButtonFactory(
         )
     }
 
+    fun effectListAddByCommandButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.LIME_DYE,
+        name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]",
+        lore = emptyList(),
+        action = action
+    )
+
+    fun effectListAddByMenuButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.MAGENTA_DYE,
+        name = "<!i><#FF00FF>₪ Добавить эффект <#FF66FF>[Меню]",
+        lore = emptyList(),
+        action = action
+    )
+
+    fun effectListClearAllButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.RED_DYE,
+        name = "<!i><#FF1500>⚠ Удалить всё",
+        lore = emptyList(),
+        action = action
+    )
+
+    fun visualEffectTypeEntryButton(
+        displayName: String,
+        material: Material,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = material,
+        name = if (selected) "<!i><#00FF40>$displayName" else "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            zeroFoodPreview().invoke(this)
+            hideEverythingExceptTooltip().invoke(this)
+            hideJukeboxTooltip(material).invoke(this)
+            if (selected) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectLevelButton(level: Int, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.GLOWSTONE_DUST,
+        name = if (level > 1) {
+            "<!i><#C7A300>◎ <#FFD700>Уровень:<#FFF3E0> $level"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Уровень:<#FFF3E0> 1"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (level > 1) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectDurationButton(durationSeconds: Int, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.CLOCK,
+        name = when {
+            durationSeconds == -1 -> "<!i><#C7A300>◎ <#FFD700>Длительность:<#FFF3E0> ∞"
+            durationSeconds > 30 -> "<!i><#C7A300>◎ <#FFD700>Длительность:<#FFF3E0> $durationSeconds сек"
+            else -> "<!i><#C7A300>⭘ <#FFD700>Длительность:<#FFF3E0> $durationSeconds сек"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (durationSeconds != 30) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectProbabilityButton(probabilityPercent: Int, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.EMERALD,
+        name = if (probabilityPercent < 100) {
+            "<!i><#C7A300>⭘ <#FFD700>Шанс наложения:<#FFF3E0> $probabilityPercent%"
+        } else {
+            "<!i><#C7A300>◎ <#FFD700>Шанс наложения:<#FFF3E0> 100%"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (probabilityPercent == 100) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectParticlesToggleButton(visible: Boolean, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.ENDER_PEARL,
+        name = if (visible) {
+            "<!i><#C7A300>◎ <#FFD700>Партиклы: <#00FF40>Видны"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Партиклы: <#FF1500>Скрыты"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (visible) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectIconToggleButton(visible: Boolean, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.ENDER_EYE,
+        name = if (visible) {
+            "<!i><#C7A300>◎ <#FFD700>Иконка в углу: <#00FF40>Видна"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Иконка в углу: <#FF1500>Скрыта"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (visible) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun visualEffectConfirmButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.LIME_DYE,
+        name = "<!i><#00FF40>✔ Подтвердить создание",
+        lore = emptyList(),
+        action = action
+    )
+
+    fun visualEffectSelectedPreviewButton(
+        displayName: String,
+        material: Material
+    ): Button = actionButton(
+        material = material,
+        name = "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            zeroFoodPreview().invoke(this)
+            hideEverythingExceptTooltip().invoke(this)
+            hideJukeboxTooltip(material).invoke(this)
+            this
+        }
+    )
+
     fun hideAttributes(): ItemBuilder.() -> ItemBuilder = {
         edit { item ->
             val meta = item.itemMeta ?: return@edit
