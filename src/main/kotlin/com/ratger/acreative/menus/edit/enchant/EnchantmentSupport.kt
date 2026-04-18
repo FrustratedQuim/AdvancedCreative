@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.enchant
 
+import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import org.bukkit.NamespacedKey
@@ -17,50 +18,6 @@ object EnchantmentSupport {
 
     private val enchantmentRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT) }
 
-    private val vanillaDisplayNames: Map<String, String> = mapOf(
-        "aqua_affinity" to "Подводник",
-        "bane_of_arthropods" to "Бич членистоногих",
-        "blast_protection" to "Взрывоустойчивость",
-        "breach" to "Пробитие",
-        "channeling" to "Громовержец",
-        "density" to "Плотность",
-        "depth_strider" to "Подводная ходьба",
-        "efficiency" to "Эффективность",
-        "feather_falling" to "Невесомость",
-        "fire_aspect" to "Заговор огня",
-        "fire_protection" to "Огнеупорность",
-        "flame" to "Горящая стрела",
-        "fortune" to "Удача",
-        "frost_walker" to "Ледоход",
-        "impaling" to "Пронзатель",
-        "infinity" to "Бесконечность",
-        "knockback" to "Отдача",
-        "looting" to "Добыча",
-        "loyalty" to "Верность",
-        "luck_of_the_sea" to "Везучий рыбак",
-        "lure" to "Приманка",
-        "mending" to "Починка",
-        "multishot" to "Тройной выстрел",
-        "piercing" to "Пробивание",
-        "power" to "Сила",
-        "projectile_protection" to "Защита от снарядов",
-        "protection" to "Защита",
-        "punch" to "Отбрасывание",
-        "quick_charge" to "Быстрая перезарядка",
-        "respiration" to "Подводное дыхание",
-        "riptide" to "Тягун",
-        "sharpness" to "Острота",
-        "silk_touch" to "Шёлковое касание",
-        "smite" to "Небесная кара",
-        "soul_speed" to "Скорость души",
-        "sweeping" to "Разящий клинок",
-        "swift_sneak" to "Проворство",
-        "thorns" to "Шипы",
-        "unbreaking" to "Прочность",
-        "vanishing_curse" to "Проклятие утраты",
-        "wind_burst" to "Порыв ветра",
-        "binding_curse" to "Проклятие несъёмности"
-    )
 
     fun entries(meta: ItemMeta?): List<EnchantmentEntry> {
         val source = enchantmentLevels(meta)
@@ -78,8 +35,6 @@ object EnchantmentSupport {
     }
 
     fun hasAny(meta: ItemMeta?): Boolean = enchantmentLevels(meta).isNotEmpty()
-
-    fun count(meta: ItemMeta?): Int = enchantmentLevels(meta).size
 
     fun contains(meta: ItemMeta?, enchantment: Enchantment): Boolean = enchantmentLevels(meta).containsKey(enchantment)
 
@@ -130,7 +85,7 @@ object EnchantmentSupport {
 
     fun displayName(enchantment: Enchantment): String {
         val path = keyPath(enchantment)
-        return vanillaDisplayNames[path] ?: humanizePath(path)
+        return VanillaRuLocalization.enchantmentName(path)
     }
 
     fun suggestions(prefix: String): List<String> {
@@ -155,13 +110,4 @@ object EnchantmentSupport {
         return meta.enchants
     }
 
-    private fun humanizePath(path: String): String {
-        return path.split('_')
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { part ->
-                part.replaceFirstChar { ch ->
-                    if (ch.isLowerCase()) ch.titlecase() else ch.toString()
-                }
-            }
-    }
 }

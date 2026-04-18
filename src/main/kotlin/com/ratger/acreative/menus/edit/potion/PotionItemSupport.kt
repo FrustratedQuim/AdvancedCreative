@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.potion
 
 import com.ratger.acreative.menus.edit.meta.ItemStackReplacementSupport
+import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
 import org.bukkit.Color
 import org.bukkit.Material
 import org.bukkit.Registry
@@ -27,47 +28,6 @@ object PotionItemSupport {
         val showIcon: Boolean
     )
 
-    private val localizedEffectNames = mapOf(
-        "speed" to "Скорость",
-        "slowness" to "Замедление",
-        "haste" to "Спешка",
-        "mining_fatigue" to "Усталость",
-        "strength" to "Сила",
-        "instant_health" to "Мгновенное исцеление",
-        "instant_damage" to "Мгновенный урон",
-        "jump_boost" to "Прыгучесть",
-        "nausea" to "Тошнота",
-        "regeneration" to "Регенерация",
-        "resistance" to "Сопротивление",
-        "fire_resistance" to "Огнестойкость",
-        "water_breathing" to "Подводное дыхание",
-        "invisibility" to "Невидимость",
-        "blindness" to "Слепота",
-        "night_vision" to "Ночное зрение",
-        "hunger" to "Голод",
-        "weakness" to "Слабость",
-        "poison" to "Отравление",
-        "wither" to "Иссушение",
-        "health_boost" to "Прилив здоровья",
-        "absorption" to "Поглощение",
-        "saturation" to "Насыщение",
-        "glowing" to "Свечение",
-        "levitation" to "Левитация",
-        "luck" to "Удача",
-        "unluck" to "Невезение",
-        "slow_falling" to "Плавное падение",
-        "conduit_power" to "Сила источника",
-        "dolphins_grace" to "Грация дельфина",
-        "bad_omen" to "Дурной знак",
-        "hero_of_the_village" to "Герой деревни",
-        "darkness" to "Темнота",
-        "trial_omen" to "Знак испытаний",
-        "raid_omen" to "Знак рейда",
-        "wind_charged" to "Ветровой заряд",
-        "weaving" to "Плетение",
-        "oozing" to "Слизистость",
-        "infested" to "Заражение"
-    )
 
     private val previewPotionTypeByEffect = mapOf(
         "speed" to PotionType.SWIFTNESS,
@@ -170,7 +130,7 @@ object PotionItemSupport {
 
     fun displayName(type: PotionEffectType): String {
         val path = keyPath(type)
-        return localizedEffectNames[path] ?: humanize(path)
+        return VanillaRuLocalization.potionEffectName(path)
     }
 
     fun keyPath(type: PotionEffectType): String {
@@ -230,9 +190,4 @@ object PotionItemSupport {
         }
     }
 
-    private fun humanize(path: String): String {
-        return path.split('_').joinToString(" ") {
-            it.replaceFirstChar { char -> if (char.isLowerCase()) char.titlecase() else char.toString() }
-        }
-    }
 }

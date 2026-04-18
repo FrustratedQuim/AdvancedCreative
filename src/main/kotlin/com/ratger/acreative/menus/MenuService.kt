@@ -16,6 +16,7 @@ import com.ratger.acreative.menus.edit.restrictions.RestrictionMode
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.edit.text.VanillaNameLocalizationService
 import com.ratger.acreative.menus.edit.text.VanillaTranslationResolver
+import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditMenu
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -117,6 +118,7 @@ class MenuService(
     )
 
     init {
+        VanillaRuLocalization.initialize(vanillaTranslationResolver)
         applyStateManager = ItemEditorApplyStateManager(
             hooker = hooker,
             sessionManager = sessionManager,
