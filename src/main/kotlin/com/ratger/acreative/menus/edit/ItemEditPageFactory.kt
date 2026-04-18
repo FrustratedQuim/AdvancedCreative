@@ -21,6 +21,9 @@ import com.ratger.acreative.menus.edit.pages.effects.FoodEditPage
 import com.ratger.acreative.menus.edit.pages.effects.FoodRemoveEffectsListPage
 import com.ratger.acreative.menus.edit.pages.effects.VisualEffectParametersPage
 import com.ratger.acreative.menus.edit.pages.effects.VisualEffectTypeSelectPage
+import com.ratger.acreative.menus.edit.enchant.EnchantmentMenuFlowService
+import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentParametersPage
+import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentTypeSelectPage
 import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentsActivePage
 import com.ratger.acreative.menus.edit.pages.enchantments.EnchantmentsEditPage
 import com.ratger.acreative.menus.edit.pages.head.HeadTextureEditPage
@@ -252,7 +255,33 @@ internal class ItemEditPageFactory(
         val lockPage = LockEditPage(support, buttonFactory, handlers.openAdvancedPageOne)
         val toolPage = ToolEditPage(support, buttonFactory, handlers.openAdvancedPageTwo, requestApplyInput)
 
-        val enchantmentsActivePage = EnchantmentsActivePage(support, buttonFactory, requestApplyInput)
+        val enchantmentMenuFlowService = EnchantmentMenuFlowService()
+        val enchantmentTypeSelectPage = EnchantmentTypeSelectPage(support, buttonFactory, enchantmentMenuFlowService)
+        val enchantmentParametersPage = EnchantmentParametersPage(support, buttonFactory, enchantmentMenuFlowService, requestSignInput)
+        lateinit var openEnchantmentTypePage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
+        lateinit var openEnchantmentParametersPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
+        openEnchantmentTypePage = { player, session, page, openParent ->
+            enchantmentTypeSelectPage.open(
+                player = player,
+                session = session,
+                page = page,
+                openParent = openParent,
+                openParams = { paramsPlayer, paramsSession ->
+                    openEnchantmentParametersPage(paramsPlayer, paramsSession, openParent)
+                }
+            )
+        }
+        openEnchantmentParametersPage = { player, session, openParent ->
+            enchantmentParametersPage.open(
+                player = player,
+                session = session,
+                openParent = openParent,
+                openTypePage = { backPlayer, backSession, targetPage ->
+                    openEnchantmentTypePage(backPlayer, backSession, targetPage, openParent)
+                }
+            )
+        }
+        val enchantmentsActivePage = EnchantmentsActivePage(support, buttonFactory, requestApplyInput, openEnchantmentTypePage)
         val enchantmentsPage = EnchantmentsEditPage(support, buttonFactory, enchantmentsActivePage::open)
 
         val restrictionsListPage = RestrictionsListPage(support, buttonFactory, handlers.openRestrictionsRoot, requestApplyInput)

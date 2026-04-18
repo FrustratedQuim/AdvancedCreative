@@ -992,6 +992,41 @@ class MenuButtonFactory(
         action = action
     )
 
+    fun enchantmentTypeEntryButton(
+        displayName: String,
+        modelId: String,
+        selected: Boolean,
+        action: (ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = if (selected) "<!i><#00FF40>$displayName" else "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
+            if (selected) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun enchantmentSelectedPreviewButton(displayName: String, modelId: String): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = "<!i><#FFD700>$displayName",
+        lore = emptyList(),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
+            this
+        }
+    )
+
     fun visualEffectLevelButton(level: Int, action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.GLOWSTONE_DUST,
         name = if (level > 1) {
@@ -1002,6 +1037,21 @@ class MenuButtonFactory(
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
         itemModifier = {
             if (level > 1) glint(true)
+            this
+        },
+        action = action
+    )
+
+    fun enchantmentLevelButton(level: Int, action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.BLAZE_POWDER,
+        name = if (level != 1) {
+            "<!i><#C7A300>◎ <#FFD700>Уровень:<#FFF3E0> $level"
+        } else {
+            "<!i><#C7A300>⭘ <#FFD700>Уровень:<#FFF3E0> 1"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
+        itemModifier = {
+            if (level != 1) glint(true)
             this
         },
         action = action
@@ -1068,6 +1118,13 @@ class MenuButtonFactory(
     )
 
     fun visualEffectConfirmButton(action: (ClickEvent) -> Unit): Button = actionButton(
+        material = Material.LIME_DYE,
+        name = "<!i><#00FF40>✔ Подтвердить создание",
+        lore = emptyList(),
+        action = action
+    )
+
+    fun enchantmentConfirmCreateButton(action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.LIME_DYE,
         name = "<!i><#00FF40>✔ Подтвердить создание",
         lore = emptyList(),

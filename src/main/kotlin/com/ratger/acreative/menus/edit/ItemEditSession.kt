@@ -38,5 +38,8 @@ data class ItemEditSession(
     var simpleHeadEquippableApplied: Boolean = false,
     var visualEffectContext: VisualEffectContextKey? = null,
     var visualEffectDraft: VisualEffectDraft = VisualEffectDraft(),
-    var visualEffectLastTypePage: Int = 0
+    var visualEffectLastTypePage: Int = 0,
+    var enchantmentDraftKey: String? = null,
+    var enchantmentDraftLevel: Int = 1,
+    var enchantmentDraftLastTypePage: Int = 0
 )

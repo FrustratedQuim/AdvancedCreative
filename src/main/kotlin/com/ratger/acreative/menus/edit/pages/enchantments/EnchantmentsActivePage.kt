@@ -12,7 +12,8 @@ import org.bukkit.entity.Player
 class EnchantmentsActivePage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val openTypeSelectPage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
 
@@ -38,6 +39,16 @@ class EnchantmentsActivePage(
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.ENCHANTMENT) { reopenPlayer, reopenSession ->
+                        open(reopenPlayer, reopenSession, pageIndex, back)
+                    }
+                }
+            },
+            addMenuAction = PagedListPageBuilder.ActionSlot(
+                material = Material.MAGENTA_DYE,
+                name = "<!i><#FF00FF>₪ Добавить зачарование <#FF66FF>[Меню]"
+            ) { addPlayer, addSession, pageIndex ->
+                support.transition(addSession) {
+                    openTypeSelectPage(addPlayer, addSession, 0) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex, back)
                     }
                 }

@@ -17,6 +17,20 @@ object EnchantmentSupport {
     )
 
     private val enchantmentRegistry by lazy { RegistryAccess.registryAccess().getRegistry(RegistryKey.ENCHANTMENT) }
+    private val preferredOrder = listOf(
+        "unbreaking", "mending",
+        "efficiency", "fortune", "silk_touch",
+        "sharpness", "smite", "bane_of_arthropods", "knockback", "fire_aspect", "looting", "sweeping_edge",
+        "power", "punch", "flame", "infinity",
+        "protection", "fire_protection", "blast_protection", "projectile_protection",
+        "feather_falling", "respiration", "aqua_affinity", "thorns", "depth_strider", "frost_walker", "soul_speed", "swift_sneak",
+        "impaling", "riptide", "loyalty", "channeling",
+        "lure", "luck_of_the_sea",
+        "quick_charge", "multishot", "piercing",
+        "breach", "density", "wind_burst",
+        "binding_curse", "vanishing_curse"
+    )
+    private val preferredOrderIndex = preferredOrder.withIndex().associate { it.value to it.index }
 
 
     fun entries(meta: ItemMeta?): List<EnchantmentEntry> {
@@ -86,6 +100,16 @@ object EnchantmentSupport {
     fun displayName(enchantment: Enchantment): String {
         val path = keyPath(enchantment)
         return VanillaRuLocalization.enchantmentName(path)
+    }
+
+
+    fun orderedEnchantments(): List<Enchantment> {
+        return enchantmentRegistry.iterator().asSequence()
+            .sortedWith(compareBy<Enchantment>(
+                { preferredOrderIndex[keyPath(it)] ?: Int.MAX_VALUE },
+                ::keyPath
+            ))
+            .toList()
     }
 
     fun suggestions(prefix: String): List<String> {
