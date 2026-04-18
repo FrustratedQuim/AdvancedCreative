@@ -28,8 +28,26 @@ class VisualEffectTypeSelectPage(
         28, 29, 30, 31, 32, 33, 34
     )
 
+    private val preferredOrder = listOf(
+        "speed", "slowness", "jump_boost", "slow_falling",
+        "night_vision", "darkness", "invisibility", "glowing", "blindness", "nausea",
+        "water_breathing", "fire_resistance", "resistance",
+        "haste", "mining_fatigue",
+        "strength", "weakness",
+        "regeneration", "instant_health", "health_boost", "absorption",
+        "instant_damage", "poison", "wither",
+        "saturation", "hunger",
+        "luck", "unluck",
+        "conduit_power", "dolphins_grace",
+        "wind_charged", "weaving", "oozing", "infested",
+        "bad_omen", "raid_omen", "trial_omen", "hero_of_the_village"
+    )
+    private val orderIndexByKey = preferredOrder.withIndex().associate { it.value to it.index }
     private val orderedTypes: List<PotionEffectType> = Registry.MOB_EFFECT.iterator().asSequence()
-        .sortedBy { it.key.key }
+        .sortedWith(compareBy<PotionEffectType>(
+            { orderIndexByKey[it.key.key] ?: Int.MAX_VALUE },
+            { it.key.key }
+        ))
         .toList()
 
     fun open(
@@ -85,7 +103,7 @@ class VisualEffectTypeSelectPage(
             val isSelected = selectedType == type
             menu.setButton(slot, buttonFactory.visualEffectTypeEntryButton(
                 displayName = PotionItemSupport.displayName(type),
-                material = VisualEffectIconResolver.resolve(type),
+                modelId = VisualEffectIconResolver.resolve(type).key.asString(),
                 selected = isSelected
             ) {
                 if (isSelected) {

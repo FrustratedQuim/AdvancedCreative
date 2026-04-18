@@ -89,14 +89,23 @@ class AdvancedEditMainPage(
             listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
             action = { support.transition(session) { openTextAppearance(player, session) } }
         ))
-        menu.setButton(31, buttonFactory.actionButton(session.editableItem.type, "<!i><#C7A300>◎ <#FFD700>ID предмета: <#00FF40>$itemId", listOf(
+        menu.setButton(31, buttonFactory.actionButton(Material.STRUCTURE_VOID, "<!i><#C7A300>◎ <#FFD700>ID предмета: <#00FF40>$itemId", listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             "",
             "<!i><#FFD700>После нажатия:",
             "<!i><#C7A300> ● <#FFF3E0>/apply <id> <#C7A300>- <#FFE68A>задать по id ",
             "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отмена ",
             ""
-        ), buttonFactory.hideEverythingExceptTooltip(), action = {
+        ), itemModifier = {
+            NamespacedKey.fromString(itemId)?.let { key ->
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.itemModel = key
+                    item.itemMeta = meta
+                }
+            }
+            this
+        }, action = {
             support.transition(session) {
                 requestApplyInput(player, session, EditorApplyKind.ITEM_ID) { reopenPlayer, reopenSession ->
                     open(reopenPlayer, reopenSession)
@@ -124,7 +133,7 @@ class AdvancedEditMainPage(
                 }
                 glint(true)
             }
-            buttonFactory.hideEverythingExceptTooltip().invoke(this)
+            this
         }, action = { event ->
             if (event.isRight || event.isShiftRight) {
                 val meta = session.editableItem.itemMeta
@@ -147,9 +156,7 @@ class AdvancedEditMainPage(
                             "<!i><#C7A300> ● <#FFF3E0>/apply hand <#C7A300>- <#FFE68A>взять из руки ",
                             ""
                         ),
-                        itemModifier = {
-                            buttonFactory.hideEverythingExceptTooltip().invoke(this)
-                        },
+                        itemModifier = { this },
                         action = { clickEvent ->
                             if (clickEvent.isLeft || clickEvent.isShiftLeft) {
                                 support.transition(session) {

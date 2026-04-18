@@ -17,6 +17,7 @@ import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.core.TickScheduler
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
@@ -972,17 +973,19 @@ class MenuButtonFactory(
 
     fun visualEffectTypeEntryButton(
         displayName: String,
-        material: Material,
+        modelId: String,
         selected: Boolean,
         action: (ClickEvent) -> Unit
     ): Button = actionButton(
-        material = material,
+        material = Material.STRUCTURE_VOID,
         name = if (selected) "<!i><#00FF40>$displayName" else "<!i><#FFD700>$displayName",
         lore = emptyList(),
         itemModifier = {
-            zeroFoodPreview().invoke(this)
-            hideEverythingExceptTooltip().invoke(this)
-            hideJukeboxTooltip(material).invoke(this)
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
             if (selected) glint(true)
             this
         },
@@ -1073,15 +1076,17 @@ class MenuButtonFactory(
 
     fun visualEffectSelectedPreviewButton(
         displayName: String,
-        material: Material
+        modelId: String
     ): Button = actionButton(
-        material = material,
+        material = Material.STRUCTURE_VOID,
         name = "<!i><#FFD700>$displayName",
         lore = emptyList(),
         itemModifier = {
-            zeroFoodPreview().invoke(this)
-            hideEverythingExceptTooltip().invoke(this)
-            hideJukeboxTooltip(material).invoke(this)
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = NamespacedKey.fromString(modelId)
+                item.itemMeta = meta
+            }
             this
         }
     )

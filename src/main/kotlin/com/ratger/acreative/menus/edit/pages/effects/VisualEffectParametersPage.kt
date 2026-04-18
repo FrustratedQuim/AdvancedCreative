@@ -44,7 +44,7 @@ class VisualEffectParametersPage(
         if (selectedType != null) {
             menu.setButton(4, buttonFactory.visualEffectSelectedPreviewButton(
                 displayName = PotionItemSupport.displayName(selectedType),
-                material = VisualEffectIconResolver.resolve(selectedType)
+                modelId = VisualEffectIconResolver.resolve(selectedType).key.asString()
             ))
         }
 
