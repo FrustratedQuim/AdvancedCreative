@@ -12,7 +12,6 @@ import com.ratger.acreative.menus.edit.head.PlayerProfileCopyHelper
 import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
-import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectIconResolver
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.core.TickScheduler
@@ -24,7 +23,6 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.potion.PotionEffectType
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -842,10 +840,14 @@ class MenuButtonFactory(
                 buildFrameInvisibilityButtonItem(editedItem)
 
             type == Material.POTION || type == Material.SPLASH_POTION || type == Material.LINGERING_POTION || type == Material.TIPPED_ARROW ->
-                ItemBuilder(type)
+                ItemBuilder(Material.STRUCTURE_VOID)
                     .name(parser.parse("<!i><#C7A300>🧪 <#FFD700>Параметры зелья"))
                     .lore(lore.map(parser::parse))
-                    .flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+                    .edit { item ->
+                        val meta = item.itemMeta ?: return@edit
+                        meta.itemModel = NamespacedKey.minecraft(type.key.key)
+                        item.itemMeta = meta
+                    }
                     .build()
 
             type == Material.FILLED_MAP ->
@@ -914,9 +916,8 @@ class MenuButtonFactory(
         type: PotionEffectType,
         action: (ClickEvent) -> Unit
     ): Button {
-        val previewPotionType = PotionItemSupport.previewPotionType(type)
         return actionButton(
-            material = Material.POTION,
+            material = Material.STRUCTURE_VOID,
             name = "<!i><#C7A300>◎ <#FFD700>Эффект №$index",
             lore = listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
@@ -931,19 +932,50 @@ class MenuButtonFactory(
                 ""
             ),
             itemModifier = {
-                if (previewPotionType != null) {
-                    edit { item ->
-                        val meta = item.itemMeta as? PotionMeta ?: return@edit
-                        meta.basePotionType = previewPotionType
-                        item.itemMeta = meta
-                    }
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.itemModel = VisualEffectIconResolver.resolve(type).key
+                    item.itemMeta = meta
                 }
-                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
                 this
             },
             action = action
         )
     }
+
+    fun potionEffectEntryButton(
+        index: Int,
+        displayName: String,
+        durationLabel: String,
+        level: Int,
+        showParticles: Boolean,
+        showIcon: Boolean,
+        type: PotionEffectType,
+        action: (ClickEvent) -> Unit
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = "<!i><#C7A300>◎ <#FFD700>Эффект №$index",
+        lore = listOf(
+            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
+            "",
+            "<!i><#FFD700>Параметры:",
+            "<!i><#C7A300> ● <#FFE68A>Название: <#FFF3E0>$displayName ",
+            "<!i><#C7A300> ● <#FFE68A>Длительность: <#FFF3E0>$durationLabel ",
+            "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>$level ",
+            "<!i><#C7A300> ● <#FFE68A>Видны партиклы: ${if (showParticles) "<#00FF40>Да" else "<#FF1500>Нет"}",
+            "<!i><#C7A300> ● <#FFE68A>Иконка в углу: ${if (showIcon) "<#00FF40>Да" else "<#FF1500>Нет"}",
+            ""
+        ),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = VisualEffectIconResolver.resolve(type).key
+                item.itemMeta = meta
+            }
+            this
+        },
+        action = action
+    )
 
     fun visualEffectTypeEntryButton(
         displayName: String,
