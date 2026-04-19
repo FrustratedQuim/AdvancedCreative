@@ -15,7 +15,7 @@ class RestrictionsListPage(
     private val buttonFactory: MenuButtonFactory,
     private val openRestrictionsRoot: (Player, ItemEditSession) -> Unit,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val openBlockSelectPage: (Player, ItemEditSession, RestrictionMode, Int, (Player, ItemEditSession) -> Unit) -> Unit
+    private val openBlockSelectPage: (Player, ItemEditSession, RestrictionMode, Int, (Player, ItemEditSession) -> Unit, Boolean) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
 
@@ -46,9 +46,9 @@ class RestrictionsListPage(
                 name = mode.addMenuButtonTitle
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
-                    openBlockSelectPage(addPlayer, addSession, mode, 0) { reopenPlayer, reopenSession ->
+                    openBlockSelectPage(addPlayer, addSession, mode, 0, { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, mode, pageIndex)
-                    }
+                    }, true)
                 }
             },
             clearAction = PagedListPageBuilder.ActionSlot(

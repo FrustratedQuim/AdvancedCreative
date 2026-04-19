@@ -57,6 +57,8 @@ class VisualEffectTypeSelectPage(
         page: Int,
         openParent: (Player, ItemEditSession) -> Unit,
         openParams: (Player, ItemEditSession) -> Unit,
+        multiSelect: Boolean = false,
+        selectedTypesProvider: (ItemEditSession) -> Set<PotionEffectType> = { emptySet() },
         onTypeSelected: ((Player, ItemEditSession, PotionEffectType) -> Unit)? = null
     ) {
         flowService.begin(session, contextKey)
@@ -81,10 +83,11 @@ class VisualEffectTypeSelectPage(
         blackSlots.forEach { menu.setButton(it, black) }
         graySlots.forEach { menu.setButton(it, gray) }
         val selectedType = flowService.resolveType(session.visualEffectDraft.effectTypeKey)
+        val selectedTypesSet = if (multiSelect) selectedTypesProvider(session) else emptySet()
 
         menu.setButton(18, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
-                if (pageIndex > 0) open(player, session, contextKey, pageIndex - 1, openParent, openParams)
+                if (pageIndex > 0) open(player, session, contextKey, pageIndex - 1, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected)
                 else openParent(player, session)
             }
         })
@@ -94,7 +97,7 @@ class VisualEffectTypeSelectPage(
             menu.setButton(26, buttonFactory.forwardButton("Вперёд ▶") {
                 support.transition(session) {
                     if (pageIndex + 1 < totalPages) {
-                        open(player, session, contextKey, pageIndex + 1, openParent, openParams, onTypeSelected)
+                        open(player, session, contextKey, pageIndex + 1, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected)
                     } else {
                         if (onTypeSelected != null) {
                             if (selectedType != null) {
@@ -112,21 +115,24 @@ class VisualEffectTypeSelectPage(
 
         pageEntries.forEachIndexed { index, type ->
             val slot = workSlots[index]
-            val isSelected = selectedType == type
+            val isSelected = if (multiSelect) selectedTypesSet.contains(type) else selectedType == type
             menu.setButton(slot, buttonFactory.visualEffectTypeEntryButton(
                 displayName = PotionItemSupport.displayName(type),
                 modelId = VisualEffectIconResolver.resolve(type).key.asString(),
                 selected = isSelected
             ) {
-                if (isSelected) {
+                if (!multiSelect && isSelected) {
                     session.visualEffectDraft = session.visualEffectDraft.copy(effectTypeKey = null)
-                    support.transition(session) { open(player, session, contextKey, pageIndex, openParent, openParams, onTypeSelected) }
+                    support.transition(session) { open(player, session, contextKey, pageIndex, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected) }
                     return@visualEffectTypeEntryButton
                 }
                 session.visualEffectDraft = session.visualEffectDraft.copy(effectTypeKey = type.key.key)
                 support.transition(session) {
                     if (onTypeSelected != null) {
                         onTypeSelected(player, session, type)
+                        if (multiSelect) {
+                            open(player, session, contextKey, pageIndex, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected)
+                        }
                     } else {
                         openParams(player, session)
                     }

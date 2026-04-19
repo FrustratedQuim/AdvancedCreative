@@ -17,7 +17,7 @@ class DeathProtectionRemoveEffectsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
+    private val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, Boolean, (ItemEditSession) -> Set<PotionEffectType>, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
     private val openDeathProtectionRoot: (Player, ItemEditSession) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -58,13 +58,17 @@ class DeathProtectionRemoveEffectsListPage(
                         addSession,
                         VisualEffectContextKey.DEATH_PROTECTION,
                         0,
-                        { backPlayer, backSession -> open(backPlayer, backSession, pageIndex) }
-                    ) { selectedPlayer, selectedSession, selectedType ->
+                        { backPlayer, backSession -> open(backPlayer, backSession, pageIndex) },
+                        true,
+                        { selectionSession -> DeathProtectionMenuSupport.removedEffects(selectionSession.editableItem).toSet() }
+                    ) { _, selectedSession, selectedType ->
                         support.transition(selectedSession) {
-                            DeathProtectionMenuSupport.addRemovedEffect(selectedSession.editableItem, selectedType)
-                            val afterSize = DeathProtectionMenuSupport.removedEffects(selectedSession.editableItem).size
-                            val targetPage = listBuilder.coercePageIndexAfterUpdate(pageIndex, afterSize)
-                            open(selectedPlayer, selectedSession, targetPage)
+                            val hasEffect = DeathProtectionMenuSupport.removedEffects(selectedSession.editableItem).contains(selectedType)
+                            if (hasEffect) {
+                                DeathProtectionMenuSupport.removeRemovedEffect(selectedSession.editableItem, selectedType)
+                            } else {
+                                DeathProtectionMenuSupport.addRemovedEffect(selectedSession.editableItem, selectedType)
+                            }
                         }
                     }
                 }

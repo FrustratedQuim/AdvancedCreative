@@ -30,6 +30,7 @@ class RestrictionBlockSelectPage(
         mode: RestrictionMode,
         page: Int,
         openParent: (Player, ItemEditSession) -> Unit,
+        multiSelect: Boolean = false,
         onSelected: (Player, ItemEditSession) -> Unit
     ) {
         val options = ItemRestrictionSupport.blockOptions()
@@ -56,7 +57,7 @@ class RestrictionBlockSelectPage(
 
         menu.setButton(18, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
-                if (pageIndex > 0) open(player, session, mode, pageIndex - 1, openParent, onSelected)
+                if (pageIndex > 0) open(player, session, mode, pageIndex - 1, openParent, multiSelect, onSelected)
                 else openParent(player, session)
             }
         })
@@ -64,7 +65,7 @@ class RestrictionBlockSelectPage(
         menu.setButton(26, buttonFactory.forwardButton("Вперёд ▶") {
             support.transition(session) {
                 val nextPage = if (pageIndex + 1 < totalPages) pageIndex + 1 else 0
-                open(player, session, mode, nextPage, openParent, onSelected)
+                open(player, session, mode, nextPage, openParent, multiSelect, onSelected)
             }
         })
 
@@ -76,11 +77,11 @@ class RestrictionBlockSelectPage(
                     support.transition(session) {
                         val parsed = input?.trim()?.toIntOrNull()
                         val targetPage = (parsed?.coerceIn(1, totalPages) ?: (pageIndex + 1)) - 1
-                        open(submitPlayer, session, mode, targetPage, openParent, onSelected)
+                        open(submitPlayer, session, mode, targetPage, openParent, multiSelect, onSelected)
                     }
                 },
                 { leavePlayer ->
-                    support.transition(session) { open(leavePlayer, session, mode, pageIndex, openParent, onSelected) }
+                    support.transition(session) { open(leavePlayer, session, mode, pageIndex, openParent, multiSelect, onSelected) }
                 }
             )
         })
@@ -94,7 +95,13 @@ class RestrictionBlockSelectPage(
                 selected = selected
             ) {
                 ItemRestrictionSupport.add(session.editableItem, mode, entry.key)
-                support.transition(session) { onSelected(player, session) }
+                support.transition(session) {
+                    if (multiSelect) {
+                        open(player, session, mode, pageIndex, openParent, multiSelect, onSelected)
+                    } else {
+                        onSelected(player, session)
+                    }
+                }
             })
         }
 

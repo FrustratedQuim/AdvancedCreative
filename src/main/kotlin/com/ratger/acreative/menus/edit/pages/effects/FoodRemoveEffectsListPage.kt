@@ -18,7 +18,7 @@ class FoodRemoveEffectsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
+    private val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, Boolean, (ItemEditSession) -> Set<PotionEffectType>, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
     private val openFoodRoot: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -59,14 +59,18 @@ class FoodRemoveEffectsListPage(
                         addSession,
                         VisualEffectContextKey.CONSUMABLE,
                         0,
-                        { backPlayer, backSession -> open(backPlayer, backSession, openBack, pageIndex) }
-                    ) { selectedPlayer, selectedSession, selectedType ->
+                        { backPlayer, backSession -> open(backPlayer, backSession, openBack, pageIndex) },
+                        true,
+                        { selectionSession -> ConsumableComponentSupport.removedEffects(selectionSession.editableItem).toSet() }
+                    ) { _, selectedSession, selectedType ->
                         support.transition(selectedSession) {
                             EdibleMenuSupport.ensureEnabledWithDefaults(selectedSession.editableItem)
-                            ConsumableComponentSupport.addRemovedEffect(selectedSession.editableItem, selectedType)
-                            val afterSize = ConsumableComponentSupport.removedEffects(selectedSession.editableItem).size
-                            val targetPage = listBuilder.coercePageIndexAfterUpdate(pageIndex, afterSize)
-                            open(selectedPlayer, selectedSession, openBack, targetPage)
+                            val hasEffect = ConsumableComponentSupport.removedEffects(selectedSession.editableItem).contains(selectedType)
+                            if (hasEffect) {
+                                ConsumableComponentSupport.removeRemovedEffect(selectedSession.editableItem, selectedType)
+                            } else {
+                                ConsumableComponentSupport.addRemovedEffect(selectedSession.editableItem, selectedType)
+                            }
                         }
                     }
                 }

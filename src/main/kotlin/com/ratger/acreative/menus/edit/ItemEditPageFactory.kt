@@ -118,7 +118,7 @@ internal data class ItemEditNavigationHandlers(
     val openPotionEffectsPage: (Player, ItemEditSession, Int) -> Unit,
     val openPotionPageWithBack: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
     val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
-    val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
+    val openVisualEffectTypeOnlyPage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit, Boolean, (ItemEditSession) -> Set<PotionEffectType>, (Player, ItemEditSession, PotionEffectType) -> Unit) -> Unit,
     val openVisualEffectParametersPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit, (Player, ItemEditSession, Int) -> Unit) -> Unit,
     val openArmorTrimPatternPage: (Player, ItemEditSession) -> Unit,
     val openArmorTrimMaterialPage: (Player, ItemEditSession) -> Unit
@@ -327,8 +327,8 @@ internal class ItemEditPageFactory(
             buttonFactory,
             handlers.openRestrictionsRoot,
             requestApplyInput
-        ) { player, session, mode, page, openParent ->
-            restrictionBlockSelectPage.open(player, session, mode, page, openParent) { selectedPlayer, selectedSession ->
+        ) { player, session, mode, page, openParent, multiSelect ->
+            restrictionBlockSelectPage.open(player, session, mode, page, openParent, multiSelect) { selectedPlayer, selectedSession ->
                 openParent(selectedPlayer, selectedSession)
             }
         }

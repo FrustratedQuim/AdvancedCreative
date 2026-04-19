@@ -281,6 +281,8 @@ class ItemEditMenu(
         contextKey: VisualEffectContextKey,
         page: Int,
         openParent: (Player, ItemEditSession) -> Unit,
+        multiSelect: Boolean,
+        selectedTypesProvider: (ItemEditSession) -> Set<PotionEffectType>,
         onTypeSelected: (Player, ItemEditSession, PotionEffectType) -> Unit
     ) {
         openPageSafely(player) {
@@ -291,6 +293,8 @@ class ItemEditMenu(
                 page = page,
                 openParent = openParent,
                 openParams = openParent,
+                multiSelect = multiSelect,
+                selectedTypesProvider = selectedTypesProvider,
                 onTypeSelected = onTypeSelected
             )
         }
