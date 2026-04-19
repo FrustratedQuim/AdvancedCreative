@@ -7,6 +7,10 @@ import org.bukkit.entity.Player
 
 class EditCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.EDIT) {
     override fun handle(player: Player, args: Array<out String>) {
+        if (!hooker.accountLinkRequirementService.hasRequiredLink(player)) {
+            hooker.accountLinkRequirementService.sendLinkRequiredMessage(player)
+            return
+        }
         hooker.menuService.openItemEditor(player)
     }
 }

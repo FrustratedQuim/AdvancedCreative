@@ -131,11 +131,11 @@ class MenuButtonFactory(
 
     fun decorationHeadsForwardButton(action: () -> Unit): Button = forwardButton("Вперёд ▶") { action() }
 
-    fun decorationHeadsMyHeadsButton(count: Int, action: () -> Unit): Button = actionButton(
+    fun decorationHeadsMyHeadsButton(count: Int, action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.CHEST_MINECART,
         name = "<!i><#C7A300>⭐ <#FFD700>Мои головы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
-        action = { action() }
+        action = action
     )
 
     fun decorationHeadsCategoryButton(
@@ -172,11 +172,11 @@ class MenuButtonFactory(
     )
 
 
-    fun decorationHeadsMyPagesButton(count: Int, action: () -> Unit): Button = actionButton(
+    fun decorationHeadsMyPagesButton(count: Int, action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.BOOK,
         name = "<!i><#C7A300>⭐ <#FFD700>Мои страницы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
-        action = { action() }
+        action = action
     )
 
     fun decorationHeadsSavePageButton(isSaved: Boolean, action: (ClickEvent) -> Unit): Button = actionButton(

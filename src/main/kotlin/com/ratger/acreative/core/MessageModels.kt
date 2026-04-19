@@ -127,7 +127,8 @@ enum class MessageKey {
     EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT,
     EDIT_APPLY_PROMPT_SUBTITLE_EFFECT,
     EDIT_APPLY_PROMPT_SUBTITLE_CONSUME_SECONDS,
-    EDIT_PROMPT_CLEAR
+    EDIT_PROMPT_CLEAR,
+    ACCOUNT_LINK_REQUIRED
 }
 
 object MessageCatalog {
@@ -269,6 +270,7 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_POTION_EFFECT to "<#7BFF00>/apply <эффект> [уровень] - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_EFFECT to "<#7BFF00>/apply <эффект> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_CONSUME_SECONDS to "<#7BFF00>/apply <секунд> - указать <gray>| <#7BFF00>/apply cancel - отмена",
-        MessageKey.EDIT_PROMPT_CLEAR to ""
+        MessageKey.EDIT_PROMPT_CLEAR to "",
+        MessageKey.ACCOUNT_LINK_REQUIRED to "<dark_red>▍ <#FF1500>Привяжите ваш аккаунт к <click:run_command:'/help'><hover:show_text:'<gray>Нажмите'><u>ВК/Discord</u></hover></click>"
     )
 }

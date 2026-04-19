@@ -68,7 +68,12 @@ class Subsystem(
         menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
     )
     private val recentService = RecentService(recentRepository, executor, playerRecentLimit)
-    private val giveService = GiveService(hooker.menuService.headMutationSupport(), parser, recentService)
+    private val giveService = GiveService(
+        hooker.menuService.headMutationSupport(),
+        parser,
+        recentService,
+        hooker.accountLinkRequirementService
+    )
     private val savedPagesService = SavedPagesService(savedPagesRepository, 45)
 
     private val sessionManager = SessionManager(categoryRegistry.firstCategoryKey())
@@ -88,7 +93,8 @@ class Subsystem(
         executor = executor,
         temporaryOverrideSupport = temporaryMenuButtonOverrideSupport,
         messageManager = hooker.messageManager,
-        promptService = ApplyPromptService(hooker.messageManager)
+        promptService = ApplyPromptService(hooker.messageManager),
+        accountLinkRequirementService = hooker.accountLinkRequirementService
     )
 
     init {

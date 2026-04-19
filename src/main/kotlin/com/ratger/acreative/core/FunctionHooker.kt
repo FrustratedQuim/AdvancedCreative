@@ -36,6 +36,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var permissionManager: PermissionManager
         private set
+    lateinit var accountLinkRequirementService: AccountLinkRequirementService
+        private set
     lateinit var commandManager: CommandManager
         private set
     lateinit var playerStateManager: PlayerStateManager
@@ -125,6 +127,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
 
         messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
+        accountLinkRequirementService = AccountLinkRequirementService(this)
         playerStateManager = PlayerStateManager(this)
         entityManager = EntityManager(this)
         sitManager = SitManager(this)

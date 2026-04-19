@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.menu
 
+import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
@@ -37,7 +38,8 @@ class MenuService(
     private val executor: ExecutorService,
     private val temporaryOverrideSupport: TemporaryMenuButtonOverrideSupport,
     private val messageManager: MessageManager,
-    private val promptService: ApplyPromptService
+    private val promptService: ApplyPromptService,
+    private val accountLinkRequirementService: AccountLinkRequirementService
 ) {
     private data class CategoryOption(val key: String, val displayName: String)
 
@@ -121,7 +123,7 @@ class MenuService(
                             onRecentCountUpdated = { updatedCount ->
                                 Bukkit.getScheduler().runTask(plugin, Runnable {
                                     if (!player.isOnline) return@Runnable
-                                    event.menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(updatedCount) {
+                                    event.menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(updatedCount) { _ ->
                                         sessionManager.setRecentMode(player.uniqueId)
                                         open(player)
                                     })
@@ -137,14 +139,39 @@ class MenuService(
                         sessionManager.update(player.uniqueId, state.copy(page = state.page + 1))
                         open(player)
                     },
-                    onMyHeads = {
+                    onMyHeads = { event ->
+                        if (!accountLinkRequirementService.hasRequiredLink(player)) {
+                            showLinkRequiredButtonWarning(event.menu, 46) {
+                                buttonFactory.decorationHeadsMyHeadsButton(myCount) { _ ->
+                                    sessionManager.setRecentMode(player.uniqueId)
+                                    open(player)
+                                }
+                            }
+                            return@renderCategoryMenu
+                        }
                         sessionManager.setRecentMode(player.uniqueId)
                         open(player)
                     },
-                    onMyPages = {
+                    onMyPages = { event ->
+                        if (!accountLinkRequirementService.hasRequiredLink(player)) {
+                            showLinkRequiredButtonWarning(event.menu, 47) {
+                                buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { _ ->
+                                    openSavedPages(player, state.copy(page = page.page))
+                                }
+                            }
+                            return@renderCategoryMenu
+                        }
                         openSavedPages(player, state.copy(page = page.page))
                     },
                     onToggleSavePage = { event ->
+                        if (!accountLinkRequirementService.hasRequiredLink(player)) {
+                            showLinkRequiredButtonWarning(event.menu, 51) {
+                                buttonFactory.decorationHeadsSavePageButton(isSaved) { clickEvent ->
+                                    toggleSaveCurrentPage(player, state.copy(page = page.page), clickEvent.menu)
+                                }
+                            }
+                            return@renderCategoryMenu
+                        }
                         toggleSaveCurrentPage(player, state.copy(page = page.page), event.menu)
                     },
                     onSwitchCategory = { nextIndex ->
@@ -191,7 +218,15 @@ class MenuService(
                         recentService.rememberInteractionForDeferredPromotion(player.uniqueId, entry.stableKey)
                         giveService.give(player, entry, categoryName, event, trackRecent = false)
                     },
-                    onMyPages = { openSavedPages(player, state) },
+                    onMyPages = { event ->
+                        if (!accountLinkRequirementService.hasRequiredLink(player)) {
+                            showLinkRequiredButtonWarning(event.menu, 47) {
+                                buttonFactory.decorationHeadsMyPagesButton(pagesCount) { _ -> openSavedPages(player, state) }
+                            }
+                            return@renderRecentMenu
+                        }
+                        openSavedPages(player, state)
+                    },
                     onSwitchCategory = { nextIndex ->
                         val nextCategory = categoryOptions.getOrNull(nextIndex)?.key ?: ALL_RECENT_CATEGORY_KEY
                         sessionManager.setRecentCategory(player.uniqueId, nextCategory)
@@ -344,9 +379,24 @@ class MenuService(
                         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isSaved) { event -> toggleSaveCurrentPage(player, state, event.menu) })
                     }
                 }
-                menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(count) { openSavedPages(player, state) })
+                menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(count) { _ -> openSavedPages(player, state) })
             })
         }
+    }
+
+
+    private fun showLinkRequiredButtonWarning(
+        menu: ru.violence.coreapi.bukkit.api.menu.Menu,
+        slot: Int,
+        restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
+    ) {
+        temporaryOverrideSupport.replaceSlotTemporarily(
+            menu = menu,
+            slot = slot,
+            temporaryButton = buttonFactory.actionButton(Material.BARRIER, "<!i><#FF1500>⚠ Привяжите ваш аккаунт", emptyList()),
+            restoreAfterTicks = 30L,
+            restoreButton = restoreButton
+        )
     }
 
     fun onPlayerJoin(playerId: UUID) {

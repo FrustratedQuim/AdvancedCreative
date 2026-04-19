@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.decorationheads.service
 
+import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -14,7 +15,8 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 class GiveService(
     private val headTextureMutationSupport: HeadTextureMutationSupport,
     private val parser: MiniMessageParser,
-    private val recentService: RecentService
+    private val recentService: RecentService,
+    private val accountLinkRequirementService: AccountLinkRequirementService
 ) {
     fun give(
         player: Player,
@@ -65,7 +67,7 @@ class GiveService(
             else -> player.setItemOnCursor(item)
         }
 
-        if (trackRecent) {
+        if (trackRecent && accountLinkRequirementService.hasRequiredLink(player)) {
             recentService.push(player.uniqueId, entry, onRecentCountUpdated)
         }
     }

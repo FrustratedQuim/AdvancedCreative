@@ -35,8 +35,8 @@ class MenuRenderer(
         onGive: (Entry, String, ClickEvent) -> Unit,
         onBack: () -> Unit,
         onForward: () -> Unit,
-        onMyHeads: () -> Unit,
-        onMyPages: () -> Unit,
+        onMyHeads: (ClickEvent) -> Unit,
+        onMyPages: (ClickEvent) -> Unit,
         onToggleSavePage: (ClickEvent) -> Unit,
         onSwitchCategory: (Int) -> Unit,
         onSearch: () -> Unit
@@ -51,8 +51,8 @@ class MenuRenderer(
         if (pageResult.page > 1) menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         if (pageResult.page < pageResult.totalPages) menu.setButton(50, buttonFactory.decorationHeadsForwardButton { onForward() })
 
-        menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(myCount) { onMyHeads() })
-        menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { onMyPages() })
+        menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(myCount) { event -> onMyHeads(event) })
+        menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { event -> onMyPages(event) })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isCurrentPageSaved) { onToggleSavePage(it) })
         menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch() })
@@ -77,13 +77,13 @@ class MenuRenderer(
         entries: List<Entry>,
         categoryNameResolver: (Int) -> String,
         onGive: (Entry, String, ClickEvent) -> Unit,
-        onMyPages: () -> Unit,
+        onMyPages: (ClickEvent) -> Unit,
         onSwitchCategory: (Int) -> Unit,
         onBack: () -> Unit
     ) {
         val menu = baseMenu("▍ Головы → Мои → $categoryName", setOf(47, 48, 49, 52) + contentSlots(entries.size))
         fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 50, 51, 52))
-        menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { onMyPages() })
+        menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { event -> onMyPages(event) })
         menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(52, buttonFactory.decorationHeadsReminderButton())
