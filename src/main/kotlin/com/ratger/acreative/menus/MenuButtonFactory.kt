@@ -232,6 +232,7 @@ class MenuButtonFactory(
                     add("")
                     add("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы перейти")
                     add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы изменить")
+                    add("<!i><#FFD700>Q, <#FFE68A>чтобы удалить")
                 }.map(parser::parse)
             )
             .flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)

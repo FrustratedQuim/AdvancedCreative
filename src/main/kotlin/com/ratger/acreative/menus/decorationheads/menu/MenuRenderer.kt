@@ -11,6 +11,7 @@ import com.ratger.acreative.menus.decorationheads.model.PageResult
 import com.ratger.acreative.menus.decorationheads.model.SavedPageEntry
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.ClickType
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -102,7 +103,8 @@ class MenuRenderer(
         onBack: () -> Unit,
         onFilter: (Int) -> Unit,
         onOpenEntry: (SavedPageEntry) -> Unit,
-        onEditEntry: (SavedPageEntry) -> Unit
+        onEditEntry: (SavedPageEntry) -> Unit,
+        onDeleteEntry: (SavedPageEntry) -> Unit
     ) {
         val menu = baseMenu("▍ Головы → Мои страницы", setOf(48, 49) + contentSlots(entries.size))
         fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 48, 50, 51, 52))
@@ -114,6 +116,7 @@ class MenuRenderer(
                 when {
                     event.isLeft || event.isShiftLeft -> onOpenEntry(entry)
                     event.isRight || event.isShiftRight -> onEditEntry(entry)
+                    isDropClick(event) -> onDeleteEntry(entry)
                 }
             })
         }
@@ -179,5 +182,9 @@ class MenuRenderer(
     private fun contentSlots(entryCount: Int): Set<Int> {
         val safeCount = entryCount.coerceIn(0, 45)
         return (0 until safeCount).toSet()
+    }
+
+    private fun isDropClick(event: ClickEvent): Boolean {
+        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
     }
 }

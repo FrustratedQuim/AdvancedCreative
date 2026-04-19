@@ -244,6 +244,16 @@ class MenuService(
                     },
                     onEditEntry = { entry ->
                         openSavedPageEditor(player, originState, selected.key, entry.id)
+                    },
+                    onDeleteEntry = { entry ->
+                        executor.submit {
+                            savedPagesService.delete(player.uniqueId, entry.id)
+                            Bukkit.getScheduler().runTask(plugin, Runnable {
+                                if (player.isOnline) {
+                                    openSavedPages(player, originState, selected.key)
+                                }
+                            })
+                        }
                     }
                 )
             })
