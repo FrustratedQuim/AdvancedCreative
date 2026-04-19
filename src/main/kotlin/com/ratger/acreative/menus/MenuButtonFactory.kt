@@ -133,7 +133,7 @@ class MenuButtonFactory(
 
     fun decorationHeadsMyHeadsButton(count: Int, action: () -> Unit): Button = actionButton(
         material = Material.CHEST_MINECART,
-        name = "<!i><#FFD700>⭐ Мои головы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
+        name = "<!i><#C7A300>⭐ <#FFD700>Мои головы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
         action = { action() }
     )
@@ -146,7 +146,7 @@ class MenuButtonFactory(
         material = Material.CLOCK,
         options = options.map { ListButtonOption(it, it) },
         selectedIndex = selectedIndex,
-        titleBuilder = { _, _ -> "<!i><#FFD700>⚡ Категория" },
+        titleBuilder = { _, _ -> "<!i><#C7A300>⚡ <#FFD700>Категория" },
         beforeOptionsLore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить",
             ""
@@ -159,9 +159,9 @@ class MenuButtonFactory(
     fun decorationHeadsSearchButton(query: String?, action: () -> Unit): Button = actionButton(
         material = Material.COMPASS,
         name = if (query.isNullOrBlank()) {
-            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
+            "<!i><#C7A300>🔎 <#FFD700>Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
         } else {
-            "<!i><#FFD700>🔎 Поиск <#C7A300>[<#FFF3E0>${sanitizeMiniMessageText(query)}<#C7A300>]"
+            "<!i><#C7A300>🔎 <#FFD700>Поиск <#C7A300>[<#FFF3E0>${sanitizeMiniMessageText(query)}<#C7A300>]"
         },
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы указать"),
         itemModifier = {
@@ -174,14 +174,14 @@ class MenuButtonFactory(
 
     fun decorationHeadsMyPagesButton(count: Int, action: () -> Unit): Button = actionButton(
         material = Material.BOOK,
-        name = "<!i><#FFD700>⭐ Мои страницы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
+        name = "<!i><#C7A300>⭐ <#FFD700>Мои страницы <#C7A300>[<#FFF3E0>$count<#C7A300>]",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
         action = { action() }
     )
 
     fun decorationHeadsSavePageButton(isSaved: Boolean, action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.PAPER,
-        name = if (isSaved) "<!i><#FFD700>✎ Страница сохранена" else "<!i><#FFD700>✎ Сохранить страницу",
+        name = if (isSaved) "<!i><#C7A300>✎ <#FFD700>Страница сохранена" else "<!i><#C7A300>✎ <#FFD700>Сохранить страницу",
         lore = listOf(
             if (isSaved) "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить" else "<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить"
         ),
