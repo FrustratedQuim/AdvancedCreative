@@ -36,7 +36,7 @@ class EnchantmentsActivePage(
             backOnFirstPage = back,
             addAction = PagedListPageBuilder.ActionSlot(
                 material = Material.LIME_DYE,
-                name = "<!i><#00FF40>₪ Добавить зачарование"
+                name = "<!i><#00FF40>₪ Добавить зачарование <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
                     requestApplyInput(addPlayer, addSession, EditorApplyKind.ENCHANTMENT) { reopenPlayer, reopenSession ->
