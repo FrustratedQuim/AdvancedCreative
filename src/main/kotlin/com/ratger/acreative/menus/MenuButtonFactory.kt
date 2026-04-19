@@ -1177,14 +1177,14 @@ class MenuButtonFactory(
 
     fun visualEffectConfirmButton(action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.LIME_DYE,
-        name = "<!i><#00FF40>✔ Подтвердить создание",
+        name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
         action = action
     )
 
     fun enchantmentConfirmCreateButton(action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.LIME_DYE,
-        name = "<!i><#00FF40>✔ Подтвердить создание",
+        name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
         action = action
     )
@@ -1206,7 +1206,7 @@ class MenuButtonFactory(
 
     fun attributeConfirmCreateButton(action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.LIME_DYE,
-        name = "<!i><#00FF40>✔ Подтвердить создание",
+        name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
         action = action
     )
