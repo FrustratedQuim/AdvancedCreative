@@ -1,7 +1,6 @@
 package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
-import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.menus.apply.ApplyCommandCoordinator
@@ -61,11 +60,16 @@ import com.ratger.acreative.menus.edit.apply.meta.StackSizeApplyHandler
 import com.ratger.acreative.menus.edit.apply.effects.UseCooldownGroupApplyHandler
 import com.ratger.acreative.menus.edit.apply.effects.UseCooldownSecondsApplyHandler
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
+import com.ratger.acreative.menus.edit.personal.PersonalItemsRepository
+import com.ratger.acreative.menus.edit.personal.PersonalItemsService
+import com.ratger.acreative.menus.edit.personal.PlayerDataDatabase
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import org.bukkit.scheduler.BukkitTask
+import java.util.concurrent.Executors
 
 class MenuService(
     private val hooker: FunctionHooker
@@ -84,6 +88,13 @@ class MenuService(
     private val headMutationSupport = HeadTextureMutationSupport()
     private val headLookupService = LicensedProfileLookupService()
     private val headProfileService = HeadProfileService(headLookupService)
+    private val personalDataExecutor = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "acreative-edit-personal-items").apply { isDaemon = true }
+    }
+    private val personalDataDatabase = PlayerDataDatabase(hooker.plugin.dataFolder)
+    private val personalItemsRepository = PersonalItemsRepository(personalDataDatabase, 21)
+    private val personalItemsService = PersonalItemsService(personalItemsRepository, personalDataExecutor, 21)
+    private var periodicPersonalItemsFlushTask: BukkitTask? = null
 
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
@@ -120,6 +131,7 @@ class MenuService(
         headMutationSupport = headMutationSupport,
         textStyleService = textStyleService,
         visualEffectFlowService = visualEffectFlowService,
+        personalItemsService = personalItemsService,
         requestSignInput = { player, templateLines, onSubmit, onLeave ->
             signInputService.open(
                 player = player,
@@ -136,6 +148,14 @@ class MenuService(
 
     init {
         VanillaRuLocalization.initialize(vanillaTranslationResolver)
+        personalDataDatabase.init()
+        val flushIntervalTicks = 6L * 60L * 60L * 20L
+        periodicPersonalItemsFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
+            hooker.plugin,
+            Runnable { personalItemsService.flushDirtyToDatabase() },
+            flushIntervalTicks,
+            flushIntervalTicks
+        )
         applyStateManager = ItemEditorApplyStateManager(
             hooker = hooker,
             sessionManager = sessionManager,
@@ -205,6 +225,9 @@ class MenuService(
         sessionManager.addCloseListener { player, _ ->
             applyStateManager.cancelWaiting(player, reopenMenu = false)
         }
+        sessionManager.addCloseListener { player, session ->
+            personalItemsService.onEditSessionClosed(player.uniqueId, session.editableItem, session.initialContentHash)
+        }
     }
 
     fun isInItemEditSession(player: Player): Boolean = sessionManager.isInSession(player)
@@ -220,7 +243,7 @@ class MenuService(
 
         val handItem = player.inventory.itemInMainHand
         if (handItem.type == Material.AIR || handItem.amount <= 0) {
-            hooker.messageManager.sendChat(player, MessageKey.EDIT_EMPTY_HAND)
+            itemEditMenu.openMyItemsStandalone(player)
             return
         }
 
@@ -243,6 +266,12 @@ class MenuService(
 
     fun handlePlayerDisconnect(player: Player) {
         applyCoordinator.cancel(player)
+        personalItemsService.commitDeferredPromotions(player.uniqueId)
+        personalItemsService.clearPlayer(player.uniqueId)
+    }
+
+    fun handlePlayerJoin(player: Player) {
+        personalItemsService.pruneExpiredOnFirstJoin(player.uniqueId)
     }
 
     fun registerApplyTarget(target: ApplyCommandTarget) {
@@ -272,5 +301,11 @@ class MenuService(
         }
 
         player.world.dropItemNaturally(player.location.clone().add(0.0, 1.0, 0.0), item)
+    }
+
+    fun shutdown() {
+        periodicPersonalItemsFlushTask?.cancel()
+        personalItemsService.flushDirtyToDatabase()
+        personalDataExecutor.shutdownNow()
     }
 }

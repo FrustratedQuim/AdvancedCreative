@@ -40,6 +40,7 @@ import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionsListPage
 import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionBlockSelectPage
 import com.ratger.acreative.menus.edit.pages.restrictions.RestrictionsRootPage
 import com.ratger.acreative.menus.edit.pages.root.RootEditMenu
+import com.ratger.acreative.menus.edit.pages.root.MyItemsEditMenu
 import com.ratger.acreative.menus.edit.pages.root.SimpleEditMenu
 import com.ratger.acreative.menus.edit.pages.tooling.LockEditPage
 import com.ratger.acreative.menus.edit.pages.tooling.ToolEditPage
@@ -48,11 +49,13 @@ import com.ratger.acreative.menus.edit.pages.tooling.UseRemainderEditPage
 import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimEditPage
 import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimMaterialSelectPage
 import com.ratger.acreative.menus.edit.pages.trim.ArmorTrimPatternSelectPage
+import com.ratger.acreative.menus.edit.personal.PersonalItemsService
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffectType
 
 internal data class ItemEditPages(
     val root: RootEditMenu,
+    val myItems: MyItemsEditMenu,
     val simple: SimpleEditMenu,
     val advancedMain: AdvancedEditMainPage,
     val advancedDetails: AdvancedEditDetailsPage,
@@ -87,6 +90,7 @@ internal data class ItemEditPages(
 
 internal data class ItemEditNavigationHandlers(
     val openRoot: (Player, ItemEditSession) -> Unit,
+    val openMyItems: (Player, ItemEditSession) -> Unit,
     val openSimple: (Player, ItemEditSession) -> Unit,
     val openAdvancedPageOne: (Player, ItemEditSession) -> Unit,
     val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
@@ -131,7 +135,8 @@ internal class ItemEditPageFactory(
     private val requestSignInput: (Player, Array<String>, (Player, String?) -> Unit, (Player) -> Unit) -> Unit,
     private val headMutationSupport: HeadTextureMutationSupport,
     private val textStyleService: ItemTextStyleService,
-    private val visualEffectFlowService: VisualEffectFlowService
+    private val visualEffectFlowService: VisualEffectFlowService,
+    private val personalItemsService: PersonalItemsService
 ) {
     fun create(handlers: ItemEditNavigationHandlers): ItemEditPages {
         val headTextureValueBookSupport = HeadTextureValueBookSupport()
@@ -140,7 +145,16 @@ internal class ItemEditPageFactory(
             support = support,
             buttonFactory = buttonFactory,
             openSimple = handlers.openSimple,
-            openAdvancedPageOne = handlers.openAdvancedPageOne
+            openAdvancedPageOne = handlers.openAdvancedPageOne,
+            openMyItems = handlers.openMyItems,
+            myItemsCountProvider = { player -> personalItemsService.list(player.uniqueId).size }
+        )
+
+        val myItemsPage = MyItemsEditMenu(
+            support = support,
+            buttonFactory = buttonFactory,
+            personalItemsService = personalItemsService,
+            openRoot = handlers.openRoot
         )
 
         val simplePage = SimpleEditMenu(
@@ -366,6 +380,7 @@ internal class ItemEditPageFactory(
 
         return ItemEditPages(
             root = rootPage,
+            myItems = myItemsPage,
             simple = simplePage,
             advancedMain = advancedMainPage,
             advancedDetails = advancedDetailsPage,

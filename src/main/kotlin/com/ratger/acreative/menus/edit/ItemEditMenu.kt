@@ -8,6 +8,7 @@ import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
+import com.ratger.acreative.menus.edit.personal.PersonalItemsService
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
@@ -25,7 +26,8 @@ class ItemEditMenu(
     private val requestSignInput: (Player, Array<String>, (Player, String?) -> Unit, (Player) -> Unit) -> Unit,
     headMutationSupport: HeadTextureMutationSupport,
     textStyleService: ItemTextStyleService,
-    private val visualEffectFlowService: VisualEffectFlowService
+    private val visualEffectFlowService: VisualEffectFlowService,
+    private val personalItemsService: PersonalItemsService
 ) {
     enum class LastEditorCategory {
         ROOT,
@@ -38,6 +40,7 @@ class ItemEditMenu(
     private val lastAdvancedPageByPlayer = mutableMapOf<java.util.UUID, Int>()
 
     private val openRootHandler: (Player, ItemEditSession) -> Unit = { player, session -> openRoot(player, session) }
+    private val openMyItemsHandler: (Player, ItemEditSession) -> Unit = { player, session -> openMyItems(player, session) }
     private val openSimpleHandler: (Player, ItemEditSession) -> Unit = { player, session -> openSimple(player, session) }
     private val openAdvancedPageOneHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageOne(player, session) }
     private val openAdvancedPageTwoHandler: (Player, ItemEditSession) -> Unit = { player, session -> openAdvancedPageTwo(player, session) }
@@ -68,10 +71,12 @@ class ItemEditMenu(
         requestSignInput = requestSignInput,
         headMutationSupport = headMutationSupport,
         textStyleService = textStyleService,
-        visualEffectFlowService = visualEffectFlowService
+        visualEffectFlowService = visualEffectFlowService,
+        personalItemsService = personalItemsService
     ).create(
         ItemEditNavigationHandlers(
             openRoot = openRootHandler,
+            openMyItems = openMyItemsHandler,
             openSimple = openSimpleHandler,
             openAdvancedPageOne = openAdvancedPageOneHandler,
             openAdvancedPageTwo = openAdvancedPageTwoHandler,
@@ -122,6 +127,14 @@ class ItemEditMenu(
             rememberCategory(player, LastEditorCategory.SIMPLE)
             pages.simple.open(player, session)
         }
+    }
+
+    fun openMyItems(player: Player, session: ItemEditSession) {
+        openPageSafely(player) { pages.myItems.open(player, session) }
+    }
+
+    fun openMyItemsStandalone(player: Player) {
+        openPageSafely(player) { pages.myItems.openStandalone(player) }
     }
 
     fun openAdvancedPageOne(player: Player, session: ItemEditSession) {

@@ -214,5 +214,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         if (this::subsystem.isInitialized) {
             subsystem.shutdown()
         }
+        if (this::menuService.isInitialized) {
+            menuService.shutdown()
+        }
     }
 }

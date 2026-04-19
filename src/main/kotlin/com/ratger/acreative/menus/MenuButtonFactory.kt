@@ -762,6 +762,8 @@ class MenuButtonFactory(
 
     fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone()) { }
 
+    fun itemAsIsButton(item: ItemStack, action: (ClickEvent) -> Unit): Button = protectedButton(item.clone(), action)
+
     fun headTextureValueInputSlotButton(
         valueBook: ItemStack?,
         action: (ClickEvent) -> Unit

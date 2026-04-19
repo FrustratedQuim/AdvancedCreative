@@ -280,6 +280,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val joiningPlayer = event.player
+        hooker.menuService.handlePlayerJoin(joiningPlayer)
         hooker.disguiseManager.onViewerJoin(joiningPlayer)
         hooker.layManager.onViewerJoin(joiningPlayer)
         hooker.jarManager.onViewerJoin(joiningPlayer)

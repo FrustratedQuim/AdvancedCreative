@@ -27,7 +27,8 @@ class ItemEditMenuSupport(
         rows: MenuRows,
         interactiveTopSlots: Set<Int>,
         session: ItemEditSession,
-        allowPlayerInventoryClicks: Boolean = false
+        allowPlayerInventoryClicks: Boolean = false,
+        blockShiftClickFromPlayerInventory: Boolean = false
     ): Menu = MenuUiSupport.buildMenu(
         plugin = hooker.plugin,
         parser = parser,
@@ -36,8 +37,29 @@ class ItemEditMenuSupport(
         menuTopRange = 0 until menuSize,
         interactiveTopSlots = interactiveTopSlots,
         allowPlayerInventoryClicks = allowPlayerInventoryClicks,
+        blockShiftClickFromPlayerInventory = blockShiftClickFromPlayerInventory,
         onOpen = { session.isInternalTransition = false },
         onClose = editorCloseListener(session)
+    )
+
+    fun buildStandaloneMenu(
+        title: String,
+        menuSize: Int,
+        rows: MenuRows,
+        interactiveTopSlots: Set<Int>,
+        allowPlayerInventoryClicks: Boolean = true,
+        blockShiftClickFromPlayerInventory: Boolean = true,
+        onClose: ((CloseEvent) -> Unit)? = null
+    ): Menu = MenuUiSupport.buildMenu(
+        plugin = hooker.plugin,
+        parser = parser,
+        title = title,
+        rows = rows,
+        menuTopRange = 0 until menuSize,
+        interactiveTopSlots = interactiveTopSlots,
+        allowPlayerInventoryClicks = allowPlayerInventoryClicks,
+        blockShiftClickFromPlayerInventory = blockShiftClickFromPlayerInventory,
+        onClose = onClose
     )
 
     fun fillBase(menu: Menu, menuSize: Int, blackSlots: Set<Int>) {

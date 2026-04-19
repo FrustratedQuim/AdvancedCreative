@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit
 
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
+import java.security.MessageDigest
 import java.util.UUID
 
 class ItemEditSessionManager {
@@ -12,7 +13,8 @@ class ItemEditSessionManager {
         val session = ItemEditSession(
             playerId = player.uniqueId,
             originalMainHandSlot = player.inventory.heldItemSlot,
-            editableItem = sourceItem.clone()
+            editableItem = sourceItem.clone(),
+            initialContentHash = contentHash(sourceItem)
         )
         sessions[player.uniqueId] = session
         return session
@@ -34,5 +36,13 @@ class ItemEditSessionManager {
 
     fun addCloseListener(listener: (Player, ItemEditSession) -> Unit) {
         closeListeners += listener
+    }
+
+    private fun contentHash(item: ItemStack): String? {
+        if (item.type.isAir || item.amount <= 0) return null
+        val normalized = item.clone().apply { amount = 1 }
+        val bytes = normalized.serializeAsBytes()
+        val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
+        return digest.joinToString(separator = "") { "%02x".format(it) }
     }
 }
