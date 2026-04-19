@@ -42,7 +42,7 @@ class RootEditMenu(
 
     private fun buildAdvancedModeButton(action: (ClickEvent) -> Unit) = buttonFactory.actionButton(
         material = Material.ENDER_EYE,
-        name = "<!i><#C7A300>⭐ <#FFD700>Продвинутый режим",
+        name = "<!i><#C7A300>\uD83D\uDD25 <#FFD700>Продвинутый режим",
         lore = listOf(
             "<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть",
             "",
