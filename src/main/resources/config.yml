@@ -45,6 +45,7 @@ permissions:
     sneeze: rise
     glide: rise
     gravity: rise
+    edit: rise
     resize: flare
     freeze: flare
     glow: spark
@@ -53,7 +54,6 @@ permissions:
     sithead: sunny
     spit: horizon
     piss: horizon
-    decorationheads: flare
 
 decoration-heads:
   api:
