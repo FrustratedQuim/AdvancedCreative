@@ -45,13 +45,11 @@ class AccountLinkRequirementService(
                 return cachedUserManager
             }
 
-            val candidate = Bukkit.getServicesManager().knownServices
-                .mapNotNull { serviceClass ->
-                    Bukkit.getServicesManager().load(serviceClass)?.takeIf { provider ->
-                        provider.javaClass.methods.any { it.name == "getUser" && it.parameterCount == 1 }
-                    }
+            val candidate = Bukkit.getServicesManager().knownServices.firstNotNullOfOrNull { serviceClass ->
+                Bukkit.getServicesManager().load(serviceClass)?.takeIf { provider ->
+                    provider.javaClass.methods.any { it.name == "getUser" && it.parameterCount == 1 }
                 }
-                .firstOrNull()
+            }
 
             cachedUserManager = candidate
             userManagerLookupAttempted = true
