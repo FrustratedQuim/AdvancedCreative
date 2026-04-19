@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.attributes
 
 import com.google.common.collect.LinkedHashMultimap
+import com.ratger.acreative.menus.edit.attributes.AttributeIconResolver
 import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.menus.edit.attributes.SlotGroupAdapter
 import com.ratger.acreative.menus.MenuButtonFactory
@@ -90,7 +91,7 @@ class AttributeEditPage(
         val value = ItemAttributeMenuSupport.formatAmount(entry.modifier)
 
         return buttonFactory.actionButton(
-            material = Material.PRISMARINE_SHARD,
+            material = Material.STRUCTURE_VOID,
             name = "<!i><#C7A300>◎ <#FFD700>Атрибут №${globalIndex + 1}",
             lore = listOf(
                 "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
@@ -102,6 +103,14 @@ class AttributeEditPage(
                 "<!i><#C7A300> ● <#FFE68A>Слот: <#FFF3E0>$slotDisplayName ",
                 ""
             ),
+            itemModifier = {
+                edit { item ->
+                    val meta = item.itemMeta ?: return@edit
+                    meta.itemModel = AttributeIconResolver.resolve(entry.attribute).key
+                    item.itemMeta = meta
+                }
+                this
+            },
             action = {
                 removeAt(session, globalIndex)
                 val afterSize = ItemAttributeMenuSupport.listEffectiveEntries(session.editableItem).size

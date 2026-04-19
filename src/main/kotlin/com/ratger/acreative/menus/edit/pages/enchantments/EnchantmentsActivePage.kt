@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.enchantments
 
+import com.ratger.acreative.menus.edit.enchant.EnchantmentIconResolver
 import com.ratger.acreative.menus.edit.enchant.EnchantmentSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
@@ -66,7 +67,7 @@ class EnchantmentsActivePage(
             },
             entryButton = { entryPlayer, entrySession, pageWindow, globalIndex, entry ->
                 buttonFactory.actionButton(
-                    material = Material.ENCHANTED_BOOK,
+                    material = Material.STRUCTURE_VOID,
                     name = "<!i><#C7A300>◎ <#FFD700>Зачарование №${globalIndex + 1}",
                     lore = listOf(
                         "<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить",
@@ -76,6 +77,14 @@ class EnchantmentsActivePage(
                         "<!i><#C7A300> ● <#FFE68A>Уровень: <#FFF3E0>${entry.level} ",
                         ""
                     ),
+                    itemModifier = {
+                        edit { item ->
+                            val meta = item.itemMeta ?: return@edit
+                            meta.itemModel = EnchantmentIconResolver.resolve(entry.enchantment).key
+                            item.itemMeta = meta
+                        }
+                        this
+                    },
                     action = {
                         val meta = entrySession.editableItem.itemMeta ?: return@actionButton
                         EnchantmentSupport.remove(meta, entry.enchantment)

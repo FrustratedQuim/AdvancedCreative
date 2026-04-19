@@ -13,6 +13,7 @@ import com.ratger.acreative.menus.edit.invisibility.FrameInvisibilitySupport
 import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
+import com.ratger.acreative.menus.edit.effects.visual.VisualEffectIconResolver
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.core.TickScheduler
 import org.bukkit.event.inventory.ClickType
@@ -887,26 +888,20 @@ class MenuButtonFactory(
         type: PotionEffectType,
         displayName: String,
         action: (ClickEvent) -> Unit
-    ): Button {
-        val previewPotionType = PotionItemSupport.previewPotionType(type)
-        return actionButton(
-            material = Material.POTION,
-            name = "<!i><#C7A300>◎ <#FFD700>$displayName",
-            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить"),
-            itemModifier = {
-                if (previewPotionType != null) {
-                    edit { item ->
-                        val meta = item.itemMeta as? PotionMeta ?: return@edit
-                        meta.basePotionType = previewPotionType
-                        item.itemMeta = meta
-                    }
-                }
-                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
-                this
-            },
-            action = action
-        )
-    }
+    ): Button = actionButton(
+        material = Material.STRUCTURE_VOID,
+        name = "<!i><#C7A300>◎ <#FFD700>$displayName",
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить"),
+        itemModifier = {
+            edit { item ->
+                val meta = item.itemMeta ?: return@edit
+                meta.itemModel = VisualEffectIconResolver.resolve(type).key
+                item.itemMeta = meta
+            }
+            this
+        },
+        action = action
+    )
 
     fun potionApplyEffectEntryButton(
         index: Int,
