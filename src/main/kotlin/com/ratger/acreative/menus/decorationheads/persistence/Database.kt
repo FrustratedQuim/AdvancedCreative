@@ -41,16 +41,6 @@ class Database(dataFolder: File) {
                 )
                 st.executeUpdate(
                     """
-                    CREATE TABLE IF NOT EXISTS decoration_head_sync_state (
-                        state_key TEXT PRIMARY KEY,
-                        state_value TEXT NOT NULL,
-                        updated_at INTEGER NOT NULL
-                    )
-                    """.trimIndent()
-                )
-
-                st.executeUpdate(
-                    """
                     CREATE TABLE IF NOT EXISTS decoration_head_saved_pages (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         player_uuid TEXT NOT NULL,
@@ -79,7 +69,7 @@ class Database(dataFolder: File) {
                     """.trimIndent()
                 )
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_recent_player_pos ON decoration_head_recent(player_uuid, position)")
-st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_saved_pages_player ON decoration_head_saved_pages(player_uuid)")
+                st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_saved_pages_player ON decoration_head_saved_pages(player_uuid)")
                 st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_saved_pages_player_category ON decoration_head_saved_pages(player_uuid, category_key)")
             }
             conn.commit()

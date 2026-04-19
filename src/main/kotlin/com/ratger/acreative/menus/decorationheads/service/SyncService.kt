@@ -7,7 +7,6 @@ import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
-import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
 import java.util.concurrent.ExecutorService
 
 class SyncService(
@@ -17,7 +16,6 @@ class SyncService(
     private val categoryResolver: CategoryResolver,
     private val cache: Cache,
     private val catalogRepository: CatalogRepository,
-    private val syncStateRepository: SyncStateRepository,
     private val executor: ExecutorService,
     private val logger: java.util.logging.Logger,
     private val warmPages: Int
@@ -28,11 +26,11 @@ class SyncService(
                 .onFailure { logger.warning("Decoration heads warmup failed: ${it.message}") }
                 .getOrNull()
 
-            val shouldRunInitialFullSync = runCatching {
-                catalogRepository.isCatalogEmpty() || !syncStateRepository.isInitialSyncCompleted()
-            }.onFailure {
-                logger.warning("Decoration heads sync-state check failed: ${it.message}. Skipping full sync for this startup")
-            }.getOrDefault(false)
+            val shouldRunInitialFullSync = runCatching { catalogRepository.isCatalogEmpty() }
+                .onFailure {
+                    logger.warning("Decoration heads catalog check failed: ${it.message}. Skipping full sync for this startup")
+                }
+                .getOrDefault(false)
 
             if (!shouldRunInitialFullSync) {
                 logger.info("Decoration heads: skipping full catalog sync (already initialized)")
@@ -41,7 +39,6 @@ class SyncService(
 
             runCatching {
                 fullSyncAllConfiguredCategories(startPageByCategoryId = warmupContext?.warmedPagesByCategory.orEmpty())
-                syncStateRepository.markInitialSyncCompleted()
                 logger.info("Decoration heads: initial full catalog sync completed")
             }.onFailure {
                 logger.warning("Decoration heads initial full sync failed: ${it.message}")

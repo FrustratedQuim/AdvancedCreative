@@ -14,7 +14,6 @@ import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
 import com.ratger.acreative.menus.decorationheads.persistence.SavedPagesRepository
 import com.ratger.acreative.menus.decorationheads.persistence.Database
-import com.ratger.acreative.menus.decorationheads.persistence.SyncStateRepository
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -46,7 +45,6 @@ class Subsystem(
     private val catalogRepository = CatalogRepository(database)
     private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
     private val recentRepository = RecentRepository(database, playerRecentLimit)
-    private val syncStateRepository = SyncStateRepository(database)
     private val savedPagesRepository = SavedPagesRepository(database)
 
     private val requestFactory = MinecraftHeadsRequestFactory(
@@ -104,7 +102,6 @@ class Subsystem(
         categoryResolver = categoryResolver,
         cache = cache,
         catalogRepository = catalogRepository,
-        syncStateRepository = syncStateRepository,
         executor = executor,
         logger = hooker.plugin.logger,
         warmPages = config.getInt("decoration-heads.warm-pages", 1)
