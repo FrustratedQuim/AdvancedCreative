@@ -160,6 +160,7 @@ internal class ItemEditPageFactory(
         val simplePage = SimpleEditMenu(
             support = support,
             buttonFactory = buttonFactory,
+            textStyleService = textStyleService,
             openRoot = handlers.openRoot,
             openEnchantments = handlers.openEnchantmentsFromSimple,
             openTextAppearance = handlers.openTextAppearanceFromSimple

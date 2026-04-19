@@ -47,7 +47,7 @@ class PersonalItemsService(
 
     fun rememberInteractionForDeferredPromotion(playerId: UUID, item: ItemStack) {
         val key = contentHash(item) ?: return
-        val touched = playersWithDeferredPromotions.computeIfAbsent(playerId) { ConcurrentHashMap.newKeySet<String>() }
+        val touched = playersWithDeferredPromotions.computeIfAbsent(playerId) { ConcurrentHashMap.newKeySet() }
         touched.add(key)
     }
 

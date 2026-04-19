@@ -21,6 +21,11 @@ object VanillaRuLocalization {
     fun blockName(path: String): String =
         resolve("block.minecraft.$path") ?: humanize(path)
 
+    fun itemName(path: String): String =
+        resolve("item.minecraft.$path")
+            ?: resolve("block.minecraft.$path")
+            ?: humanize(path)
+
     private fun resolve(key: String): String? = resolver?.resolve(key, ruLocale)
 
     private fun humanize(path: String): String {

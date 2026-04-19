@@ -6,6 +6,10 @@ import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
 import com.ratger.acreative.menus.edit.effects.FoodComponentSupport
 import com.ratger.acreative.menus.edit.equippable.EquippableSupport
+import com.ratger.acreative.menus.edit.text.ItemTextStyleService
+import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
@@ -16,6 +20,7 @@ import ru.violence.coreapi.bukkit.api.menu.MenuRows
 class SimpleEditMenu(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
+    private val textStyleService: ItemTextStyleService,
     private val openRoot: (Player, ItemEditSession) -> Unit,
     private val openEnchantments: (Player, ItemEditSession) -> Unit,
     private val openTextAppearance: (Player, ItemEditSession) -> Unit
@@ -68,6 +73,7 @@ class SimpleEditMenu(
         },
         action = { event ->
             if (session.simpleThrowableApplied) return@actionButton
+            val hadCustomName = textStyleService.hasCustomName(session.editableItem)
             val previousMeta = session.editableItem.itemMeta
             val previousType = session.editableItem.type
             val previousAmount = session.editableItem.amount
@@ -83,6 +89,10 @@ class SimpleEditMenu(
             convertedMeta.itemModel = NamespacedKey.minecraft(previousType.key.key)
             if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
                 convertedMeta.setMaxStackSize(previousTargetMaxStack)
+            }
+            if (!hadCustomName) {
+                val localizedDefaultName = VanillaRuLocalization.itemName(previousType.key.key)
+                convertedMeta.customName(Component.text(localizedDefaultName).decoration(TextDecoration.ITALIC, false))
             }
             converted.itemMeta = convertedMeta
             val targetMaxStack = if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
