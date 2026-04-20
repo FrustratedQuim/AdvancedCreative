@@ -70,7 +70,7 @@ decoration-heads:
   menu-page-size: 45
   categories:
     new:
-      display: "Новые"
+      display: "Все"
       mode: NEW
       apiNames: []
     food:
