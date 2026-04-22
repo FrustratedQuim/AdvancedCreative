@@ -17,6 +17,9 @@ cooldowns: # В миллисекундах
   grab:       500
   slap:       500
   itemdb:     500
+  banner:     500
+  decorationbanners: 500
+  banneredit: 300
   decorationheads: 500
   edit:       300
   id:         500
@@ -48,6 +51,8 @@ permissions:
     edit: rise
     resize: flare
     freeze: flare
+    banner.moderation: flare
+    decorationbanners.moderation: flare
     glow: spark
     disguise: spark
     disguise.nick: spark

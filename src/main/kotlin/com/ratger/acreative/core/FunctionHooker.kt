@@ -25,6 +25,7 @@ import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.menus.decorationheads.service.Subsystem
+import com.ratger.acreative.menus.banner.service.Subsystem as BannerSubsystem
 import com.ratger.acreative.menus.MenuService
 import com.ratger.acreative.utils.*
 
@@ -96,7 +97,10 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var subsystem: Subsystem
         private set
+    lateinit var bannerSubsystem: BannerSubsystem
+        private set
     val decorationHeadsMenuService get() = subsystem.menuService
+    val bannerMenuService get() = bannerSubsystem.menuService
 
     fun sitManagerOrNull(): SitManager? = if (this::sitManager.isInitialized) sitManager else null
     fun glideManagerOrNull(): GlideManager? = if (this::glideManager.isInitialized) glideManager else null
@@ -153,6 +157,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         menuService = MenuService(this)
         subsystem = Subsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
         subsystem.init()
+        bannerSubsystem = BannerSubsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
+        bannerSubsystem.init()
 
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.CRAWLING) { crawlManager.uncrawlPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.DISGUISED) { disguiseManager.undisguisePlayer(it) }
@@ -216,6 +222,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         }
         if (this::subsystem.isInitialized) {
             subsystem.shutdown()
+        }
+        if (this::bannerSubsystem.isInitialized) {
+            bannerSubsystem.shutdown()
         }
         if (this::menuService.isInitialized) {
             menuService.shutdown()

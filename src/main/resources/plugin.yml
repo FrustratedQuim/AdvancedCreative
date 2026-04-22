@@ -76,10 +76,21 @@ commands:
     description: Shows the item String/Numeric ID
     usage: /itemdb
     aliases: [id]
+  banner:
+    description: Opens banner manager and moderation actions
+    usage: /banner [post|ban|banlist|banuser|banuserlist]
+  decorationbanners:
+    description: Opens player banner gallery
+    usage: /decorationbanners [player] [-m]
+    aliases: [db]
   decorationheads:
     description: Opens decoration heads menu
     usage: /decorationheads
     aliases: [dh]
+  banneredit:
+    description: Opens banner editor
+    usage: /banneredit
+    aliases: [bedit]
   edit:
     description: Open item editor menu
     usage: /edit
@@ -94,6 +105,21 @@ permissions:
   advancedcreative.itemdb:
     description: Allows using /itemdb
     default: op
+  advancedcreative.banner:
+    description: Allows using /banner
+    default: true
+  advancedcreative.banner.moderation:
+    description: Allows using /banner ban, banlist, banuser and banuserlist
+    default: op
+  advancedcreative.decorationbanners:
+    description: Allows using /decorationbanners
+    default: true
+  advancedcreative.decorationbanners.moderation:
+    description: Allows moderation mode in /decorationbanners
+    default: op
+  advancedcreative.banneredit:
+    description: Allows using /banneredit
+    default: true
   advancedcreative.sit:
     description: Allows using /sit
     default: op

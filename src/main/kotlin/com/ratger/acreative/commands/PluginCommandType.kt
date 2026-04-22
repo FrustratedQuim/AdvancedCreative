@@ -23,7 +23,10 @@ enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     SLAP("slap"),
     SITHEAD("sithead"),
     ITEMDB("itemdb"),
+    BANNER("banner"),
+    DECORATIONBANNERS("decorationbanners"),
     DECORATIONHEADS("decorationheads"),
+    BANNEREDIT("banneredit"),
     EDIT("edit"),
     APPLY("apply");
 

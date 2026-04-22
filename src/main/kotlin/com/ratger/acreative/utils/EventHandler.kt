@@ -34,6 +34,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerQuit(event: PlayerQuitEvent) {
         val player = event.player
         hooker.menuService.handlePlayerDisconnect(player)
+        hooker.bannerMenuService.handlePlayerDisconnect(player)
         hooker.decorationHeadsMenuService.clearPlayer(player.uniqueId)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
@@ -52,6 +53,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val player = event.player
         hooker.menuService.handlePlayerDisconnect(player)
+        hooker.bannerMenuService.handlePlayerDeath(player)
         hooker.decorationHeadsMenuService.clearPlayer(player.uniqueId)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
