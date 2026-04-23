@@ -20,8 +20,8 @@ class BannerEditorMenu(
         const val EDITOR_MENU_SIZE = 45
         const val PICKER_MENU_SIZE = 54
         val EDITOR_BLACK_SLOTS = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44)
-        val EDITOR_PATTERN_SLOTS = listOf(1, 2, 3, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
-        val BASE_PICKER_SLOTS = listOf(1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
+        val EDITOR_PATTERN_SLOTS = listOf(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
+        val BASE_PICKER_SLOTS = listOf(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
         val PICKER_BLACK_SLOTS = setOf(0, 1, 3, 5, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 52, 53)
         val PICKER_PATTERN_SLOTS = listOf(19, 20, 21, 22, 23, 24, 25)
         val PICKER_COLOR_SLOTS = listOf(28, 29, 30, 31, 32, 33, 34)
@@ -31,7 +31,7 @@ class BannerEditorMenu(
         val interactiveTopSlots = buildSet {
             add(4)
             add(39)
-            add(40)
+            add(41)
             addAll(EDITOR_PATTERN_SLOTS.take(BannerPatternSupport.visiblePatterns(session.editableBanner).size).toSet())
             if (session.openedFromMainMenu) {
                 add(18)
@@ -49,7 +49,7 @@ class BannerEditorMenu(
         )
 
         support.fillBase(menu, EDITOR_MENU_SIZE, EDITOR_BLACK_SLOTS)
-        menu.setClickListener(buildEditorClickListener(player, session))
+        menu.setClickListener(buildEditorClickListener(session))
         refreshEditorButtons(player, session, menu)
         menu.open(player)
     }
@@ -83,7 +83,7 @@ class BannerEditorMenu(
             }
             support.transition(session) { openPatternPicker(player, session) }
         })
-        menu.setButton(40, buttonFactory.editorClearPatternsButton {
+        menu.setButton(41, buttonFactory.editorClearPatternsButton {
             BannerPatternSupport.clearPatterns(session.editableBanner)
             reopenEditor(player, session)
         })
@@ -174,11 +174,11 @@ class BannerEditorMenu(
         val patternStart = page * PICKER_PATTERN_SLOTS.size
         val colorStart = page * PICKER_COLOR_SLOTS.size
 
-        menu.setButton(2, session.selectedColor?.let(BannerCatalog::colorByDye)?.let(buttonFactory::pickerSelectedColorButton) ?: buttonFactory.airButton())
+        menu.setButton(2, session.selectedColor?.let(BannerCatalog::colorByDye)?.let(buttonFactory::pickerSelectedColorButton) ?: buttonFactory.blackFiller())
         menu.setButton(4, session.editableBanner?.let {
             buttonFactory.previewButton(BannerPatternSupport.previewWithPattern(it, session.selectedColor, session.selectedPatternType))
         } ?: buttonFactory.editorInsertSlotButton(null) { })
-        menu.setButton(6, session.selectedPatternType?.let(BannerCatalog::patternByType)?.let(buttonFactory::pickerSelectedPatternButton) ?: buttonFactory.airButton())
+        menu.setButton(6, session.selectedPatternType?.let(BannerCatalog::patternByType)?.let(buttonFactory::pickerSelectedPatternButton) ?: buttonFactory.blackFiller())
 
         val onBack = {
             if (page > 0) {
@@ -290,15 +290,14 @@ class BannerEditorMenu(
         support.transition(session) { open(player, session) }
     }
 
-    private fun buildEditorClickListener(player: Player, session: BannerEditorSession): (ClickEvent) -> Boolean = { event ->
+    private fun buildEditorClickListener(session: BannerEditorSession): (ClickEvent) -> Boolean = { event ->
         if (event.rawSlot in 0 until EDITOR_MENU_SIZE) {
             when {
-                event.rawSlot == 4 && event.isShiftLeft && moveEditableBannerToInventory(event, session) -> false
                 event.rawSlot == 4 -> true
                 else -> event.rawSlot in interactiveEditorSlots(session)
             }
         } else {
-            !(event.isShiftLeft && handleShiftLeftFromPlayerInventory(event, player, session))
+            !(event.isShiftLeft && handleShiftLeftFromPlayerInventory(event, event.player, session))
         }
     }
 
@@ -306,7 +305,7 @@ class BannerEditorMenu(
         return buildSet {
             add(4)
             add(39)
-            add(40)
+            add(41)
             if (session.openedFromMainMenu) {
                 add(18)
             }
@@ -334,6 +333,13 @@ class BannerEditorMenu(
         }
 
         if (isEmpty(cursorItem)) {
+            if (event.isShiftLeft) {
+                giveToInventoryOrDrop(player, currentBanner.clone())
+                session.editableBanner = null
+                reopenEditor(player, session)
+                return
+            }
+
             player.setItemOnCursor(currentBanner.clone())
             session.editableBanner = null
             reopenEditor(player, session)
@@ -347,14 +353,6 @@ class BannerEditorMenu(
         session.editableBanner = cursorItem.clone()
         player.setItemOnCursor(currentBanner.clone())
         reopenEditor(player, session)
-    }
-
-    private fun moveEditableBannerToInventory(event: ClickEvent, session: BannerEditorSession): Boolean {
-        val currentBanner = session.editableBanner ?: return false
-        giveToInventoryOrDrop(event.player, currentBanner.clone())
-        session.editableBanner = null
-        reopenEditor(event.player, session)
-        return true
     }
 
     private fun handleShiftLeftFromPlayerInventory(event: ClickEvent, player: Player, session: BannerEditorSession): Boolean {
@@ -377,6 +375,16 @@ class BannerEditorMenu(
         return true
     }
 
+    private fun giveToInventoryOrDrop(player: Player, item: ItemStack) {
+        val remainingAmount = com.ratger.acreative.utils.PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, item)
+        if (remainingAmount > 0) {
+            player.world.dropItemNaturally(
+                player.location.clone().add(0.0, 1.0, 0.0),
+                item.clone().apply { amount = remainingAmount }
+            )
+        }
+    }
+
     private fun reopenEditor(player: Player, session: BannerEditorSession) {
         support.transition(session) { open(player, session) }
     }
@@ -394,16 +402,6 @@ class BannerEditorMenu(
             restoreAfterTicks = 30L,
             restoreButton = restore
         )
-    }
-
-    private fun giveToInventoryOrDrop(player: Player, item: ItemStack) {
-        val remainingAmount = com.ratger.acreative.utils.PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, item)
-        if (remainingAmount > 0) {
-            player.world.dropItemNaturally(
-                player.location.clone().add(0.0, 1.0, 0.0),
-                item.clone().apply { amount = remainingAmount }
-            )
-        }
     }
 
     private fun pickerTitle(page: Int, totalPages: Int): String {
