@@ -62,27 +62,7 @@ class BannerEditorMenu(
         menu.setButton(4, buttonFactory.editorInsertSlotButton(session.editableBanner) { event ->
             handleEditorInsertSlot(event, session)
         })
-        menu.setButton(39, buttonFactory.editorAddPatternButton {
-            if (session.editableBanner == null) {
-                showTemporaryWarning(
-                    menu = menu,
-                    slot = 39,
-                    title = "<!i><#FF1500>⚠ Вложите флаг",
-                    restore = { buttonFactory.editorAddPatternButton { support.transition(session) { openPatternPicker(player, session) } } }
-                )
-                return@editorAddPatternButton
-            }
-            if (BannerPatternSupport.patternCount(session.editableBanner) >= BannerPatternSupport.EDITOR_VISIBLE_PATTERN_LIMIT) {
-                showTemporaryWarning(
-                    menu = menu,
-                    slot = 39,
-                    title = "<!i><#FF1500>⚠ Превышен лимит",
-                    restore = { buttonFactory.editorAddPatternButton { support.transition(session) { openPatternPicker(player, session) } } }
-                )
-                return@editorAddPatternButton
-            }
-            support.transition(session) { openPatternPicker(player, session) }
-        })
+        menu.setButton(39, buildEditorAddPatternButton(player, session, menu))
         menu.setButton(41, buttonFactory.editorClearPatternsButton {
             BannerPatternSupport.clearPatterns(session.editableBanner)
             reopenEditor(player, session)
@@ -315,6 +295,7 @@ class BannerEditorMenu(
 
     private fun handleEditorInsertSlot(event: ClickEvent, session: BannerEditorSession) {
         val player = event.player
+        val menu = event.menu
         val currentBanner = session.editableBanner
         val cursorItem = player.itemOnCursor
 
@@ -328,7 +309,7 @@ class BannerEditorMenu(
 
             session.editableBanner = cursorItem.clone()
             player.setItemOnCursor(null)
-            reopenEditor(player, session)
+            refreshEditorButtons(player, session, menu)
             return
         }
 
@@ -336,13 +317,13 @@ class BannerEditorMenu(
             if (event.isShiftLeft) {
                 giveToInventoryOrDrop(player, currentBanner.clone())
                 session.editableBanner = null
-                reopenEditor(player, session)
+                refreshEditorButtons(player, session, menu)
                 return
             }
 
             player.setItemOnCursor(currentBanner.clone())
             session.editableBanner = null
-            reopenEditor(player, session)
+            refreshEditorButtons(player, session, menu)
             return
         }
 
@@ -352,7 +333,7 @@ class BannerEditorMenu(
 
         session.editableBanner = cursorItem.clone()
         player.setItemOnCursor(currentBanner.clone())
-        reopenEditor(player, session)
+        refreshEditorButtons(player, session, menu)
     }
 
     private fun handleShiftLeftFromPlayerInventory(event: ClickEvent, player: Player, session: BannerEditorSession): Boolean {
@@ -387,6 +368,32 @@ class BannerEditorMenu(
 
     private fun reopenEditor(player: Player, session: BannerEditorSession) {
         support.transition(session) { open(player, session) }
+    }
+
+    private fun buildEditorAddPatternButton(
+        player: Player,
+        session: BannerEditorSession,
+        menu: Menu
+    ): Button = buttonFactory.editorAddPatternButton {
+        if (session.editableBanner == null) {
+            showTemporaryWarning(
+                menu = menu,
+                slot = 39,
+                title = "<!i><#FF1500>⚠ Вложите флаг",
+                restore = { buildEditorAddPatternButton(player, session, menu) }
+            )
+            return@editorAddPatternButton
+        }
+        if (BannerPatternSupport.patternCount(session.editableBanner) >= BannerPatternSupport.EDITOR_VISIBLE_PATTERN_LIMIT) {
+            showTemporaryWarning(
+                menu = menu,
+                slot = 39,
+                title = "<!i><#FF1500>⚠ Превышен лимит",
+                restore = { buildEditorAddPatternButton(player, session, menu) }
+            )
+            return@editorAddPatternButton
+        }
+        support.transition(session) { openPatternPicker(player, session) }
     }
 
     private fun showTemporaryWarning(
