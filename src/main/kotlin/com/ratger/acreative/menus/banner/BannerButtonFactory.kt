@@ -68,7 +68,7 @@ class BannerButtonFactory(
         )
     }
 
-    fun postCategoryButton(options: List<String>, selectedIndex: Int, action: (Int) -> Unit): Button =
+    fun postCategoryButton(options: List<String>, selectedIndex: Int, action: (ClickEvent, Int) -> Unit): Button =
         shared.listButton(
             material = Material.SPYGLASS,
             options = options.map { MenuButtonFactory.ListButtonOption(it, it) },
@@ -79,7 +79,7 @@ class BannerButtonFactory(
                 ""
             ),
             afterOptionsLore = listOf("")
-        ) { _, newIndex -> action(newIndex) }
+        ) { event, newIndex -> action(event, newIndex) }
 
     fun postConfirmButton(action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.LIME_DYE,

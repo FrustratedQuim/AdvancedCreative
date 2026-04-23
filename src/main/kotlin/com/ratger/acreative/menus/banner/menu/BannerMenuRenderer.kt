@@ -45,24 +45,28 @@ class BannerMenuRenderer(
         draft: BannerPostDraft,
         categoryOptions: List<String>,
         selectedCategoryIndex: Int,
+        currentMenu: Menu? = null,
         onApplyTitle: (ClickEvent) -> Unit,
         onResetTitle: (ClickEvent) -> Unit,
-        onSwitchCategory: (Int) -> Unit,
+        onSwitchCategory: (ClickEvent, Int) -> Unit,
         onConfirm: (ClickEvent) -> Unit
     ) {
-        val menu = buildMenu(
+        val menu = currentMenu ?: buildMenu(
             title = "▍ Публикация флага",
             rows = MenuRows.FOUR,
             interactiveTopSlots = setOf(11, 15, 31),
             allowPlayerInventoryClicks = false,
             blockShiftClickFromPlayerInventory = false
-        )
-        fillMask(menu, 36, setOf(0, 8, 9, 17, 18, 26, 27, 28, 34, 35))
+        ).also {
+            fillMask(it, 36, setOf(0, 8, 9, 17, 18, 26, 27, 28, 34, 35))
+        }
         menu.setButton(11, buttonFactory.postTitleButton(draft.title, onApplyTitle, onResetTitle))
         menu.setButton(13, buttonFactory.previewButton(draft.bannerItem))
         menu.setButton(15, buttonFactory.postCategoryButton(categoryOptions, selectedCategoryIndex, onSwitchCategory))
         menu.setButton(31, buttonFactory.postConfirmButton(onConfirm))
-        menu.open(player)
+        if (currentMenu == null) {
+            menu.open(player)
+        }
     }
 
     fun renderPublicGallery(

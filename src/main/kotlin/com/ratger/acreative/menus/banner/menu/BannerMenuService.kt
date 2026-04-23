@@ -108,7 +108,7 @@ class BannerMenuService(
         openStoredPostMenu(player)
     }
 
-    fun openStoredPostMenu(player: Player) {
+    fun openStoredPostMenu(player: Player, currentMenu: Menu? = null) {
         if (moderationService.isUserBanned(player.uniqueId)) {
             hooker.messageManager.sendChat(player, MessageKey.BANNER_POST_BANNED)
             return
@@ -127,19 +127,20 @@ class BannerMenuService(
             draft = draft,
             categoryOptions = categoryOptions,
             selectedCategoryIndex = selectedCategoryIndex,
+            currentMenu = currentMenu,
             onApplyTitle = {
                 titleApplyStateManager.begin(player)
                 player.closeInventory()
             },
-            onResetTitle = {
+            onResetTitle = { event ->
                 updatePostDraft(player.uniqueId) { it.copy(title = null) }
-                openStoredPostMenu(player)
+                openStoredPostMenu(player, event.menu)
             },
-            onSwitchCategory = { index ->
+            onSwitchCategory = { event, index ->
                 val category = BannerCatalog.publishCategories.getOrNull(index)
                 if (category != null) {
                     updatePostDraft(player.uniqueId) { it.copy(category = category) }
-                    openStoredPostMenu(player)
+                    openStoredPostMenu(player, event.menu)
                 }
             },
             onConfirm = { event -> confirmPublish(player, event.menu) }
