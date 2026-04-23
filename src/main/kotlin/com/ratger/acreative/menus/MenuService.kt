@@ -280,6 +280,7 @@ class MenuService(
 
     fun headMutationSupport(): HeadTextureMutationSupport = headMutationSupport
     fun buttonFactory(): MenuButtonFactory = buttonFactory
+    fun itemEditSessionsSnapshot(): List<ItemEditSession> = sessionManager.sessionsSnapshot()
 
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {
         EquippableSupport.normalizeAfterMutation(session.editableItem)

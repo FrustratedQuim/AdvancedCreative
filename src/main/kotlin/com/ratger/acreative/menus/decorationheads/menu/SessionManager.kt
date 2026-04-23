@@ -49,4 +49,6 @@ class SessionManager(
         byPlayer.remove(playerId)
         recentCategoryByPlayer.remove(playerId)
     }
+
+    fun totalEntriesCount(): Int = byPlayer.size + recentCategoryByPlayer.size
 }

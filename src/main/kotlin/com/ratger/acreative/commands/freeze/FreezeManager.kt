@@ -9,6 +9,11 @@ import org.bukkit.GameMode
 import org.bukkit.entity.Player
 
 class FreezeManager(private val hooker: FunctionHooker) {
+    data class CacheSnapshot(
+        val sessions: Int,
+        val hiddenViewers: Int,
+        val hiddenRelations: Int
+    )
 
     private val targetResolver = FreezeTargetResolver(hooker)
     private val blockFactory = FreezeBlockFactory(hooker)
@@ -16,6 +21,12 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     val frozenPlayers: Map<Player, MutableList<WrapperEntity>>
         get() = sessions.frozenPlayersView()
+
+    fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
+        sessions = sessions.sessionCount(),
+        hiddenViewers = sessions.hiddenViewerCount(),
+        hiddenRelations = sessions.hiddenRelationsCount()
+    )
 
     fun prepareToFreezePlayer(initiator: Player, targetName: String?) {
         val resolved = targetResolver.resolve(initiator, targetName) ?: return

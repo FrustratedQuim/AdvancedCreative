@@ -21,6 +21,10 @@ class BannerPublicationHistoryCache(
         history[HistoryKey(authorUuid, patternSignature, category.key)] = true
     }
 
+    fun size(): Int = history.size
+
+    fun snapshotKeys(): List<String> = history.keys.map { "${it.authorUuid}:${it.categoryKey}:${it.patternSignature}" }
+
     private data class HistoryKey(
         val authorUuid: UUID,
         val patternSignature: String,

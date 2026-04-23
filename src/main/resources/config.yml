@@ -21,6 +21,7 @@ cooldowns: # В миллисекундах
   decorationbanners: 500
   banneredit: 300
   decorationheads: 500
+  acreative: 500
   edit:       300
   id:         500
   freeze:     3500

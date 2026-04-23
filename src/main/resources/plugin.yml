@@ -97,6 +97,9 @@ commands:
   apply:
     description: Apply pending editor input
     usage: /apply <value|cancel>
+  acreative:
+    description: Admin management command
+    usage: /acreative <memory>
 
 permissions:
   advancedcreative.ahelp:
@@ -210,4 +213,7 @@ permissions:
     default: op
   advancedcreative.decorationheads:
     description: Allows using /decorationheads
+    default: op
+  advancedcreative.acreative:
+    description: Allows using /acreative
     default: op

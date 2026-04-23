@@ -32,6 +32,14 @@ data class DisguiseData(
 )
 
 class DisguiseManager(private val hooker: FunctionHooker) {
+    data class CacheSnapshot(
+        val disguisedPlayers: Int,
+        val viewerRelations: Int,
+        val queuedViewerRelations: Int,
+        val pendingViewers: Int,
+        val rememberedNames: Int,
+        val rememberedGlowStates: Int
+    )
 
     val disguisedPlayers = ConcurrentHashMap<Player, DisguiseData>()
     private val tasks = ConcurrentHashMap<Player, Int>()
@@ -283,6 +291,15 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         scheduleUpdateTask(player)
         hooker.messageManager.sendChat(player, MessageKey.SUCCESS_DISGUISE)
     }
+
+    fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
+        disguisedPlayers = disguisedPlayers.size,
+        viewerRelations = activeViewers.values.sumOf { it.size },
+        queuedViewerRelations = queuedInitViewers.values.sumOf { it.size },
+        pendingViewers = viewerPendingUntilTick.size,
+        rememberedNames = lastCustomName.size,
+        rememberedGlowStates = lastGlowingState.size
+    )
 
     fun undisguisePlayer(player: Player, silent: Boolean = false) {
         disguisedPlayers[player]?.let { data ->

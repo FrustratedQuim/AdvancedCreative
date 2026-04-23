@@ -148,5 +148,9 @@ class LicensedProfileLookupService {
                 }
             }
         )
+
+        fun cacheEntriesSnapshot(): List<LicensedProfilePayload> = synchronized(licensedProfileCache) {
+            licensedProfileCache.values.toList()
+        }
     }
 }

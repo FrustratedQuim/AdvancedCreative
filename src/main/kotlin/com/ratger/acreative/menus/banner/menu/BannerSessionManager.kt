@@ -49,4 +49,7 @@ class BannerSessionManager {
         postDraftByPlayer.remove(playerId)
         myOriginByPlayer.remove(playerId)
     }
+
+    fun totalEntriesCount(): Int =
+        publicStateByPlayer.size + myStateByPlayer.size + postDraftByPlayer.size + myOriginByPlayer.size
 }

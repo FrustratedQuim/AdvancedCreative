@@ -19,6 +19,10 @@ class Cache(
 
     fun get(stableKey: String): Entry? = headByStableKey.get(stableKey)
 
+    fun dynamicEntriesSnapshot(): List<Entry> = headByStableKey.snapshotEntries().map { it.value }
+
+    fun dynamicSize(): Int = headByStableKey.size()
+
     fun clearIndexes() {
         searchIndex.clear()
     }

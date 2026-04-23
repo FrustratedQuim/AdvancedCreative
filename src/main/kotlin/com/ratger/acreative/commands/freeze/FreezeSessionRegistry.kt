@@ -43,4 +43,10 @@ internal class FreezeSessionRegistry {
     fun hasAnyHiddenBlocks(targetId: UUID): Boolean = hiddenBlocksByViewer.any { it.value.containsKey(targetId) }
 
     fun frozenPlayersView(): Map<Player, MutableList<WrapperEntity>> = sessionsByPlayer.mapValues { it.value.blocks }
+
+    fun sessionCount(): Int = sessionsByPlayer.size
+
+    fun hiddenViewerCount(): Int = hiddenBlocksByViewer.size
+
+    fun hiddenRelationsCount(): Int = hiddenBlocksByViewer.values.sumOf { it.size }
 }

@@ -13,6 +13,11 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class EffectsManager(private val hooker: FunctionHooker) {
+    data class CacheSnapshot(
+        val activeEffects: Int,
+        val scheduledTasks: Int,
+        val internalOwners: Int
+    )
 
     val activeEffects = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, Int>>()
     private val effectTasks = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, Int>>()
@@ -197,4 +202,10 @@ class EffectsManager(private val hooker: FunctionHooker) {
         }
         player.removePotionEffect(effectType)
     }
+
+    fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
+        activeEffects = activeEffects.values.sumOf { it.size },
+        scheduledTasks = effectTasks.values.sumOf { it.size },
+        internalOwners = internalEffectOwners.values.sumOf { byEffect -> byEffect.values.sumOf { it.size } }
+    )
 }

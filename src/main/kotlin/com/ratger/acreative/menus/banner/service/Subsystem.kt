@@ -25,6 +25,13 @@ class Subsystem(
     parser: MiniMessageParser,
     sharedButtonFactory: MenuButtonFactory
 ) {
+    data class MemorySnapshot(
+        val authorNames: List<String>,
+        val publicationHistoryKeys: List<String>,
+        val bannerSessionEntries: Int,
+        val editorSessions: List<com.ratger.acreative.menus.banner.editor.BannerEditorSession>
+    )
+
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "acreative-banner").apply { isDaemon = true }
     }
@@ -112,4 +119,11 @@ class Subsystem(
     }
 
     fun buttonFactory(): BannerButtonFactory = buttonFactory
+
+    fun memorySnapshot(): MemorySnapshot = MemorySnapshot(
+        authorNames = authorCache.snapshotValues(),
+        publicationHistoryKeys = publicationHistoryCache.snapshotKeys(),
+        bannerSessionEntries = sessionManager.totalEntriesCount(),
+        editorSessions = editorSessionManager.sessionsSnapshot()
+    )
 }

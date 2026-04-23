@@ -28,6 +28,15 @@ class Subsystem(
     parser: MiniMessageParser,
     buttonFactory: MenuButtonFactory
 ) {
+    data class MemorySnapshot(
+        val dynamicEntries: List<com.ratger.acreative.menus.decorationheads.model.Entry>,
+        val searchEntries: List<Pair<String, List<com.ratger.acreative.menus.decorationheads.model.Entry>>>,
+        val dynamicCount: Int,
+        val cachedRecentEntries: Int,
+        val cachedRecentPlayers: Int,
+        val sessionEntries: Int
+    )
+
     private val config = hooker.configManager.config
     private val plugin = hooker.plugin
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { r ->
@@ -133,4 +142,13 @@ class Subsystem(
         recentService.flushDirtyToDatabase()
         executor.shutdownNow()
     }
+
+    fun memorySnapshot(): MemorySnapshot = MemorySnapshot(
+        dynamicEntries = cache.dynamicEntriesSnapshot(),
+        searchEntries = cache.searchIndex.snapshot(),
+        dynamicCount = cache.dynamicSize(),
+        cachedRecentEntries = recentService.cachedEntriesCount(),
+        cachedRecentPlayers = recentService.cachedPlayersCount(),
+        sessionEntries = sessionManager.totalEntriesCount()
+    )
 }

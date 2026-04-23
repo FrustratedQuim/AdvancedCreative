@@ -16,4 +16,8 @@ class CommandCooldownService(private val configManager: ConfigManager) {
         val cooldownMillis = configManager.config.getLong("cooldowns.${commandType.cooldownKey}", 1000L)
         playerCooldowns.computeIfAbsent(playerId) { mutableMapOf() }[commandType] = System.currentTimeMillis() + cooldownMillis
     }
+
+    fun cachedPlayersCount(): Int = playerCooldowns.size
+
+    fun cachedEntriesCount(): Int = playerCooldowns.values.sumOf { it.size }
 }

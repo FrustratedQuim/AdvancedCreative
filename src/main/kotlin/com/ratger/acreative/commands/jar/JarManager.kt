@@ -24,6 +24,12 @@ import org.bukkit.util.Vector
 import java.util.UUID
 
 class JarManager(private val hooker: FunctionHooker) {
+    data class CacheSnapshot(
+        val activeSessions: Int,
+        val releaseInProgress: Int,
+        val pendingReleaseCallbacks: Int,
+        val movementBypassTargets: Int
+    )
 
     private val displayFactory = JarDisplayFactory(hooker)
     private val sessions = JarSessionRegistry()
@@ -208,6 +214,13 @@ class JarManager(private val hooker: FunctionHooker) {
             releaseSession(it.targetUuid, waitForScaleRestore = false)
         }
     }
+
+    fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
+        activeSessions = sessions.allSessions().size,
+        releaseInProgress = releaseInProgress.size,
+        pendingReleaseCallbacks = pendingReleaseCallbacks.values.sumOf { it.size },
+        movementBypassTargets = movementBypassTargets.size
+    )
 
     fun onViewerJoin(viewer: Player) {
         sessions.allSessions().forEach { session ->

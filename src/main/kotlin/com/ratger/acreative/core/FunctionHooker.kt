@@ -4,6 +4,7 @@ import com.ratger.acreative.AdvancedCreative
 import com.ratger.acreative.commands.CommandManager
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.commands.crawl.CrawlManager
+import com.ratger.acreative.commands.admin.AdminManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager
 import com.ratger.acreative.commands.freeze.FreezeManager
@@ -95,6 +96,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var menuService: MenuService
         private set
+    lateinit var adminManager: AdminManager
+        private set
     lateinit var subsystem: Subsystem
         private set
     lateinit var bannerSubsystem: BannerSubsystem
@@ -155,6 +158,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
         menuService = MenuService(this)
+        adminManager = AdminManager(this)
         subsystem = Subsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
         subsystem.init()
         bannerSubsystem = BannerSubsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())

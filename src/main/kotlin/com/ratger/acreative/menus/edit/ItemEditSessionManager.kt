@@ -38,6 +38,8 @@ class ItemEditSessionManager {
         closeListeners += listener
     }
 
+    fun sessionsSnapshot(): List<ItemEditSession> = sessions.values.toList()
+
     private fun contentHash(item: ItemStack): String? {
         if (item.type.isAir || item.amount <= 0) return null
         val normalized = item.clone().apply { amount = 1 }

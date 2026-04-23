@@ -27,4 +27,8 @@ class BannerAuthorCache(
     }
 
     fun resolve(name: String): String? = authorNamesByLower[name.lowercase(Locale.ROOT)]
+
+    fun snapshotValues(): List<String> = authorNamesByLower.values.toList()
+
+    fun size(): Int = authorNamesByLower.size
 }

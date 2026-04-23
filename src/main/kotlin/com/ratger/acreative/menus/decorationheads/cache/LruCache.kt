@@ -16,5 +16,11 @@ class LruCache<K, V>(
     fun get(key: K): V? = map[key]
 
     @Synchronized
+    fun size(): Int = map.size
+
+    @Synchronized
+    fun snapshotEntries(): List<Map.Entry<K, V>> = map.entries.map { java.util.AbstractMap.SimpleEntry(it.key, it.value) }
+
+    @Synchronized
     fun clear() = map.clear()
 }

@@ -12,6 +12,11 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 class HideManager(private val hooker: FunctionHooker) {
+    data class CacheSnapshot(
+        val hiddenRelations: Int,
+        val hiders: Int,
+        val notificationCooldowns: Int
+    )
 
     val hiddenPlayers = ConcurrentHashMap<UUID, MutableSet<UUID>>()
     private val notificationCooldowns = ConcurrentHashMap<UUID, Long>()
@@ -31,6 +36,12 @@ class HideManager(private val hooker: FunctionHooker) {
         }
         hidePlayer(hider, target)
     }
+
+    fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
+        hiddenRelations = hiddenPlayers.values.sumOf { it.size },
+        hiders = hiddenPlayers.size,
+        notificationCooldowns = notificationCooldowns.size
+    )
 
     fun hidePlayer(hider: Player, target: Player) {
         if (hider == target) {

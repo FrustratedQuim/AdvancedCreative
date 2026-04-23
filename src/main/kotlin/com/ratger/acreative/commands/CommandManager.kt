@@ -1,6 +1,7 @@
 package com.ratger.acreative.commands
 
 import com.ratger.acreative.commands.crawl.CrawlCommand
+import com.ratger.acreative.commands.admin.AdvancedCreativeAdminCommand
 import com.ratger.acreative.commands.banner.BannerCommand
 import com.ratger.acreative.commands.banner.BannerEditCommand
 import com.ratger.acreative.commands.banner.DecorationBannersCommand
@@ -65,7 +66,8 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         DecorationHeadsCommand(functionHooker),
         BannerEditCommand(functionHooker),
         EditCommand(functionHooker),
-        ApplyCommand(functionHooker)
+        ApplyCommand(functionHooker),
+        AdvancedCreativeAdminCommand(functionHooker)
     ).associateBy { it.type }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {

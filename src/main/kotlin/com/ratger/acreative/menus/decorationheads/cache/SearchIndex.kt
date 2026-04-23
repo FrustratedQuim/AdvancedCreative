@@ -11,6 +11,8 @@ class SearchIndex(limit: Int) {
     fun get(query: String, page: Int, pageSize: Int): List<Entry>? =
         cache.get(key(query, page, pageSize))
 
+    fun snapshot(): List<Pair<String, List<Entry>>> = cache.snapshotEntries().map { it.key to it.value }
+
     fun clear() = cache.clear()
 
     private fun key(query: String, page: Int, pageSize: Int): String = "$query:$page:$pageSize"

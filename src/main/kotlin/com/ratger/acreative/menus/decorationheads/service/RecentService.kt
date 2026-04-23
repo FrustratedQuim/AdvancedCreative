@@ -102,6 +102,12 @@ class RecentService(
         }
     }
 
+    fun cachedPlayersCount(): Int = cacheByPlayer.size
+
+    fun cachedEntriesCount(): Int = cacheByPlayer.values.sumOf { entries ->
+        synchronized(entries) { entries.size }
+    }
+
     private fun loadPlayerCacheIfMissing(playerId: UUID): MutableList<CachedRecentEntry> {
         return cacheByPlayer.computeIfAbsent(playerId) {
             recentRepository.listStored(playerId)
