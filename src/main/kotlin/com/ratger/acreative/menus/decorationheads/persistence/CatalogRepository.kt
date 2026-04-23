@@ -1,10 +1,11 @@
 package com.ratger.acreative.menus.decorationheads.persistence
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.sql.ResultSet
 
 class CatalogRepository(
-    private val database: Database
+    private val database: AdvancedCreativeDatabase
 ) {
     fun upsert(entries: Collection<Entry>) {
         if (entries.isEmpty()) return
@@ -12,12 +13,12 @@ class CatalogRepository(
             conn.autoCommit = false
             conn.prepareStatement(
                 """
-                INSERT INTO decoration_head_catalog (stable_key, head_name, head_name_ru, category_id, texture_value, updated_at)
+                INSERT INTO head_catalog_entries (stable_key, display_name, display_name_ru, source_category_id, texture_value, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(stable_key) DO UPDATE SET
-                head_name=excluded.head_name,
-                head_name_ru=COALESCE(excluded.head_name_ru, decoration_head_catalog.head_name_ru),
-                category_id=excluded.category_id,
+                display_name=excluded.display_name,
+                display_name_ru=COALESCE(excluded.display_name_ru, head_catalog_entries.display_name_ru),
+                source_category_id=excluded.source_category_id,
                 texture_value=excluded.texture_value,
                 updated_at=excluded.updated_at
                 """.trimIndent()
@@ -38,7 +39,7 @@ class CatalogRepository(
     }
 
     fun isCatalogEmpty(): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("SELECT 1 FROM decoration_head_catalog LIMIT 1").use { ps ->
+        conn.prepareStatement("SELECT 1 FROM head_catalog_entries LIMIT 1").use { ps ->
             ps.executeQuery().use { rs -> !rs.next() }
         }
     }
@@ -47,7 +48,7 @@ class CatalogRepository(
         if (categoryIds.isEmpty()) return 0
         val placeholders = categoryIds.joinToString(",") { "?" }
         return database.connection().use { conn ->
-            conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog WHERE category_id IN ($placeholders)").use { ps ->
+            conn.prepareStatement("SELECT COUNT(*) FROM head_catalog_entries WHERE source_category_id IN ($placeholders)").use { ps ->
                 categoryIds.bind(ps)
                 ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
             }
@@ -60,9 +61,9 @@ class CatalogRepository(
         return database.connection().use { conn ->
             conn.prepareStatement(
                 """
-                SELECT * FROM decoration_head_catalog
-                WHERE category_id IN ($placeholders)
-                ORDER BY head_name COLLATE NOCASE ASC
+                SELECT * FROM head_catalog_entries
+                WHERE source_category_id IN ($placeholders)
+                ORDER BY display_name COLLATE NOCASE ASC
                 LIMIT ? OFFSET ?
                 """.trimIndent()
             ).use { ps ->
@@ -75,7 +76,7 @@ class CatalogRepository(
     }
 
     fun countRecentPublished(): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog").use { ps ->
+        conn.prepareStatement("SELECT COUNT(*) FROM head_catalog_entries").use { ps ->
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
@@ -83,8 +84,8 @@ class CatalogRepository(
     fun findRecentPublishedPage(limit: Int, offset: Int): List<Entry> = database.connection().use { conn ->
         conn.prepareStatement(
             """
-            SELECT * FROM decoration_head_catalog
-            ORDER BY head_name COLLATE NOCASE ASC
+            SELECT * FROM head_catalog_entries
+            ORDER BY display_name COLLATE NOCASE ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -95,20 +96,20 @@ class CatalogRepository(
     }
 
     fun countBySearch(query: String, searchByRussianAlias: Boolean): Int = database.connection().use { conn ->
-        val column = if (searchByRussianAlias) "head_name_ru" else "head_name"
-        conn.prepareStatement("SELECT COUNT(*) FROM decoration_head_catalog WHERE lower(COALESCE($column, '')) LIKE ?").use { ps ->
+        val column = if (searchByRussianAlias) "display_name_ru" else "display_name"
+        conn.prepareStatement("SELECT COUNT(*) FROM head_catalog_entries WHERE lower(COALESCE($column, '')) LIKE ?").use { ps ->
             ps.setString(1, "%${query.lowercase()}%")
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
 
     fun findSearchPage(query: String, limit: Int, offset: Int, searchByRussianAlias: Boolean): List<Entry> = database.connection().use { conn ->
-        val column = if (searchByRussianAlias) "head_name_ru" else "head_name"
+        val column = if (searchByRussianAlias) "display_name_ru" else "display_name"
         conn.prepareStatement(
             """
-            SELECT * FROM decoration_head_catalog
+            SELECT * FROM head_catalog_entries
             WHERE lower(COALESCE($column, '')) LIKE ?
-            ORDER BY head_name COLLATE NOCASE ASC
+            ORDER BY display_name COLLATE NOCASE ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -132,9 +133,9 @@ class CatalogRepository(
         while (rs.next()) {
             out += Entry(
                 stableKey = rs.getString("stable_key"),
-                name = rs.getString("head_name"),
-                russianAlias = rs.getString("head_name_ru"),
-                categoryId = rs.getInt("category_id"),
+                name = rs.getString("display_name"),
+                russianAlias = rs.getString("display_name_ru"),
+                categoryId = rs.getInt("source_category_id"),
                 textureValue = rs.getString("texture_value")
             )
         }

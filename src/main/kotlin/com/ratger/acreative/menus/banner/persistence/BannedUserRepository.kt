@@ -3,16 +3,17 @@ package com.ratger.acreative.menus.banner.persistence
 import com.ratger.acreative.menus.banner.model.BannedUserEntry
 import com.ratger.acreative.menus.banner.model.BannerPageResult
 import com.ratger.acreative.menus.banner.model.BannerProfileSnapshot
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.sql.ResultSet
 import java.util.Locale
 import java.util.UUID
 
 class BannedUserRepository(
-    private val database: BannerDatabase,
+    private val database: AdvancedCreativeDatabase,
     private val pageSize: Int
 ) {
     fun find(playerUuid: UUID): BannedUserEntry? = database.connection().use { conn ->
-        conn.prepareStatement("SELECT * FROM banner_banned_users WHERE player_uuid=? LIMIT 1").use { ps ->
+        conn.prepareStatement("SELECT * FROM banner_blocked_players WHERE player_uuid=? LIMIT 1").use { ps ->
             ps.setString(1, playerUuid.toString())
             ps.executeQuery().use { rs ->
                 if (rs.next()) readCurrentEntry(rs) else null
@@ -26,14 +27,14 @@ class BannedUserRepository(
         database.connection().use { conn ->
             conn.prepareStatement(
                 """
-                INSERT OR REPLACE INTO banner_banned_users(
+                INSERT OR REPLACE INTO banner_blocked_players(
                     player_uuid,
                     player_name,
                     player_name_lower,
                     reason,
                     skin_value,
                     skin_signature,
-                    banned_at
+                    blocked_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent()
@@ -51,7 +52,7 @@ class BannedUserRepository(
     }
 
     fun delete(playerUuid: UUID): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM banner_banned_users WHERE player_uuid=?").use { ps ->
+        conn.prepareStatement("DELETE FROM banner_blocked_players WHERE player_uuid=?").use { ps ->
             ps.setString(1, playerUuid.toString())
             ps.executeUpdate() > 0
         }
@@ -72,7 +73,7 @@ class BannedUserRepository(
     }
 
     private fun count(): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_banned_users").use { ps ->
+        conn.prepareStatement("SELECT COUNT(*) FROM banner_blocked_players").use { ps ->
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
@@ -81,8 +82,8 @@ class BannedUserRepository(
         conn.prepareStatement(
             """
             SELECT *
-            FROM banner_banned_users
-            ORDER BY banned_at DESC, player_name_lower ASC
+            FROM banner_blocked_players
+            ORDER BY blocked_at DESC, player_name_lower ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -104,7 +105,7 @@ class BannedUserRepository(
             playerName = rs.getString("player_name"),
             reason = rs.getString("reason"),
             profileSnapshot = rs.getString("skin_value")?.let { BannerProfileSnapshot(it, rs.getString("skin_signature")) },
-            bannedAtEpochMillis = rs.getLong("banned_at")
+            bannedAtEpochMillis = rs.getLong("blocked_at")
         )
     }
 }

@@ -28,6 +28,7 @@ import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.menus.decorationheads.service.Subsystem
 import com.ratger.acreative.menus.banner.service.Subsystem as BannerSubsystem
 import com.ratger.acreative.menus.MenuService
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import com.ratger.acreative.utils.*
 
 class FunctionHooker(val plugin: AdvancedCreative) {
@@ -94,6 +95,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var tickScheduler: TickScheduler
         private set
+    lateinit var database: AdvancedCreativeDatabase
+        private set
     lateinit var menuService: MenuService
         private set
     lateinit var adminManager: AdminManager
@@ -135,6 +138,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
         accountLinkRequirementService = AccountLinkRequirementService(this)
+        database = AdvancedCreativeDatabase(plugin.dataFolder)
+        database.init()
         playerStateManager = PlayerStateManager(this)
         entityManager = EntityManager(this)
         sitManager = SitManager(this)

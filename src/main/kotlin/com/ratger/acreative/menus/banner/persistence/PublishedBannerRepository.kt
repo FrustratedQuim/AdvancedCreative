@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.banner.model.BannerGalleryState
 import com.ratger.acreative.menus.banner.model.BannerPageResult
 import com.ratger.acreative.menus.banner.model.BannerSort
 import com.ratger.acreative.menus.banner.model.PublishedBannerEntry
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import org.bukkit.inventory.ItemStack
 import java.sql.PreparedStatement
 import java.sql.ResultSet
@@ -12,7 +13,7 @@ import java.util.Locale
 import java.util.UUID
 
 class PublishedBannerRepository(
-    private val database: BannerDatabase,
+    private val database: AdvancedCreativeDatabase,
     private val pageSize: Int
 ) {
     fun savePublishedBanner(
@@ -29,21 +30,22 @@ class PublishedBannerRepository(
         val loweredAuthor = authorName.lowercase(Locale.ROOT)
 
         return database.connection().use { conn ->
+            conn.autoCommit = false
+            BannerPatternStorageSupport.upsertPattern(conn, patternSignature, bannerItem)
             val generatedId = conn.prepareStatement(
                 """
-                INSERT INTO banner_published(
+                INSERT INTO banner_publications(
                     author_uuid,
                     author_name,
                     author_name_lower,
                     title,
                     title_lower,
                     category_key,
-                    banner_data,
                     pattern_signature,
                     takes_count,
                     published_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
                 """.trimIndent(),
                 PreparedStatement.RETURN_GENERATED_KEYS
             ).use { ps ->
@@ -53,14 +55,14 @@ class PublishedBannerRepository(
                 ps.setString(4, normalizedTitle.ifBlank { null })
                 ps.setString(5, loweredTitle)
                 ps.setString(6, category.key)
-                ps.setBytes(7, bannerItem.serializeAsBytes())
-                ps.setString(8, patternSignature)
-                ps.setLong(9, publishedAtEpochMillis)
+                ps.setString(7, patternSignature)
+                ps.setLong(8, publishedAtEpochMillis)
                 ps.executeUpdate()
                 ps.generatedKeys.use { keys ->
                     if (keys.next()) keys.getLong(1) else 0L
                 }
             }
+            conn.commit()
             generatedId
         }
     }
@@ -82,7 +84,7 @@ class PublishedBannerRepository(
     fun count(state: BannerGalleryState): Int {
         val (sql, binder) = buildQuery(
             state = state,
-            select = "SELECT COUNT(*) FROM banner_published",
+            select = "SELECT COUNT(*) FROM banner_publications publication",
             withOrder = false
         )
 
@@ -95,14 +97,14 @@ class PublishedBannerRepository(
     }
 
     fun countByAuthor(authorUuid: UUID): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_published WHERE author_uuid=?").use { ps ->
+        conn.prepareStatement("SELECT COUNT(*) FROM banner_publications WHERE author_uuid=?").use { ps ->
             ps.setString(1, authorUuid.toString())
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
 
     fun countByAuthorName(authorName: String): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_published WHERE author_name_lower=?").use { ps ->
+        conn.prepareStatement("SELECT COUNT(*) FROM banner_publications WHERE author_name_lower=?").use { ps ->
             ps.setString(1, authorName.lowercase(Locale.ROOT))
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
@@ -113,7 +115,7 @@ class PublishedBannerRepository(
             conn.prepareStatement(
                 """
                 SELECT 1
-                FROM banner_published
+                FROM banner_publications
                 WHERE author_uuid=? AND pattern_signature=? AND category_key=?
                 LIMIT 1
                 """.trimIndent()
@@ -130,7 +132,7 @@ class PublishedBannerRepository(
             conn.prepareStatement(
                 """
                 SELECT 1
-                FROM banner_published
+                FROM banner_publications
                 WHERE pattern_signature=? AND category_key=? AND published_at>=?
                 LIMIT 1
                 """.trimIndent()
@@ -143,22 +145,40 @@ class PublishedBannerRepository(
         }
 
     fun deleteById(id: Long): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM banner_published WHERE id=?").use { ps ->
+        conn.autoCommit = false
+        val patternSignature = conn.prepareStatement(
+            "SELECT pattern_signature FROM banner_publications WHERE id=? LIMIT 1"
+        ).use { ps ->
+            ps.setLong(1, id)
+            ps.executeQuery().use { rs -> if (rs.next()) rs.getString("pattern_signature") else null }
+        }
+        val deleted = conn.prepareStatement("DELETE FROM banner_publications WHERE id=?").use { ps ->
             ps.setLong(1, id)
             ps.executeUpdate() > 0
         }
+        if (deleted && patternSignature != null) {
+            BannerPatternStorageSupport.deletePatternIfUnused(conn, patternSignature)
+        }
+        conn.commit()
+        deleted
     }
 
     fun deleteByPatternSignature(patternSignature: String): Int = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM banner_published WHERE pattern_signature=?").use { ps ->
+        conn.autoCommit = false
+        val deleted = conn.prepareStatement("DELETE FROM banner_publications WHERE pattern_signature=?").use { ps ->
             ps.setString(1, patternSignature)
             ps.executeUpdate()
         }
+        if (deleted > 0) {
+            BannerPatternStorageSupport.deletePatternIfUnused(conn, patternSignature)
+        }
+        conn.commit()
+        deleted
     }
 
     fun incrementTakes(id: Long) {
         database.connection().use { conn ->
-            conn.prepareStatement("UPDATE banner_published SET takes_count=takes_count+1 WHERE id=?").use { ps ->
+            conn.prepareStatement("UPDATE banner_publications SET takes_count=takes_count+1 WHERE id=?").use { ps ->
                 ps.setLong(1, id)
                 ps.executeUpdate()
             }
@@ -169,7 +189,7 @@ class PublishedBannerRepository(
         conn.prepareStatement(
             """
             SELECT DISTINCT author_name, author_name_lower
-            FROM banner_published
+            FROM banner_publications
             ORDER BY author_name_lower ASC, author_name ASC
             """.trimIndent()
         ).use { ps ->
@@ -186,7 +206,11 @@ class PublishedBannerRepository(
     private fun list(state: BannerGalleryState, offset: Int): List<PublishedBannerEntry> {
         val (sql, binder) = buildQuery(
             state = state,
-            select = "SELECT * FROM banner_published",
+            select = """
+                SELECT publication.*, pattern.banner_item_data
+                FROM banner_publications publication
+                JOIN banner_patterns pattern ON pattern.pattern_signature = publication.pattern_signature
+            """.trimIndent(),
             withOrder = true
         )
 
@@ -207,16 +231,16 @@ class PublishedBannerRepository(
     ): Pair<String, (PreparedStatement) -> Int> {
         val filters = buildList {
             if (state.category != BannerCategory.ALL) {
-                add("category_key=?")
+                add("publication.category_key=?")
             }
             if (state.authorFilterUuid != null) {
-                add("author_uuid=?")
+                add("publication.author_uuid=?")
             }
             if (!state.authorFilterName.isNullOrBlank()) {
-                add("author_name_lower=?")
+                add("publication.author_name_lower=?")
             }
             if (!state.searchQuery.isNullOrBlank()) {
-                add("title_lower LIKE ?")
+                add("publication.title_lower LIKE ?")
             }
         }
 
@@ -225,9 +249,9 @@ class PublishedBannerRepository(
             ""
         } else {
             when (state.sort) {
-                BannerSort.POPULAR -> " ORDER BY takes_count DESC, published_at DESC, id DESC"
-                BannerSort.NEW -> " ORDER BY published_at DESC, id DESC"
-                BannerSort.OLD -> " ORDER BY published_at ASC, id ASC"
+                BannerSort.POPULAR -> " ORDER BY publication.takes_count DESC, publication.published_at DESC, publication.id DESC"
+                BannerSort.NEW -> " ORDER BY publication.published_at DESC, publication.id DESC"
+                BannerSort.OLD -> " ORDER BY publication.published_at ASC, publication.id ASC"
             }
         }
 
@@ -255,7 +279,7 @@ class PublishedBannerRepository(
     private fun readEntries(rs: ResultSet): List<PublishedBannerEntry> {
         return buildList {
             while (rs.next()) {
-                val bytes = rs.getBytes("banner_data") ?: continue
+                val bytes = rs.getBytes("banner_item_data") ?: continue
                 val banner = runCatching { ItemStack.deserializeBytes(bytes) }.getOrNull() ?: continue
                 add(
                     PublishedBannerEntry(

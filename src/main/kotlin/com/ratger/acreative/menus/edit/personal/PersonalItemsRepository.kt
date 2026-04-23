@@ -1,10 +1,11 @@
 package com.ratger.acreative.menus.edit.personal
 
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import org.bukkit.inventory.ItemStack
 import java.util.UUID
 
 class PersonalItemsRepository(
-    private val database: PlayerDataDatabase,
+    private val database: AdvancedCreativeDatabase,
     private val limit: Int
 ) {
     data class StoredPersonalItem(
@@ -18,7 +19,7 @@ class PersonalItemsRepository(
             SELECT content_hash, item_data, last_used_at
             FROM edit_personal_items
             WHERE player_uuid=?
-            ORDER BY last_used_at DESC, rowid ASC
+            ORDER BY last_used_at DESC, content_hash ASC
         """.trimIndent()
 
         return database.connection().use { conn ->

@@ -12,7 +12,6 @@ import com.ratger.acreative.menus.banner.menu.BannerSessionManager
 import com.ratger.acreative.menus.banner.menu.BannerTitleApplyStateManager
 import com.ratger.acreative.menus.banner.persistence.BannedPatternRepository
 import com.ratger.acreative.menus.banner.persistence.BannedUserRepository
-import com.ratger.acreative.menus.banner.persistence.BannerDatabase
 import com.ratger.acreative.menus.banner.persistence.PublishedBannerRepository
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
@@ -36,10 +35,9 @@ class Subsystem(
         Thread(runnable, "acreative-banner").apply { isDaemon = true }
     }
 
-    private val bannerDatabase = BannerDatabase(hooker.plugin.dataFolder)
-    private val publishedBannerRepository = PublishedBannerRepository(bannerDatabase, 45)
-    private val bannedPatternRepository = BannedPatternRepository(bannerDatabase, 45)
-    private val bannedUserRepository = BannedUserRepository(bannerDatabase, 45)
+    private val publishedBannerRepository = PublishedBannerRepository(hooker.database, 45)
+    private val bannedPatternRepository = BannedPatternRepository(hooker.database, 45)
+    private val bannedUserRepository = BannedUserRepository(hooker.database, 45)
     private val authorCache = BannerAuthorCache(publishedBannerRepository)
     private val publicationHistoryCache = BannerPublicationHistoryCache(publishedBannerRepository)
     private val galleryService = BannerGalleryService(publishedBannerRepository, BannerTakeCooldownService())
@@ -110,7 +108,6 @@ class Subsystem(
     }
 
     fun init() {
-        bannerDatabase.init()
         authorCache.reload()
     }
 

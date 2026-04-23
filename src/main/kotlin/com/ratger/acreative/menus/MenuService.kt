@@ -62,7 +62,6 @@ import com.ratger.acreative.menus.edit.apply.effects.UseCooldownSecondsApplyHand
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.personal.PersonalItemsRepository
 import com.ratger.acreative.menus.edit.personal.PersonalItemsService
-import com.ratger.acreative.menus.edit.personal.PlayerDataDatabase
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -91,8 +90,7 @@ class MenuService(
     private val personalDataExecutor = Executors.newSingleThreadExecutor { r ->
         Thread(r, "acreative-edit-personal-items").apply { isDaemon = true }
     }
-    private val personalDataDatabase = PlayerDataDatabase(hooker.plugin.dataFolder)
-    private val personalItemsRepository = PersonalItemsRepository(personalDataDatabase, 21)
+    private val personalItemsRepository = PersonalItemsRepository(hooker.database, 21)
     private val personalItemsService = PersonalItemsService(personalItemsRepository, personalDataExecutor, 21)
     private var periodicPersonalItemsFlushTask: BukkitTask? = null
 
@@ -148,7 +146,6 @@ class MenuService(
 
     init {
         VanillaRuLocalization.initialize(vanillaTranslationResolver)
-        personalDataDatabase.init()
         val flushIntervalTicks = 6L * 60L * 60L * 20L
         periodicPersonalItemsFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
             hooker.plugin,

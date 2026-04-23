@@ -2,15 +2,16 @@ package com.ratger.acreative.menus.banner.persistence
 
 import com.ratger.acreative.menus.banner.model.BannedPatternEntry
 import com.ratger.acreative.menus.banner.model.BannerPageResult
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import org.bukkit.inventory.ItemStack
 import java.sql.ResultSet
 
 class BannedPatternRepository(
-    private val database: BannerDatabase,
+    private val database: AdvancedCreativeDatabase,
     private val pageSize: Int
 ) {
     fun isBanned(patternSignature: String): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("SELECT 1 FROM banner_banned_patterns WHERE pattern_signature=? LIMIT 1").use { ps ->
+        conn.prepareStatement("SELECT 1 FROM banner_blocked_patterns WHERE pattern_signature=? LIMIT 1").use { ps ->
             ps.setString(1, patternSignature)
             ps.executeQuery().use(ResultSet::next)
         }
@@ -18,25 +19,33 @@ class BannedPatternRepository(
 
     fun save(patternSignature: String, bannerItem: ItemStack, bannedAtEpochMillis: Long) {
         database.connection().use { conn ->
+            conn.autoCommit = false
+            BannerPatternStorageSupport.upsertPattern(conn, patternSignature, bannerItem)
             conn.prepareStatement(
                 """
-                INSERT OR REPLACE INTO banner_banned_patterns(pattern_signature, banner_data, banned_at)
-                VALUES (?, ?, ?)
+                INSERT OR REPLACE INTO banner_blocked_patterns(pattern_signature, blocked_at)
+                VALUES (?, ?)
                 """.trimIndent()
             ).use { ps ->
                 ps.setString(1, patternSignature)
-                ps.setBytes(2, bannerItem.serializeAsBytes())
-                ps.setLong(3, bannedAtEpochMillis)
+                ps.setLong(2, bannedAtEpochMillis)
                 ps.executeUpdate()
             }
+            conn.commit()
         }
     }
 
     fun delete(patternSignature: String): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM banner_banned_patterns WHERE pattern_signature=?").use { ps ->
+        conn.autoCommit = false
+        val deleted = conn.prepareStatement("DELETE FROM banner_blocked_patterns WHERE pattern_signature=?").use { ps ->
             ps.setString(1, patternSignature)
             ps.executeUpdate() > 0
         }
+        if (deleted) {
+            BannerPatternStorageSupport.deletePatternIfUnused(conn, patternSignature)
+        }
+        conn.commit()
+        deleted
     }
 
     fun page(page: Int): BannerPageResult<BannedPatternEntry> {
@@ -54,7 +63,7 @@ class BannedPatternRepository(
     }
 
     private fun count(): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_banned_patterns").use { ps ->
+        conn.prepareStatement("SELECT COUNT(*) FROM banner_blocked_patterns").use { ps ->
             ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
         }
     }
@@ -62,9 +71,10 @@ class BannedPatternRepository(
     private fun list(offset: Int): List<BannedPatternEntry> = database.connection().use { conn ->
         conn.prepareStatement(
             """
-            SELECT *
-            FROM banner_banned_patterns
-            ORDER BY banned_at DESC, pattern_signature ASC
+            SELECT blocked.pattern_signature, blocked.blocked_at, pattern.banner_item_data
+            FROM banner_blocked_patterns blocked
+            JOIN banner_patterns pattern ON pattern.pattern_signature = blocked.pattern_signature
+            ORDER BY blocked.blocked_at DESC, blocked.pattern_signature ASC
             LIMIT ? OFFSET ?
             """.trimIndent()
         ).use { ps ->
@@ -73,13 +83,13 @@ class BannedPatternRepository(
             ps.executeQuery().use { rs ->
                 buildList {
                     while (rs.next()) {
-                        val bytes = rs.getBytes("banner_data") ?: continue
+                        val bytes = rs.getBytes("banner_item_data") ?: continue
                         val banner = runCatching { ItemStack.deserializeBytes(bytes) }.getOrNull() ?: continue
                         add(
                             BannedPatternEntry(
                                 patternSignature = rs.getString("pattern_signature"),
                                 bannerItem = banner,
-                                bannedAtEpochMillis = rs.getLong("banned_at")
+                                bannedAtEpochMillis = rs.getLong("blocked_at")
                             )
                         )
                     }

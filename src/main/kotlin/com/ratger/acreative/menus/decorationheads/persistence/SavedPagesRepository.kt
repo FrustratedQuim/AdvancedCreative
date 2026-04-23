@@ -2,10 +2,11 @@ package com.ratger.acreative.menus.decorationheads.persistence
 
 import com.ratger.acreative.menus.decorationheads.model.SavedPageEntry
 import com.ratger.acreative.menus.decorationheads.model.SavedPageSourceMode
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.util.UUID
 
 class SavedPagesRepository(
-    private val database: Database
+    private val database: AdvancedCreativeDatabase
 ) {
     fun insert(
         playerUuid: UUID,
@@ -19,7 +20,7 @@ class SavedPagesRepository(
     ): SavedPageEntry {
         val now = System.currentTimeMillis() / 1000L
         val sql = """
-            INSERT INTO decoration_head_saved_pages
+            INSERT INTO head_saved_pages
             (player_uuid, source_mode, category_key, source_page, search_query, search_query_key, note, map_color_key, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
@@ -47,7 +48,7 @@ class SavedPagesRepository(
     }
 
     fun deleteById(playerUuid: UUID, id: Long): Boolean {
-        val sql = "DELETE FROM decoration_head_saved_pages WHERE player_uuid=? AND id=?"
+        val sql = "DELETE FROM head_saved_pages WHERE player_uuid=? AND id=?"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 ps.setString(1, playerUuid.toString())
@@ -58,7 +59,7 @@ class SavedPagesRepository(
     }
 
     fun findById(playerUuid: UUID, id: Long): SavedPageEntry? {
-        val sql = "SELECT * FROM decoration_head_saved_pages WHERE player_uuid=? AND id=?"
+        val sql = "SELECT * FROM head_saved_pages WHERE player_uuid=? AND id=?"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 ps.setString(1, playerUuid.toString())
@@ -70,7 +71,7 @@ class SavedPagesRepository(
 
     fun findBySource(playerUuid: UUID, sourceMode: SavedPageSourceMode, categoryKey: String, sourcePage: Int, searchQueryKey: String): SavedPageEntry? {
         val sql = """
-            SELECT * FROM decoration_head_saved_pages
+            SELECT * FROM head_saved_pages
             WHERE player_uuid=? AND source_mode=? AND category_key=? AND source_page=? AND search_query_key=?
             LIMIT 1
         """.trimIndent()
@@ -87,7 +88,7 @@ class SavedPagesRepository(
     }
 
     fun countByPlayer(playerUuid: UUID): Int {
-        val sql = "SELECT COUNT(*) FROM decoration_head_saved_pages WHERE player_uuid=?"
+        val sql = "SELECT COUNT(*) FROM head_saved_pages WHERE player_uuid=?"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 ps.setString(1, playerUuid.toString())
@@ -100,9 +101,9 @@ class SavedPagesRepository(
 
     fun listByPlayerAndCategory(playerUuid: UUID, categoryKey: String?): List<SavedPageEntry> {
         val sql = if (categoryKey == null) {
-            "SELECT * FROM decoration_head_saved_pages WHERE player_uuid=? ORDER BY id ASC"
+            "SELECT * FROM head_saved_pages WHERE player_uuid=? ORDER BY id ASC"
         } else {
-            "SELECT * FROM decoration_head_saved_pages WHERE player_uuid=? AND category_key=? ORDER BY id ASC"
+            "SELECT * FROM head_saved_pages WHERE player_uuid=? AND category_key=? ORDER BY id ASC"
         }
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
@@ -120,7 +121,7 @@ class SavedPagesRepository(
     fun updateNote(playerUuid: UUID, id: Long, note: String?): Boolean = updateField(playerUuid, id, "note", note)
 
     fun updateSourcePage(playerUuid: UUID, id: Long, sourcePage: Int): Boolean {
-        val sql = "UPDATE decoration_head_saved_pages SET source_page=?, updated_at=? WHERE player_uuid=? AND id=?"
+        val sql = "UPDATE head_saved_pages SET source_page=?, updated_at=? WHERE player_uuid=? AND id=?"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 ps.setInt(1, sourcePage)
@@ -135,7 +136,7 @@ class SavedPagesRepository(
     fun updateMapColorKey(playerUuid: UUID, id: Long, mapColorKey: String?): Boolean = updateField(playerUuid, id, "map_color_key", mapColorKey)
 
     private fun updateField(playerUuid: UUID, id: Long, field: String, value: String?): Boolean {
-        val sql = "UPDATE decoration_head_saved_pages SET $field=?, updated_at=? WHERE player_uuid=? AND id=?"
+        val sql = "UPDATE head_saved_pages SET $field=?, updated_at=? WHERE player_uuid=? AND id=?"
         return database.connection().use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 ps.setString(1, value)

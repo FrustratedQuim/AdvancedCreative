@@ -1,10 +1,11 @@
 package com.ratger.acreative.menus.decorationheads.persistence
 
 import com.ratger.acreative.menus.decorationheads.model.Entry
+import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.util.UUID
 
 class RecentRepository(
-    private val database: Database,
+    private val database: AdvancedCreativeDatabase,
     private val limit: Int
 ) {
     data class StoredRecentEntry(
@@ -16,10 +17,16 @@ class RecentRepository(
 
     fun listStored(playerId: UUID): List<StoredRecentEntry> {
         val sql = """
-            SELECT stable_key, head_name, category_id, texture_value, last_used_at
-            FROM decoration_head_recent
-            WHERE player_uuid=?
-            ORDER BY position ASC
+            SELECT
+                recent.stable_key,
+                catalog.display_name,
+                catalog.source_category_id,
+                catalog.texture_value,
+                recent.last_used_at
+            FROM head_recent_entries recent
+            JOIN head_catalog_entries catalog ON catalog.stable_key = recent.stable_key
+            WHERE recent.player_uuid=?
+            ORDER BY recent.position ASC
         """.trimIndent()
 
         return database.connection().use { conn ->
@@ -32,9 +39,9 @@ class RecentRepository(
                                 StoredRecentEntry(
                                     entry = Entry(
                                         stableKey = rs.getString("stable_key"),
-                                        name = rs.getString("head_name"),
+                                        name = rs.getString("display_name"),
                                         russianAlias = null,
-                                        categoryId = rs.getInt("category_id"),
+                                        categoryId = rs.getInt("source_category_id"),
                                         textureValue = rs.getString("texture_value")
                                     ),
                                     savedAtEpochSeconds = rs.getLong("last_used_at")
@@ -52,25 +59,22 @@ class RecentRepository(
         val trimmed = entries.take(limit)
         database.connection().use { conn ->
             conn.autoCommit = false
-            conn.prepareStatement("DELETE FROM decoration_head_recent WHERE player_uuid=?").use { ps ->
+            conn.prepareStatement("DELETE FROM head_recent_entries WHERE player_uuid=?").use { ps ->
                 ps.setString(1, player)
                 ps.executeUpdate()
             }
 
             conn.prepareStatement(
                 """
-                INSERT INTO decoration_head_recent (player_uuid, position, last_used_at, stable_key, head_name, category_id, texture_value)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO head_recent_entries (player_uuid, position, stable_key, last_used_at)
+                VALUES (?, ?, ?, ?)
                 """.trimIndent()
             ).use { ps ->
                 trimmed.forEachIndexed { index, stored ->
                     ps.setString(1, player)
                     ps.setInt(2, index)
-                    ps.setLong(3, stored.savedAtEpochSeconds)
-                    ps.setString(4, stored.entry.stableKey)
-                    ps.setString(5, stored.entry.name)
-                    ps.setInt(6, stored.entry.categoryId)
-                    ps.setString(7, stored.entry.textureValue)
+                    ps.setString(3, stored.entry.stableKey)
+                    ps.setLong(4, stored.savedAtEpochSeconds)
                     ps.addBatch()
                 }
                 ps.executeBatch()

@@ -13,7 +13,6 @@ import com.ratger.acreative.menus.decorationheads.menu.SessionManager
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
 import com.ratger.acreative.menus.decorationheads.persistence.SavedPagesRepository
-import com.ratger.acreative.menus.decorationheads.persistence.Database
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -50,11 +49,10 @@ class Subsystem(
         searchLimit = config.getInt("decoration-heads.search-query-cache-size", 128)
     )
 
-    private val database = Database(hooker.plugin.dataFolder)
-    private val catalogRepository = CatalogRepository(database)
+    private val catalogRepository = CatalogRepository(hooker.database)
     private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
-    private val recentRepository = RecentRepository(database, playerRecentLimit)
-    private val savedPagesRepository = SavedPagesRepository(database)
+    private val recentRepository = RecentRepository(hooker.database, playerRecentLimit)
+    private val savedPagesRepository = SavedPagesRepository(hooker.database)
 
     private val requestFactory = MinecraftHeadsRequestFactory(
         baseUrl = config.getString("decoration-heads.api.base-url", "https://minecraft-heads.com")!!,
@@ -125,7 +123,6 @@ class Subsystem(
     private var periodicRecentFlushTask: BukkitTask? = null
 
     fun init() {
-        database.init()
         recentService.init()
         syncService.start()
         val flushIntervalTicks = 6L * 60L * 60L * 20L
