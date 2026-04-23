@@ -34,8 +34,14 @@ class Subsystem(
     private val bannedPatternRepository = BannedPatternRepository(bannerDatabase, 45)
     private val bannedUserRepository = BannedUserRepository(bannerDatabase, 45)
     private val authorCache = BannerAuthorCache(publishedBannerRepository)
+    private val publicationHistoryCache = BannerPublicationHistoryCache(publishedBannerRepository)
     private val galleryService = BannerGalleryService(publishedBannerRepository, BannerTakeCooldownService())
-    private val publicationService = BannerPublicationService(publishedBannerRepository, bannedPatternRepository, authorCache)
+    private val publicationService = BannerPublicationService(
+        publishedBannerRepository,
+        bannedPatternRepository,
+        authorCache,
+        publicationHistoryCache
+    )
     private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService())
     private val moderationService = BannerModerationService(
         bannedPatternRepository = bannedPatternRepository,

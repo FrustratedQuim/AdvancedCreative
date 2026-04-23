@@ -82,7 +82,7 @@ commands:
   decorationbanners:
     description: Opens player banner gallery
     usage: /decorationbanners [player] [-m]
-    aliases: [db]
+    aliases: [db, banners]
   decorationheads:
     description: Opens decoration heads menu
     usage: /decorationheads

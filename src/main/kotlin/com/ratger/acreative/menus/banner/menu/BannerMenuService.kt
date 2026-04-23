@@ -500,7 +500,7 @@ class BannerMenuService(
                             "limit" to BannerPatternSupport.PUBLISH_LIMIT.toString()
                         )
                     )
-                    openStoredPostMenu(player)
+                    player.closeInventory()
                 }
             }
         }

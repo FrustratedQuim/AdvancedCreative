@@ -11,6 +11,7 @@ class BannerPublicationService(
     private val publishedBannerRepository: PublishedBannerRepository,
     private val bannedPatternRepository: BannedPatternRepository,
     private val authorCache: BannerAuthorCache,
+    private val publicationHistoryCache: BannerPublicationHistoryCache,
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) {
     enum class PublishFailure {
@@ -42,6 +43,7 @@ class BannerPublicationService(
             patternSignature = patternSignature,
             publishedAtEpochMillis = publishedAt
         )
+        publicationHistoryCache.rememberPublication(player.uniqueId, patternSignature, draft.category)
         authorCache.reload()
 
         return Result.success(
@@ -86,7 +88,7 @@ class BannerPublicationService(
             return PublishFailure.ALREADY_PUBLISHED_TODAY
         }
 
-        if (publishedBannerRepository.hasPublicationHistory(player.uniqueId, patternSignature, draft.category)) {
+        if (publicationHistoryCache.hasPublicationHistory(player.uniqueId, patternSignature, draft.category)) {
             return PublishFailure.ALREADY_PUBLISHED_BY_PLAYER
         }
 

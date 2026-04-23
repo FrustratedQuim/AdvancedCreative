@@ -29,21 +29,6 @@ class PublishedBannerRepository(
         val loweredAuthor = authorName.lowercase(Locale.ROOT)
 
         return database.connection().use { conn ->
-            conn.autoCommit = false
-
-            conn.prepareStatement(
-                """
-                INSERT OR IGNORE INTO banner_publication_history(author_uuid, pattern_signature, category_key, published_at)
-                VALUES (?, ?, ?, ?)
-                """.trimIndent()
-            ).use { ps ->
-                ps.setString(1, authorUuid.toString())
-                ps.setString(2, patternSignature)
-                ps.setString(3, category.key)
-                ps.setLong(4, publishedAtEpochMillis)
-                ps.executeUpdate()
-            }
-
             val generatedId = conn.prepareStatement(
                 """
                 INSERT INTO banner_published(
@@ -76,8 +61,6 @@ class PublishedBannerRepository(
                     if (keys.next()) keys.getLong(1) else 0L
                 }
             }
-
-            conn.commit()
             generatedId
         }
     }
@@ -123,7 +106,7 @@ class PublishedBannerRepository(
             conn.prepareStatement(
                 """
                 SELECT 1
-                FROM banner_publication_history
+                FROM banner_published
                 WHERE author_uuid=? AND pattern_signature=? AND category_key=?
                 LIMIT 1
                 """.trimIndent()
