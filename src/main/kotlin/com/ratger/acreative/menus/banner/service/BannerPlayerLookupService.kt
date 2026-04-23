@@ -14,12 +14,12 @@ class BannerPlayerLookupService(
     fun findUser(name: String): User? = BukkitHelper.getUser(name).orElse(null)
 
     fun resolveSkinSnapshotAsync(user: User): CompletableFuture<BannerProfileSnapshot?> {
-        val onlineSnapshot = onlineSnapshot(user.getName())
+        val onlineSnapshot = onlineSnapshot(user.name)
         if (onlineSnapshot != null) {
             return CompletableFuture.completedFuture(onlineSnapshot)
         }
 
-        return licensedProfileLookupService.lookupLicensedProfileAsync(user.getName())
+        return licensedProfileLookupService.lookupLicensedProfileAsync(user.name)
             .handle { payload, error ->
                 if (error != null || payload == null || payload.textureValue.isBlank()) {
                     null

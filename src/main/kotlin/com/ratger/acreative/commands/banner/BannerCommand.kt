@@ -4,6 +4,7 @@ import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -40,6 +41,15 @@ class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
                     base += listOf("ban", "banlist", "banuser", "banuserlist")
                 }
                 base.filter { it.startsWith(args[0], ignoreCase = true) }
+            }
+            2 -> {
+                if (player.hasPermission(MODERATION_PERMISSION) && args[0].equals("banuser", ignoreCase = true)) {
+                    Bukkit.getOnlinePlayers()
+                        .map { it.name }
+                        .filter { it.startsWith(args[1], ignoreCase = true) }
+                } else {
+                    emptyList()
+                }
             }
             else -> emptyList()
         }

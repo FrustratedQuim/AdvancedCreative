@@ -3,6 +3,7 @@ package com.ratger.acreative.commands.banner
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -31,7 +32,7 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
                 val suggestions = if (input.equals("-m", ignoreCase = true)) {
                     mutableListOf<String>()
                 } else {
-                    hooker.bannerMenuService.authorSuggestions(input).toMutableList()
+                    (hooker.bannerMenuService.authorSuggestions(input) + onlineNameSuggestions(input)).toMutableList()
                 }
                 if (player.hasPermission(MODERATION_PERMISSION) && "-m".startsWith(input, ignoreCase = true)) {
                     suggestions += "-m"
@@ -40,7 +41,7 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
             }
             2 -> {
                 if (args[0].equals("-m", ignoreCase = true)) {
-                    hooker.bannerMenuService.authorSuggestions(args[1])
+                    (hooker.bannerMenuService.authorSuggestions(args[1]) + onlineNameSuggestions(args[1])).distinct()
                 } else if (player.hasPermission(MODERATION_PERMISSION)) {
                     listOf("-m").filter { it.startsWith(args[1], ignoreCase = true) }
                 } else {
@@ -53,5 +54,11 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
 
     private companion object {
         const val MODERATION_PERMISSION = "advancedcreative.decorationbanners.moderation"
+    }
+
+    private fun onlineNameSuggestions(prefix: String): List<String> {
+        return Bukkit.getOnlinePlayers()
+            .map { it.name }
+            .filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }

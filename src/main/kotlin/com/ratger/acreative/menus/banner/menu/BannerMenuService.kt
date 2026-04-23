@@ -159,17 +159,26 @@ class BannerMenuService(
     }
 
     fun openPublicGalleryForAuthor(player: Player, authorName: String, moderationMode: Boolean) {
-        val currentState = sessionManager.publicState(player.uniqueId)
         val resolvedAuthorName = authorCache.resolve(authorName) ?: authorName
-        val nextState = currentState.copy(
-            page = 1,
-            authorFilterUuid = null,
-            authorFilterName = resolvedAuthorName,
-            moderatorMode = moderationMode,
-            openedFromMainMenu = false
-        )
-        sessionManager.updatePublicState(player.uniqueId, nextState)
-        openPublicGallery(player, nextState)
+        val targetUser = playerLookupService.findUser(resolvedAuthorName)
+        if (targetUser == null) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
+            return
+        }
+
+        executor.submit {
+            val publishedCount = galleryService.countByAuthorName(targetUser.name)
+            runSync {
+                if (!player.isOnline) {
+                    return@runSync
+                }
+                if (publishedCount <= 0) {
+                    hooker.messageManager.sendChat(player, MessageKey.BANNER_USER_NO_FLAGS)
+                    return@runSync
+                }
+                openPublicGalleryForResolvedAuthor(player, targetUser.name, moderationMode)
+            }
+        }
     }
 
     fun openBannedPatterns(player: Player, requestedPage: Int = 1) {
@@ -599,6 +608,19 @@ class BannerMenuService(
     private fun updatePostDraft(playerId: UUID, update: (BannerPostDraft) -> BannerPostDraft) {
         val currentDraft = sessionManager.getPostDraft(playerId) ?: return
         sessionManager.setPostDraft(playerId, update(currentDraft))
+    }
+
+    private fun openPublicGalleryForResolvedAuthor(player: Player, authorName: String, moderationMode: Boolean) {
+        val currentState = sessionManager.publicState(player.uniqueId)
+        val nextState = currentState.copy(
+            page = 1,
+            authorFilterUuid = null,
+            authorFilterName = authorName,
+            moderatorMode = moderationMode,
+            openedFromMainMenu = false
+        )
+        sessionManager.updatePublicState(player.uniqueId, nextState)
+        openPublicGallery(player, nextState)
     }
 
     private fun runSync(action: () -> Unit) {

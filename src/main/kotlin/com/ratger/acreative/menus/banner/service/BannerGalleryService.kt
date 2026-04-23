@@ -27,6 +27,8 @@ class BannerGalleryService(
 
     fun myCount(player: Player): Int = publishedBannerRepository.countByAuthor(player.uniqueId)
 
+    fun countByAuthorName(authorName: String): Int = publishedBannerRepository.countByAuthorName(authorName)
+
     fun recordTakeIfNeeded(entry: PublishedBannerEntry, player: Player) {
         if (takeCooldownService.shouldCountTake(entry.id, player.uniqueId)) {
             publishedBannerRepository.incrementTakes(entry.id)

@@ -101,6 +101,13 @@ class PublishedBannerRepository(
         }
     }
 
+    fun countByAuthorName(authorName: String): Int = database.connection().use { conn ->
+        conn.prepareStatement("SELECT COUNT(*) FROM banner_published WHERE author_name_lower=?").use { ps ->
+            ps.setString(1, authorName.lowercase(Locale.ROOT))
+            ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
+        }
+    }
+
     fun hasPublicationHistory(authorUuid: UUID, patternSignature: String, category: BannerCategory): Boolean =
         database.connection().use { conn ->
             conn.prepareStatement(
