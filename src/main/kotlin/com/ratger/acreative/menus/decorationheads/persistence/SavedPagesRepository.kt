@@ -25,7 +25,7 @@ class SavedPagesRepository(
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
 
-        return database.connection().use { conn ->
+        val createdId = database.connection().use { conn ->
             conn.prepareStatement(sql, java.sql.Statement.RETURN_GENERATED_KEYS).use { ps ->
                 ps.setString(1, playerUuid.toString())
                 ps.setString(2, sourceMode.name)
@@ -40,11 +40,23 @@ class SavedPagesRepository(
                 ps.executeUpdate()
                 ps.generatedKeys.use { keys ->
                     check(keys.next()) { "Failed to insert saved page" }
-                    val id = keys.getLong(1)
-                    return SavedPageEntry(id, playerUuid, sourceMode, categoryKey, sourcePage, searchQuery, searchQueryKey, note, mapColorKey, now, now)
+                    keys.getLong(1)
                 }
             }
         }
+        return SavedPageEntry(
+            createdId,
+            playerUuid,
+            sourceMode,
+            categoryKey,
+            sourcePage,
+            searchQuery,
+            searchQueryKey,
+            note,
+            mapColorKey,
+            now,
+            now
+        )
     }
 
     fun deleteById(playerUuid: UUID, id: Long): Boolean {
