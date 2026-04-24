@@ -156,7 +156,7 @@ class MenuButtonFactory(
         action(newIndex)
     }
 
-    fun decorationHeadsSearchButton(query: String?, action: () -> Unit): Button = actionButton(
+    fun decorationHeadsSearchButton(query: String?, action: (ClickEvent) -> Unit): Button = actionButton(
         material = Material.COMPASS,
         name = if (query.isNullOrBlank()) {
             "<!i><#C7A300>🔎 <#FFD700>Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
@@ -168,7 +168,7 @@ class MenuButtonFactory(
             if (!query.isNullOrBlank()) glint(true)
             this
         },
-        action = { action() }
+        action = action
     )
 
 

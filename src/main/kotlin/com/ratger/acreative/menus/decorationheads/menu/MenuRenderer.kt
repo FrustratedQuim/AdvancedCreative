@@ -11,7 +11,6 @@ import com.ratger.acreative.menus.decorationheads.model.PageResult
 import com.ratger.acreative.menus.decorationheads.model.SavedPageEntry
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import org.bukkit.entity.Player
-import org.bukkit.event.inventory.ClickType
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -39,7 +38,7 @@ class MenuRenderer(
         onMyPages: (ClickEvent) -> Unit,
         onToggleSavePage: (ClickEvent) -> Unit,
         onSwitchCategory: (Int) -> Unit,
-        onSearch: () -> Unit
+        onSearch: (ClickEvent) -> Unit
     ) {
         val categoryName = categoryRegistry.byKey(state.categoryKey)?.displayName ?: state.categoryKey
         val menu = baseMenu(
@@ -55,7 +54,7 @@ class MenuRenderer(
         menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { event -> onMyPages(event) })
         menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isCurrentPageSaved) { onToggleSavePage(it) })
-        menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch() })
+        menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch(it) })
 
         val showRealCategory = state.mode == DecorationHeadMenuMode.SEARCH || categoryRegistry.byKey(state.categoryKey)?.mode == CategoryMode.NEW
         pageResult.entries.forEachIndexed { index, entry ->
@@ -116,7 +115,7 @@ class MenuRenderer(
                 when {
                     event.isLeft || event.isShiftLeft -> onOpenEntry(entry)
                     event.isRight || event.isShiftRight -> onEditEntry(entry)
-                    isDropClick(event) -> onDeleteEntry(entry)
+                    MenuUiSupport.isDropClick(event) -> onDeleteEntry(entry)
                 }
             })
         }
@@ -184,7 +183,4 @@ class MenuRenderer(
         return (0 until safeCount).toSet()
     }
 
-    private fun isDropClick(event: ClickEvent): Boolean {
-        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
-    }
 }

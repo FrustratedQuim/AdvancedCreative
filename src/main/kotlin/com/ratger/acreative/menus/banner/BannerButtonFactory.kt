@@ -129,7 +129,7 @@ class BannerButtonFactory(
             afterOptionsLore = listOf("")
         ) { _, newIndex -> action(newIndex) }
 
-    fun searchButton(query: String?, action: () -> Unit): Button = shared.actionButton(
+    fun searchButton(query: String?, action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.COMPASS,
         name = if (query.isNullOrBlank()) {
             "<!i><#C7A300>🔎 <#FFD700>Поиск <#C7A300>[<#FFF3E0>Пусто<#C7A300>]"
@@ -143,7 +143,7 @@ class BannerButtonFactory(
             }
             this
         },
-        action = { action() }
+        action = action
     )
 
     fun postInfoButton(): Button = shared.actionButton(

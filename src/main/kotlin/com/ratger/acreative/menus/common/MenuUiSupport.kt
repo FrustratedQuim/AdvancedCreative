@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.common
 
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import org.bukkit.event.inventory.ClickType
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.button.Button
@@ -8,6 +9,10 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
 
 object MenuUiSupport {
+    fun isDropClick(event: ClickEvent): Boolean {
+        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
+    }
+
     fun buildMenu(
         plugin: org.bukkit.plugin.Plugin,
         parser: MiniMessageParser,

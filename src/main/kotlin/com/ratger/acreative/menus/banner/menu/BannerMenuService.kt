@@ -9,6 +9,7 @@ import com.ratger.acreative.menus.banner.editor.BannerEditorSession
 import com.ratger.acreative.menus.banner.editor.BannerEditorSessionManager
 import com.ratger.acreative.menus.banner.model.*
 import com.ratger.acreative.menus.banner.service.*
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
@@ -379,12 +380,24 @@ class BannerMenuService(
                     onCategory = { newIndex ->
                         val nextCategory = BannerCatalog.galleryCategories.getOrNull(newIndex)
                         if (nextCategory != null) {
-                            val nextState = sessionManager.publicState(player.uniqueId).copy(page = 1, category = nextCategory)
+                            val nextState = sessionManager.publicState(player.uniqueId).copy(
+                                page = 1,
+                                category = nextCategory,
+                                searchQuery = null
+                            )
                             sessionManager.updatePublicState(player.uniqueId, nextState)
                             openPublicGallery(player, nextState)
                         }
                     },
-                    onSearch = {
+                    onSearch = { event ->
+                        val currentState = sessionManager.publicState(player.uniqueId)
+                        if (MenuUiSupport.isDropClick(event)) {
+                            val nextState = currentState.copy(page = 1, searchQuery = null)
+                            sessionManager.updatePublicState(player.uniqueId, nextState)
+                            openPublicGallery(player, nextState)
+                            return@renderPublicGallery
+                        }
+
                         player.closeInventory()
                         searchInputService.open(player)
                     },

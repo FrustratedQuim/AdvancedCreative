@@ -82,7 +82,7 @@ class BannerMenuRenderer(
         onMyFlags: () -> Unit,
         onFilter: (Int) -> Unit,
         onCategory: (Int) -> Unit,
-        onSearch: () -> Unit,
+        onSearch: (ClickEvent) -> Unit,
         onBack: (() -> Unit)?,
         onForward: (() -> Unit)?
     ) {
@@ -111,7 +111,7 @@ class BannerMenuRenderer(
         menu.setButton(47, buttonFactory.filterButton(filterOptions, selectedFilterIndex, onFilter))
         menu.setButton(49, buttonFactory.categoryButton(categoryOptions, selectedCategoryIndex, onCategory))
         menu.setButton(51, buttonFactory.postInfoButton())
-        menu.setButton(52, buttonFactory.searchButton(state.searchQuery, onSearch))
+        menu.setButton(52, buttonFactory.searchButton(state.searchQuery) { onSearch(it) })
 
         pageResult.entries.forEachIndexed { index, entry ->
             menu.setButton(

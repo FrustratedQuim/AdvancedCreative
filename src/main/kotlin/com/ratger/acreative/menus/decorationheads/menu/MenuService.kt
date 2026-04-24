@@ -4,6 +4,7 @@ import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
@@ -179,7 +180,13 @@ class MenuService(
                         sessionManager.update(player.uniqueId, DecorationHeadMenuState(DecorationHeadMenuMode.CATEGORY, nextCategory, 1, null, null))
                         open(player)
                     },
-                    onSearch = {
+                    onSearch = { event ->
+                        if (MenuUiSupport.isDropClick(event)) {
+                            val nextState = state.copy(mode = DecorationHeadMenuMode.CATEGORY, searchQuery = null, page = 1)
+                            sessionManager.update(player.uniqueId, nextState)
+                            open(player)
+                            return@renderCategoryMenu
+                        }
                         player.closeInventory()
                         searchInputService.open(player)
                     }
