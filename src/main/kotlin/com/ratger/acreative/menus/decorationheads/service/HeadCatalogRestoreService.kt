@@ -45,6 +45,7 @@ class HeadCatalogRestoreService(
         if (entries.isEmpty()) return RestoreResult.LoadError
 
         catalogRepository.replaceAll(entries)
+        syncService.refreshCategoryMappings()
         return RestoreResult.Success(entries.size, RestoreSource.DAT)
     }
 
@@ -61,6 +62,7 @@ class HeadCatalogRestoreService(
         if (entries.isEmpty()) return RestoreResult.LoadError
 
         catalogRepository.replaceAll(entries)
+        syncService.refreshCategoryMappings()
         return RestoreResult.Success(entries.size, RestoreSource.API)
     }
 

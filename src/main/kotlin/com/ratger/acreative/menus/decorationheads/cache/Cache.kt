@@ -23,7 +23,4 @@ class Cache(
 
     fun dynamicSize(): Int = headByStableKey.size()
 
-    fun clearIndexes() {
-        searchIndex.clear()
-    }
 }

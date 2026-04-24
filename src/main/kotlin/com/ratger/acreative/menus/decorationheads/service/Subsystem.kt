@@ -113,11 +113,7 @@ class Subsystem(
         mapper = mapper,
         categoryRegistry = categoryRegistry,
         categoryResolver = categoryResolver,
-        cache = cache,
-        catalogRepository = catalogRepository,
-        executor = executor,
-        logger = hooker.plugin.logger,
-        warmPages = config.getInt("decoration-heads.warm-pages", 1)
+        logger = hooker.plugin.logger
     )
     private val restoreService = HeadCatalogRestoreService(
         catalogRepository = catalogRepository,
@@ -131,6 +127,7 @@ class Subsystem(
 
     fun init() {
         recentService.init()
+        executor.submit { syncService.refreshCategoryMappings() }
         val flushIntervalTicks = 6L * 60L * 60L * 20L
         periodicRecentFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
             plugin,
