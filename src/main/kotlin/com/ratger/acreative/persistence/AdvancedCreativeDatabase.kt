@@ -18,7 +18,6 @@ class AdvancedCreativeDatabase(
             conn.autoCommit = false
             createTables(conn)
             createIndexes(conn)
-            applySchemaVersion(conn)
             validateForeignKeys(conn)
             conn.commit()
         }
@@ -42,14 +41,6 @@ class AdvancedCreativeDatabase(
 
     private fun createTables(conn: Connection) {
         conn.createStatement().use { st ->
-            st.executeUpdate(
-                """
-                CREATE TABLE IF NOT EXISTS storage_meta (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL
-                )
-                """.trimIndent()
-            )
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS edit_personal_items (
@@ -222,20 +213,6 @@ class AdvancedCreativeDatabase(
         }
     }
 
-    private fun applySchemaVersion(conn: Connection) {
-        val currentVersion = conn.createStatement().use { st ->
-            st.executeQuery("PRAGMA user_version").use { rs -> if (rs.next()) rs.getInt(1) else 0 }
-        }
-        require(currentVersion <= SCHEMA_VERSION) {
-            "Unsupported database schema version $currentVersion, expected <= $SCHEMA_VERSION"
-        }
-        if (currentVersion < SCHEMA_VERSION) {
-            conn.createStatement().use { st ->
-                st.executeUpdate("PRAGMA user_version = $SCHEMA_VERSION")
-            }
-        }
-    }
-
     private fun validateForeignKeys(conn: Connection) {
         conn.createStatement().use { st ->
             st.executeQuery("PRAGMA main.foreign_key_check").use { rs ->
@@ -250,8 +227,7 @@ class AdvancedCreativeDatabase(
     }
 
     private companion object {
-        const val DATABASE_FILE_NAME = "advanced-creative-data.db"
+        const val DATABASE_FILE_NAME = "global_data.db"
         const val BUSY_TIMEOUT_MILLIS = 5_000
-        const val SCHEMA_VERSION = 1
     }
 }
