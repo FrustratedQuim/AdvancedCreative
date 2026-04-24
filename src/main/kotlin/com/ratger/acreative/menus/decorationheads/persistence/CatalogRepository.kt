@@ -81,6 +81,34 @@ class CatalogRepository(
         }
     }
 
+    fun replaceAll(entries: Collection<Entry>) {
+        database.connection().use { conn ->
+            conn.autoCommit = false
+            conn.prepareStatement("DELETE FROM head_recent_entries").use { it.executeUpdate() }
+            conn.prepareStatement("DELETE FROM head_catalog_entries").use { it.executeUpdate() }
+            if (entries.isNotEmpty()) {
+                conn.prepareStatement(
+                    """
+                    INSERT INTO head_catalog_entries (stable_key, display_name, display_name_ru, source_category_id, texture_value, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """.trimIndent()
+                ).use { ps ->
+                    entries.forEach { e ->
+                        ps.setString(1, e.stableKey)
+                        ps.setString(2, e.name)
+                        ps.setString(3, e.russianAlias)
+                        ps.setInt(4, e.categoryId)
+                        ps.setString(5, e.textureValue)
+                        ps.setLong(6, System.currentTimeMillis())
+                        ps.addBatch()
+                    }
+                    ps.executeBatch()
+                }
+            }
+            conn.commit()
+        }
+    }
+
     fun findRecentPublishedPage(limit: Int, offset: Int): List<Entry> = database.connection().use { conn ->
         conn.prepareStatement(
             """

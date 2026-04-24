@@ -119,12 +119,18 @@ class Subsystem(
         logger = hooker.plugin.logger,
         warmPages = config.getInt("decoration-heads.warm-pages", 1)
     )
+    private val restoreService = HeadCatalogRestoreService(
+        catalogRepository = catalogRepository,
+        syncService = syncService,
+        fallbackCatalogReader = HeadFallbackCatalogReader(),
+        dataFolder = plugin.dataFolder,
+        logger = hooker.plugin.logger
+    )
 
     private var periodicRecentFlushTask: BukkitTask? = null
 
     fun init() {
         recentService.init()
-        syncService.start()
         val flushIntervalTicks = 6L * 60L * 60L * 20L
         periodicRecentFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
             plugin,
@@ -133,6 +139,10 @@ class Subsystem(
             flushIntervalTicks
         )
     }
+
+    fun restoreCatalogFromDat(): HeadCatalogRestoreService.RestoreResult = restoreService.restoreFromDat()
+
+    fun restoreCatalogFromApi(): HeadCatalogRestoreService.RestoreResult = restoreService.restoreFromApi()
 
     fun shutdown() {
         periodicRecentFlushTask?.cancel()

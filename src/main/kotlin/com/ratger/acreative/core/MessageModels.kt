@@ -137,7 +137,13 @@ enum class MessageKey {
     EDIT_APPLY_PROMPT_SUBTITLE_EFFECT,
     EDIT_APPLY_PROMPT_SUBTITLE_CONSUME_SECONDS,
     EDIT_PROMPT_CLEAR,
-    ACCOUNT_LINK_REQUIRED
+    ACCOUNT_LINK_REQUIRED,
+    HEAD_RESTORE_DAT_FILE_MISSING,
+    HEAD_RESTORE_LOAD_ERROR,
+    HEAD_RESTORE_DAT_SUCCESS,
+    HEAD_RESTORE_API_KEY_MISSING,
+    HEAD_RESTORE_API_SUCCESS,
+    HEAD_RESTORE_ALREADY_POPULATED
 }
 
 object MessageCatalog {
@@ -289,6 +295,12 @@ object MessageCatalog {
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_EFFECT to "<#7BFF00>/apply <эффект> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_CONSUME_SECONDS to "<#7BFF00>/apply <секунд> - указать <gray>| <#7BFF00>/apply cancel - отмена",
         MessageKey.EDIT_PROMPT_CLEAR to "",
-        MessageKey.ACCOUNT_LINK_REQUIRED to "<dark_red>▍ <#FF1500>Привяжите ваш аккаунт к <click:run_command:'/help'><hover:show_text:'<gray>Нажмите'><u>ВК/Discord</u></hover></click>"
+        MessageKey.ACCOUNT_LINK_REQUIRED to "<dark_red>▍ <#FF1500>Привяжите ваш аккаунт к <click:run_command:'/help'><hover:show_text:'<gray>Нажмите'><u>ВК/Discord</u></hover></click>",
+        MessageKey.HEAD_RESTORE_DAT_FILE_MISSING to "<dark_red>▍ <#FF1500>%name%.dat не обнаружен",
+        MessageKey.HEAD_RESTORE_LOAD_ERROR to "<dark_red>▍ <#FF1500>Произошла ошибка при загрузке..",
+        MessageKey.HEAD_RESTORE_DAT_SUCCESS to "<dark_green>▍ <#7BFF00>%amount% <#00FF40>голов успешно загружено из <#7BFF00>.dat",
+        MessageKey.HEAD_RESTORE_API_KEY_MISSING to "<dark_red>▍ <#FF1500>API ключ не установлен",
+        MessageKey.HEAD_RESTORE_API_SUCCESS to "<dark_green>▍ <#7BFF00>%amount% <#00FF40>голов успешно загружено из <#7BFF00>API",
+        MessageKey.HEAD_RESTORE_ALREADY_POPULATED to "<dark_red>▍ <#FF1500>База голов уже заполнена"
     )
 }

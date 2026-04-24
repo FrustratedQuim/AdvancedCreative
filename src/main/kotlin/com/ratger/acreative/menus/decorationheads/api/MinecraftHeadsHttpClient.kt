@@ -21,6 +21,8 @@ class MinecraftHeadsHttpClient(
     private val json = Json { ignoreUnknownKeys = true }
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofMillis(connectTimeoutMs)).build()
 
+    fun hasApiKey(): Boolean = requestFactory.apiKey() != null
+
     fun fetchCategories(): List<MinecraftHeadsCategoryDto> {
         val root = getJson(requestFactory.categoriesUri())
         val candidates = listOf("categories", "data")

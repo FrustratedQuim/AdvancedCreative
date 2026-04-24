@@ -6,6 +6,7 @@ import com.ratger.acreative.menus.decorationheads.cache.Cache
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.category.CategoryResolver
+import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
 import java.util.concurrent.ExecutorService
 
@@ -20,6 +21,8 @@ class SyncService(
     private val logger: java.util.logging.Logger,
     private val warmPages: Int
 ) {
+    fun hasApiKey(): Boolean = client.hasApiKey()
+
     fun start() {
         executor.submit {
             val warmupContext = runCatching { syncCategoriesAndWarmCache() }
@@ -86,6 +89,17 @@ class SyncService(
     }
 
     fun fullSyncAllConfiguredCategories(startPageByCategoryId: Map<Int, Int> = emptyMap()) {
+        val allEntries = fetchAllConfiguredHeads(startPageByCategoryId)
+        if (allEntries.isEmpty()) return
+        catalogRepository.upsert(allEntries)
+    }
+
+    fun fetchAllConfiguredHeads(startPageByCategoryId: Map<Int, Int> = emptyMap()): List<Entry> {
+        val categories = client.fetchCategories().associate { it.name to it.id }
+        categoryResolver.applyApiCategories(categories, categoryRegistry.definitions)
+            .forEach(logger::warning)
+
+        val collected = LinkedHashMap<String, Entry>()
         categoryRegistry.definitions
             .filter { it.mode == CategoryMode.CATEGORY_GROUP }
             .forEach { definition ->
@@ -100,11 +114,12 @@ class SyncService(
                         if (mapped.isEmpty()) break
                         fetched += mapped.size
                         total = mapper.readRecords(response, fetched)
-                        catalogRepository.upsert(mapped)
+                        mapped.forEach { collected[it.stableKey] = it }
                         page++
                     }
                 }
             }
+        return collected.values.toList()
     }
 
     private data class WarmupContext(

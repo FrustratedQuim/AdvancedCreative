@@ -86,7 +86,7 @@ commands:
   decorationheads:
     description: Opens decoration heads menu
     usage: /decorationheads
-    aliases: [dh]
+    aliases: [dh, heads]
   banneredit:
     description: Opens banner editor
     usage: /banneredit
@@ -99,7 +99,7 @@ commands:
     usage: /apply <value|cancel>
   acreative:
     description: Admin management command
-    usage: /acreative <memory>
+    usage: /acreative <memory|heads restore_from_dat|heads restore_from_api>
 
 permissions:
   advancedcreative.ahelp:
