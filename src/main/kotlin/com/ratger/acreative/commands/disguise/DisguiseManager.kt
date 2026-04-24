@@ -104,6 +104,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     private fun getCurrentTick(): Long = Bukkit.getCurrentTick().toLong()
 
     private fun isViewerPending(viewerId: UUID): Boolean {
+        pruneExpiredViewerPending()
         val untilTick = viewerPendingUntilTick[viewerId] ?: return false
         return untilTick > getCurrentTick()
     }
@@ -296,10 +297,19 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         disguisedPlayers = disguisedPlayers.size,
         viewerRelations = activeViewers.values.sumOf { it.size },
         queuedViewerRelations = queuedInitViewers.values.sumOf { it.size },
-        pendingViewers = viewerPendingUntilTick.size,
+        pendingViewers = activePendingViewerCount(),
         rememberedNames = lastCustomName.size,
         rememberedGlowStates = lastGlowingState.size
     )
+
+    private fun activePendingViewerCount(): Int {
+        pruneExpiredViewerPending()
+        return viewerPendingUntilTick.size
+    }
+
+    private fun pruneExpiredViewerPending(currentTick: Long = getCurrentTick()) {
+        viewerPendingUntilTick.entries.removeIf { (_, untilTick) -> untilTick <= currentTick }
+    }
 
     fun undisguisePlayer(player: Player, silent: Boolean = false) {
         disguisedPlayers[player]?.let { data ->

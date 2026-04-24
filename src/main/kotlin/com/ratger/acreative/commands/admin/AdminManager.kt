@@ -2,13 +2,12 @@ package com.ratger.acreative.commands.admin
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
-import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import com.ratger.acreative.menus.decorationheads.service.HeadCatalogRestoreService
 import com.ratger.acreative.menus.decorationheads.service.HeadFallbackCatalog
+import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.entity.Player
 import java.util.Locale
-import kotlin.math.max
 
 class AdminManager(
     private val hooker: FunctionHooker
@@ -19,6 +18,11 @@ class AdminManager(
         val title: String,
         val bytes: Long,
         val units: Int
+    )
+
+    private data class MemoryReport(
+        val totalBytes: Long,
+        val mainBlocks: List<MemoryBlock>
     )
 
     fun showMemoryUsage(player: Player) {
@@ -33,7 +37,6 @@ class AdminManager(
             player.sendMessage(mini.deserialize(line))
         }
 
-        player.sendMessage(mini.deserialize("<#C7A300> ● <#FFE68A>Остальное<#EDC800>- <#FFF3E0>${formatBytes(report.remainingBytes)}"))
         player.sendMessage(mini.deserialize("<#FFD700><st>                                                                             </st>"))
     }
 
@@ -92,6 +95,7 @@ class AdminManager(
     private fun buildReport(): MemoryReport {
         val bannerSnapshot = hooker.bannerSubsystem.memorySnapshot()
         val headsSnapshot = hooker.subsystem.memorySnapshot()
+        val personalItemsSnapshot = hooker.menuService.personalItemsMemorySnapshot()
         val itemEditSessions = hooker.menuService.itemEditSessionsSnapshot()
         val hideSnapshot = hooker.hideManager.cacheSnapshot()
         val effectSnapshot = hooker.effectsManager.cacheSnapshot()
@@ -115,19 +119,30 @@ class AdminManager(
         )
 
         val headsBlock = MemoryBlock(
-            title = "Головы",
+            title = "Головы (${headsSnapshot.dynamicCount}/${headsSnapshot.dynamicLimit}, search ${headsSnapshot.searchCount}/${headsSnapshot.searchLimit})",
             bytes = headsSnapshot.dynamicEntries.sumOf { entry ->
-            estimateStringBytes(entry.stableKey) +
-                estimateStringBytes(entry.name) +
-                estimateStringBytes(entry.russianAlias) +
-                estimateStringBytes(entry.textureValue) +
-                96L
+                estimateStringBytes(entry.stableKey) +
+                    estimateStringBytes(entry.name) +
+                    estimateStringBytes(entry.russianAlias) +
+                    estimateStringBytes(entry.textureValue) +
+                    96L
             } + headsSnapshot.searchEntries.sumOf { (key, entries) ->
                 estimateStringBytes(key) + entries.size * 40L
             } + headsSnapshot.cachedRecentEntries * 120L +
                 headsSnapshot.cachedRecentPlayers * 48L +
                 headsSnapshot.sessionEntries * 84L,
-            units = headsSnapshot.dynamicCount
+            units = headsSnapshot.dynamicCount +
+                headsSnapshot.searchCount +
+                headsSnapshot.cachedRecentEntries +
+                headsSnapshot.cachedRecentPlayers +
+                headsSnapshot.sessionEntries
+        )
+
+        val personalItemsBlock = MemoryBlock(
+            title = "Мои предметы",
+            bytes = personalItemsSnapshot.items.sumOf { estimateSerializedItemBytes(it) + 128L } +
+                personalItemsSnapshot.cachedPlayers * 48L,
+            units = personalItemsSnapshot.cachedItems + personalItemsSnapshot.cachedPlayers
         )
 
         val namedBlocks = listOf(
@@ -135,13 +150,21 @@ class AdminManager(
             headsBlock,
             MemoryBlock(
                 title = "Эффекты",
-                bytes = effectSnapshot.activeEffects * 72L + effectSnapshot.scheduledTasks * 36L + effectSnapshot.internalOwners * 48L,
-                units = effectSnapshot.activeEffects + effectSnapshot.scheduledTasks + effectSnapshot.internalOwners
+                bytes = effectSnapshot.activeEffects * 72L +
+                    effectSnapshot.scheduledTasks * 36L +
+                    effectSnapshot.internalOwners * 48L,
+                units = effectSnapshot.activeEffects +
+                    effectSnapshot.scheduledTasks +
+                    effectSnapshot.internalOwners
             ),
             MemoryBlock(
                 title = "Скрытия",
-                bytes = hideSnapshot.hiddenRelations * 40L + hideSnapshot.hiders * 32L + hideSnapshot.notificationCooldowns * 24L,
-                units = hideSnapshot.hiddenRelations + hideSnapshot.hiders + hideSnapshot.notificationCooldowns
+                bytes = hideSnapshot.hiddenRelations * 40L +
+                    hideSnapshot.hiders * 32L +
+                    hideSnapshot.notificationCooldowns * 24L,
+                units = hideSnapshot.hiddenRelations +
+                    hideSnapshot.hiders +
+                    hideSnapshot.notificationCooldowns
             ),
             MemoryBlock(
                 title = "Маскировки",
@@ -160,8 +183,12 @@ class AdminManager(
             ),
             MemoryBlock(
                 title = "Заморозка",
-                bytes = freezeSnapshot.sessions * 320L + freezeSnapshot.hiddenViewers * 48L + freezeSnapshot.hiddenRelations * 64L,
-                units = freezeSnapshot.sessions + freezeSnapshot.hiddenViewers + freezeSnapshot.hiddenRelations
+                bytes = freezeSnapshot.sessions * 320L +
+                    freezeSnapshot.hiddenViewers * 48L +
+                    freezeSnapshot.hiddenRelations * 64L,
+                units = freezeSnapshot.sessions +
+                    freezeSnapshot.hiddenViewers +
+                    freezeSnapshot.hiddenRelations
             ),
             MemoryBlock(
                 title = "Банки",
@@ -179,6 +206,7 @@ class AdminManager(
                 bytes = commandCooldownEntries * 40L + commandCooldownPlayers * 24L,
                 units = commandCooldownEntries
             ),
+            personalItemsBlock,
             MemoryBlock(
                 title = "Лиц. профили",
                 bytes = licensedProfiles.sumOf { payload ->
@@ -196,19 +224,11 @@ class AdminManager(
         ).filter { it.units > 0 || it.bytes > 0L }
             .sortedByDescending { it.bytes }
 
-        val total = namedBlocks.sumOf { it.bytes }
         return MemoryReport(
-            totalBytes = total,
-            mainBlocks = namedBlocks,
-            remainingBytes = max(0L, total - namedBlocks.sumOf { it.bytes })
+            totalBytes = namedBlocks.sumOf { it.bytes },
+            mainBlocks = namedBlocks
         )
     }
-
-    private data class MemoryReport(
-        val totalBytes: Long,
-        val mainBlocks: List<MemoryBlock>,
-        val remainingBytes: Long
-    )
 
     private fun estimateSerializedItemBytes(item: org.bukkit.inventory.ItemStack?): Long {
         if (item == null) return 0L

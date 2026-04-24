@@ -110,7 +110,7 @@ class LayManager(private val hooker: FunctionHooker) {
         if (layingMap.containsKey(player)) return true
         if (!isValidLayInteraction(player, block)) return false
 
-        lastInteract[player.uniqueId] = System.currentTimeMillis()
+        markInteraction(player.uniqueId)
         if (!canLay(player)) return false
 
         val headBlock = findBedHeadBlock(block) ?: return false
@@ -201,8 +201,7 @@ class LayManager(private val hooker: FunctionHooker) {
         if (player.isSneaking) return false
         if (player.location.distance(block.location) > MAX_INTERACT_DISTANCE) return false
         if (!block.type.name.contains("BED") || !player.world.isDayTime) return false
-        val currentTime = System.currentTimeMillis()
-        return currentTime - (lastInteract[player.uniqueId] ?: 0) >= INTERACT_DELAY_MS
+        return canInteractNow(player.uniqueId)
     }
 
     private fun resolveBedYaw(headBlock: Block, player: Player): Float {
@@ -386,5 +385,19 @@ class LayManager(private val hooker: FunctionHooker) {
             hooker.entityManager.updatePlayerNPCEquipment(data.npc, newEquipment, player)
             layingMap[player] = data.copy(equipment = newEquipment)
         }
+    }
+
+    private fun canInteractNow(playerId: UUID): Boolean {
+        val now = System.currentTimeMillis()
+        val last = lastInteract[playerId] ?: return true
+        if (now - last >= INTERACT_DELAY_MS) {
+            lastInteract.remove(playerId)
+            return true
+        }
+        return false
+    }
+
+    private fun markInteraction(playerId: UUID) {
+        lastInteract[playerId] = System.currentTimeMillis()
     }
 }

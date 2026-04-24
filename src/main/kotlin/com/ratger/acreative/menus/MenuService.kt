@@ -73,6 +73,12 @@ import java.util.concurrent.Executors
 class MenuService(
     private val hooker: FunctionHooker
 ) {
+    data class MemorySnapshot(
+        val cachedPlayers: Int,
+        val cachedItems: Int,
+        val items: List<ItemStack>
+    )
+
     private val parser = MiniMessageParser()
     private val editParsers = EditParsers()
     private val validationService = ValidationService()
@@ -261,10 +267,14 @@ class MenuService(
         return applyCoordinator.tabComplete(player, args)
     }
 
-    fun handlePlayerDisconnect(player: Player) {
+    fun handlePlayerRuntimeReset(player: Player) {
         applyCoordinator.cancel(player)
         personalItemsService.commitDeferredPromotions(player.uniqueId)
-        personalItemsService.clearPlayer(player.uniqueId)
+    }
+
+    fun handlePlayerDisconnect(player: Player) {
+        handlePlayerRuntimeReset(player)
+        personalItemsService.evictPlayer(player.uniqueId)
     }
 
     fun handlePlayerJoin(player: Player) {
@@ -278,6 +288,10 @@ class MenuService(
     fun headMutationSupport(): HeadTextureMutationSupport = headMutationSupport
     fun buttonFactory(): MenuButtonFactory = buttonFactory
     fun itemEditSessionsSnapshot(): List<ItemEditSession> = sessionManager.sessionsSnapshot()
+    fun personalItemsMemorySnapshot(): MemorySnapshot {
+        val snapshot = personalItemsService.memorySnapshot()
+        return MemorySnapshot(snapshot.cachedPlayers, snapshot.cachedItems, snapshot.items)
+    }
 
     fun syncEditedItemBack(player: Player, session: ItemEditSession) {
         EquippableSupport.normalizeAfterMutation(session.editableItem)
@@ -303,7 +317,12 @@ class MenuService(
 
     fun shutdown() {
         periodicPersonalItemsFlushTask?.cancel()
-        personalItemsService.flushDirtyToDatabase()
+        runCatching {
+            personalDataExecutor.submit { personalItemsService.flushDirtyToDatabase() }.get(5, java.util.concurrent.TimeUnit.SECONDS)
+        }.onFailure {
+            hooker.plugin.logger.warning("Failed to flush personal items cache before shutdown: ${it.message}")
+            personalItemsService.flushDirtyToDatabase()
+        }
         personalDataExecutor.shutdownNow()
     }
 }

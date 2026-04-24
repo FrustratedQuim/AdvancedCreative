@@ -415,6 +415,15 @@ class MenuService(
 
     fun clearPlayer(playerId: UUID) {
         recentService.commitDeferredPromotions(playerId)
+        clearTransientPlayerState(playerId)
+    }
+
+    fun handlePlayerDisconnect(playerId: UUID) {
+        recentService.evictPlayer(playerId)
+        clearTransientPlayerState(playerId)
+    }
+
+    private fun clearTransientPlayerState(playerId: UUID) {
         sessionManager.clear(playerId)
         savedPagesFilterByPlayer.remove(playerId)
     }

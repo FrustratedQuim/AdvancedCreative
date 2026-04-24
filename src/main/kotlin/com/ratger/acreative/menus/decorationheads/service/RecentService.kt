@@ -12,6 +12,11 @@ class RecentService(
     private val executor: ExecutorService,
     private val limit: Int
 ) {
+    data class MemorySnapshot(
+        val cachedPlayers: Int,
+        val cachedEntries: Int
+    )
+
     private data class CachedRecentEntry(
         val entry: Entry,
         var savedAtEpochSeconds: Long
@@ -54,25 +59,7 @@ class RecentService(
     }
 
     fun commitDeferredPromotions(playerId: UUID) {
-        executor.submit {
-            val touched = playersWithDeferredPromotions.remove(playerId).orEmpty()
-            if (touched.isEmpty()) {
-                return@submit
-            }
-            val entries = loadPlayerCacheIfMissing(playerId)
-            val now = nowEpochSeconds()
-            synchronized(entries) {
-                touched.forEach { stableKey ->
-                    val index = entries.indexOfFirst { it.entry.stableKey == stableKey }
-                    if (index >= 0) {
-                        val existing = entries.removeAt(index)
-                        existing.savedAtEpochSeconds = now
-                        entries.add(0, existing)
-                    }
-                }
-            }
-            dirtyPlayers.add(playerId)
-        }
+        executor.submit { commitDeferredPromotionsInternal(playerId) }
     }
 
     fun pruneExpiredOnFirstJoin(playerId: UUID) {
@@ -92,20 +79,29 @@ class RecentService(
 
     fun flushDirtyToDatabase() {
         val players = dirtyPlayers.toList()
-        players.forEach { playerId ->
-            val entries = cacheByPlayer[playerId] ?: return@forEach
-            val snapshot = synchronized(entries) {
-                entries.take(limit).map { RecentRepository.StoredRecentEntry(it.entry, it.savedAtEpochSeconds) }
-            }
-            recentRepository.replaceAll(playerId, snapshot)
-            dirtyPlayers.remove(playerId)
-        }
+        players.forEach(::flushPlayerToDatabase)
     }
 
     fun cachedPlayersCount(): Int = cacheByPlayer.size
 
     fun cachedEntriesCount(): Int = cacheByPlayer.values.sumOf { entries ->
         synchronized(entries) { entries.size }
+    }
+
+    fun memorySnapshot(): MemorySnapshot = MemorySnapshot(
+        cachedPlayers = cachedPlayersCount(),
+        cachedEntries = cachedEntriesCount()
+    )
+
+    fun evictPlayer(playerId: UUID) {
+        executor.submit {
+            commitDeferredPromotionsInternal(playerId)
+            flushPlayerToDatabase(playerId)
+            cacheByPlayer.remove(playerId)
+            dirtyPlayers.remove(playerId)
+            playersWithDeferredPromotions.remove(playerId)
+            playersWithPruneCheck.remove(playerId)
+        }
     }
 
     private fun loadPlayerCacheIfMissing(playerId: UUID): MutableList<CachedRecentEntry> {
@@ -115,6 +111,38 @@ class RecentService(
                 .map { CachedRecentEntry(it.entry, it.savedAtEpochSeconds) }
                 .toMutableList()
         }
+    }
+
+    private fun commitDeferredPromotionsInternal(playerId: UUID) {
+        val touched = playersWithDeferredPromotions.remove(playerId).orEmpty()
+        if (touched.isEmpty()) {
+            return
+        }
+        val entries = loadPlayerCacheIfMissing(playerId)
+        val now = nowEpochSeconds()
+        synchronized(entries) {
+            touched.forEach { stableKey ->
+                val index = entries.indexOfFirst { it.entry.stableKey == stableKey }
+                if (index >= 0) {
+                    val existing = entries.removeAt(index)
+                    existing.savedAtEpochSeconds = now
+                    entries.add(0, existing)
+                }
+            }
+        }
+        dirtyPlayers.add(playerId)
+    }
+
+    private fun flushPlayerToDatabase(playerId: UUID) {
+        val entries = cacheByPlayer[playerId] ?: return
+        if (!dirtyPlayers.contains(playerId)) {
+            return
+        }
+        val snapshot = synchronized(entries) {
+            entries.take(limit).map { RecentRepository.StoredRecentEntry(it.entry, it.savedAtEpochSeconds) }
+        }
+        recentRepository.replaceAll(playerId, snapshot)
+        dirtyPlayers.remove(playerId)
     }
 
     private fun nowEpochSeconds(): Long = Instant.now().epochSecond

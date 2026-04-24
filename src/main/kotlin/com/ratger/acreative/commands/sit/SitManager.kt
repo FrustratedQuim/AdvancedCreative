@@ -66,10 +66,8 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun sitOnHead(player: Player, target: Player?, sender: Player? = null) {
-
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - (lastInteract[player.uniqueId] ?: 0L) < INTERACT_DELAY_MS) return
-        lastInteract[player.uniqueId] = currentTime
+        if (!canInteractNow(player.uniqueId)) return
+        markInteraction(player.uniqueId)
 
         var finalTarget = target ?: return
         if (hasTargetStateConflict(player, finalTarget)) return
@@ -267,12 +265,10 @@ class SitManager(private val hooker: FunctionHooker) {
             player.location.distance(block.location) > MAX_INTERACT_DISTANCE) {
             return false
         }
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - (lastInteract[player.uniqueId] ?: 0) < INTERACT_DELAY_MS) {
+        if (!canInteractNow(player.uniqueId)) {
             return false
         }
-
-        lastInteract[player.uniqueId] = currentTime
+        markInteraction(player.uniqueId)
         when (val data = block.blockData) {
             is Stairs -> {
                 if (data.half == Bisected.Half.TOP) return false
@@ -401,4 +397,18 @@ class SitManager(private val hooker: FunctionHooker) {
     fun getSitSession(player: Player): SitSession? = sessionRegistry.get(player)
 
     fun getSittingPlayers(): Set<Player> = sessionRegistry.players()
+
+    private fun canInteractNow(playerId: UUID): Boolean {
+        val now = System.currentTimeMillis()
+        val last = lastInteract[playerId] ?: return true
+        if (now - last >= INTERACT_DELAY_MS) {
+            lastInteract.remove(playerId)
+            return true
+        }
+        return false
+    }
+
+    private fun markInteraction(playerId: UUID) {
+        lastInteract[playerId] = System.currentTimeMillis()
+    }
 }

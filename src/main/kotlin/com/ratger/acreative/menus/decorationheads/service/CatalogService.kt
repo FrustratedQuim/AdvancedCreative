@@ -18,6 +18,12 @@ class CatalogService(
     private val catalogRepository: CatalogRepository,
     private val menuPageSize: Int
 ) {
+    data class WarmupSnapshot(
+        val requestedPages: Int,
+        val loadedEntries: Int,
+        val cachedEntriesAfterWarmup: Int
+    )
+
     private companion object {
         val cyrillicRegex = Regex("\\p{IsCyrillic}")
     }
@@ -35,6 +41,34 @@ class CatalogService(
         val entries = findPage(state, page, offset)
 
         return PageResult(entries = entries, page = page, totalPages = totalPages, totalItems = totalItems)
+    }
+
+    fun warmRecentPublishedPages(pageCount: Int): WarmupSnapshot {
+        val normalizedPageCount = pageCount.coerceAtLeast(0)
+        if (normalizedPageCount == 0) {
+            return WarmupSnapshot(
+                requestedPages = 0,
+                loadedEntries = 0,
+                cachedEntriesAfterWarmup = cache.dynamicSize()
+            )
+        }
+
+        var loadedEntries = 0
+        repeat(normalizedPageCount) { pageIndex ->
+            val offset = pageIndex * menuPageSize
+            val entries = catalogRepository.findRecentPublishedPage(menuPageSize, offset)
+            if (entries.isEmpty()) {
+                return@repeat
+            }
+            cache.putAll(entries)
+            loadedEntries += entries.size
+        }
+
+        return WarmupSnapshot(
+            requestedPages = normalizedPageCount,
+            loadedEntries = loadedEntries,
+            cachedEntriesAfterWarmup = cache.dynamicSize()
+        )
     }
 
     private fun count(state: DecorationHeadMenuState): Int = when (state.mode) {

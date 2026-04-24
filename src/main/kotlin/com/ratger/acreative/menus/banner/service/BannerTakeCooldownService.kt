@@ -9,6 +9,7 @@ class BannerTakeCooldownService(
     private val takenByBanner = ConcurrentHashMap<Long, ConcurrentHashMap<UUID, Long>>()
 
     fun shouldCountTake(bannerId: Long, playerId: UUID, nowMillis: Long = System.currentTimeMillis()): Boolean {
+        pruneExpiredAll(nowMillis)
         val entries = takenByBanner.computeIfAbsent(bannerId) { ConcurrentHashMap() }
         val expiresAt = entries[playerId]
         if (expiresAt != null && expiresAt > nowMillis) {
@@ -16,11 +17,21 @@ class BannerTakeCooldownService(
         }
 
         entries[playerId] = nowMillis + cooldownMillis
-        pruneExpired(entries, nowMillis)
+        pruneExpired(bannerId, entries, nowMillis)
         return true
     }
 
-    private fun pruneExpired(entries: MutableMap<UUID, Long>, nowMillis: Long) {
+    private fun pruneExpired(bannerId: Long, entries: MutableMap<UUID, Long>, nowMillis: Long) {
         entries.entries.removeIf { it.value <= nowMillis }
+        if (entries.isEmpty()) {
+            takenByBanner.remove(bannerId, entries)
+        }
+    }
+
+    private fun pruneExpiredAll(nowMillis: Long) {
+        takenByBanner.entries.removeIf { (bannerId, entries) ->
+            pruneExpired(bannerId, entries, nowMillis)
+            entries.isEmpty()
+        }
     }
 }

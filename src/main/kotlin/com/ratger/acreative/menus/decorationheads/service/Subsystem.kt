@@ -21,6 +21,7 @@ import org.bukkit.Bukkit
 import org.bukkit.scheduler.BukkitTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class Subsystem(
     hooker: FunctionHooker,
@@ -31,6 +32,9 @@ class Subsystem(
         val dynamicEntries: List<com.ratger.acreative.menus.decorationheads.model.Entry>,
         val searchEntries: List<Pair<String, List<com.ratger.acreative.menus.decorationheads.model.Entry>>>,
         val dynamicCount: Int,
+        val dynamicLimit: Int,
+        val searchCount: Int,
+        val searchLimit: Int,
         val cachedRecentEntries: Int,
         val cachedRecentPlayers: Int,
         val sessionEntries: Int
@@ -127,7 +131,10 @@ class Subsystem(
 
     fun init() {
         recentService.init()
-        executor.submit { syncService.refreshCategoryMappings() }
+        executor.submit {
+            syncService.refreshCategoryMappings()
+            catalogService.warmRecentPublishedPages(config.getInt("decoration-heads.warm-pages", 1))
+        }
         val flushIntervalTicks = 6L * 60L * 60L * 20L
         periodicRecentFlushTask = Bukkit.getScheduler().runTaskTimerAsynchronously(
             plugin,
@@ -143,16 +150,27 @@ class Subsystem(
 
     fun shutdown() {
         periodicRecentFlushTask?.cancel()
-        recentService.flushDirtyToDatabase()
+        runCatching {
+            executor.submit { recentService.flushDirtyToDatabase() }.get(5, TimeUnit.SECONDS)
+        }.onFailure {
+            plugin.logger.warning("Failed to flush decoration heads cache before shutdown: ${it.message}")
+            recentService.flushDirtyToDatabase()
+        }
         executor.shutdownNow()
     }
 
-    fun memorySnapshot(): MemorySnapshot = MemorySnapshot(
-        dynamicEntries = cache.dynamicEntriesSnapshot(),
-        searchEntries = cache.searchIndex.snapshot(),
-        dynamicCount = cache.dynamicSize(),
-        cachedRecentEntries = recentService.cachedEntriesCount(),
-        cachedRecentPlayers = recentService.cachedPlayersCount(),
-        sessionEntries = sessionManager.totalEntriesCount()
-    )
+    fun memorySnapshot(): MemorySnapshot {
+        val recentSnapshot = recentService.memorySnapshot()
+        return MemorySnapshot(
+            dynamicEntries = cache.dynamicEntriesSnapshot(),
+            searchEntries = cache.searchIndex.snapshot(),
+            dynamicCount = cache.dynamicSize(),
+            dynamicLimit = cache.dynamicLimit(),
+            searchCount = cache.searchIndex.size(),
+            searchLimit = cache.searchIndex.limit(),
+            cachedRecentEntries = recentSnapshot.cachedEntries,
+            cachedRecentPlayers = recentSnapshot.cachedPlayers,
+            sessionEntries = sessionManager.totalEntriesCount()
+        )
+    }
 }

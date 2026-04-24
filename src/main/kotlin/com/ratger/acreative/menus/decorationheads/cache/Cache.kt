@@ -3,7 +3,7 @@ package com.ratger.acreative.menus.decorationheads.cache
 import com.ratger.acreative.menus.decorationheads.model.Entry
 
 class Cache(
-    dynamicLimit: Int,
+    private val dynamicLimit: Int,
     searchLimit: Int
 ) {
     private val headByStableKey = LruCache<String, Entry>(dynamicLimit)
@@ -22,5 +22,7 @@ class Cache(
     fun dynamicEntriesSnapshot(): List<Entry> = headByStableKey.snapshotEntries().map { it.value }
 
     fun dynamicSize(): Int = headByStableKey.size()
+
+    fun dynamicLimit(): Int = dynamicLimit
 
 }

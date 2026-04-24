@@ -16,6 +16,12 @@ class PersonalItemsService(
     private val executor: ExecutorService,
     private val limit: Int
 ) {
+    data class MemorySnapshot(
+        val cachedPlayers: Int,
+        val cachedItems: Int,
+        val items: List<ItemStack>
+    )
+
     private data class CachedPersonalItem(
         val contentHash: String,
         val item: ItemStack,
@@ -68,24 +74,29 @@ class PersonalItemsService(
 
     fun flushDirtyToDatabase() {
         val players = dirtyPlayers.toList()
-        players.forEach { playerId ->
-            val entries = cacheByPlayer[playerId] ?: return@forEach
-            val snapshot = synchronized(entries) {
-                entries.take(limit).map {
-                    PersonalItemsRepository.StoredPersonalItem(
-                        contentHash = it.contentHash,
-                        item = it.item,
-                        lastUsedAtEpochSeconds = it.lastUsedAtEpochSeconds
-                    )
-                }
-            }
-            repository.replaceAll(playerId, snapshot)
-            dirtyPlayers.remove(playerId)
-        }
+        players.forEach(::flushPlayerToDatabase)
     }
 
-    fun clearPlayer(playerId: UUID) {
-        playersWithDeferredPromotions.remove(playerId)
+    fun memorySnapshot(): MemorySnapshot {
+        val items = cacheByPlayer.values.flatMap { entries ->
+            synchronized(entries) { entries.map { it.item.clone() } }
+        }
+        return MemorySnapshot(
+            cachedPlayers = cacheByPlayer.size,
+            cachedItems = items.size,
+            items = items
+        )
+    }
+
+    fun evictPlayer(playerId: UUID) {
+        executor.submit {
+            commitDeferredPromotionsInternal(playerId)
+            flushPlayerToDatabase(playerId)
+            cacheByPlayer.remove(playerId)
+            dirtyPlayers.remove(playerId)
+            playersWithDeferredPromotions.remove(playerId)
+            playersWithPruneCheck.remove(playerId)
+        }
     }
 
     fun giveFromMenu(player: Player, item: ItemStack, clickEvent: ClickEvent) {
@@ -161,6 +172,24 @@ class PersonalItemsService(
                 .map { CachedPersonalItem(it.contentHash, it.item.clone(), it.lastUsedAtEpochSeconds) }
                 .toMutableList()
         }
+    }
+
+    private fun flushPlayerToDatabase(playerId: UUID) {
+        val entries = cacheByPlayer[playerId] ?: return
+        if (!dirtyPlayers.contains(playerId)) {
+            return
+        }
+        val snapshot = synchronized(entries) {
+            entries.take(limit).map {
+                PersonalItemsRepository.StoredPersonalItem(
+                    contentHash = it.contentHash,
+                    item = it.item,
+                    lastUsedAtEpochSeconds = it.lastUsedAtEpochSeconds
+                )
+            }
+        }
+        repository.replaceAll(playerId, snapshot)
+        dirtyPlayers.remove(playerId)
     }
 
     private fun contentHash(item: ItemStack): String? {

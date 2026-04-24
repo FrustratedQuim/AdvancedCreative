@@ -40,10 +40,11 @@ class HideManager(private val hooker: FunctionHooker) {
     fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
         hiddenRelations = hiddenPlayers.values.sumOf { it.size },
         hiders = hiddenPlayers.size,
-        notificationCooldowns = notificationCooldowns.size
+        notificationCooldowns = activeNotificationCooldowns()
     )
 
     fun hidePlayer(hider: Player, target: Player) {
+        pruneExpiredNotificationCooldowns()
         if (hider == target) {
             hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_SELF)
             return
@@ -176,6 +177,15 @@ class HideManager(private val hooker: FunctionHooker) {
                 unhidePlayer(hider, target)
             }
         }
+    }
+
+    private fun activeNotificationCooldowns(): Int {
+        pruneExpiredNotificationCooldowns()
+        return notificationCooldowns.size
+    }
+
+    private fun pruneExpiredNotificationCooldowns(now: Long = System.currentTimeMillis()) {
+        notificationCooldowns.entries.removeIf { (_, expiresAt) -> expiresAt + notifyCooldown <= now }
     }
 
     fun reapplyHide(hider: Player, target: Player) {
