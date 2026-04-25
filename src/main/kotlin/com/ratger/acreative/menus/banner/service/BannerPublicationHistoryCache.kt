@@ -21,6 +21,14 @@ class BannerPublicationHistoryCache(
         history[HistoryKey(authorUuid, patternSignature, category.key)] = true
     }
 
+    fun forgetPublication(authorUuid: UUID, patternSignature: String, category: BannerCategory) {
+        history.remove(HistoryKey(authorUuid, patternSignature, category.key))
+    }
+
+    fun clear() {
+        history.clear()
+    }
+
     fun size(): Int = history.size
 
     fun snapshotKeys(): List<String> = history.keys.map { "${it.authorUuid}:${it.categoryKey}:${it.patternSignature}" }

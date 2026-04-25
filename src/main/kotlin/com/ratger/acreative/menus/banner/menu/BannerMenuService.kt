@@ -57,6 +57,7 @@ class BannerMenuService(
     fun applyTarget(): ApplyCommandTarget = titleApplyStateManager
 
     fun openMainMenu(player: Player) {
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
         renderer.renderMainMenu(
             player = player,
             onOpenEditor = { openEditor(player, openedFromMainMenu = true) },
@@ -72,6 +73,7 @@ class BannerMenuService(
     }
 
     fun openEditor(player: Player, openedFromMainMenu: Boolean) {
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
         val existingSession = editorSessionManager.getSession(player)
         if (existingSession != null) {
             existingSession.openedFromMainMenu = existingSession.openedFromMainMenu || openedFromMainMenu
@@ -119,6 +121,7 @@ class BannerMenuService(
             openPostFromCommand(player)
             return
         }
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
 
         val categoryOptions = BannerCatalog.publishCategories.map { it.displayName }
         val selectedCategoryIndex = BannerCatalog.publishCategories.indexOf(draft.category).takeIf { it >= 0 } ?: 0
@@ -148,7 +151,16 @@ class BannerMenuService(
         )
     }
 
+    fun reopenPostFromApply(player: Player): Boolean {
+        if (!sessionManager.wasLastMenuBanner(player.uniqueId)) {
+            return false
+        }
+        openPostFromCommand(player)
+        return true
+    }
+
     fun openPublicGalleryFromCommand(player: Player, moderationMode: Boolean = false) {
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
         val nextState = sessionManager.publicState(player.uniqueId).copy(
             authorFilterUuid = null,
             authorFilterName = null,
@@ -342,6 +354,7 @@ class BannerMenuService(
     }
 
     private fun openPublicGallery(player: Player, state: BannerGalleryState) {
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
         sessionManager.updatePublicState(player.uniqueId, state)
         executor.submit {
             val pageResult = galleryService.publicPage(state)
@@ -417,6 +430,7 @@ class BannerMenuService(
     }
 
     private fun openMyGallery(player: Player, state: MyBannersState) {
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
         sessionManager.updateMyState(player.uniqueId, state)
         executor.submit {
             val pageResult = galleryService.myPage(player, state)
@@ -522,7 +536,7 @@ class BannerMenuService(
                             "limit" to BannerPatternSupport.PUBLISH_LIMIT.toString()
                         )
                     )
-                    player.closeInventory()
+                    openPublicGalleryForCategory(player, draft.category)
                 }
             }
         }
@@ -636,7 +650,26 @@ class BannerMenuService(
         openPublicGallery(player, nextState)
     }
 
+    private fun openPublicGalleryForCategory(player: Player, category: BannerCategory) {
+        val currentState = sessionManager.publicState(player.uniqueId)
+        val nextState = currentState.copy(
+            page = 1,
+            category = category,
+            searchQuery = null,
+            authorFilterUuid = null,
+            authorFilterName = null,
+            openedFromMainMenu = false,
+            moderatorMode = false
+        )
+        sessionManager.updatePublicState(player.uniqueId, nextState)
+        openPublicGallery(player, nextState)
+    }
+
     private fun runSync(action: () -> Unit) {
         Bukkit.getScheduler().runTask(plugin, Runnable(action))
+    }
+
+    fun clearApplyRecoveryContext(player: Player) {
+        sessionManager.clearLastBannerMenuMarker(player.uniqueId)
     }
 }

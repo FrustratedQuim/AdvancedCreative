@@ -11,6 +11,7 @@ class BannerSessionManager {
     private val myStateByPlayer = ConcurrentHashMap<UUID, MyBannersState>()
     private val postDraftByPlayer = ConcurrentHashMap<UUID, BannerPostDraft>()
     private val myOriginByPlayer = ConcurrentHashMap<UUID, BannerGalleryState>()
+    private val lastBannerMenuByPlayer = ConcurrentHashMap<UUID, Boolean>()
 
     fun publicState(playerId: UUID): BannerGalleryState =
         publicStateByPlayer.computeIfAbsent(playerId) { BannerGalleryState() }
@@ -32,9 +33,20 @@ class BannerSessionManager {
 
     fun getPostDraft(playerId: UUID): BannerPostDraft? = postDraftByPlayer[playerId]
 
+    fun markLastMenuAsBanner(playerId: UUID) {
+        lastBannerMenuByPlayer[playerId] = true
+    }
+
+    fun clearLastBannerMenuMarker(playerId: UUID) {
+        lastBannerMenuByPlayer.remove(playerId)
+    }
+
+    fun wasLastMenuBanner(playerId: UUID): Boolean = lastBannerMenuByPlayer[playerId] == true
+
     fun clearTransient(playerId: UUID) {
         postDraftByPlayer.remove(playerId)
         myOriginByPlayer.remove(playerId)
+        lastBannerMenuByPlayer.remove(playerId)
     }
 
     fun rememberMyOrigin(playerId: UUID, state: BannerGalleryState) {
@@ -48,8 +60,9 @@ class BannerSessionManager {
         myStateByPlayer.remove(playerId)
         postDraftByPlayer.remove(playerId)
         myOriginByPlayer.remove(playerId)
+        lastBannerMenuByPlayer.remove(playerId)
     }
 
     fun totalEntriesCount(): Int =
-        publicStateByPlayer.size + myStateByPlayer.size + postDraftByPlayer.size + myOriginByPlayer.size
+        publicStateByPlayer.size + myStateByPlayer.size + postDraftByPlayer.size + myOriginByPlayer.size + lastBannerMenuByPlayer.size
 }

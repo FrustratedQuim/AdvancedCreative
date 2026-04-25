@@ -237,6 +237,7 @@ class MenuService(
     fun canPickupDuringItemSession(player: Player): Boolean = applyStateManager.canPickupInCurrentState(player)
 
     fun openItemEditor(player: Player) {
+        hooker.bannerMenuService.clearApplyRecoveryContext(player)
         val existingSession = sessionManager.getSession(player)
         if (existingSession != null) {
             applyStateManager.cancelWaiting(player, reopenMenu = false)
@@ -257,6 +258,9 @@ class MenuService(
 
     fun handleApply(player: Player, args: Array<out String>) {
         if (!applyCoordinator.isWaiting(player)) {
+            if (hooker.bannerMenuService.reopenPostFromApply(player)) {
+                return
+            }
             openItemEditor(player)
             return
         }

@@ -54,8 +54,18 @@ class BannerPublicationService(
     }
 
     fun deletePublishedBanner(entryId: Long): Boolean {
+        val identity = publishedBannerRepository.publicationIdentity(entryId)
         val deleted = publishedBannerRepository.deleteById(entryId)
         if (deleted) {
+            if (identity != null) {
+                publicationHistoryCache.forgetPublication(
+                    authorUuid = identity.authorUuid,
+                    patternSignature = identity.patternSignature,
+                    category = identity.category
+                )
+            } else {
+                publicationHistoryCache.clear()
+            }
             authorCache.reload()
         }
         return deleted
@@ -64,6 +74,7 @@ class BannerPublicationService(
     fun removeBlockedPatternEverywhere(patternSignature: String): Int {
         val removed = publishedBannerRepository.deleteByPatternSignature(patternSignature)
         if (removed > 0) {
+            publicationHistoryCache.clear()
             authorCache.reload()
         }
         return removed

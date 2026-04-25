@@ -16,6 +16,12 @@ class PublishedBannerRepository(
     private val database: AdvancedCreativeDatabase,
     private val pageSize: Int
 ) {
+    data class PublicationIdentity(
+        val authorUuid: UUID,
+        val patternSignature: String,
+        val category: BannerCategory
+    )
+
     fun savePublishedBanner(
         authorUuid: UUID,
         authorName: String,
@@ -143,6 +149,33 @@ class PublishedBannerRepository(
                 ps.executeQuery().use(ResultSet::next)
             }
         }
+
+    fun publicationIdentity(id: Long): PublicationIdentity? = database.connection().use { conn ->
+        conn.prepareStatement(
+            """
+            SELECT author_uuid, pattern_signature, category_key
+            FROM banner_publications
+            WHERE id=?
+            LIMIT 1
+            """.trimIndent()
+        ).use { ps ->
+            ps.setLong(1, id)
+            ps.executeQuery().use { rs ->
+                if (!rs.next()) {
+                    return@use null
+                }
+
+                val authorUuid = runCatching { UUID.fromString(rs.getString("author_uuid")) }.getOrNull()
+                    ?: return@use null
+                val category = BannerCategory.fromKey(rs.getString("category_key"))
+                PublicationIdentity(
+                    authorUuid = authorUuid,
+                    patternSignature = rs.getString("pattern_signature"),
+                    category = category
+                )
+            }
+        }
+    }
 
     fun deleteById(id: Long): Boolean = database.connection().use { conn ->
         conn.autoCommit = false
