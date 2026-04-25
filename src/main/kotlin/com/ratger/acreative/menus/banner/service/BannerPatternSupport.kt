@@ -68,22 +68,55 @@ object BannerPatternSupport {
         return true
     }
 
+    fun replacePatternAt(item: ItemStack?, actualIndex: Int, color: DyeColor, type: PatternType): Boolean {
+        val meta = item?.itemMeta as? BannerMeta ?: return false
+        if (actualIndex !in 0 until meta.numberOfPatterns()) return false
+        meta.setPattern(actualIndex, Pattern(color, type))
+        item.itemMeta = meta
+        return true
+    }
+
+    fun movePattern(item: ItemStack?, fromIndex: Int, toIndex: Int): Boolean {
+        val meta = item?.itemMeta as? BannerMeta ?: return false
+        val patternCount = meta.numberOfPatterns()
+        if (patternCount <= 1) return false
+        if (fromIndex !in 0 until patternCount) return false
+        if (toIndex !in 0 until patternCount) return false
+        if (fromIndex == toIndex) return true
+
+        val mutablePatterns = meta.patterns.toMutableList()
+        val movedPattern = mutablePatterns.removeAt(fromIndex)
+        mutablePatterns.add(toIndex, movedPattern)
+        meta.patterns = mutablePatterns
+        item.itemMeta = meta
+        return true
+    }
+
     fun visiblePatterns(item: ItemStack?): List<VisibleBannerPattern> {
         val actualPatterns = patterns(item)
         if (actualPatterns.isEmpty()) return emptyList()
-        val topmost = actualPatterns.asReversed().take(EDITOR_VISIBLE_PATTERN_LIMIT)
-        return topmost.mapIndexedNotNull { reversedIndex, pattern ->
-            val actualIndex = actualPatterns.lastIndex - reversedIndex
+        val visible = actualPatterns.take(EDITOR_VISIBLE_PATTERN_LIMIT)
+        return visible.mapIndexedNotNull { actualIndex, pattern ->
             val descriptor = BannerCatalog.patternByType(pattern.pattern) ?: return@mapIndexedNotNull null
             VisibleBannerPattern(actualIndex, pattern, descriptor)
         }
     }
 
-    fun previewWithPattern(item: ItemStack, color: DyeColor?, type: PatternType?): ItemStack {
+    fun previewWithPattern(
+        item: ItemStack,
+        color: DyeColor?,
+        type: PatternType?,
+        replaceActualIndex: Int? = null
+    ): ItemStack {
         val preview = item.clone().apply { amount = 1 }
         if (color == null || type == null) {
             return preview
         }
+
+        if (replaceActualIndex != null && replacePatternAt(preview, replaceActualIndex, color, type)) {
+            return preview
+        }
+
         addPattern(preview, color, type)
         return preview
     }

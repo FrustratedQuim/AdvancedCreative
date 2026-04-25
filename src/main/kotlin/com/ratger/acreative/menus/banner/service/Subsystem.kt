@@ -10,12 +10,14 @@ import com.ratger.acreative.menus.banner.menu.BannerMenuRenderer
 import com.ratger.acreative.menus.banner.menu.BannerMenuService
 import com.ratger.acreative.menus.banner.menu.BannerSessionManager
 import com.ratger.acreative.menus.banner.menu.BannerTitleApplyStateManager
+import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.banner.persistence.BannedPatternRepository
 import com.ratger.acreative.menus.banner.persistence.BannedUserRepository
 import com.ratger.acreative.menus.banner.persistence.PublishedBannerRepository
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import org.bukkit.Bukkit
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -56,6 +58,7 @@ class Subsystem(
     )
     private val giveService = BannerGiveService(galleryService)
     private val buttonFactory = BannerButtonFactory(parser, sharedButtonFactory)
+    private val signInputService = SignInputService(hooker.plugin)
     private val sessionManager = BannerSessionManager()
     private val editorSessionManager = BannerEditorSessionManager()
     private val renderer = BannerMenuRenderer(hooker.plugin, parser, buttonFactory)
@@ -83,6 +86,18 @@ class Subsystem(
         val editorMenu = BannerEditorMenu(
             support = editorSupport,
             buttonFactory = buttonFactory,
+            requestSignInput = { player, templateLines, onSubmit, onLeave ->
+                signInputService.open(
+                    player = player,
+                    templateLines = templateLines,
+                    onSubmit = { submitPlayer, input ->
+                        Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onSubmit(submitPlayer, input) })
+                    },
+                    onLeave = { leavePlayer ->
+                        Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onLeave(leavePlayer) })
+                    }
+                )
+            },
             openMainMenu = { player -> createdMenuService?.openMainMenu(player) }
         )
 

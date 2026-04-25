@@ -244,7 +244,13 @@ class BannerButtonFactory(
         if (meta != null) {
             meta.setPatterns(listOf(pattern))
             meta.displayName(parser.parse("<!i><#C7A300>◎ <#FFD700>${BannerTextSupport.escapeMiniMessage(displayName)}"))
-            meta.lore(listOf(parser.parse("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить")))
+            meta.lore(
+                listOf(
+                    parser.parse("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы удалить"),
+                    parser.parse("<!i><#FFD700>ПКМ, <#FFE68A>чтобы изменить"),
+                    parser.parse("<!i><#FFD700>Q, <#FFE68A>чтобы переместить")
+                )
+            )
             meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
             item.itemMeta = meta
         }

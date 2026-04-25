@@ -13,5 +13,6 @@ data class BannerEditorSession(
     var isInternalTransition: Boolean = false,
     var pickerPage: Int = 0,
     var selectedPatternType: PatternType? = null,
-    var selectedColor: DyeColor? = null
+    var selectedColor: DyeColor? = null,
+    var editingPatternActualIndex: Int? = null
 )

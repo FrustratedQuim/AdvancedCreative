@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.banner.editor
 import com.ratger.acreative.menus.banner.BannerButtonFactory
 import com.ratger.acreative.menus.banner.service.BannerCatalog
 import com.ratger.acreative.menus.banner.service.BannerPatternSupport
+import com.ratger.acreative.menus.common.MenuUiSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -14,6 +15,12 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 class BannerEditorMenu(
     private val support: BannerEditorMenuSupport,
     private val buttonFactory: BannerButtonFactory,
+    private val requestSignInput: (
+        player: Player,
+        templateLines: Array<String>,
+        onSubmit: (Player, String?) -> Unit,
+        onLeave: (Player) -> Unit
+    ) -> Unit,
     private val openMainMenu: (Player) -> Unit
 ) {
     private companion object {
@@ -78,9 +85,25 @@ class BannerEditorMenu(
                     baseMaterial = session.editableBanner?.type ?: Material.RED_BANNER,
                     pattern = visiblePattern.pattern,
                     displayName = visiblePattern.descriptor.displayName
-                ) {
-                    BannerPatternSupport.removePatternAt(session.editableBanner, visiblePattern.actualIndex)
-                    reopenEditor(player, session)
+                ) { event ->
+                    when {
+                        event.isLeft || event.isShiftLeft -> {
+                            BannerPatternSupport.removePatternAt(session.editableBanner, visiblePattern.actualIndex)
+                            reopenEditor(player, session)
+                        }
+
+                        event.isRight || event.isShiftRight -> {
+                            session.selectedPatternType = visiblePattern.pattern.pattern
+                            session.selectedColor = visiblePattern.pattern.color
+                            session.editingPatternActualIndex = visiblePattern.actualIndex
+                            session.pickerPage = 0
+                            support.transition(session) { openPatternPicker(player, session) }
+                        }
+
+                        MenuUiSupport.isDropClick(event) -> {
+                            requestPatternMoveInput(player, session, visiblePattern.actualIndex)
+                        }
+                    }
                 }
             )
         }
@@ -156,7 +179,14 @@ class BannerEditorMenu(
 
         menu.setButton(2, session.selectedColor?.let(BannerCatalog::colorByDye)?.let(buttonFactory::pickerSelectedColorButton) ?: buttonFactory.blackFiller())
         menu.setButton(4, session.editableBanner?.let {
-            buttonFactory.previewButton(BannerPatternSupport.previewWithPattern(it, session.selectedColor, session.selectedPatternType))
+            buttonFactory.previewButton(
+                BannerPatternSupport.previewWithPattern(
+                    item = it,
+                    color = session.selectedColor,
+                    type = session.selectedPatternType,
+                    replaceActualIndex = session.editingPatternActualIndex
+                )
+            )
         } ?: buttonFactory.editorInsertSlotButton(null) { })
         menu.setButton(6, session.selectedPatternType?.let(BannerCatalog::patternByType)?.let(buttonFactory::pickerSelectedPatternButton) ?: buttonFactory.blackFiller())
 
@@ -165,6 +195,7 @@ class BannerEditorMenu(
                 session.pickerPage = page - 1
                 support.transition(session) { openPatternPicker(player, session) }
             } else {
+                session.editingPatternActualIndex = null
                 support.transition(session) { open(player, session) }
             }
         }
@@ -253,6 +284,19 @@ class BannerEditorMenu(
                 title = "<!i><#FF1500>⚠ Выберите цвет",
                 restore = { buttonFactory.pickerConfirmButton { confirmPatternSelection(player, session, menu) } }
             )
+            return
+        }
+
+        val editingPatternActualIndex = session.editingPatternActualIndex
+        if (editingPatternActualIndex != null) {
+            BannerPatternSupport.replacePatternAt(
+                item = editableBanner,
+                actualIndex = editingPatternActualIndex,
+                color = selectedColor,
+                type = selectedPattern
+            )
+            session.editingPatternActualIndex = null
+            support.transition(session) { open(player, session) }
             return
         }
 
@@ -375,6 +419,7 @@ class BannerEditorMenu(
         session: BannerEditorSession,
         menu: Menu
     ): Button = buttonFactory.editorAddPatternButton {
+        session.editingPatternActualIndex = null
         if (session.editableBanner == null) {
             showTemporaryWarning(
                 menu = menu,
@@ -394,6 +439,36 @@ class BannerEditorMenu(
             return@editorAddPatternButton
         }
         support.transition(session) { openPatternPicker(player, session) }
+    }
+
+    private fun requestPatternMoveInput(player: Player, session: BannerEditorSession, sourceActualIndex: Int) {
+        val editableBanner = session.editableBanner
+        val maxIndex = BannerPatternSupport.patternCount(editableBanner) - 1
+        if (editableBanner == null || maxIndex <= 0) {
+            return
+        }
+
+        support.transition(session) {
+            requestSignInput(
+                player,
+                arrayOf("", "↑ № позиции ↑", "", ""),
+                { submitPlayer, input ->
+                    val parsedTarget = input?.trim()?.toIntOrNull()
+                    if (parsedTarget != null) {
+                        val targetActualIndex = (parsedTarget - 1).coerceIn(0, maxIndex)
+                        BannerPatternSupport.movePattern(
+                            item = session.editableBanner,
+                            fromIndex = sourceActualIndex,
+                            toIndex = targetActualIndex
+                        )
+                    }
+                    open(submitPlayer, session)
+                },
+                { leavePlayer ->
+                    open(leavePlayer, session)
+                }
+            )
+        }
     }
 
     private fun showTemporaryWarning(
