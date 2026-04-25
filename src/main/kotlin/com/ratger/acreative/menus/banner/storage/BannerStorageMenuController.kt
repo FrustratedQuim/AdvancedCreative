@@ -1,10 +1,12 @@
 package com.ratger.acreative.menus.banner.storage
 
+import com.ratger.acreative.menus.banner.service.BannerPatternSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
 import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Vector
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
 class BannerStorageMenuController(
@@ -46,7 +48,8 @@ class BannerStorageMenuController(
             val copy = clickedItem.clone().apply {
                 amount = dropAmount
             }
-            player.world.dropItemNaturally(player.location.clone().add(0.0, 1.0, 0.0), copy)
+            val drop = player.world.dropItem(player.location.clone().add(0.0, 1.0, 0.0), copy)
+            drop.velocity = player.eyeLocation.direction.normalize().multiply(0.3).add(Vector(0.0, 0.1, 0.0))
             val leftInSlot = clickedItem.amount - dropAmount
             if (leftInSlot > 0) {
                 storageService.setPageSlot(
@@ -82,11 +85,7 @@ class BannerStorageMenuController(
             return true
         }
 
-        if (isEmpty(cursor)) {
-            return true
-        }
-
-        if (!isBanner(cursor)) {
+        if (!isEmpty(cursor) && !BannerPatternSupport.isBanner(cursor)) {
             return true
         }
 
@@ -118,7 +117,7 @@ class BannerStorageMenuController(
         }
         val clickedInventory = event.clickedInventory ?: return true
         val clickedItem = event.clickedItem ?: return true
-        if (!isBanner(clickedItem)) {
+        if (!BannerPatternSupport.isBanner(clickedItem)) {
             return false
         }
 
@@ -137,6 +136,4 @@ class BannerStorageMenuController(
     }
 
     private fun isEmpty(item: ItemStack?): Boolean = item == null || item.type.isAir || item.amount <= 0
-
-    private fun isBanner(item: ItemStack?): Boolean = item != null && item.type.name.endsWith("_BANNER")
 }
