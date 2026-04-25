@@ -25,6 +25,7 @@ class BannerButtonFactory(
 ) {
     fun blackFiller(): Button = shared.blackFillerButton()
     fun grayFiller(): Button = shared.grayFillerButton()
+    fun whiteFillerButton(): Button = shared.whiteFillerButton()
     fun backButton(action: () -> Unit): Button = shared.backButton { action() }
     fun forwardButton(action: () -> Unit): Button = shared.forwardButton { action() }
 
@@ -39,6 +40,13 @@ class BannerButtonFactory(
         material = Material.BELL,
         name = "<!i><#C7A300>🔔 <#FFD700>Флаги игроков",
         lore = listOf("<!i><#FFD700> ● <#FFE68A>Аналог: <#FFF3E0>/db"),
+        action = { action() }
+    )
+
+    fun mainMenuStorageButton(action: () -> Unit): Button = shared.actionButton(
+        material = Material.FIELD_MASONED_BANNER_PATTERN,
+        name = "<!i><#C7A300>🛡 <#FFD700>Хранилище флагов",
+        lore = listOf("<!i><#FFD700> ● <#FFE68A>Аналог: <#FFF3E0>/myflags"),
         action = { action() }
     )
 
@@ -159,6 +167,69 @@ class BannerButtonFactory(
         lore = emptyList(),
         action = {}
     )
+
+    fun storageInfoButton(action: () -> Unit): Button = shared.actionButton(
+        material = Material.FIRE_CHARGE,
+        name = "<!i><#FFD700>ℹ Что это такое?",
+        lore = listOf(
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Это ваши <#FFD700>личные флаги,<#FFE68A> которые",
+            "<!i>  <#FFE68A>можете видеть только вы.",
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Они <#FFD700>не удаляются<#FFE68A> спустя время,",
+            "<!i>  <#FFE68A>всё ограничено лишь лимитом.",
+            ""
+        ),
+        action = { action() }
+    )
+
+    fun storageEditInfoButton(action: () -> Unit): Button = shared.actionButton(
+        material = Material.EMERALD,
+        name = "<!i><#FFD700>ℹ Что это такое?",
+        lore = listOf(
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Измените содержимое так, как",
+            "<!i>  <#FFD700>вам удобно<#FFE68A>, чтобы потом брать.",
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Можно вложить лишь <#FFD700>флаги,<#FFE68A> меню",
+            "<!i>  <#FFE68A>ведь предназначено для них.",
+            "",
+            "<!i><#FFD700> ◆ <#FFE68A>Сохраняется лишь <#FFD700>рисунок<#FFE68A> и",
+            "<!i>  <#FFD700>название<#FFE68A> флага до <#FFD700>64 символов.",
+            ""
+        ),
+        action = { action() }
+    )
+
+    fun storageModeButton(editMode: Boolean, action: () -> Unit): Button = shared.actionButton(
+        material = Material.BUNDLE,
+        name = if (editMode) {
+            "<!i><#C7A300>⭐ <#FFD700>Обычный режим"
+        } else {
+            "<!i><#C7A300>⭐ <#FFD700>Режим редактирования"
+        },
+        lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы переключить"),
+        itemModifier = {
+            if (editMode) {
+                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+                glint(true)
+            } else {
+                flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
+            }
+            this
+        },
+        action = { action() }
+    )
+
+    fun storageLimitButton(current: Int, limitText: String): Button = shared.actionButton(
+        material = Material.BOOK,
+        name = "<!i><#C7A300>ℹ <#FFD700>Лимит <#C7A300>[<#FFF3E0>$current/$limitText<#C7A300>]",
+        lore = emptyList(),
+        action = {}
+    )
+
+    fun storageStoredBannerButton(item: ItemStack, action: (ClickEvent) -> Unit): Button =
+        shared.itemAsIsButton(item.clone().apply { amount = 1 }) { action(it) }
 
     fun publishedBannerButton(
         entry: PublishedBannerEntry,

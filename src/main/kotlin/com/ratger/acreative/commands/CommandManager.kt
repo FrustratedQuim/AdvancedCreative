@@ -5,6 +5,7 @@ import com.ratger.acreative.commands.admin.AdvancedCreativeAdminCommand
 import com.ratger.acreative.commands.banner.BannerCommand
 import com.ratger.acreative.commands.banner.BannerEditCommand
 import com.ratger.acreative.commands.banner.DecorationBannersCommand
+import com.ratger.acreative.commands.banner.MyFlagsCommand
 import com.ratger.acreative.commands.disguise.DisguiseCommand
 import com.ratger.acreative.commands.decorationheads.DecorationHeadsCommand
 import com.ratger.acreative.commands.edit.EditCommand
@@ -63,6 +64,7 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
         ItemdbCommand(functionHooker),
         BannerCommand(functionHooker),
         DecorationBannersCommand(functionHooker),
+        MyFlagsCommand(functionHooker),
         DecorationHeadsCommand(functionHooker),
         BannerEditCommand(functionHooker),
         EditCommand(functionHooker),

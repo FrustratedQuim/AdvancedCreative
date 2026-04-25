@@ -142,6 +142,16 @@ class AdvancedCreativeDatabase(
                 )
                 """.trimIndent()
             )
+            st.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS banner_storage_items (
+                    player_uuid TEXT NOT NULL,
+                    slot_index INTEGER NOT NULL,
+                    banner_item_data BLOB NOT NULL,
+                    PRIMARY KEY(player_uuid, slot_index)
+                )
+                """.trimIndent()
+            )
         }
     }
 
@@ -208,6 +218,12 @@ class AdvancedCreativeDatabase(
                 """
                 CREATE INDEX IF NOT EXISTS idx_head_saved_pages_player_id
                 ON head_saved_pages(player_uuid, id ASC)
+                """.trimIndent()
+            )
+            st.executeUpdate(
+                """
+                CREATE INDEX IF NOT EXISTS idx_banner_storage_items_player_slot
+                ON banner_storage_items(player_uuid, slot_index ASC)
                 """.trimIndent()
             )
         }

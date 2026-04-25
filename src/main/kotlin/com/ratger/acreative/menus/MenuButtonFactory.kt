@@ -107,6 +107,12 @@ class MenuButtonFactory(
             .build()
     ).build()
 
+    fun whiteFillerButton() = Button.simple(
+        ItemBuilder(Material.WHITE_STAINED_GLASS_PANE)
+            .hideTooltip(true)
+            .build()
+    ).build()
+
     fun backButton(
         text: String = "◀ Назад",
         action: (ClickEvent) -> Unit

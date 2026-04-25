@@ -10,6 +10,14 @@ import com.ratger.acreative.menus.banner.menu.BannerMenuRenderer
 import com.ratger.acreative.menus.banner.menu.BannerMenuService
 import com.ratger.acreative.menus.banner.menu.BannerSessionManager
 import com.ratger.acreative.menus.banner.menu.BannerTitleApplyStateManager
+import com.ratger.acreative.menus.banner.storage.BannerStorageConfigResolver
+import com.ratger.acreative.menus.banner.storage.BannerStorageItemNormalizer
+import com.ratger.acreative.menus.banner.storage.BannerStorageMenuController
+import com.ratger.acreative.menus.banner.storage.BannerStorageMenuRenderer
+import com.ratger.acreative.menus.banner.storage.BannerStorageNameSupport
+import com.ratger.acreative.menus.banner.storage.BannerStorageRepository
+import com.ratger.acreative.menus.banner.storage.BannerStorageService
+import com.ratger.acreative.menus.banner.storage.BannerStorageSessionManager
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.banner.persistence.BannedPatternRepository
 import com.ratger.acreative.menus.banner.persistence.BannedUserRepository
@@ -30,7 +38,8 @@ class Subsystem(
         val authorNames: List<String>,
         val publicationHistoryKeys: List<String>,
         val bannerSessionEntries: Int,
-        val editorSessions: List<com.ratger.acreative.menus.banner.editor.BannerEditorSession>
+        val editorSessions: List<com.ratger.acreative.menus.banner.editor.BannerEditorSession>,
+        val storageSessions: Int
     )
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
@@ -61,7 +70,16 @@ class Subsystem(
     private val signInputService = SignInputService(hooker.plugin)
     private val sessionManager = BannerSessionManager()
     private val editorSessionManager = BannerEditorSessionManager()
+    private val storageSessionManager = BannerStorageSessionManager()
+    private val storageRepository = BannerStorageRepository(hooker.database)
+    private val storageService = BannerStorageService(
+        repository = storageRepository,
+        normalizer = BannerStorageItemNormalizer(BannerStorageNameSupport()),
+        configResolver = BannerStorageConfigResolver(hooker)
+    )
     private val renderer = BannerMenuRenderer(hooker.plugin, parser, buttonFactory)
+    private val storageRenderer = BannerStorageMenuRenderer(hooker.plugin, parser, buttonFactory)
+    private val storageController = BannerStorageMenuController(storageService)
 
     val menuService: BannerMenuService
 
@@ -114,6 +132,10 @@ class Subsystem(
             playerLookupService = playerLookupService,
             authorCache = authorCache,
             renderer = renderer,
+            storageRenderer = storageRenderer,
+            storageController = storageController,
+            storageService = storageService,
+            storageSessionManager = storageSessionManager,
             editorMenu = editorMenu,
             titleApplyStateManager = titleApplyStateManager
         )
@@ -136,6 +158,7 @@ class Subsystem(
         authorNames = authorCache.snapshotValues(),
         publicationHistoryKeys = publicationHistoryCache.snapshotKeys(),
         bannerSessionEntries = sessionManager.totalEntriesCount(),
-        editorSessions = editorSessionManager.sessionsSnapshot()
+        editorSessions = editorSessionManager.sessionsSnapshot(),
+        storageSessions = storageSessionManager.totalSessions()
     )
 }

@@ -19,6 +19,7 @@ cooldowns: # В миллисекундах
   itemdb:     500
   banner:     500
   decorationbanners: 500
+  myflags:    500
   banneredit: 300
   decorationheads: 500
   acreative: 500
@@ -119,6 +120,20 @@ decoration-heads:
       display: "Разное"
       mode: CATEGORY_GROUP
       apiNames: ["Miscellaneous"]
+
+banner:
+  storage:
+    default-limit: 45
+    min-pages: 10
+    page-size: 45
+    limits:
+      group.don_rise_perms: 45
+      group.don_flare_perms: 45
+      group.don_shine_perms: 90
+      group.don_spark_perms: 90
+      group.don_sunny_perms: 90
+      group.don_horizon_perms: 180
+      advancedcreative.banner.storage_bypass: -1
 
 blocked-disguises:
   - ARROW

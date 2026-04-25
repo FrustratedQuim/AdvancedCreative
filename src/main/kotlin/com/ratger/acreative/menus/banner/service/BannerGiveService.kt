@@ -14,14 +14,33 @@ class BannerGiveService(
 ) {
     fun give(
         player: Player,
+        sourceItem: ItemStack,
+        clickEvent: ClickEvent
+    ) {
+        giveInternal(player, sourceItem, clickEvent)
+    }
+
+    fun give(
+        player: Player,
         entry: PublishedBannerEntry,
         clickEvent: ClickEvent,
         trackTake: Boolean = true
     ) {
+        giveInternal(player, entry.bannerItem, clickEvent)
+        if (trackTake) {
+            galleryService.recordTakeIfNeeded(entry, player)
+        }
+    }
+
+    private fun giveInternal(
+        player: Player,
+        sourceItem: ItemStack,
+        clickEvent: ClickEvent
+    ) {
         clickEvent.handle.isCancelled = true
 
-        val item = BannerPatternSupport.normalizeForStorage(entry.bannerItem)?.apply { amount = 1 }
-            ?: entry.bannerItem.clone().apply { amount = 1 }
+        val item = BannerPatternSupport.normalizeForStorage(sourceItem)?.apply { amount = 1 }
+            ?: sourceItem.clone().apply { amount = 1 }
         val isShiftClick = clickEvent.isShiftLeft ||
             clickEvent.isShiftRight ||
             clickEvent.handle.isShiftClick ||
@@ -42,10 +61,6 @@ class BannerGiveService(
                 }
             }
             else -> player.setItemOnCursor(item)
-        }
-
-        if (trackTake) {
-            galleryService.recordTakeIfNeeded(entry, player)
         }
     }
 

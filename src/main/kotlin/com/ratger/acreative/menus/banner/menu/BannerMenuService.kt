@@ -8,11 +8,19 @@ import com.ratger.acreative.menus.banner.editor.BannerEditorMenu
 import com.ratger.acreative.menus.banner.editor.BannerEditorSession
 import com.ratger.acreative.menus.banner.editor.BannerEditorSessionManager
 import com.ratger.acreative.menus.banner.model.*
+import com.ratger.acreative.menus.banner.storage.BannerStorageMenuController
+import com.ratger.acreative.menus.banner.storage.BannerStorageMenuRenderer
+import com.ratger.acreative.menus.banner.storage.BannerStorageService
+import com.ratger.acreative.menus.banner.storage.BannerStorageSession
+import com.ratger.acreative.menus.banner.storage.BannerStorageSessionManager
 import com.ratger.acreative.menus.banner.service.*
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -35,6 +43,10 @@ class BannerMenuService(
     private val playerLookupService: BannerPlayerLookupService,
     private val authorCache: BannerAuthorCache,
     private val renderer: BannerMenuRenderer,
+    private val storageRenderer: BannerStorageMenuRenderer,
+    private val storageController: BannerStorageMenuController,
+    private val storageService: BannerStorageService,
+    private val storageSessionManager: BannerStorageSessionManager,
     private val editorMenu: BannerEditorMenu,
     private val titleApplyStateManager: BannerTitleApplyStateManager
 ) {
@@ -60,6 +72,7 @@ class BannerMenuService(
         sessionManager.markLastMenuAsBanner(player.uniqueId)
         renderer.renderMainMenu(
             player = player,
+            onOpenStorage = { openStorage(player, openedFromMainMenu = true) },
             onOpenEditor = { openEditor(player, openedFromMainMenu = true) },
             onOpenGallery = {
                 val nextState = sessionManager.publicState(player.uniqueId).copy(
@@ -87,6 +100,27 @@ class BannerMenuService(
             player.inventory.setItemInMainHand(ItemStack(Material.AIR))
         }
         editorMenu.open(player, session)
+    }
+
+    fun openStorageFromCommand(player: Player) {
+        openStorage(player, openedFromMainMenu = false)
+    }
+
+    fun openStorage(player: Player, openedFromMainMenu: Boolean) {
+        if (!hooker.accountLinkRequirementService.hasRequiredLink(player)) {
+            hooker.accountLinkRequirementService.sendLinkRequiredMessage(player)
+            return
+        }
+        sessionManager.markLastMenuAsBanner(player.uniqueId)
+        val session = storageSessionManager.get(player.uniqueId) ?: run {
+            BannerStorageSession(
+                playerId = player.uniqueId,
+                openedFromMainMenu = openedFromMainMenu,
+                layout = storageService.loadLayout(player)
+            ).also(storageSessionManager::upsert)
+        }
+        session.openedFromMainMenu = session.openedFromMainMenu || openedFromMainMenu
+        renderStorage(player, session)
     }
 
     fun openPostFromCommand(player: Player) {
@@ -309,6 +343,7 @@ class BannerMenuService(
             editorSessionManager.clear(player.uniqueId)
             syncEditedBannerBack(player, session)
         }
+        flushStorageSession(player, remove = true)
         sessionManager.clear(player.uniqueId)
     }
 
@@ -319,6 +354,7 @@ class BannerMenuService(
             editorSessionManager.clear(player.uniqueId)
             syncEditedBannerBack(player, session)
         }
+        flushStorageSession(player, remove = true)
         sessionManager.clearTransient(player.uniqueId)
     }
 
@@ -667,6 +703,108 @@ class BannerMenuService(
 
     private fun runSync(action: () -> Unit) {
         Bukkit.getScheduler().runTask(plugin, Runnable(action))
+    }
+
+    private fun renderStorage(player: Player, session: BannerStorageSession) {
+        val config = storageService.config()
+        val totalPages = storageService.totalPages(player, session.layout)
+        session.page = session.page.coerceIn(1, totalPages)
+        val pageItems = storageService.pageSlice(session.layout, session.page, config.pageSize)
+        val limitSnapshot = storageService.limitSnapshot(player, session.layout)
+        val editListener = if (session.editMode) {
+            storageController.buildEditClickListener(
+                player = player,
+                session = session,
+                pageSize = config.pageSize,
+                onRefresh = { renderStorage(player, session) }
+            )
+        } else {
+            null
+        }
+
+        storageRenderer.render(
+            player = player,
+            session = session,
+            pageItems = if (session.editMode) {
+                pageItems
+            } else {
+                pageItems.mapValues { (_, item) -> prepareStorageMenuItem(item) }
+            },
+            totalPages = totalPages,
+            limit = limitSnapshot,
+            onStoredBanner = { rawItem, event ->
+                val source = prepareStorageGiveItem(rawItem)
+                giveService.give(player, source, event)
+            },
+            onInfo = {},
+                onModeToggle = {
+                    session.editMode = !session.editMode
+                    if (!session.editMode) {
+                        storageService.saveLayout(player, session.layout)
+                    }
+                    transitionStorage(session) { renderStorage(player, session) }
+                },
+            onBack = when {
+                session.page > 1 -> {
+                    {
+                        session.page -= 1
+                        session.editMode = false
+                        transitionStorage(session) { renderStorage(player, session) }
+                    }
+                }
+                session.openedFromMainMenu -> ({ openMainMenu(player) })
+                else -> null
+            },
+            onForward = if (session.page < totalPages) {
+                {
+                    session.page += 1
+                    transitionStorage(session) { renderStorage(player, session) }
+                }
+            } else {
+                null
+            },
+            onClose = onClose@{ closePlayer ->
+                val trackedSession = storageSessionManager.get(closePlayer.uniqueId) ?: return@onClose
+                if (trackedSession.isInternalTransition) {
+                    trackedSession.isInternalTransition = false
+                    return@onClose
+                }
+                flushStorageSession(closePlayer, remove = true)
+            },
+            editClickListener = editListener
+        )
+    }
+
+    private fun prepareStorageMenuItem(item: ItemStack): ItemStack {
+        val title = storageService.plainTitle(item) ?: BannerPatternSupport.localizedBaseName(item)
+        val decorated = item.clone().apply { amount = 1 }
+        decorated.editMeta { meta ->
+            meta.customName(Component.text(title, NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false))
+        }
+        return decorated
+    }
+
+    private fun prepareStorageGiveItem(item: ItemStack): ItemStack {
+        val title = storageService.plainTitle(item) ?: BannerPatternSupport.localizedBaseName(item)
+        val decorated = item.clone().apply { amount = 1 }
+        decorated.editMeta { meta ->
+            meta.customName(Component.text(title, NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false))
+        }
+        return decorated
+    }
+
+    private fun flushStorageSession(player: Player, remove: Boolean) {
+        val session = if (remove) {
+            storageSessionManager.remove(player.uniqueId)
+        } else {
+            storageSessionManager.get(player.uniqueId)
+        } ?: return
+        storageService.saveLayout(player, session.layout)
+    }
+
+    private fun transitionStorage(session: BannerStorageSession, action: () -> Unit) {
+        session.isInternalTransition = true
+        action()
     }
 
     fun clearApplyRecoveryContext(player: Player) {

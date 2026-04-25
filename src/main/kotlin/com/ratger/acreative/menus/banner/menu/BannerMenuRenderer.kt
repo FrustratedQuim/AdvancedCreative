@@ -24,19 +24,21 @@ class BannerMenuRenderer(
 ) {
     fun renderMainMenu(
         player: Player,
+        onOpenStorage: () -> Unit,
         onOpenEditor: () -> Unit,
         onOpenGallery: () -> Unit
     ) {
         val menu = buildMenu(
             title = "▍ Менеджер флагов",
             rows = MenuRows.THREE,
-            interactiveTopSlots = setOf(12, 14),
+            interactiveTopSlots = setOf(11, 13, 15),
             allowPlayerInventoryClicks = false,
             blockShiftClickFromPlayerInventory = false
         )
         fillMask(menu, 27, setOf(0, 8, 9, 17, 18, 26))
-        menu.setButton(12, buttonFactory.mainMenuEditorButton { onOpenEditor() })
-        menu.setButton(14, buttonFactory.mainMenuGalleryButton { onOpenGallery() })
+        menu.setButton(11, buttonFactory.mainMenuStorageButton { onOpenStorage() })
+        menu.setButton(13, buttonFactory.mainMenuEditorButton { onOpenEditor() })
+        menu.setButton(15, buttonFactory.mainMenuGalleryButton { onOpenGallery() })
         menu.open(player)
     }
 

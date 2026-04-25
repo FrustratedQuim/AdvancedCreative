@@ -83,6 +83,9 @@ commands:
     description: Opens player banner gallery
     usage: /decorationbanners [player] [-m]
     aliases: [db, banners]
+  myflags:
+    description: Opens personal banner storage
+    usage: /myflags
   decorationheads:
     description: Opens decoration heads menu
     usage: /decorationheads
@@ -119,6 +122,12 @@ permissions:
     default: true
   advancedcreative.decorationbanners.moderation:
     description: Allows moderation mode in /decorationbanners
+    default: op
+  advancedcreative.myflags:
+    description: Allows using /myflags
+    default: true
+  advancedcreative.banner.storage_bypass:
+    description: Allows infinite personal banner storage
     default: op
   advancedcreative.banneredit:
     description: Allows using /banneredit

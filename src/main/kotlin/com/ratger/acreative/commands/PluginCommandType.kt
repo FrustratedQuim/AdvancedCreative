@@ -25,6 +25,7 @@ enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     ITEMDB("itemdb"),
     BANNER("banner"),
     DECORATIONBANNERS("decorationbanners"),
+    MYFLAGS("myflags"),
     DECORATIONHEADS("decorationheads"),
     BANNEREDIT("banneredit"),
     EDIT("edit"),

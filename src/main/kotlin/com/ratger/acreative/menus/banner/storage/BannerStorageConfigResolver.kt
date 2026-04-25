@@ -1,0 +1,62 @@
+package com.ratger.acreative.menus.banner.storage
+
+import com.ratger.acreative.core.FunctionHooker
+import org.bukkit.entity.Player
+import kotlin.math.ceil
+import kotlin.math.max
+
+class BannerStorageConfigResolver(
+    private val hooker: FunctionHooker
+) {
+    fun readConfig(): BannerStorageConfig {
+        val config = hooker.configManager.config
+        val root = config.getConfigurationSection("banner.storage")
+
+        val pageSize = root?.getInt("page-size", 45)?.coerceAtLeast(9) ?: 45
+        val minPages = root?.getInt("min-pages", 10)?.coerceAtLeast(1) ?: 10
+        val defaultLimit = root?.getInt("default-limit", 45) ?: 45
+
+        val limitsSection = root?.getConfigurationSection("limits")
+        val limits = linkedMapOf<String, Int>()
+        limitsSection?.getKeys(false)?.forEach { key ->
+            limits[key] = limitsSection.getInt(key)
+        }
+
+        return BannerStorageConfig(
+            defaultLimit = defaultLimit,
+            minPages = minPages,
+            pageSize = pageSize,
+            limitsByPermission = limits
+        )
+    }
+
+    fun resolveLimit(player: Player, config: BannerStorageConfig = readConfig()): Int {
+        var resolved = config.defaultLimit
+        config.limitsByPermission.forEach { (permission, value) ->
+            if (!player.hasPermission(permission)) {
+                return@forEach
+            }
+            if (value < 0) {
+                resolved = -1
+                return@forEach
+            }
+            if (resolved < 0) {
+                return@forEach
+            }
+            resolved = max(resolved, value)
+        }
+        return resolved
+    }
+
+    fun computeTotalPages(
+        limit: Int,
+        maxOccupiedSlotIndex: Int,
+        config: BannerStorageConfig = readConfig()
+    ): Int {
+        return if (limit < 0) {
+            max(config.minPages, ceil((maxOccupiedSlotIndex + 2) / config.pageSize.toDouble()).toInt())
+        } else {
+            max(config.minPages, ceil(limit / config.pageSize.toDouble()).toInt())
+        }
+    }
+}
