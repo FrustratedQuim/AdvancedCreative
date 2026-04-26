@@ -161,7 +161,7 @@ class BannerButtonFactory(
         action = {}
     )
 
-    fun limitInfoButton(current: Int, limit: Int): Button = shared.actionButton(
+    fun limitInfoButton(current: Int, limit: String): Button = shared.actionButton(
         material = Material.BOOK,
         name = "<!i><#C7A300>ℹ <#FFD700>Лимит <#C7A300>[<#FFF3E0>$current/$limit<#C7A300>]",
         lore = emptyList(),

@@ -8,7 +8,6 @@ import com.ratger.acreative.menus.banner.model.BannerPageResult
 import com.ratger.acreative.menus.banner.model.BannerPostDraft
 import com.ratger.acreative.menus.banner.model.MyBannersState
 import com.ratger.acreative.menus.banner.model.PublishedBannerEntry
-import com.ratger.acreative.menus.banner.service.BannerPatternSupport
 import com.ratger.acreative.menus.banner.service.BannerTextSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -145,6 +144,7 @@ class BannerMenuRenderer(
         state: MyBannersState,
         pageResult: BannerPageResult<PublishedBannerEntry>,
         currentCount: Int,
+        limitText: String,
         filterOptions: List<String>,
         selectedFilterIndex: Int,
         categoryOptions: List<String>,
@@ -182,7 +182,7 @@ class BannerMenuRenderer(
         menu.setButton(48, buttonFactory.backButton { onBack() })
         menu.setButton(49, buttonFactory.categoryButton(categoryOptions, selectedCategoryIndex, onCategory))
         if (onForward != null) menu.setButton(50, buttonFactory.forwardButton { onForward() })
-        menu.setButton(52, buttonFactory.limitInfoButton(currentCount, BannerPatternSupport.PUBLISH_LIMIT))
+        menu.setButton(52, buttonFactory.limitInfoButton(currentCount, limitText))
 
         pageResult.entries.forEachIndexed { index, entry ->
             menu.setButton(

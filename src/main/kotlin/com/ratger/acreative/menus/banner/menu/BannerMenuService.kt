@@ -53,6 +53,7 @@ class BannerMenuService(
     private val titleApplyStateManager: BannerTitleApplyStateManager
 ) {
     private val plugin = hooker.plugin
+    private val permissionLimitResolver = BannerPermissionLimitResolver()
     private val temporaryOverrideSupport = TemporaryMenuButtonOverrideSupport(hooker.tickScheduler)
     private val searchInputService = BannerSearchInputService(
         signInputService = SignInputService(plugin),
@@ -528,6 +529,7 @@ class BannerMenuService(
                     state = currentState,
                     pageResult = pageResult,
                     currentCount = currentCount,
+                    limitText = permissionLimitResolver.formatLimit(publicationService.limitFor(player)),
                     filterOptions = BannerCatalog.sorts.map { it.displayName },
                     selectedFilterIndex = selectedFilterIndex,
                     categoryOptions = BannerCatalog.galleryCategories.map { it.displayName },
@@ -598,7 +600,8 @@ class BannerMenuService(
                             BannerPublicationService.PublishFailure.ALREADY_PUBLISHED_BY_PLAYER -> "<!i><#FF1500>⚠ Вы уже публиковали такой флаг"
                             BannerPublicationService.PublishFailure.LIMIT_REACHED -> {
                                 val currentCount = galleryService.myCount(player)
-                                "<!i><#FF1500>⚠ Превышен лимит ($currentCount/${BannerPatternSupport.PUBLISH_LIMIT})"
+                                val limitText = permissionLimitResolver.formatLimit(publicationService.limitFor(player))
+                                "<!i><#FF1500>⚠ Превышен лимит ($currentCount/$limitText)"
                             }
                             BannerPublicationService.PublishFailure.BLOCKED_PATTERN -> "<!i><#FF1500>⚠ Проказник! Такой флаг запрещён"
                         }
@@ -613,7 +616,7 @@ class BannerMenuService(
                         MessageKey.BANNER_POST_SUCCESS,
                         mapOf(
                             "current" to result.value.activeCount.toString(),
-                            "limit" to BannerPatternSupport.PUBLISH_LIMIT.toString()
+                            "limit" to permissionLimitResolver.formatLimit(result.value.limit)
                         )
                     )
                     openPublicGalleryForCategory(player, draft.category)

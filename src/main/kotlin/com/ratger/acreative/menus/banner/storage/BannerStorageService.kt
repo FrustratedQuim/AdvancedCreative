@@ -1,12 +1,14 @@
 package com.ratger.acreative.menus.banner.storage
 
+import com.ratger.acreative.menus.banner.service.BannerPermissionLimitResolver
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
 class BannerStorageService(
     private val repository: BannerStorageRepository,
     private val normalizer: BannerStorageItemNormalizer,
-    private val configResolver: BannerStorageConfigResolver
+    private val configResolver: BannerStorageConfigResolver,
+    private val permissionLimitResolver: BannerPermissionLimitResolver = BannerPermissionLimitResolver()
 ) {
     data class LimitSnapshot(
         val current: Int,
@@ -72,7 +74,7 @@ class BannerStorageService(
     fun limitSnapshot(player: Player, layout: Map<Int, ItemStack>): LimitSnapshot {
         val current = currentCount(layout)
         val limit = limitFor(player)
-        val text = if (limit < 0) "∞" else limit.toString()
+        val text = permissionLimitResolver.formatLimit(limit)
         return LimitSnapshot(current, limit, text)
     }
 

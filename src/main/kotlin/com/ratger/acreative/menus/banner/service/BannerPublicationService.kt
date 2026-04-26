@@ -12,6 +12,8 @@ class BannerPublicationService(
     private val bannedPatternRepository: BannedPatternRepository,
     private val authorCache: BannerAuthorCache,
     private val publicationHistoryCache: BannerPublicationHistoryCache,
+    private val configResolver: BannerPublicationConfigResolver,
+    private val permissionLimitResolver: BannerPermissionLimitResolver,
     private val zoneId: ZoneId = ZoneId.systemDefault()
 ) {
     enum class PublishFailure {
@@ -22,7 +24,8 @@ class BannerPublicationService(
     }
 
     data class PublishSuccess(
-        val activeCount: Int
+        val activeCount: Int,
+        val limit: Int
     )
 
     fun publish(player: Player, draft: BannerPostDraft): Result {
@@ -48,9 +51,15 @@ class BannerPublicationService(
 
         return Result.success(
             PublishSuccess(
-                activeCount = publishedBannerRepository.countByAuthor(player.uniqueId)
+                activeCount = publishedBannerRepository.countByAuthor(player.uniqueId),
+                limit = limitFor(player)
             )
         )
+    }
+
+    fun limitFor(player: Player): Int {
+        val config = configResolver.readConfig()
+        return permissionLimitResolver.resolveLimit(player, config.defaultLimit, config.limitsByPermission)
     }
 
     fun deletePublishedBanner(entryId: Long): Boolean {
@@ -90,7 +99,8 @@ class BannerPublicationService(
         }
 
         val currentCount = publishedBannerRepository.countByAuthor(player.uniqueId)
-        if (currentCount >= BannerPatternSupport.PUBLISH_LIMIT) {
+        val limit = limitFor(player)
+        if (limit >= 0 && currentCount >= limit) {
             return PublishFailure.LIMIT_REACHED
         }
 

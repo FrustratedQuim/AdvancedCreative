@@ -12,7 +12,6 @@ import org.bukkit.inventory.meta.BannerMeta
 import org.bukkit.inventory.meta.SkullMeta
 
 object BannerPatternSupport {
-    const val PUBLISH_LIMIT: Int = 60
     const val EDITOR_VISIBLE_PATTERN_LIMIT: Int = 16
 
     data class VisibleBannerPattern(

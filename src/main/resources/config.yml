@@ -122,8 +122,18 @@ decoration-heads:
       apiNames: ["Miscellaneous"]
 
 banner:
+  post:
+    default-limit: 18
+    limits:
+      "group.don_rise_perms": 45
+      "group.don_flare_perms": 45
+      "group.don_shine_perms": 90
+      "group.don_spark_perms": 90
+      "group.don_sunny_perms": 90
+      "group.don_horizon_perms": 180
+      "advancedcreative.banner.post_bypass": -1
   storage:
-    default-limit: 45
+    default-limit: 18
     min-pages: 10
     page-size: 45
     limits:

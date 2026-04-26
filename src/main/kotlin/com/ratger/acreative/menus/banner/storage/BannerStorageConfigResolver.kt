@@ -1,13 +1,15 @@
 package com.ratger.acreative.menus.banner.storage
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.menus.banner.service.BannerPermissionLimitResolver
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
 import kotlin.math.ceil
 import kotlin.math.max
 
 class BannerStorageConfigResolver(
-    private val hooker: FunctionHooker
+    private val hooker: FunctionHooker,
+    private val permissionLimitResolver: BannerPermissionLimitResolver = BannerPermissionLimitResolver()
 ) {
     fun readConfig(): BannerStorageConfig {
         val config = hooker.configManager.config
@@ -30,21 +32,7 @@ class BannerStorageConfigResolver(
     }
 
     fun resolveLimit(player: Player, config: BannerStorageConfig = readConfig()): Int {
-        var resolved = config.defaultLimit
-        config.limitsByPermission.forEach { (permission, value) ->
-            if (!player.hasPermission(permission)) {
-                return@forEach
-            }
-            if (value < 0) {
-                resolved = -1
-                return@forEach
-            }
-            if (resolved < 0) {
-                return@forEach
-            }
-            resolved = max(resolved, value)
-        }
-        return resolved
+        return permissionLimitResolver.resolveLimit(player, config.defaultLimit, config.limitsByPermission)
     }
 
     fun computeTotalPages(

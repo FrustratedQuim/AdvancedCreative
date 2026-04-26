@@ -129,6 +129,9 @@ permissions:
   advancedcreative.banner.storage_bypass:
     description: Allows infinite personal banner storage
     default: op
+  advancedcreative.banner.post_bypass:
+    description: Allows infinite published banner limit
+    default: op
   advancedcreative.banneredit:
     description: Allows using /banneredit
     default: true

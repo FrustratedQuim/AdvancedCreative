@@ -49,6 +49,7 @@ class Subsystem(
     private val publishedBannerRepository = PublishedBannerRepository(hooker.database, 45)
     private val bannedPatternRepository = BannedPatternRepository(hooker.database, 45)
     private val bannedUserRepository = BannedUserRepository(hooker.database, 45)
+    private val permissionLimitResolver = BannerPermissionLimitResolver()
     private val authorCache = BannerAuthorCache(publishedBannerRepository)
     private val publicationHistoryCache = BannerPublicationHistoryCache(publishedBannerRepository)
     private val galleryService = BannerGalleryService(publishedBannerRepository, BannerTakeCooldownService())
@@ -56,7 +57,9 @@ class Subsystem(
         publishedBannerRepository,
         bannedPatternRepository,
         authorCache,
-        publicationHistoryCache
+        publicationHistoryCache,
+        BannerPublicationConfigResolver(hooker),
+        permissionLimitResolver
     )
     private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService())
     private val moderationService = BannerModerationService(
@@ -75,7 +78,8 @@ class Subsystem(
     private val storageService = BannerStorageService(
         repository = storageRepository,
         normalizer = BannerStorageItemNormalizer(BannerStorageNameSupport()),
-        configResolver = BannerStorageConfigResolver(hooker)
+        configResolver = BannerStorageConfigResolver(hooker, permissionLimitResolver),
+        permissionLimitResolver = permissionLimitResolver
     )
     private val renderer = BannerMenuRenderer(hooker.plugin, parser, buttonFactory)
     private val storageRenderer = BannerStorageMenuRenderer(hooker.plugin, parser, buttonFactory)
