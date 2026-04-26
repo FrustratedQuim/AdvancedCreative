@@ -12,12 +12,10 @@ import org.bukkit.plugin.Plugin
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.event.DragEvent
-import java.util.logging.Logger
 
 class BannerStorageMenuController(
     private val plugin: Plugin,
-    private val storageService: BannerStorageService,
-    private val logger: Logger
+    private val storageService: BannerStorageService
 ) {
     fun buildEditClickListener(
         player: Player,
@@ -49,14 +47,12 @@ class BannerStorageMenuController(
             if (topSlots.isEmpty()) {
                 true
             } else if (!isEmpty(event.oldCursor) && !BannerPatternSupport.isBanner(event.oldCursor)) {
-                logDragDecision(event, event.oldCursor, "drag_blocked_non_banner_cursor")
                 false
             } else {
                 val occupiedBefore = currentStoredCount(session, event.menu, pageSize)
                 val newlyOccupied = topSlots.count { isEmpty(event.menu.inventory.getItem(it)) }
                 val limit = storageService.limitSnapshot(player, session.layout)
                 val withinLimit = limit.limit < 0 || occupiedBefore + newlyOccupied <= limit.limit
-                logDragDecision(event, event.oldCursor, if (withinLimit) "drag_vanilla_allowed" else "drag_blocked_limit_reached")
                 if (withinLimit) {
                     scheduleRefresh(event.menu, onLimitUpdate)
                 }
@@ -117,51 +113,34 @@ class BannerStorageMenuController(
         event: ClickEvent
     ): Boolean {
         val cursor = event.cursor
-        val clickedItem = event.clickedItem
         val currentItem = event.menu.inventory.getItem(event.rawSlot)
 
         if (event.isShiftLeft || event.isShiftRight) {
-            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_shift_allowed")
             return true
         }
 
         if (event.action == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
-            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_move_to_other_inventory")
             return true
         }
 
         if (event.action == InventoryAction.COLLECT_TO_CURSOR) {
-            if (!isEmpty(cursor) && !BannerPatternSupport.isBanner(cursor)) {
-                logEditClickDecision(event, cursor, clickedItem, "top_blocked_collect_non_banner_cursor")
-                return false
-            }
-            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_collect_to_cursor")
-            return true
+            return !(!isEmpty(cursor) && !BannerPatternSupport.isBanner(cursor))
         }
 
         if (event.action == InventoryAction.NOTHING) {
-            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_nothing")
             return true
         }
 
         val incomingItem = resolveIncomingTopInventoryItem(player, event, currentItem)
         if (!isEmpty(incomingItem) && !BannerPatternSupport.isBanner(incomingItem)) {
-            logEditClickDecision(event, cursor, incomingItem, "top_blocked_non_banner_incoming")
             return false
         }
 
         val limitSnapshot = storageService.limitSnapshot(player, session.layout)
         val createsNewOccupiedSlot = willCreateNewOccupiedTopSlot(player, event, currentItem, incomingItem)
-        if (createsNewOccupiedSlot &&
-            limitSnapshot.limit >= 0 &&
-            currentStoredCount(session, event.menu, pageSize) >= limitSnapshot.limit
-        ) {
-            logEditClickDecision(event, cursor, clickedItem, "top_blocked_limit_reached")
-            return false
-        }
-
-        logEditClickDecision(event, cursor, clickedItem, "top_vanilla_allowed")
-        return true
+        return !(createsNewOccupiedSlot &&
+                limitSnapshot.limit >= 0 &&
+                currentStoredCount(session, event.menu, pageSize) >= limitSnapshot.limit)
     }
 
     private fun handlePlayerInventoryClick(
@@ -176,7 +155,6 @@ class BannerStorageMenuController(
 
         val clickedItem = event.clickedItem ?: return true
         if (!BannerPatternSupport.isBanner(clickedItem)) {
-            logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_blocked_non_banner")
             return false
         }
 
@@ -184,12 +162,10 @@ class BannerStorageMenuController(
         if (limit.limit >= 0 && currentStoredCount(session, event.menu, pageSize) >= limit.limit) {
             val targetSlot = (0 until pageSize).firstOrNull { isEmpty(event.menu.inventory.getItem(it)) }
             if (targetSlot == null) {
-                logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_blocked_limit_reached")
                 return false
             }
         }
 
-        logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_vanilla_allowed")
         return true
     }
 
@@ -360,28 +336,5 @@ class BannerStorageMenuController(
         Bukkit.getScheduler().runTask(plugin, Runnable {
             onLimitUpdate(menu)
         })
-    }
-
-    private fun logEditClickDecision(
-        event: ClickEvent?,
-        cursor: ItemStack?,
-        clickedItem: ItemStack?,
-        action: String
-    ) {
-        logger.info(
-            "[BannerStorage/Edit] clickType=${event?.type ?: "N/A"}, " +
-                "cursorHasItem=${!isEmpty(cursor)}, slotHasItem=${!isEmpty(clickedItem)}, action=$action"
-        )
-    }
-
-    private fun logDragDecision(
-        event: DragEvent?,
-        cursor: ItemStack?,
-        action: String
-    ) {
-        logger.info(
-            "[BannerStorage/Edit] dragType=${event?.type ?: "N/A"}, " +
-                "cursorHasItem=${!isEmpty(cursor)}, rawSlots=${event?.rawSlots ?: emptySet<Int>()}, action=$action"
-        )
     }
 }
