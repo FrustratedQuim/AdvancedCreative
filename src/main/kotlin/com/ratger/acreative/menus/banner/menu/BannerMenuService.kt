@@ -75,7 +75,7 @@ class BannerMenuService(
         sessionManager.markLastMenuAsBanner(player.uniqueId)
         renderer.renderMainMenu(
             player = player,
-            onOpenStorage = { openStorage(player, openedFromMainMenu = true) },
+            onOpenStorage = { event -> handleLinkedBannerStorageOpen(player, event) },
             onOpenEditor = { openEditor(player, openedFromMainMenu = true) },
             onOpenGallery = {
                 val nextState = sessionManager.publicState(player.uniqueId).copy(
@@ -127,6 +127,11 @@ class BannerMenuService(
     }
 
     fun openPostFromCommand(player: Player) {
+        if (!hooker.accountLinkRequirementService.hasRequiredLink(player)) {
+            hooker.accountLinkRequirementService.sendLinkRequiredMessage(player)
+            return
+        }
+
         if (moderationService.isUserBanned(player.uniqueId)) {
             hooker.messageManager.sendChat(player, MessageKey.BANNER_POST_BANNED)
             return
@@ -457,10 +462,7 @@ class BannerMenuService(
                     categoryOptions = BannerCatalog.galleryCategories.map { it.displayName },
                     selectedCategoryIndex = selectedCategoryIndex,
                     onEntry = { entry, event -> handlePublicEntryClick(player, entry, event) },
-                    onMyFlags = {
-                        sessionManager.rememberMyOrigin(player.uniqueId, sessionManager.publicState(player.uniqueId))
-                        openMyGallery(player, sessionManager.myState(player.uniqueId))
-                    },
+                    onMyFlags = { event -> handleLinkedMyFlagsOpen(player, myFlagsCount, event) },
                     onFilter = { newIndex ->
                         val nextSort = BannerCatalog.sorts.getOrNull(newIndex)
                         if (nextSort != null) {
@@ -714,6 +716,57 @@ class BannerMenuService(
             temporaryButton = buttonFactory.temporaryBarrierButton(title),
             restoreAfterTicks = 30L,
             restoreButton = { buttonFactory.postConfirmButton { confirmPublish(it.player, it.menu) } }
+        )
+    }
+
+    private fun handleLinkedBannerStorageOpen(player: Player, event: ClickEvent) {
+        handleLinkedMenuAction(
+            player = player,
+            menu = event.menu,
+            slot = 11,
+            restoreButton = { buttonFactory.mainMenuStorageButton { nestedEvent -> handleLinkedBannerStorageOpen(player, nestedEvent) } },
+            action = { openStorage(player, openedFromMainMenu = true) }
+        )
+    }
+
+    private fun handleLinkedMyFlagsOpen(player: Player, myFlagsCount: Int, event: ClickEvent) {
+        handleLinkedMenuAction(
+            player = player,
+            menu = event.menu,
+            slot = 46,
+            restoreButton = { buttonFactory.myFlagsButton(myFlagsCount) { nestedEvent -> handleLinkedMyFlagsOpen(player, myFlagsCount, nestedEvent) } },
+            action = {
+                sessionManager.rememberMyOrigin(player.uniqueId, sessionManager.publicState(player.uniqueId))
+                openMyGallery(player, sessionManager.myState(player.uniqueId))
+            }
+        )
+    }
+
+    private fun handleLinkedMenuAction(
+        player: Player,
+        menu: Menu,
+        slot: Int,
+        restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button,
+        action: () -> Unit
+    ) {
+        if (!hooker.accountLinkRequirementService.hasRequiredLink(player)) {
+            showLinkRequiredButtonWarning(menu, slot, restoreButton)
+            return
+        }
+        action()
+    }
+
+    private fun showLinkRequiredButtonWarning(
+        menu: Menu,
+        slot: Int,
+        restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
+    ) {
+        temporaryOverrideSupport.replaceSlotTemporarily(
+            menu = menu,
+            slot = slot,
+            temporaryButton = buttonFactory.temporaryBarrierButton("<!i><#FF1500>⚠ Привяжите ваш аккаунт"),
+            restoreAfterTicks = 30L,
+            restoreButton = restoreButton
         )
     }
 

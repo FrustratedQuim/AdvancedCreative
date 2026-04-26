@@ -43,11 +43,11 @@ class BannerButtonFactory(
         action = { action() }
     )
 
-    fun mainMenuStorageButton(action: () -> Unit): Button = shared.actionButton(
+    fun mainMenuStorageButton(action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.FIELD_MASONED_BANNER_PATTERN,
         name = "<!i><#C7A300>🛡 <#FFD700>Хранилище флагов",
         lore = listOf("<!i><#FFD700> ● <#FFE68A>Аналог: <#FFF3E0>/myflags"),
-        action = { action() }
+        action = action
     )
 
     fun postTitleButton(title: String?, onApply: (ClickEvent) -> Unit, onReset: (ClickEvent) -> Unit): Button {
@@ -104,11 +104,11 @@ class BannerButtonFactory(
 
     fun previewButton(item: ItemStack): Button = shared.itemAsIsButton(item.clone().apply { amount = 1 }) { }
 
-    fun myFlagsButton(count: Int, action: () -> Unit): Button = shared.actionButton(
+    fun myFlagsButton(count: Int, action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.CHEST_MINECART,
         name = "<!i><#C7A300>⭐ <#FFD700>Мои флаги <#C7A300>[<#FFF3E0>$count<#C7A300>]",
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть"),
-        action = { action() }
+        action = action
     )
 
     fun filterButton(options: List<String>, selectedIndex: Int, action: (Int) -> Unit): Button =

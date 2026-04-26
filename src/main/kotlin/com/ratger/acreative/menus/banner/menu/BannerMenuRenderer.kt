@@ -23,7 +23,7 @@ class BannerMenuRenderer(
 ) {
     fun renderMainMenu(
         player: Player,
-        onOpenStorage: () -> Unit,
+        onOpenStorage: (ClickEvent) -> Unit,
         onOpenEditor: () -> Unit,
         onOpenGallery: () -> Unit
     ) {
@@ -35,7 +35,7 @@ class BannerMenuRenderer(
             blockShiftClickFromPlayerInventory = false
         )
         fillMask(menu, 27, setOf(0, 8, 9, 17, 18, 26))
-        menu.setButton(11, buttonFactory.mainMenuStorageButton { onOpenStorage() })
+        menu.setButton(11, buttonFactory.mainMenuStorageButton { onOpenStorage(it) })
         menu.setButton(13, buttonFactory.mainMenuEditorButton { onOpenEditor() })
         menu.setButton(15, buttonFactory.mainMenuGalleryButton { onOpenGallery() })
         menu.open(player)
@@ -80,7 +80,7 @@ class BannerMenuRenderer(
         categoryOptions: List<String>,
         selectedCategoryIndex: Int,
         onEntry: (PublishedBannerEntry, ClickEvent) -> Unit,
-        onMyFlags: () -> Unit,
+        onMyFlags: (ClickEvent) -> Unit,
         onFilter: (Int) -> Unit,
         onCategory: (Int) -> Unit,
         onSearch: (ClickEvent) -> Unit,
@@ -106,14 +106,16 @@ class BannerMenuRenderer(
             blockShiftClickFromPlayerInventory = true
         )
         if (currentMenu != null) {
-            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, true, true)
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, allowPlayerInventoryClicks = true,
+                blockShiftClickFromPlayerInventory = true
+            )
         }
 
         clearTopArea(menu)
         fillFooter(menu)
         if (onBack != null) menu.setButton(48, buttonFactory.backButton { onBack() })
         if (onForward != null) menu.setButton(50, buttonFactory.forwardButton { onForward() })
-        menu.setButton(46, buttonFactory.myFlagsButton(myFlagsCount) { onMyFlags() })
+        menu.setButton(46, buttonFactory.myFlagsButton(myFlagsCount) { onMyFlags(it) })
         menu.setButton(47, buttonFactory.filterButton(filterOptions, selectedFilterIndex, onFilter))
         menu.setButton(49, buttonFactory.categoryButton(categoryOptions, selectedCategoryIndex, onCategory))
         menu.setButton(51, buttonFactory.postInfoButton())
@@ -173,7 +175,9 @@ class BannerMenuRenderer(
             blockShiftClickFromPlayerInventory = true
         )
         if (currentMenu != null) {
-            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, true, true)
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, allowPlayerInventoryClicks = true,
+                blockShiftClickFromPlayerInventory = true
+            )
         }
 
         clearTopArea(menu)
@@ -264,7 +268,9 @@ class BannerMenuRenderer(
             blockShiftClickFromPlayerInventory = false
         )
         if (currentMenu != null) {
-            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, false, false)
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, allowPlayerInventoryClicks = false,
+                blockShiftClickFromPlayerInventory = false
+            )
         }
         clearTopArea(menu)
         fillFooter(menu)
@@ -327,7 +333,7 @@ class BannerMenuRenderer(
         allowPlayerInventoryClicks: Boolean,
         blockShiftClickFromPlayerInventory: Boolean
     ) {
-        menu.setTitle(parser.parse("<!i>$title"))
+        menu.title = parser.parse("<!i>$title")
         menu.setClickListener { event ->
             if (
                 blockShiftClickFromPlayerInventory &&
