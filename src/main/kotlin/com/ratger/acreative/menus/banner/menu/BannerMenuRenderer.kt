@@ -127,6 +127,7 @@ class BannerMenuRenderer(
                     entry = entry,
                     categoryName = entry.category.displayName,
                     showAuthor = true,
+                    showCategory = state.category == com.ratger.acreative.menus.banner.model.BannerCategory.ALL,
                     showDeleteHint = false,
                     moderationMode = state.moderatorMode,
                     action = { onEntry(entry, it) }
@@ -190,6 +191,7 @@ class BannerMenuRenderer(
                     entry = entry,
                     categoryName = entry.category.displayName,
                     showAuthor = false,
+                    showCategory = state.category == com.ratger.acreative.menus.banner.model.BannerCategory.ALL,
                     showDeleteHint = true,
                     moderationMode = false,
                     action = { onEntry(entry, it) }

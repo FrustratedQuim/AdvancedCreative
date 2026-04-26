@@ -458,10 +458,10 @@ class BannerEditorMenu(
                     val parsedTarget = input?.trim()?.toIntOrNull()
                     if (parsedTarget != null) {
                         val targetActualIndex = (parsedTarget - 1).coerceIn(0, maxIndex)
-                        BannerPatternSupport.movePattern(
+                        BannerPatternSupport.swapPatterns(
                             item = session.editableBanner,
-                            fromIndex = sourceActualIndex,
-                            toIndex = targetActualIndex
+                            firstIndex = sourceActualIndex,
+                            secondIndex = targetActualIndex
                         )
                     }
                     open(submitPlayer, session)

@@ -244,6 +244,7 @@ class BannerButtonFactory(
         entry: PublishedBannerEntry,
         categoryName: String,
         showAuthor: Boolean,
+        showCategory: Boolean,
         showDeleteHint: Boolean,
         moderationMode: Boolean,
         action: (ClickEvent) -> Unit
@@ -253,7 +254,9 @@ class BannerButtonFactory(
             if (showAuthor) {
                 add("<!i><#FFD700>▍ <#FFE68A>Автор: <#FFF3E0>${BannerTextSupport.escapeMiniMessage(entry.authorName)}")
             }
-            add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${BannerTextSupport.escapeMiniMessage(categoryName)}")
+            if (showCategory) {
+                add("<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${BannerTextSupport.escapeMiniMessage(categoryName)}")
+            }
             add("<!i><#FFD700>▍ <#FFE68A>Взято: <#FFF3E0>${BannerTextSupport.formatTakes(entry.takes)}")
             if (moderationMode) {
                 add("")
@@ -265,6 +268,15 @@ class BannerButtonFactory(
             }
         }
         return shared.itemAsIsButton(decorateBanner(entry.bannerItem, title, lore)) { action(it) }
+    }
+
+    fun createGivenPublishedBannerItem(entry: PublishedBannerEntry): ItemStack {
+        val title = entry.title?.takeIf { it.isNotBlank() } ?: BannerPatternSupport.localizedBaseName(entry.bannerItem)
+        val lore = listOf(
+            "<!i><#FFD700>▍ <#FFE68A>Автор: <#FFF3E0>${BannerTextSupport.escapeMiniMessage(entry.authorName)}",
+            "<!i><#FFD700>▍ <#FFE68A>Категория: <#FFF3E0>${BannerTextSupport.escapeMiniMessage(entry.category.displayName)}"
+        )
+        return decorateBanner(entry.bannerItem, title, lore)
     }
 
     fun bannedPatternButton(entry: BannedPatternEntry, action: (ClickEvent) -> Unit): Button {

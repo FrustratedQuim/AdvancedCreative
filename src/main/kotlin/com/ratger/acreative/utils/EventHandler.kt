@@ -18,6 +18,7 @@ import org.bukkit.event.block.BlockPlaceEvent
 import org.bukkit.event.entity.*
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.*
 import org.bukkit.inventory.EquipmentSlot
@@ -312,11 +313,19 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.HIGH)
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as Player
+        if (hooker.bannerMenuService.handleStorageRawInventoryClick(event)) {
+            return
+        }
         if (utils.isLaying(player) || utils.isDisguised(player)) {
             if (event.slotType == InventoryType.SlotType.ARMOR || event.slot == 40) {
                 event.isCancelled = true
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    fun onInventoryDrag(event: InventoryDragEvent) {
+        hooker.bannerMenuService.handleStorageRawInventoryDrag(event)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)

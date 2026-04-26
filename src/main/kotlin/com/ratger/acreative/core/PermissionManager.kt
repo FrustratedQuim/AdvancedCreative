@@ -1,5 +1,6 @@
 package com.ratger.acreative.core
 
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
 
 class PermissionManager(private val hooker: FunctionHooker) {
@@ -35,20 +36,25 @@ class PermissionManager(private val hooker: FunctionHooker) {
 
         val commandsSec = permissions?.getConfigurationSection("commands")
         commandsSec?.let { sec ->
-            sec.getKeys(false).forEach { command ->
-                val fullPath = "permissions.commands.$command"
-                val raw = hooker.configManager.config.get(fullPath)
-                when (raw) {
-                    is String -> {
-                        commandToRole[command.lowercase()] = raw.lowercase()
-                    }
-                    else -> {
-                        hooker.configManager.config.getString("$fullPath.role")?.let {
-                            commandToRole[command.lowercase()] = it.lowercase()
-                        }
-                        hooker.configManager.config.getString("$fullPath.node")?.let {
-                            commandToNode[command.lowercase()] = it
-                        }
+            loadCommandPermissions(sec)
+        }
+    }
+
+    private fun loadCommandPermissions(section: ConfigurationSection, prefix: String = "") {
+        section.getKeys(false).forEach { key ->
+            val commandKey = if (prefix.isEmpty()) key else "$prefix.$key"
+            when (val raw = section.get(key)) {
+                is String -> {
+                    commandToRole[commandKey.lowercase()] = raw.lowercase()
+                }
+                is ConfigurationSection -> {
+                    val role = raw.getString("role")
+                    val node = raw.getString("node")
+                    if (role != null || node != null) {
+                        role?.let { commandToRole[commandKey.lowercase()] = it.lowercase() }
+                        node?.let { commandToNode[commandKey.lowercase()] = it }
+                    } else {
+                        loadCommandPermissions(raw, commandKey)
                     }
                 }
             }

@@ -65,7 +65,7 @@ class Subsystem(
         publicationService = publicationService,
         playerLookupService = playerLookupService
     )
-    private val giveService = BannerGiveService(galleryService)
+    private val giveService = BannerGiveService()
     private val buttonFactory = BannerButtonFactory(parser, sharedButtonFactory)
     private val signInputService = SignInputService(hooker.plugin)
     private val sessionManager = BannerSessionManager()

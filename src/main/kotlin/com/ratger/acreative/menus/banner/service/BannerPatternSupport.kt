@@ -76,17 +76,18 @@ object BannerPatternSupport {
         return true
     }
 
-    fun movePattern(item: ItemStack?, fromIndex: Int, toIndex: Int): Boolean {
+    fun swapPatterns(item: ItemStack?, firstIndex: Int, secondIndex: Int): Boolean {
         val meta = item?.itemMeta as? BannerMeta ?: return false
         val patternCount = meta.numberOfPatterns()
         if (patternCount <= 1) return false
-        if (fromIndex !in 0 until patternCount) return false
-        if (toIndex !in 0 until patternCount) return false
-        if (fromIndex == toIndex) return true
+        if (firstIndex !in 0 until patternCount) return false
+        if (secondIndex !in 0 until patternCount) return false
+        if (firstIndex == secondIndex) return true
 
         val mutablePatterns = meta.patterns.toMutableList()
-        val movedPattern = mutablePatterns.removeAt(fromIndex)
-        mutablePatterns.add(toIndex, movedPattern)
+        val firstPattern = mutablePatterns[firstIndex]
+        mutablePatterns[firstIndex] = mutablePatterns[secondIndex]
+        mutablePatterns[secondIndex] = firstPattern
         meta.patterns = mutablePatterns
         item.itemMeta = meta
         return true

@@ -5,6 +5,7 @@ import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.banner.model.BannerPostDraft
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.UUID
@@ -54,7 +55,7 @@ class BannerTitleApplyStateManager(
             return true
         }
 
-        val title = args.joinToString(" ").trim().takeIf { it.isNotBlank() }
+        val title = BannerPostDraft.normalizeTitle(args.joinToString(" "))
         clear(player, request)
         onApply(player, title)
         return true

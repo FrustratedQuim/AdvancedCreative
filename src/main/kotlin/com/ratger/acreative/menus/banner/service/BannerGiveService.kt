@@ -1,6 +1,5 @@
 package com.ratger.acreative.menus.banner.service
 
-import com.ratger.acreative.menus.banner.model.PublishedBannerEntry
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -9,27 +8,13 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.util.Vector
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 
-class BannerGiveService(
-    private val galleryService: BannerGalleryService
-) {
+class BannerGiveService {
     fun give(
         player: Player,
         sourceItem: ItemStack,
         clickEvent: ClickEvent
     ) {
         giveInternal(player, sourceItem, clickEvent)
-    }
-
-    fun give(
-        player: Player,
-        entry: PublishedBannerEntry,
-        clickEvent: ClickEvent,
-        trackTake: Boolean = true
-    ) {
-        giveInternal(player, entry.bannerItem, clickEvent)
-        if (trackTake) {
-            galleryService.recordTakeIfNeeded(entry, player)
-        }
     }
 
     private fun giveInternal(
@@ -39,8 +24,7 @@ class BannerGiveService(
     ) {
         clickEvent.handle.isCancelled = true
 
-        val item = BannerPatternSupport.normalizeForStorage(sourceItem)?.apply { amount = 1 }
-            ?: sourceItem.clone().apply { amount = 1 }
+        val item = sourceItem.clone().apply { amount = 1 }
         val isShiftClick = clickEvent.isShiftLeft ||
             clickEvent.isShiftRight ||
             clickEvent.handle.isShiftClick ||

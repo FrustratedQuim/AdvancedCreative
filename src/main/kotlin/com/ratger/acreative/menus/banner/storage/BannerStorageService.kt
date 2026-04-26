@@ -76,5 +76,7 @@ class BannerStorageService(
         return LimitSnapshot(current, limit, text)
     }
 
+    fun extractPlainTitle(item: ItemStack): String? = normalizer.plainTitle(item)
+
     fun plainTitle(item: ItemStack): String? = normalizer.plainTitle(item)
 }

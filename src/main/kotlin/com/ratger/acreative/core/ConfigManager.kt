@@ -1,6 +1,7 @@
 package com.ratger.acreative.core
 
 import org.bukkit.configuration.file.YamlConfiguration
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.EntityType
 import java.io.File
 import java.io.InputStreamReader
@@ -47,9 +48,23 @@ class ConfigManager(private val hooker: FunctionHooker) {
     private fun fixEmptyValues(yaml: YamlConfiguration) {
         hooker.plugin.getResource(CONFIG_RESOURCE_NAME)?.use { inputStream ->
             val defaultYaml = YamlConfiguration.loadConfiguration(InputStreamReader(inputStream))
-            for (key in defaultYaml.getKeys(true)) {
-                if (!yaml.contains(key) || yaml.get(key) == null) {
-                    yaml.set(key, defaultYaml.get(key))
+            mergeMissingValues(target = yaml, defaults = defaultYaml)
+        }
+    }
+
+    private fun mergeMissingValues(target: ConfigurationSection, defaults: ConfigurationSection) {
+        defaults.getKeys(false).forEach { key ->
+            val defaultValue = defaults.get(key)
+            val defaultSection = defaults.getConfigurationSection(key)
+            val targetSection = target.getConfigurationSection(key)
+
+            when {
+                defaultSection != null -> {
+                    val nextTarget = targetSection ?: target.createSection(key)
+                    mergeMissingValues(nextTarget, defaultSection)
+                }
+                !target.contains(key) || target.get(key) == null -> {
+                    target.set(key, defaultValue)
                 }
             }
         }

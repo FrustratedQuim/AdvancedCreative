@@ -101,4 +101,17 @@ data class BannerPostDraft(
     val bannerItem: ItemStack,
     val title: String? = null,
     val category: BannerCategory = BannerCategory.MISCELLANEOUS
-)
+) {
+    fun normalized(): BannerPostDraft = copy(title = normalizeTitle(title))
+
+    companion object {
+        const val TITLE_MAX_LENGTH: Int = 64
+
+        fun normalizeTitle(raw: String?): String? {
+            return raw
+                ?.trim()
+                ?.take(TITLE_MAX_LENGTH)
+                ?.takeIf(String::isNotBlank)
+        }
+    }
+}

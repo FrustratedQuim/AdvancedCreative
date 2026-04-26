@@ -28,7 +28,7 @@ class BannerSessionManager {
     }
 
     fun setPostDraft(playerId: UUID, draft: BannerPostDraft) {
-        postDraftByPlayer[playerId] = draft
+        postDraftByPlayer[playerId] = draft.normalized()
     }
 
     fun getPostDraft(playerId: UUID): BannerPostDraft? = postDraftByPlayer[playerId]

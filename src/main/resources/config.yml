@@ -53,11 +53,11 @@ permissions:
     edit: rise
     resize: flare
     freeze: flare
-    banner.moderation: flare
-    decorationbanners.moderation: flare
+    "banner.moderation": flare
+    "decorationbanners.moderation": flare
     glow: spark
     disguise: spark
-    disguise.nick: spark
+    "disguise.nick": spark
     sithead: sunny
     spit: horizon
     piss: horizon
@@ -127,13 +127,13 @@ banner:
     min-pages: 10
     page-size: 45
     limits:
-      group.don_rise_perms: 45
-      group.don_flare_perms: 45
-      group.don_shine_perms: 90
-      group.don_spark_perms: 90
-      group.don_sunny_perms: 90
-      group.don_horizon_perms: 180
-      advancedcreative.banner.storage_bypass: -1
+      "group.don_rise_perms": 45
+      "group.don_flare_perms": 45
+      "group.don_shine_perms": 90
+      "group.don_spark_perms": 90
+      "group.don_sunny_perms": 90
+      "group.don_horizon_perms": 180
+      "advancedcreative.banner.storage_bypass": -1
 
 blocked-disguises:
   - ARROW

@@ -24,6 +24,8 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.ItemStack
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
@@ -138,7 +140,7 @@ class BannerMenuService(
         val previousDraft = sessionManager.getPostDraft(player.uniqueId)
         val draft = BannerPostDraft(
             bannerItem = normalizedBanner,
-            title = previousDraft?.title,
+            title = previousDraft?.title ?: storageService.extractPlainTitle(player.inventory.itemInMainHand),
             category = previousDraft?.category ?: BannerCatalog.publishCategories.first()
         )
         sessionManager.setPostDraft(player.uniqueId, draft)
@@ -358,6 +360,44 @@ class BannerMenuService(
         }
         flushStorageSession(player, remove = true)
         sessionManager.clearTransient(player.uniqueId)
+    }
+
+    fun handleStorageRawInventoryClick(event: InventoryClickEvent): Boolean {
+        val player = event.whoClicked as? Player ?: return false
+        val session = storageSessionManager.get(player.uniqueId) ?: return false
+        if (!session.editMode) {
+            return false
+        }
+
+        val config = storageService.config()
+        if (event.view.topInventory.size < config.pageSize) {
+            return false
+        }
+
+        val allowed = storageController.shouldAllowRawClick(player, session, config.pageSize, event)
+        if (!allowed) {
+            event.isCancelled = true
+        }
+        return !allowed
+    }
+
+    fun handleStorageRawInventoryDrag(event: InventoryDragEvent): Boolean {
+        val player = event.whoClicked as? Player ?: return false
+        val session = storageSessionManager.get(player.uniqueId) ?: return false
+        if (!session.editMode) {
+            return false
+        }
+
+        val config = storageService.config()
+        if (event.view.topInventory.size < config.pageSize) {
+            return false
+        }
+
+        val allowed = storageController.shouldAllowRawDrag(player, session, config.pageSize, event)
+        if (!allowed) {
+            event.isCancelled = true
+        }
+        return !allowed
     }
 
     fun handleBannerTitleApply(player: Player, title: String?) {
@@ -612,7 +652,8 @@ class BannerMenuService(
             return
         }
 
-        giveService.give(player, entry, event)
+        giveService.give(player, buttonFactory.createGivenPublishedBannerItem(entry), event)
+        galleryService.recordTakeIfNeeded(entry, player)
     }
 
     private fun handleMyEntryClick(player: Player, entry: PublishedBannerEntry, event: ClickEvent) {
@@ -629,7 +670,8 @@ class BannerMenuService(
             return
         }
 
-        giveService.give(player, entry, event)
+        giveService.give(player, buttonFactory.createGivenPublishedBannerItem(entry), event)
+        galleryService.recordTakeIfNeeded(entry, player)
     }
 
     private fun unbanPatternFromMenu(player: Player, entry: BannedPatternEntry, currentPage: Int, currentMenu: Menu? = null) {
