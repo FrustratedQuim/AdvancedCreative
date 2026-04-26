@@ -79,7 +79,7 @@ class Subsystem(
     )
     private val renderer = BannerMenuRenderer(hooker.plugin, parser, buttonFactory)
     private val storageRenderer = BannerStorageMenuRenderer(hooker.plugin, parser, buttonFactory)
-    private val storageController = BannerStorageMenuController(storageService)
+    private val storageController = BannerStorageMenuController(storageService, hooker.plugin.logger)
 
     val menuService: BannerMenuService
 
