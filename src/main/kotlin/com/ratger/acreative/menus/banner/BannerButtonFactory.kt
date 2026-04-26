@@ -201,7 +201,7 @@ class BannerButtonFactory(
         action = { action() }
     )
 
-    fun storageModeButton(editMode: Boolean, action: () -> Unit): Button = shared.actionButton(
+    fun storageModeButton(editMode: Boolean, action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.BUNDLE,
         name = if (editMode) {
             "<!i><#C7A300>⭐ <#FFD700>Обычный режим"
@@ -218,7 +218,7 @@ class BannerButtonFactory(
             }
             this
         },
-        action = { action() }
+        action = action
     )
 
     fun storageLimitButton(current: Int, limitText: String): Button = shared.actionButton(
@@ -228,8 +228,17 @@ class BannerButtonFactory(
         action = {}
     )
 
-    fun storageStoredBannerButton(item: ItemStack, action: (ClickEvent) -> Unit): Button =
-        shared.itemAsIsButton(item.clone().apply { amount = 1 }) { action(it) }
+    fun storageStoredBannerButton(
+        item: ItemStack,
+        forceSingleAmount: Boolean = true,
+        action: (ClickEvent) -> Unit
+    ): Button = shared.itemAsIsButton(
+        item.clone().apply {
+            if (forceSingleAmount) {
+                amount = 1
+            }
+        }
+    ) { action(it) }
 
     fun publishedBannerButton(
         entry: PublishedBannerEntry,

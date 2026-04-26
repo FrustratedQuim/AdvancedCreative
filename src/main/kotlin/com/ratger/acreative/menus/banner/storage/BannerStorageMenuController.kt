@@ -1,16 +1,18 @@
 package com.ratger.acreative.menus.banner.storage
 
 import com.ratger.acreative.menus.banner.service.BannerPatternSupport
-import com.ratger.acreative.menus.common.MenuUiSupport
-import com.ratger.acreative.utils.PlayerInventoryTransferSupport
+import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.event.inventory.ClickType
+import org.bukkit.event.inventory.InventoryAction
 import org.bukkit.inventory.ItemStack
-import org.bukkit.util.Vector
+import org.bukkit.plugin.Plugin
+import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
+import ru.violence.coreapi.bukkit.api.menu.event.DragEvent
 import java.util.logging.Logger
 
 class BannerStorageMenuController(
+    private val plugin: Plugin,
     private val storageService: BannerStorageService,
     private val logger: Logger
 ) {
@@ -18,14 +20,53 @@ class BannerStorageMenuController(
         player: Player,
         session: BannerStorageSession,
         pageSize: Int,
-        onRefresh: () -> Unit
+        onLimitUpdate: (Menu) -> Unit
     ): (ClickEvent) -> Boolean {
         return { event ->
-            if (event.rawSlot in 0 until pageSize) {
-                handleTopInventoryClick(player, session, pageSize, event, onRefresh)
-            } else {
-                handlePlayerInventoryClick(player, session, pageSize, event, onRefresh)
+            val allowed = when {
+                event.rawSlot in 0 until pageSize -> handleTopInventoryClick(player, session, pageSize, event)
+                else -> handlePlayerInventoryClick(player, session, pageSize, event)
             }
+
+            if (allowed && shouldRefreshAfterClick(event, pageSize)) {
+                scheduleRefresh(event.menu, onLimitUpdate)
+            }
+            allowed
+        }
+    }
+
+    fun buildEditDragListener(
+        player: Player,
+        session: BannerStorageSession,
+        pageSize: Int,
+        onLimitUpdate: (Menu) -> Unit
+    ): (DragEvent) -> Boolean {
+        return { event ->
+            val topSlots = event.rawSlots.filter { it in 0 until pageSize }
+            if (topSlots.isEmpty()) {
+                true
+            } else if (!isEmpty(event.oldCursor) && !BannerPatternSupport.isBanner(event.oldCursor)) {
+                logDragDecision(event, event.oldCursor, "drag_blocked_non_banner_cursor")
+                false
+            } else {
+                val occupiedBefore = currentStoredCount(session, event.menu, pageSize)
+                val newlyOccupied = topSlots.count { isEmpty(event.menu.inventory.getItem(it)) }
+                val limit = storageService.limitSnapshot(player, session.layout)
+                val withinLimit = limit.limit < 0 || occupiedBefore + newlyOccupied <= limit.limit
+                logDragDecision(event, event.oldCursor, if (withinLimit) "drag_vanilla_allowed" else "drag_blocked_limit_reached")
+                if (withinLimit) {
+                    scheduleRefresh(event.menu, onLimitUpdate)
+                }
+                withinLimit
+            }
+        }
+    }
+
+    fun syncPageFromMenu(session: BannerStorageSession, menu: Menu, pageSize: Int) {
+        for (slot in 0 until pageSize) {
+            val item = menu.inventory.getItem(slot)
+            val normalized = item?.let(storageService::normalizeEditableItem)
+            storageService.setPageSlot(session.layout, session.page, pageSize, slot, normalized)
         }
     }
 
@@ -33,171 +74,76 @@ class BannerStorageMenuController(
         player: Player,
         session: BannerStorageSession,
         pageSize: Int,
-        event: ClickEvent,
-        onRefresh: () -> Unit
+        event: ClickEvent
     ): Boolean {
-        val clickedSlot = event.rawSlot
-        val clickedItem = storageService.pageSlice(session.layout, session.page, pageSize)[clickedSlot]
-        val cursor = player.itemOnCursor
-        event.handle.isCancelled = true
+        val cursor = event.cursor
+        val clickedItem = event.clickedItem
+        val currentItem = event.menu.inventory.getItem(event.rawSlot)
 
-        when {
-            MenuUiSupport.isDropClick(event) -> {
-                handleTopDropClick(player, session, pageSize, clickedSlot, clickedItem, cursor, event)
-            }
-
-            event.isShiftLeft -> {
-                handleTopShiftLeftClick(player, session, pageSize, clickedSlot, clickedItem, cursor, event)
-            }
-
-            event.isLeft -> {
-                handleTopLeftClick(player, session, pageSize, clickedSlot, clickedItem, cursor, event)
-            }
-
-            else -> {
-                // Other click types are ignored in edit mode top area.
-                logEditClickDecision(event, cursor, clickedItem, "ignored_click_type")
-            }
-        }
-        onRefresh()
-        return false
-    }
-
-    private fun handleTopLeftClick(
-        player: Player,
-        session: BannerStorageSession,
-        pageSize: Int,
-        clickedSlot: Int,
-        clickedItem: ItemStack?,
-        cursor: ItemStack?,
-        event: ClickEvent
-    ) {
-        if (!isEmpty(cursor) && !BannerPatternSupport.isBanner(cursor)) {
-            logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_blocked_non_banner_cursor")
-            return
+        if (event.isShiftLeft || event.isShiftRight) {
+            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_shift_allowed")
+            return true
         }
 
-        val targetHasBanner = clickedItem != null
+        if (event.isHotbar) {
+            val hotbarItem = player.inventory.getItem(event.hotbarKey)
+            if (!isEmpty(hotbarItem) && !BannerPatternSupport.isBanner(hotbarItem)) {
+                logEditClickDecision(event, cursor, hotbarItem, "top_blocked_non_banner_hotbar")
+                return false
+            }
+        }
+
+        if (event.action == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
+            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_move_to_other_inventory")
+            return true
+        }
+
+        if (event.action == InventoryAction.COLLECT_TO_CURSOR) {
+            if (!isEmpty(cursor) && !BannerPatternSupport.isBanner(cursor)) {
+                logEditClickDecision(event, cursor, clickedItem, "top_blocked_collect_non_banner_cursor")
+                return false
+            }
+            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_collect_to_cursor")
+            return true
+        }
+
+        if (event.action == InventoryAction.NOTHING) {
+            logEditClickDecision(event, cursor, clickedItem, "top_vanilla_nothing")
+            return true
+        }
+
         val limitSnapshot = storageService.limitSnapshot(player, session.layout)
-        if (!targetHasBanner && !isEmpty(cursor) && limitSnapshot.limit >= 0 && limitSnapshot.current >= limitSnapshot.limit) {
-            logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_blocked_limit_reached")
-            return
+        val placingIntoEmptySlot = isEmpty(currentItem) && !isEmpty(cursor)
+        if (placingIntoEmptySlot && limitSnapshot.limit >= 0 && currentStoredCount(session, event.menu, pageSize) >= limitSnapshot.limit) {
+            logEditClickDecision(event, cursor, clickedItem, "top_blocked_limit_reached")
+            return false
         }
 
-        when {
-            clickedItem != null && !isEmpty(cursor) -> {
-                val cursorItem = cursor ?: return
-                storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, cursorItem.clone())
-                player.setItemOnCursor(clickedItem)
-                logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_swap_slot_with_cursor")
-            }
-
-            clickedItem != null && isEmpty(cursor) -> {
-                storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, null)
-                player.setItemOnCursor(clickedItem)
-                logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_pickup_from_slot_to_cursor")
-            }
-
-            clickedItem == null && !isEmpty(cursor) -> {
-                val cursorItem = cursor ?: return
-                storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, cursorItem.clone())
-                player.setItemOnCursor(null)
-                logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_place_cursor_into_empty_slot")
-            }
-
-            else -> logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "left_noop_empty_slot_and_empty_cursor")
-        }
-    }
-
-    private fun handleTopShiftLeftClick(
-        player: Player,
-        session: BannerStorageSession,
-        pageSize: Int,
-        clickedSlot: Int,
-        clickedItem: ItemStack?,
-        cursor: ItemStack?,
-        event: ClickEvent
-    ) {
-        if (clickedItem != null) {
-            val moveCandidate = clickedItem.clone()
-            val remainder = PlayerInventoryTransferSupport.storeInPreferredSlots(player.inventory, moveCandidate)
-            if (remainder <= 0) {
-                storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, null)
-                logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "shift_move_to_inventory_full_success")
-            } else {
-                storageService.setPageSlot(
-                    session.layout,
-                    session.page,
-                    pageSize,
-                    clickedSlot,
-                    clickedItem.clone().apply { amount = remainder }
-                )
-                logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "shift_move_to_inventory_partial_remainder")
-            }
-            return
+        val incomingItem = when {
+            !isEmpty(cursor) -> cursor
+            !isEmpty(currentItem) -> null
+            else -> null
         }
 
-        if (isEmpty(cursor) || !BannerPatternSupport.isBanner(cursor)) {
-            logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "shift_noop_empty_slot_invalid_or_empty_cursor")
-            return
-        }
-        val cursorItem = cursor ?: return
-        val limitSnapshot = storageService.limitSnapshot(player, session.layout)
-        if (limitSnapshot.limit >= 0 && limitSnapshot.current >= limitSnapshot.limit) {
-            logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "shift_blocked_limit_reached")
-            return
-        }
-        storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, cursorItem.clone())
-        player.setItemOnCursor(null)
-        logEditClickDecision(event = event, cursor = cursor, clickedItem = clickedItem, action = "shift_place_cursor_into_empty_slot")
-    }
-
-    private fun handleTopDropClick(
-        player: Player,
-        session: BannerStorageSession,
-        pageSize: Int,
-        clickedSlot: Int,
-        clickedItem: ItemStack?,
-        cursor: ItemStack?,
-        event: ClickEvent
-    ) {
-        if (clickedItem == null || !isEmpty(cursor)) {
-            logEditClickDecision(event, cursor, clickedItem, "drop_noop_empty_slot_or_non_empty_cursor")
-            return
+        if (!isEmpty(incomingItem) && !BannerPatternSupport.isBanner(incomingItem)) {
+            logEditClickDecision(event, cursor, clickedItem, "top_blocked_non_banner_cursor")
+            return false
         }
 
-        val dropAmount = if (event.type == ClickType.CONTROL_DROP) clickedItem.amount else 1
-        val copy = clickedItem.clone().apply { amount = dropAmount }
-        val drop = player.world.dropItem(player.location.clone().add(0.0, 1.0, 0.0), copy)
-        drop.velocity = player.eyeLocation.direction.normalize().multiply(0.3).add(Vector(0.0, 0.1, 0.0))
-
-        val leftInSlot = clickedItem.amount - dropAmount
-        if (leftInSlot > 0) {
-            storageService.setPageSlot(
-                session.layout,
-                session.page,
-                pageSize,
-                clickedSlot,
-                clickedItem.clone().apply { amount = leftInSlot }
-            )
-        } else {
-            storageService.setPageSlot(session.layout, session.page, pageSize, clickedSlot, null)
-        }
-        logEditClickDecision(event, cursor, clickedItem, "drop_from_slot_to_world_amount_$dropAmount")
+        logEditClickDecision(event, cursor, clickedItem, "top_vanilla_allowed")
+        return true
     }
 
     private fun handlePlayerInventoryClick(
         player: Player,
         session: BannerStorageSession,
         pageSize: Int,
-        event: ClickEvent,
-        onRefresh: () -> Unit
+        event: ClickEvent
     ): Boolean {
         if (!(event.isShiftLeft || event.isShiftRight)) {
             return true
         }
-        event.handle.isCancelled = true
-        val clickedInventory = event.clickedInventory ?: return true
+
         val clickedItem = event.clickedItem ?: return true
         if (!BannerPatternSupport.isBanner(clickedItem)) {
             logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_blocked_non_banner")
@@ -205,22 +151,39 @@ class BannerStorageMenuController(
         }
 
         val limit = storageService.limitSnapshot(player, session.layout)
-        if (limit.limit >= 0 && limit.current >= limit.limit) {
-            logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_blocked_limit_reached")
-            return false
+        if (limit.limit >= 0 && currentStoredCount(session, event.menu, pageSize) >= limit.limit) {
+            val targetSlot = (0 until pageSize).firstOrNull { isEmpty(event.menu.inventory.getItem(it)) }
+            if (targetSlot == null) {
+                logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_blocked_limit_reached")
+                return false
+            }
         }
 
-        val occupiedPageSlots = storageService.pageSlice(session.layout, session.page, pageSize)
-        val targetSlot = (0 until pageSize).firstOrNull { it !in occupiedPageSlots } ?: return false
-
-        storageService.setPageSlot(session.layout, session.page, pageSize, targetSlot, clickedItem.clone())
-        clickedInventory.setItem(event.slot, null)
-        logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_move_inventory_to_storage_slot_$targetSlot")
-        onRefresh()
-        return false
+        logEditClickDecision(event, player.itemOnCursor, clickedItem, "player_shift_vanilla_allowed")
+        return true
     }
 
     private fun isEmpty(item: ItemStack?): Boolean = item == null || item.type.isAir || item.amount <= 0
+
+    private fun currentStoredCount(session: BannerStorageSession, menu: Menu, pageSize: Int): Int {
+        val currentPageBase = (session.page - 1).coerceAtLeast(0) * pageSize
+        val outsideCurrentPage = session.layout.keys.count { it !in currentPageBase until (currentPageBase + pageSize) }
+        val currentPageCount = (0 until pageSize).count { !isEmpty(menu.inventory.getItem(it)) }
+        return outsideCurrentPage + currentPageCount
+    }
+
+    private fun shouldRefreshAfterClick(event: ClickEvent, pageSize: Int): Boolean {
+        if (event.rawSlot in 0 until pageSize) {
+            return true
+        }
+        return event.isShiftLeft || event.isShiftRight
+    }
+
+    private fun scheduleRefresh(menu: Menu, onLimitUpdate: (Menu) -> Unit) {
+        Bukkit.getScheduler().runTask(plugin, Runnable {
+            onLimitUpdate(menu)
+        })
+    }
 
     private fun logEditClickDecision(
         event: ClickEvent?,
@@ -231,6 +194,17 @@ class BannerStorageMenuController(
         logger.info(
             "[BannerStorage/Edit] clickType=${event?.type ?: "N/A"}, " +
                 "cursorHasItem=${!isEmpty(cursor)}, slotHasItem=${!isEmpty(clickedItem)}, action=$action"
+        )
+    }
+
+    private fun logDragDecision(
+        event: DragEvent?,
+        cursor: ItemStack?,
+        action: String
+    ) {
+        logger.info(
+            "[BannerStorage/Edit] dragType=${event?.type ?: "N/A"}, " +
+                "cursorHasItem=${!isEmpty(cursor)}, rawSlots=${event?.rawSlots ?: emptySet<Int>()}, action=$action"
         )
     }
 }

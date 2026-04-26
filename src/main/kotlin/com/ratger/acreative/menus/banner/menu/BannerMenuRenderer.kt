@@ -86,7 +86,8 @@ class BannerMenuRenderer(
         onCategory: (Int) -> Unit,
         onSearch: (ClickEvent) -> Unit,
         onBack: (() -> Unit)?,
-        onForward: (() -> Unit)?
+        onForward: (() -> Unit)?,
+        currentMenu: Menu? = null
     ) {
         val title = BannerTextSupport.titleWithPages(
             BannerTextSupport.galleryBaseTitle(state.authorFilterName, state.category),
@@ -98,14 +99,18 @@ class BannerMenuRenderer(
         if (onForward != null) interactive += 50
         interactive += contentSlots(pageResult.entries.size)
 
-        val menu = buildMenu(
+        val menu = currentMenu ?: buildMenu(
             title = title,
             rows = MenuRows.SIX,
             interactiveTopSlots = interactive,
             allowPlayerInventoryClicks = true,
             blockShiftClickFromPlayerInventory = true
         )
+        if (currentMenu != null) {
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, true, true)
+        }
 
+        clearTopArea(menu)
         fillFooter(menu)
         if (onBack != null) menu.setButton(48, buttonFactory.backButton { onBack() })
         if (onForward != null) menu.setButton(50, buttonFactory.forwardButton { onForward() })
@@ -129,7 +134,9 @@ class BannerMenuRenderer(
             )
         }
 
-        menu.open(player)
+        if (currentMenu == null) {
+            menu.open(player)
+        }
     }
 
     fun renderMyGallery(
@@ -145,7 +152,8 @@ class BannerMenuRenderer(
         onFilter: (Int) -> Unit,
         onCategory: (Int) -> Unit,
         onBack: () -> Unit,
-        onForward: (() -> Unit)?
+        onForward: (() -> Unit)?,
+        currentMenu: Menu? = null
     ) {
         val title = BannerTextSupport.titleWithPages(
             BannerTextSupport.myFlagsBaseTitle(state.category),
@@ -156,14 +164,18 @@ class BannerMenuRenderer(
         if (onForward != null) interactive += 50
         interactive += contentSlots(pageResult.entries.size)
 
-        val menu = buildMenu(
+        val menu = currentMenu ?: buildMenu(
             title = title,
             rows = MenuRows.SIX,
             interactiveTopSlots = interactive,
             allowPlayerInventoryClicks = true,
             blockShiftClickFromPlayerInventory = true
         )
+        if (currentMenu != null) {
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, true, true)
+        }
 
+        clearTopArea(menu)
         fillFooter(menu)
         menu.setButton(46, buttonFactory.filterButton(filterOptions, selectedFilterIndex, onFilter))
         menu.setButton(48, buttonFactory.backButton { onBack() })
@@ -185,7 +197,9 @@ class BannerMenuRenderer(
             )
         }
 
-        menu.open(player)
+        if (currentMenu == null) {
+            menu.open(player)
+        }
     }
 
     fun renderBannedPatterns(
@@ -193,7 +207,8 @@ class BannerMenuRenderer(
         pageResult: BannerPageResult<BannedPatternEntry>,
         onEntry: (BannedPatternEntry) -> Unit,
         onBack: (() -> Unit)?,
-        onForward: (() -> Unit)?
+        onForward: (() -> Unit)?,
+        currentMenu: Menu? = null
     ) {
         renderPagedModerationMenu(
             player = player,
@@ -201,7 +216,8 @@ class BannerMenuRenderer(
             entries = pageResult.entries,
             entryButton = { entry -> buttonFactory.bannedPatternButton(entry) { onEntry(entry) } },
             onBack = onBack,
-            onForward = onForward
+            onForward = onForward,
+            currentMenu = currentMenu
         )
     }
 
@@ -210,7 +226,8 @@ class BannerMenuRenderer(
         pageResult: BannerPageResult<BannedUserEntry>,
         onEntry: (BannedUserEntry) -> Unit,
         onBack: (() -> Unit)?,
-        onForward: (() -> Unit)?
+        onForward: (() -> Unit)?,
+        currentMenu: Menu? = null
     ) {
         renderPagedModerationMenu(
             player = player,
@@ -218,7 +235,8 @@ class BannerMenuRenderer(
             entries = pageResult.entries,
             entryButton = { entry -> buttonFactory.bannedUserButton(entry) { onEntry(entry) } },
             onBack = onBack,
-            onForward = onForward
+            onForward = onForward,
+            currentMenu = currentMenu
         )
     }
 
@@ -228,27 +246,34 @@ class BannerMenuRenderer(
         entries: List<T>,
         entryButton: (T) -> ru.violence.coreapi.bukkit.api.menu.button.Button,
         onBack: (() -> Unit)?,
-        onForward: (() -> Unit)?
+        onForward: (() -> Unit)?,
+        currentMenu: Menu? = null
     ) {
         val interactive = mutableSetOf<Int>()
         if (onBack != null) interactive += 48
         if (onForward != null) interactive += 50
         interactive += contentSlots(entries.size)
 
-        val menu = buildMenu(
+        val menu = currentMenu ?: buildMenu(
             title = title,
             rows = MenuRows.SIX,
             interactiveTopSlots = interactive,
             allowPlayerInventoryClicks = false,
             blockShiftClickFromPlayerInventory = false
         )
+        if (currentMenu != null) {
+            configureCurrentMenu(menu, title, MenuRows.SIX, interactive, false, false)
+        }
+        clearTopArea(menu)
         fillFooter(menu)
         if (onBack != null) menu.setButton(48, buttonFactory.backButton { onBack() })
         if (onForward != null) menu.setButton(50, buttonFactory.forwardButton { onForward() })
         entries.forEachIndexed { index, entry ->
             menu.setButton(index, entryButton(entry))
         }
-        menu.open(player)
+        if (currentMenu == null) {
+            menu.open(player)
+        }
     }
 
     private fun buildMenu(
@@ -284,6 +309,39 @@ class BannerMenuRenderer(
         for (slot in 46..52) {
             menu.setButton(slot, buttonFactory.grayFiller())
         }
+    }
+
+    private fun clearTopArea(menu: Menu) {
+        for (slot in 0 until 45) {
+            menu.setButton(slot, buttonFactory.airButton())
+        }
+    }
+
+    private fun configureCurrentMenu(
+        menu: Menu,
+        title: String,
+        rows: MenuRows,
+        interactiveTopSlots: Set<Int>,
+        allowPlayerInventoryClicks: Boolean,
+        blockShiftClickFromPlayerInventory: Boolean
+    ) {
+        menu.setTitle(parser.parse("<!i>$title"))
+        menu.setClickListener { event ->
+            if (
+                blockShiftClickFromPlayerInventory &&
+                (event.isShiftLeft || event.isShiftRight) &&
+                event.rawSlot !in (0 until rows.size)
+            ) {
+                return@setClickListener false
+            }
+
+            if (event.rawSlot in 0 until rows.size) {
+                return@setClickListener event.rawSlot in interactiveTopSlots
+            }
+
+            allowPlayerInventoryClicks
+        }
+        menu.setDragListener { event -> event.rawSlots.none { it in 0 until rows.size } }
     }
 
     private fun contentSlots(size: Int): Set<Int> = (0 until size.coerceIn(0, 45)).toSet()

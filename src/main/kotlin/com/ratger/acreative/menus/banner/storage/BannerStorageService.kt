@@ -34,6 +34,8 @@ class BannerStorageService(
         }
     }
 
+    fun normalizeEditableItem(item: ItemStack): ItemStack? = normalizer.normalizeForStorage(item)
+
     fun maxOccupiedSlotIndex(layout: Map<Int, ItemStack>): Int = layout.keys.maxOrNull() ?: -1
 
     fun currentCount(layout: Map<Int, ItemStack>): Int = layout.size

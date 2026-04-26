@@ -22,11 +22,13 @@ class BannerStorageMenuRenderer(
         limit: BannerStorageService.LimitSnapshot,
         onStoredBanner: (org.bukkit.inventory.ItemStack, ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Unit,
         onInfo: () -> Unit,
-        onModeToggle: () -> Unit,
-        onBack: (() -> Unit)?,
-        onForward: (() -> Unit)?,
-        onClose: (Player) -> Unit,
-        editClickListener: ((ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Boolean)?
+        onModeToggle: (Menu) -> Unit,
+        onBack: ((Menu) -> Unit)?,
+        onForward: ((Menu) -> Unit)?,
+        onClose: (Player, Menu) -> Unit,
+        editClickListener: ((ru.violence.coreapi.bukkit.api.menu.event.ClickEvent) -> Boolean)?,
+        editDragListener: ((ru.violence.coreapi.bukkit.api.menu.event.DragEvent) -> Boolean)?,
+        currentMenu: Menu? = null
     ) {
         val titleBase = "▍ Хранилище флагов"
         val title = BannerTextSupport.titleWithPages(titleBase, session.page, totalPages)
@@ -41,7 +43,7 @@ class BannerStorageMenuRenderer(
         if (onForward != null) interactiveTop += 50
         if (onBack != null) interactiveTop += 48
 
-        val menu = MenuUiSupport.buildMenu(
+        val menu = currentMenu ?: MenuUiSupport.buildMenu(
             plugin = plugin,
             parser = parser,
             title = "<!i>$title",
@@ -52,35 +54,58 @@ class BannerStorageMenuRenderer(
             blockShiftClickFromPlayerInventory = !session.editMode,
             onClose = { closeEvent ->
                 val closePlayer = closeEvent.player
-                onClose(closePlayer)
+                onClose(closePlayer, closeEvent.menu)
             }
         )
+        if (currentMenu != null) {
+            menu.setTitle(parser.parse("<!i>$title"))
+            menu.setClickListener { event ->
+                if (!session.editMode && (event.isShiftLeft || event.isShiftRight) && event.rawSlot >= 54) {
+                    return@setClickListener false
+                }
+
+                if (event.rawSlot in 0 until 54) {
+                    return@setClickListener event.rawSlot in interactiveTop
+                }
+
+                true
+            }
+            menu.setDragListener { event -> event.rawSlots.none { it in 0 until 54 } }
+            menu.setCloseListener { closeEvent -> onClose(closeEvent.player, closeEvent.menu) }
+        }
 
         if (session.editMode && editClickListener != null) {
             menu.setClickListener(editClickListener)
+            if (editDragListener != null) {
+                menu.setDragListener(editDragListener)
+            }
         }
 
         if (session.editMode) {
+            clearTopAreaItems(menu)
             fillEditFooter(menu)
             pageItems.forEach { (slot, item) ->
-                menu.setButton(slot, buttonFactory.storageStoredBannerButton(item) { _ -> })
+                menu.setItem(slot, item.clone())
             }
             menu.setButton(46, buttonFactory.storageEditInfoButton { onInfo() })
-            menu.setButton(49, buttonFactory.storageModeButton(true) { onModeToggle() })
+            menu.setButton(49, buttonFactory.storageModeButton(false) { onModeToggle(it.menu) })
         } else {
+            clearTopAreaButtons(menu)
             fillDefaultFooter(menu)
             pageItems.forEach { (slot, item) ->
                 menu.setButton(slot, buttonFactory.storageStoredBannerButton(item) { onStoredBanner(item, it) })
             }
             menu.setButton(46, buttonFactory.storageInfoButton { onInfo() })
-            menu.setButton(49, buttonFactory.storageModeButton(false) { onModeToggle() })
+            menu.setButton(49, buttonFactory.storageModeButton(true) { onModeToggle(it.menu) })
         }
 
-        onBack?.let { menu.setButton(48, buttonFactory.backButton { it() }) }
-        onForward?.let { menu.setButton(50, buttonFactory.forwardButton { it() }) }
+        onBack?.let { menu.setButton(48, buttonFactory.backButton { it(menu) }) }
+        onForward?.let { menu.setButton(50, buttonFactory.forwardButton { it(menu) }) }
         menu.setButton(52, buttonFactory.storageLimitButton(limit.current, limit.limitText))
 
-        menu.open(player)
+        if (currentMenu == null) {
+            menu.open(player)
+        }
     }
 
     private fun fillDefaultFooter(menu: Menu) {
@@ -94,6 +119,20 @@ class BannerStorageMenuRenderer(
     private fun fillEditFooter(menu: Menu) {
         for (slot in 45..53) {
             menu.setButton(slot, buttonFactory.whiteFillerButton())
+        }
+    }
+
+    private fun clearTopAreaButtons(menu: Menu) {
+        for (slot in 0 until 45) {
+            menu.unsetButton(slot)
+            menu.setItem(slot, null)
+        }
+    }
+
+    private fun clearTopAreaItems(menu: Menu) {
+        for (slot in 0 until 45) {
+            menu.unsetButton(slot)
+            menu.setItem(slot, null)
         }
     }
 }

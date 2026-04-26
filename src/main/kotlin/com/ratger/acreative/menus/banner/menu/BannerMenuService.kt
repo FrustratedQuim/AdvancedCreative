@@ -228,7 +228,7 @@ class BannerMenuService(
         }
     }
 
-    fun openBannedPatterns(player: Player, requestedPage: Int = 1) {
+    fun openBannedPatterns(player: Player, requestedPage: Int = 1, currentMenu: Menu? = null) {
         executor.submit {
             val pageResult = moderationService.bannedPatternsPage(requestedPage)
             runSync {
@@ -238,7 +238,7 @@ class BannerMenuService(
                 renderer.renderBannedPatterns(
                     player = player,
                     pageResult = pageResult,
-                    onEntry = { entry -> unbanPatternFromMenu(player, entry, pageResult.page) },
+                    onEntry = { entry -> unbanPatternFromMenu(player, entry, pageResult.page, currentMenu) },
                     onBack = if (pageResult.page > 1) {
                         { openBannedPatterns(player, pageResult.page - 1) }
                     } else {
@@ -248,13 +248,14 @@ class BannerMenuService(
                         { openBannedPatterns(player, pageResult.page + 1) }
                     } else {
                         null
-                    }
+                    },
+                    currentMenu = currentMenu
                 )
             }
         }
     }
 
-    fun openBannedUsers(player: Player, requestedPage: Int = 1) {
+    fun openBannedUsers(player: Player, requestedPage: Int = 1, currentMenu: Menu? = null) {
         executor.submit {
             val pageResult = moderationService.bannedUsersPage(requestedPage)
             runSync {
@@ -264,7 +265,7 @@ class BannerMenuService(
                 renderer.renderBannedUsers(
                     player = player,
                     pageResult = pageResult,
-                    onEntry = { entry -> unbanUserFromMenu(player, entry, pageResult.page) },
+                    onEntry = { entry -> unbanUserFromMenu(player, entry, pageResult.page, currentMenu) },
                     onBack = if (pageResult.page > 1) {
                         { openBannedUsers(player, pageResult.page - 1) }
                     } else {
@@ -274,7 +275,8 @@ class BannerMenuService(
                         { openBannedUsers(player, pageResult.page + 1) }
                     } else {
                         null
-                    }
+                    },
+                    currentMenu = currentMenu
                 )
             }
         }
@@ -389,7 +391,7 @@ class BannerMenuService(
         }
     }
 
-    private fun openPublicGallery(player: Player, state: BannerGalleryState) {
+    private fun openPublicGallery(player: Player, state: BannerGalleryState, currentMenu: Menu? = null) {
         sessionManager.markLastMenuAsBanner(player.uniqueId)
         sessionManager.updatePublicState(player.uniqueId, state)
         executor.submit {
@@ -459,13 +461,14 @@ class BannerMenuService(
                         }
                     } else {
                         null
-                    }
+                    },
+                    currentMenu = currentMenu
                 )
             }
         }
     }
 
-    private fun openMyGallery(player: Player, state: MyBannersState) {
+    private fun openMyGallery(player: Player, state: MyBannersState, currentMenu: Menu? = null) {
         sessionManager.markLastMenuAsBanner(player.uniqueId)
         sessionManager.updateMyState(player.uniqueId, state)
         executor.submit {
@@ -524,7 +527,8 @@ class BannerMenuService(
                         }
                     } else {
                         null
-                    }
+                    },
+                    currentMenu = currentMenu
                 )
             }
         }
@@ -601,7 +605,7 @@ class BannerMenuService(
                 publicationService.deletePublishedBanner(entry.id)
                 runSync {
                     if (player.isOnline) {
-                        openPublicGallery(player, sessionManager.publicState(player.uniqueId))
+                        openPublicGallery(player, sessionManager.publicState(player.uniqueId), event.menu)
                     }
                 }
             }
@@ -618,7 +622,7 @@ class BannerMenuService(
                 publicationService.deletePublishedBanner(entry.id)
                 runSync {
                     if (player.isOnline) {
-                        openMyGallery(player, sessionManager.myState(player.uniqueId))
+                        openMyGallery(player, sessionManager.myState(player.uniqueId), event.menu)
                     }
                 }
             }
@@ -628,7 +632,7 @@ class BannerMenuService(
         giveService.give(player, entry, event)
     }
 
-    private fun unbanPatternFromMenu(player: Player, entry: BannedPatternEntry, currentPage: Int) {
+    private fun unbanPatternFromMenu(player: Player, entry: BannedPatternEntry, currentPage: Int, currentMenu: Menu? = null) {
         executor.submit {
             moderationService.unbanPattern(entry.patternSignature)
             runSync {
@@ -636,12 +640,12 @@ class BannerMenuService(
                     return@runSync
                 }
                 hooker.messageManager.sendChat(player, MessageKey.BANNER_PATTERN_UNBANNED)
-                openBannedPatterns(player, currentPage)
+                openBannedPatterns(player, currentPage, currentMenu)
             }
         }
     }
 
-    private fun unbanUserFromMenu(player: Player, entry: BannedUserEntry, currentPage: Int) {
+    private fun unbanUserFromMenu(player: Player, entry: BannedUserEntry, currentPage: Int, currentMenu: Menu? = null) {
         executor.submit {
             moderationService.unbanUser(entry.playerUuid)
             runSync {
@@ -653,7 +657,7 @@ class BannerMenuService(
                     MessageKey.BANNER_USER_UNBANNED,
                     mapOf("player" to entry.playerName)
                 )
-                openBannedUsers(player, currentPage)
+                openBannedUsers(player, currentPage, currentMenu)
             }
         }
     }
@@ -705,18 +709,48 @@ class BannerMenuService(
         Bukkit.getScheduler().runTask(plugin, Runnable(action))
     }
 
-    private fun renderStorage(player: Player, session: BannerStorageSession) {
+    private fun renderStorage(player: Player, session: BannerStorageSession, currentMenu: Menu? = null) {
         val config = storageService.config()
+        if (session.editMode && currentMenu != null) {
+            storageController.syncPageFromMenu(session, currentMenu, config.pageSize)
+        }
         val totalPages = storageService.totalPages(player, session.layout)
         session.page = session.page.coerceIn(1, totalPages)
-        val pageItems = storageService.pageSlice(session.layout, session.page, config.pageSize)
+        val storedPageItems = storageService.pageSlice(session.layout, session.page, config.pageSize)
+        val pageItems = if (session.editMode && currentMenu != null) {
+            buildMap {
+                for (slot in 0 until config.pageSize) {
+                    val item = currentMenu.inventory.getItem(slot) ?: continue
+                    if (item.type.isAir || item.amount <= 0) continue
+                    put(slot, item.clone())
+                }
+            }
+        } else {
+            storedPageItems
+        }
         val limitSnapshot = storageService.limitSnapshot(player, session.layout)
         val editListener = if (session.editMode) {
             storageController.buildEditClickListener(
                 player = player,
                 session = session,
                 pageSize = config.pageSize,
-                onRefresh = { renderStorage(player, session) }
+                onLimitUpdate = { menu ->
+                    storageController.syncPageFromMenu(session, menu, config.pageSize)
+                    updateStorageLimitButton(menu, player, session)
+                }
+            )
+        } else {
+            null
+        }
+        val editDragListener = if (session.editMode) {
+            storageController.buildEditDragListener(
+                player = player,
+                session = session,
+                pageSize = config.pageSize,
+                onLimitUpdate = { menu ->
+                    storageController.syncPageFromMenu(session, menu, config.pageSize)
+                    updateStorageLimitButton(menu, player, session)
+                }
             )
         } else {
             null
@@ -726,9 +760,9 @@ class BannerMenuService(
             player = player,
             session = session,
             pageItems = if (session.editMode) {
-                pageItems
+                pageItems.mapValues { (_, item) -> prepareStorageEditItem(item) }
             } else {
-                pageItems.mapValues { (_, item) -> prepareStorageMenuItem(item) }
+                storedPageItems.mapValues { (_, item) -> prepareStorageMenuItem(item) }
             },
             totalPages = totalPages,
             limit = limitSnapshot,
@@ -737,41 +771,54 @@ class BannerMenuService(
                 giveService.give(player, source, event)
             },
             onInfo = {},
-                onModeToggle = {
-                    session.editMode = !session.editMode
-                    if (!session.editMode) {
-                        storageService.saveLayout(player, session.layout)
-                    }
-                    transitionStorage(session) { renderStorage(player, session) }
-                },
+            onModeToggle = { menu ->
+                if (session.editMode) {
+                    storageController.syncPageFromMenu(session, menu, config.pageSize)
+                }
+                session.editMode = !session.editMode
+                if (!session.editMode) {
+                    storageService.saveLayout(player, session.layout)
+                }
+                transitionStorage(session) { renderStorage(player, session, menu) }
+            },
             onBack = when {
                 session.page > 1 -> {
-                    {
+                    { menu ->
+                        if (session.editMode) {
+                            storageController.syncPageFromMenu(session, menu, config.pageSize)
+                        }
                         session.page -= 1
-                        session.editMode = false
                         transitionStorage(session) { renderStorage(player, session) }
                     }
                 }
-                session.openedFromMainMenu -> ({ openMainMenu(player) })
+                session.openedFromMainMenu -> ({ _: Menu -> openMainMenu(player) })
                 else -> null
             },
             onForward = if (session.page < totalPages) {
-                {
+                { menu ->
+                    if (session.editMode) {
+                        storageController.syncPageFromMenu(session, menu, config.pageSize)
+                    }
                     session.page += 1
                     transitionStorage(session) { renderStorage(player, session) }
                 }
             } else {
                 null
             },
-            onClose = onClose@{ closePlayer ->
+            onClose = onClose@{ closePlayer, menu ->
                 val trackedSession = storageSessionManager.get(closePlayer.uniqueId) ?: return@onClose
                 if (trackedSession.isInternalTransition) {
                     trackedSession.isInternalTransition = false
                     return@onClose
                 }
+                if (trackedSession.editMode) {
+                    storageController.syncPageFromMenu(trackedSession, menu, config.pageSize)
+                }
                 flushStorageSession(closePlayer, remove = true)
             },
-            editClickListener = editListener
+            editClickListener = editListener,
+            editDragListener = editDragListener,
+            currentMenu = currentMenu
         )
     }
 
@@ -784,6 +831,15 @@ class BannerMenuService(
         return decorated
     }
 
+    private fun prepareStorageEditItem(item: ItemStack): ItemStack {
+        val title = storageService.plainTitle(item) ?: BannerPatternSupport.localizedBaseName(item)
+        val decorated = item.clone()
+        decorated.editMeta { meta ->
+            meta.customName(Component.text(title, NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false))
+        }
+        return decorated
+    }
+
     private fun prepareStorageGiveItem(item: ItemStack): ItemStack {
         val title = storageService.plainTitle(item) ?: BannerPatternSupport.localizedBaseName(item)
         val decorated = item.clone().apply { amount = 1 }
@@ -791,6 +847,11 @@ class BannerMenuService(
             meta.customName(Component.text(title, NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false))
         }
         return decorated
+    }
+
+    private fun updateStorageLimitButton(menu: Menu, player: Player, session: BannerStorageSession) {
+        val limitSnapshot = storageService.limitSnapshot(player, session.layout)
+        menu.setButton(52, buttonFactory.storageLimitButton(limitSnapshot.current, limitSnapshot.limitText))
     }
 
     private fun flushStorageSession(player: Player, remove: Boolean) {
