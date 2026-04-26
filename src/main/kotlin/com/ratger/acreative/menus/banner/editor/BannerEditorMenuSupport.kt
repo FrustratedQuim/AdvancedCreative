@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
@@ -14,7 +15,7 @@ class BannerEditorMenuSupport(
     private val sessionManager: BannerEditorSessionManager,
     private val buttonFactory: MenuButtonFactory,
     private val parser: MiniMessageParser,
-    private val syncEditedBannerBack: (org.bukkit.entity.Player, BannerEditorSession) -> Unit
+    private val syncEditedBannerBack: (Player, BannerEditorSession) -> Unit
 ) {
     private val temporaryOverrideSupport = TemporaryMenuButtonOverrideSupport(hooker.tickScheduler)
 
@@ -61,6 +62,15 @@ class BannerEditorMenuSupport(
 
     fun transition(session: BannerEditorSession, action: () -> Unit) {
         session.isInternalTransition = true
+        action()
+    }
+
+    fun finishSession(player: Player, session: BannerEditorSession, action: () -> Unit) {
+        session.isInternalTransition = true
+        val closedSession = sessionManager.closeSession(player)
+        if (closedSession != null) {
+            syncEditedBannerBack(player, closedSession)
+        }
         action()
     }
 

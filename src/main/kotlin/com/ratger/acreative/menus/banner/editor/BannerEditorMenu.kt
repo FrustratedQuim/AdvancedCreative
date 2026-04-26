@@ -63,7 +63,9 @@ class BannerEditorMenu(
 
     private fun refreshEditorButtons(player: Player, session: BannerEditorSession, menu: Menu) {
         if (session.openedFromMainMenu) {
-            menu.setButton(18, buttonFactory.backButton { support.transition(session) { openMainMenu(player) } })
+            menu.setButton(18, buttonFactory.backButton {
+                support.finishSession(player, session) { openMainMenu(player) }
+            })
         }
 
         menu.setButton(4, buttonFactory.editorInsertSlotButton(session.editableBanner) { event ->
