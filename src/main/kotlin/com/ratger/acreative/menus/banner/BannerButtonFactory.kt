@@ -174,10 +174,10 @@ class BannerButtonFactory(
         lore = listOf(
             "",
             "<!i><#FFD700> ◆ <#FFE68A>Это ваши <#FFD700>личные флаги,<#FFE68A> которые",
-            "<!i>  <#FFE68A>можете видеть только вы.",
+            "<!i><b>  </b> <#FFE68A>можете видеть только вы.",
             "",
             "<!i><#FFD700> ◆ <#FFE68A>Они <#FFD700>не удаляются<#FFE68A> спустя время,",
-            "<!i>  <#FFE68A>всё ограничено лишь лимитом.",
+            "<!i><b>  </b> <#FFE68A>всё ограничено лишь лимитом.",
             ""
         ),
         action = { action() }
@@ -189,13 +189,13 @@ class BannerButtonFactory(
         lore = listOf(
             "",
             "<!i><#FFD700> ◆ <#FFE68A>Измените содержимое так, как",
-            "<!i>  <#FFD700>вам удобно<#FFE68A>, чтобы потом брать.",
+            "<!i><b>  </b> <#FFD700>вам удобно<#FFE68A>, чтобы потом брать.",
             "",
             "<!i><#FFD700> ◆ <#FFE68A>Можно вложить лишь <#FFD700>флаги,<#FFE68A> меню",
-            "<!i>  <#FFE68A>ведь предназначено для них.",
+            "<!i><b>  </b> <#FFE68A>ведь предназначено для них.",
             "",
             "<!i><#FFD700> ◆ <#FFE68A>Сохраняется лишь <#FFD700>рисунок<#FFE68A> и",
-            "<!i>  <#FFD700>название<#FFE68A> флага до <#FFD700>64 символов.",
+            "<!i><b>  </b> <#FFD700>название<#FFE68A> флага до <#FFD700>64 символов.",
             ""
         ),
         action = { action() }
@@ -210,7 +210,7 @@ class BannerButtonFactory(
         },
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы переключить"),
         itemModifier = {
-            if (editMode) {
+            if (!editMode) {
                 flags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
                 glint(true)
             } else {
@@ -322,7 +322,7 @@ class BannerButtonFactory(
         val item = ItemStack(baseMaterial, 1)
         val meta = item.itemMeta as? BannerMeta
         if (meta != null) {
-            meta.setPatterns(listOf(pattern))
+            meta.patterns = listOf(pattern)
             meta.displayName(parser.parse("<!i><#C7A300>◎ <#FFD700>${BannerTextSupport.escapeMiniMessage(displayName)}"))
             meta.lore(
                 listOf(
@@ -348,7 +348,7 @@ class BannerButtonFactory(
         val item = ItemStack(baseMaterial, 1)
         val meta = item.itemMeta as? BannerMeta
         if (meta != null) {
-            meta.setPatterns(listOf(Pattern(DyeColor.WHITE, descriptor.patternType)))
+            meta.patterns = listOf(Pattern(DyeColor.WHITE, descriptor.patternType))
             meta.displayName(parser.parse("<!i><#FFD700>${BannerTextSupport.escapeMiniMessage(descriptor.displayName)}"))
             meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
             item.itemMeta = meta
@@ -373,7 +373,7 @@ class BannerButtonFactory(
         val item = ItemStack(Material.BLACK_BANNER)
         val meta = item.itemMeta as? BannerMeta
         if (meta != null) {
-            meta.setPatterns(listOf(Pattern(DyeColor.WHITE, descriptor.patternType)))
+            meta.patterns = listOf(Pattern(DyeColor.WHITE, descriptor.patternType))
             meta.displayName(parser.parse("<!i><#FFD700>${BannerTextSupport.escapeMiniMessage(descriptor.displayName)}"))
             meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
             item.itemMeta = meta

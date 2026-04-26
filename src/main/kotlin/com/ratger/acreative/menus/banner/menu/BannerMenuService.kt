@@ -779,7 +779,7 @@ class BannerMenuService(
                 if (!session.editMode) {
                     storageService.saveLayout(player, session.layout)
                 }
-                transitionStorage(session) { renderStorage(player, session, menu) }
+                renderStorage(player, session, menu)
             },
             onBack = when {
                 session.page > 1 -> {
@@ -811,9 +811,7 @@ class BannerMenuService(
                     trackedSession.isInternalTransition = false
                     return@onClose
                 }
-                if (trackedSession.editMode) {
-                    storageController.syncPageFromMenu(trackedSession, menu, config.pageSize)
-                }
+                deactivateStorageEditMode(trackedSession, menu, config.pageSize)
                 flushStorageSession(closePlayer, remove = true)
             },
             editClickListener = editListener,
@@ -866,6 +864,14 @@ class BannerMenuService(
     private fun transitionStorage(session: BannerStorageSession, action: () -> Unit) {
         session.isInternalTransition = true
         action()
+    }
+
+    private fun deactivateStorageEditMode(session: BannerStorageSession, menu: Menu, pageSize: Int) {
+        if (!session.editMode) {
+            return
+        }
+        storageController.syncPageFromMenu(session, menu, pageSize)
+        session.editMode = false
     }
 
     fun clearApplyRecoveryContext(player: Player) {
