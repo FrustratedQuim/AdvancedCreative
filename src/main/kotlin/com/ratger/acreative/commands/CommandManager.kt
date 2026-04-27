@@ -81,6 +81,9 @@ class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompl
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String> {
         val type = PluginCommandType.fromId(command.name) ?: return emptyList()
         val handler = handlers[type] ?: return emptyList()
+        if (!handler.canUse(sender)) {
+            return emptyList()
+        }
         return handler.tabComplete(sender, args)
     }
 }

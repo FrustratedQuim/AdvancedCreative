@@ -186,7 +186,7 @@ object MessageCatalog {
         MessageKey.ERROR_LAY_IN_AIR to "<dark_red>▍ <#FF1500>Вы не можете лежать в воздухе!",
         MessageKey.ERROR_CRAWL_IN_AIR to "<dark_red>▍ <#FF1500>Вы не можете ползать в воздухе!",
         MessageKey.USAGE_SITHEAD to "<dark_red>▍ <#FF1500>Используйте /sithead toggle",
-        MessageKey.USAGE_SITHEAD_OTHER to "<dark_red>▍ <#FF1500>Используйте /sithead <цель> [игрок]",
+        MessageKey.USAGE_SITHEAD_OTHER to "<dark_red>▍ <#FF1500>Используйте /sithead <на_кого_посадить> [кого_посадить]",
         MessageKey.SITHEAD_HIDDEN_BY_ONE to "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл вас!",
         MessageKey.SITHEAD_HIDDEN_BY_ONE_TARGET to "<dark_red>▍ <#FF1500>Один из сидящих игроков скрыл %player%!",
         MessageKey.SITHEAD_HIDDEN_SELF to "<dark_red>▍ <#FF1500>Этот игрок скрыл вас от себя!",

@@ -1,77 +1,49 @@
 package com.ratger.acreative.core
 
-import org.bukkit.configuration.ConfigurationSection
+import com.ratger.acreative.commands.PluginCommandType
 import org.bukkit.entity.Player
 
 class PermissionManager(private val hooker: FunctionHooker) {
 
     data class Role(val key: String, val display: String)
 
-    private val commandToRole = mutableMapOf<String, String>()
-    private val commandToNode = mutableMapOf<String, String>()
+    private val permissionToRole = mutableMapOf<String, String>()
     private val roles = mutableMapOf<String, Role>()
-    private var messageKey: MessageKey = MessageKey.PERMISSION_REQUIRED
 
     init {
         reload()
     }
 
     fun reload() {
-        commandToRole.clear()
-        commandToNode.clear()
+        permissionToRole.clear()
         roles.clear()
 
         val root = hooker.configManager.config
-        val permissions = root.getConfigurationSection("permissions")
-
-        messageKey = MessageKey.PERMISSION_REQUIRED
-
-        val rolesSec = permissions?.getConfigurationSection("roles")
+        val rolesSec = root.getConfigurationSection("roles")
         rolesSec?.let { sec ->
             sec.getKeys(false).forEach { roleKey ->
-                val display = sec.getString("$roleKey.display") ?: roleKey
-                roles[roleKey.lowercase()] = Role(roleKey.lowercase(), display)
-            }
-        }
-
-        val commandsSec = permissions?.getConfigurationSection("commands")
-        commandsSec?.let { sec ->
-            loadCommandPermissions(sec)
-        }
-    }
-
-    private fun loadCommandPermissions(section: ConfigurationSection, prefix: String = "") {
-        section.getKeys(false).forEach { key ->
-            val commandKey = if (prefix.isEmpty()) key else "$prefix.$key"
-            when (val raw = section.get(key)) {
-                is String -> {
-                    commandToRole[commandKey.lowercase()] = raw.lowercase()
-                }
-                is ConfigurationSection -> {
-                    val role = raw.getString("role")
-                    val node = raw.getString("node")
-                    if (role != null || node != null) {
-                        role?.let { commandToRole[commandKey.lowercase()] = it.lowercase() }
-                        node?.let { commandToNode[commandKey.lowercase()] = it }
-                    } else {
-                        loadCommandPermissions(raw, commandKey)
-                    }
+                val display = sec.getString("$roleKey.display") ?: NONE_DISPLAY
+                val normalizedRoleKey = roleKey.lowercase()
+                roles[normalizedRoleKey] = Role(normalizedRoleKey, display)
+                sec.getStringList("$roleKey.permissions").forEach { permission ->
+                    permissionToRole[permission.lowercase()] = normalizedRoleKey
                 }
             }
         }
     }
 
-    fun getRequiredRoleForCommand(command: String): Role? {
-        val roleKey = commandToRole[command.lowercase()] ?: return null
+    fun getRequiredRole(permissionOrCommand: String): Role? {
+        val permissionNode = normalizePermissionKey(permissionOrCommand)
+        val roleKey = permissionToRole[permissionNode] ?: return null
         return roles[roleKey]
     }
 
-    fun sendPermissionDenied(player: Player, command: String) {
-        val role = getRequiredRoleForCommand(command)
-        if (role != null) {
+    fun sendPermissionDenied(player: Player, permissionOrCommand: String) {
+        val role = getRequiredRole(permissionOrCommand)
+        if (role != null && !role.display.equals(NONE_DISPLAY, ignoreCase = true)) {
             hooker.messageManager.sendChat(
                 player,
-                messageKey,
+                MessageKey.PERMISSION_REQUIRED,
                 variables = mapOf("role_display" to role.display)
             )
         } else {
@@ -80,6 +52,19 @@ class PermissionManager(private val hooker: FunctionHooker) {
     }
 
     fun getPermissionNodeForCommand(command: String): String {
-        return commandToNode[command.lowercase()] ?: "advancedcreative.$command"
+        return PluginCommandType.fromId(command)?.permissionNode ?: "advancedcreative.$command"
+    }
+
+    private fun normalizePermissionKey(permissionOrCommand: String): String {
+        val normalized = permissionOrCommand.lowercase()
+        return if ('.' in normalized) {
+            if (normalized.startsWith("advancedcreative.")) normalized else "advancedcreative.$normalized"
+        } else {
+            getPermissionNodeForCommand(normalized).lowercase()
+        }
+    }
+
+    private companion object {
+        const val NONE_DISPLAY = "none"
     }
 }

@@ -59,12 +59,12 @@ class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
         return if (player.hasPermission(MODERATION_PERMISSION)) {
             true
         } else {
-            hooker.permissionManager.sendPermissionDenied(player, "banner.moderation")
+            hooker.permissionManager.sendPermissionDenied(player, "decorationbanners.moderation")
             false
         }
     }
 
     private companion object {
-        const val MODERATION_PERMISSION = "advancedcreative.banner.moderation"
+        const val MODERATION_PERMISSION = "advancedcreative.decorationbanners.moderation"
     }
 }

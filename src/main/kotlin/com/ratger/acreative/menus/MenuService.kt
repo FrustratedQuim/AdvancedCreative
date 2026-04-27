@@ -73,6 +73,10 @@ import java.util.concurrent.Executors
 class MenuService(
     private val hooker: FunctionHooker
 ) {
+    private companion object {
+        const val EDIT_PERMISSION = "advancedcreative.edit"
+    }
+
     data class MemorySnapshot(
         val cachedPlayers: Int,
         val cachedItems: Int,
@@ -237,6 +241,11 @@ class MenuService(
     fun canPickupDuringItemSession(player: Player): Boolean = applyStateManager.canPickupInCurrentState(player)
 
     fun openItemEditor(player: Player) {
+        if (!player.hasPermission(EDIT_PERMISSION)) {
+            hooker.permissionManager.sendPermissionDenied(player, "edit")
+            return
+        }
+
         hooker.bannerMenuService.clearApplyRecoveryContext(player)
         val existingSession = sessionManager.getSession(player)
         if (existingSession != null) {

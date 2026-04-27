@@ -23,7 +23,8 @@ class CommandCooldownService(private val configManager: ConfigManager) {
 
     fun setCooldown(playerId: UUID, commandType: PluginCommandType) {
         pruneExpired()
-        val cooldownMillis = configManager.config.getLong("cooldowns.${commandType.cooldownKey}", 1000L)
+        val defaultCooldown = configManager.config.getLong("cooldowns.default", 500L)
+        val cooldownMillis = configManager.config.getLong("cooldowns.${commandType.cooldownKey}", defaultCooldown)
         playerCooldowns.computeIfAbsent(playerId) { mutableMapOf() }[commandType] = System.currentTimeMillis() + cooldownMillis
     }
 

@@ -9,7 +9,7 @@ import org.bukkit.entity.EntityType
 
 class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.DISGUISE) {
     private companion object {
-        val ALL_FLAGS = listOf("-self", "-noself", "-withnick", "-nonick")
+        const val EXTENDED_PERMISSION = "advancedcreative.disguise.extended"
     }
 
     override fun handle(player: Player, args: Array<out String>) {
@@ -23,7 +23,7 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
 
         return when (args.size) {
             1 -> completeDisguiseTypes(sender, args[0])
-            2, 3 -> completeFlags(args.last())
+            2, 3 -> completeFlags(sender, args.last())
             else -> emptyList()
         }
     }
@@ -33,7 +33,7 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
         val allowedTypes = EntityType.entries
             .asSequence()
             .filter { it !in blocked }
-            .filter { sender.hasPermission("advancedcreative.disguise.full") || it !in hooker.disguiseManager.restrictedEntities }
+            .filter { sender.hasPermission(EXTENDED_PERMISSION) || it !in hooker.disguiseManager.restrictedEntities }
             .map { it.name.lowercase() }
             .toMutableList()
 
@@ -41,8 +41,17 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
         return allowedTypes.filter { it.startsWith(currentArg, ignoreCase = true) }
     }
 
-    private fun completeFlags(currentArg: String): List<String> {
-        return ALL_FLAGS
+    private fun completeFlags(sender: CommandSender, currentArg: String): List<String> {
+        val availableFlags = buildList {
+            add("-self")
+            add("-noself")
+            if (sender.hasPermission("advancedcreative.disguise.nick")) {
+                add("-withnick")
+                add("-nonick")
+            }
+        }
+
+        return availableFlags
             .asSequence()
             .distinct()
             .filter { it.startsWith(currentArg, ignoreCase = true) }

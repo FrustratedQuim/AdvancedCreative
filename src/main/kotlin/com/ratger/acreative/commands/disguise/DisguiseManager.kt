@@ -1,10 +1,13 @@
 package com.ratger.acreative.commands.disguise
 
 import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.entity.data.EntityData
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityAnimation
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityHeadLook
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityMetadata
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
@@ -32,6 +35,12 @@ data class DisguiseData(
 )
 
 class DisguiseManager(private val hooker: FunctionHooker) {
+    private companion object {
+        const val EXTENDED_PERMISSION = "advancedcreative.disguise.extended"
+        const val CUSTOM_NAME_INDEX = 2
+        const val CUSTOM_NAME_VISIBLE_INDEX = 3
+    }
+
     data class CacheSnapshot(
         val disguisedPlayers: Int,
         val viewerRelations: Int,
@@ -158,14 +167,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         if (isViewerPending(viewer.uniqueId)) return false
 
         data.entity.addViewer(viewer.uniqueId)
-
-        if (data.showNick) {
-            data.entity.entityMeta.customName = getDisplayName(owner)
-            data.entity.entityMeta.isCustomNameVisible = true
-        } else {
-            data.entity.entityMeta.customName = null
-            data.entity.entityMeta.isCustomNameVisible = false
-        }
+        sendNameMetadata(viewer, data.entity.entityId, owner, data.showNick)
         data.entity.entityMeta.isGlowing = hooker.utils.isGlowing(owner)
 
         if (data.equipment.isNotEmpty()) {
@@ -219,7 +221,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             undisguisePlayer(player, true)
         }
 
-        if (!player.hasPermission("advancedcreative.disguise.full") && entityType in restrictedEntities) {
+        if (!player.hasPermission(EXTENDED_PERMISSION) && entityType in restrictedEntities) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_DISGUISE_TYPE)
             return
         }
@@ -264,13 +266,6 @@ class DisguiseManager(private val hooker: FunctionHooker) {
 
         val entity = WrapperEntity(entityType.toPacketEventsType())
         val meta = entity.entityMeta
-        if (newShowNick) {
-            meta.customName = getDisplayName(player)
-            meta.isCustomNameVisible = true
-        } else {
-            meta.customName = null
-            meta.isCustomNameVisible = false
-        }
         meta.isGlowing = hooker.utils.isGlowing(player)
 
         val data = DisguiseData(entity, entityType, newShowSelf, newShowNick, equipmentList)
@@ -431,13 +426,11 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             if (currentData.showNick) {
                 val newName = getDisplayName(player)
                 if (lastCustomName[player] != newName) {
-                    currentData.entity.entityMeta.customName = newName
-                    currentData.entity.entityMeta.isCustomNameVisible = true
                     lastCustomName[player] = newName
+                    sendNameMetadataToViewers(player, currentData, visible = true)
                 }
-            } else if (lastCustomName.remove(player) != null || currentData.entity.entityMeta.isCustomNameVisible) {
-                currentData.entity.entityMeta.customName = null
-                currentData.entity.entityMeta.isCustomNameVisible = false
+            } else {
+                lastCustomName.remove(player)
             }
             val newGlow = hooker.utils.isGlowing(player)
             if (lastGlowingState[player] != newGlow) {
@@ -484,6 +477,31 @@ class DisguiseManager(private val hooker: FunctionHooker) {
             }
         }
         tasks[player] = taskId
+    }
+
+    private fun sendNameMetadataToViewers(owner: Player, data: DisguiseData, visible: Boolean) {
+        val viewerIds = activeViewers[owner] ?: return
+        viewerIds.forEach { viewerId ->
+            val viewer = Bukkit.getPlayer(viewerId) ?: return@forEach
+            sendNameMetadata(viewer, data.entity.entityId, owner, visible)
+        }
+    }
+
+    private fun sendNameMetadata(viewer: Player, entityId: Int, owner: Player, visible: Boolean) {
+        val metadata = listOf(
+            EntityData(
+                CUSTOM_NAME_INDEX,
+                EntityDataTypes.OPTIONAL_ADV_COMPONENT,
+                Optional.ofNullable(if (visible) getDisplayName(owner) else null)
+            ),
+            EntityData(
+                CUSTOM_NAME_VISIBLE_INDEX,
+                EntityDataTypes.BOOLEAN,
+                visible
+            )
+        )
+        val packet = WrapperPlayServerEntityMetadata(entityId, metadata)
+        PacketEvents.getAPI().playerManager.sendPacket(viewer, packet)
     }
 
     private data class DisguiseFlags(

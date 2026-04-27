@@ -1,6 +1,10 @@
 package com.ratger.acreative.commands
 
-enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
+enum class PluginCommandType(
+    val id: String,
+    val cooldownKey: String = id,
+    val permissionNode: String? = "advancedcreative.$id"
+) {
     AHELP("ahelp", "help"),
     SIT("sit"),
     LAY("lay"),
@@ -23,13 +27,13 @@ enum class PluginCommandType(val id: String, val cooldownKey: String = id) {
     SLAP("slap"),
     SITHEAD("sithead"),
     ITEMDB("itemdb"),
-    BANNER("banner"),
+    BANNER("banner", permissionNode = "advancedcreative.decorationbanners"),
     DECORATIONBANNERS("decorationbanners"),
-    MYFLAGS("myflags"),
+    MYFLAGS("myflags", permissionNode = "advancedcreative.decorationbanners"),
     DECORATIONHEADS("decorationheads"),
-    BANNEREDIT("banneredit"),
+    BANNEREDIT("banneredit", permissionNode = "advancedcreative.decorationbanners"),
     EDIT("edit"),
-    APPLY("apply"),
+    APPLY("apply", permissionNode = null),
     ACREATIVE("acreative");
 
     companion object {

@@ -40,8 +40,13 @@ abstract class ExecutableCommand(
         return true
     }
 
+    fun canUse(sender: CommandSender): Boolean {
+        val player = sender as? Player ?: return false
+        return hasPermission(player)
+    }
+
     protected open fun hasPermission(player: Player): Boolean {
-        val permissionNode = hooker.permissionManager.getPermissionNodeForCommand(type.id)
+        val permissionNode = type.permissionNode ?: return true
         return player.hasPermission(permissionNode)
     }
 

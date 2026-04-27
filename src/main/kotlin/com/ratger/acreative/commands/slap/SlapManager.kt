@@ -30,7 +30,6 @@ class SlapManager(private val hooker: FunctionHooker) {
     }
 
     fun applySlap(attacker: Player, target: Player) {
-        if (target.hasPermission("advancedcreative.slap.bypass")) return
         if (cooldownPlayers.contains(target.uniqueId)) return
 
         cooldownPlayers.add(target.uniqueId)

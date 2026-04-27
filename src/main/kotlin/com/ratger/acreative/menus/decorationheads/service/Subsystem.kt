@@ -28,6 +28,10 @@ class Subsystem(
     parser: MiniMessageParser,
     buttonFactory: MenuButtonFactory
 ) {
+    private companion object {
+        const val MENU_PAGE_SIZE = 45
+    }
+
     data class MemorySnapshot(
         val dynamicEntries: List<com.ratger.acreative.menus.decorationheads.model.Entry>,
         val searchEntries: List<Pair<String, List<com.ratger.acreative.menus.decorationheads.model.Entry>>>,
@@ -76,7 +80,7 @@ class Subsystem(
         categoryRegistry = categoryRegistry,
         categoryResolver = categoryResolver,
         catalogRepository = catalogRepository,
-        menuPageSize = config.getInt("decoration-heads.menu-page-size", 45)
+        menuPageSize = MENU_PAGE_SIZE
     )
     private val recentService = RecentService(recentRepository, executor, playerRecentLimit)
     private val giveService = GiveService(

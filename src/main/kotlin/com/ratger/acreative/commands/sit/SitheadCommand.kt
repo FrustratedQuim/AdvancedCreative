@@ -16,7 +16,7 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         if (sender.hasPermission("advancedcreative.sithead.other")) {
             val completions = mutableListOf<String>()
-            if (args.size < 2) completions.add("toggle")
+            if (args.size < 2 && sender.hasPermission("advancedcreative.sithead")) completions.add("toggle")
             if (args.size < 3 && !args.contains("toggle")) {
                 completions.addAll(completeOnlinePlayers(args))
                 return completions.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
@@ -24,7 +24,7 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
             return completions
         }
 
-        return if (args.size < 2) listOf("toggle") else emptyList()
+        return if (args.size < 2 && sender.hasPermission("advancedcreative.sithead")) listOf("toggle") else emptyList()
     }
 
     private fun completeOnlinePlayers(args: Array<out String>): List<String> {

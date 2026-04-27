@@ -107,34 +107,22 @@ commands:
 permissions:
   advancedcreative.ahelp:
     description: Allows using /ahelp
-    default: true
+    default: op
   advancedcreative.itemdb:
     description: Allows using /itemdb
     default: op
-  advancedcreative.banner:
-    description: Allows using /banner
-    default: true
-  advancedcreative.banner.moderation:
-    description: Allows using /banner ban, banlist, banuser and banuserlist
-    default: op
   advancedcreative.decorationbanners:
-    description: Allows using /decorationbanners
-    default: true
-  advancedcreative.decorationbanners.moderation:
-    description: Allows moderation mode in /decorationbanners
+    description: Allows using the entire banner system including /banner, /decorationbanners, /myflags and /banneredit
     default: op
-  advancedcreative.myflags:
-    description: Allows using /myflags
-    default: true
-  advancedcreative.banner.storage_bypass:
+  advancedcreative.decorationbanners.moderation:
+    description: Allows banner moderation actions in /banner and moderation mode in /decorationbanners
+    default: op
+  advancedcreative.decorationbanners.storage_bypass:
     description: Allows infinite personal banner storage
     default: op
-  advancedcreative.banner.post_bypass:
+  advancedcreative.decorationbanners.post_bypass:
     description: Allows infinite published banner limit
     default: op
-  advancedcreative.banneredit:
-    description: Allows using /banneredit
-    default: true
   advancedcreative.sit:
     description: Allows using /sit
     default: op
@@ -192,7 +180,7 @@ permissions:
   advancedcreative.disguise:
     description: Allows using /disguise
     default: op
-  advancedcreative.disguise.full:
+  advancedcreative.disguise.extended:
     description: Allows using /disguise & all types
     default: op
   advancedcreative.disguise.nick:
@@ -213,15 +201,9 @@ permissions:
   advancedcreative.slap:
     description: Allows using /slap
     default: op
-  advancedcreative.slap.bypass:
-    description: Prevents slapping the player
-    default: op
 
   advancedcreative.edit:
     description: Allows using /edit
-    default: op
-  advancedcreative.apply:
-    description: Allows using /apply
     default: op
   advancedcreative.decorationheads:
     description: Allows using /decorationheads

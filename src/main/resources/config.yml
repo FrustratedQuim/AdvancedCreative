@@ -1,66 +1,79 @@
 cooldowns: # В миллисекундах
+  default:    500
   help:       150
   glide:      150
   gravity:    150
   resize:     150
   strength:   150
   health:     150
-  hide:       500
-  sit:        500
-  sithead:    500
-  lay:        500
-  crawl:      500
-  glow:       500
-  disguise:   500
-  effects:    500
-  jar:        500
-  grab:       500
-  slap:       500
-  itemdb:     500
-  banner:     500
-  decorationbanners: 500
-  myflags:    500
   banneredit: 300
-  decorationheads: 500
-  acreative: 500
   edit:       300
-  id:         500
   freeze:     3500
   sneeze:     5000
   spit:       5000
   piss:       30000
   hideState:  1800000 # 30 минут
 
-permissions:
-  message-key: permission-required
-  roles:
-    rise:
-      display: "<#24b2b2><b>ʀɪѕᴇ"
-    flare:
-      display: "<#21d185><b>ꜰʟᴀʀᴇ"
-    shine:
-      display: "<#9466ff><b>ѕʜɪɴᴇ"
-    spark:
-      display: "<#cd56fc><b>ѕᴘᴀʀᴋ"
-    sunny:
-      display: "<#ff7e33><b>ѕᴜɴɴʏ"
-    horizon:
-      display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ"
-  commands:
-    sneeze: rise
-    glide: rise
-    gravity: rise
-    edit: rise
-    resize: flare
-    freeze: flare
-    "banner.moderation": flare
-    "decorationbanners.moderation": flare
-    glow: spark
-    disguise: spark
-    "disguise.nick": spark
-    sithead: sunny
-    spit: horizon
-    piss: horizon
+roles:
+  player:
+    display: "none"
+    permissions:
+      - "advancedcreative.ahelp"
+      - "advancedcreative.itemdb"
+      - "advancedcreative.sit"
+      - "advancedcreative.lay"
+      - "advancedcreative.crawl"
+      - "advancedcreative.hide"
+      - "advancedcreative.strength"
+      - "advancedcreative.health"
+      - "advancedcreative.effects"
+      - "advancedcreative.decorationheads"
+      - "advancedcreative.decorationbanners"
+  rise:
+    display: "<#24b2b2><b>ʀɪѕᴇ"
+    permissions:
+      - "advancedcreative.glide"
+      - "advancedcreative.gravity"
+      - "advancedcreative.sneeze"
+      - "advancedcreative.edit"
+  flare:
+    display: "<#21d185><b>ꜰʟᴀʀᴇ"
+    permissions:
+      - "advancedcreative.freeze"
+      - "advancedcreative.resize"
+  shine:
+    display: "<#9466ff><b>ѕʜɪɴᴇ"
+    permissions: []
+  spark:
+    display: "<#cd56fc><b>ѕᴘᴀʀᴋ"
+    permissions:
+      - "advancedcreative.glow"
+      - "advancedcreative.disguise"
+  sunny:
+    display: "<#ff7e33><b>ѕᴜɴɴʏ"
+    permissions:
+      - "advancedcreative.sithead"
+  horizon:
+    display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ"
+    permissions:
+      - "advancedcreative.spit"
+      - "advancedcreative.piss"
+      - "advancedcreative.disguise.nick"
+      - "advancedcreative.disguise.extended"
+  op:
+    display: "none"
+    permissions:
+      - "advancedcreative.acreative"
+      - "advancedcreative.sithead.other"
+      - "advancedcreative.freeze.other"
+      - "advancedcreative.effects.other"
+      - "advancedcreative.hide.bypass"
+      - "advancedcreative.decorationbanners.storage_bypass"
+      - "advancedcreative.decorationbanners.post_bypass"
+      - "advancedcreative.decorationbanners.moderation"
+      - "advancedcreative.grab"
+      - "advancedcreative.slap"
+      - "advancedcreative.jar"
 
 decoration-heads:
   api:
@@ -74,7 +87,6 @@ decoration-heads:
   head-cache-size: 4096
   search-query-cache-size: 128
   player-recent-limit: 45
-  menu-page-size: 45
   categories:
     new:
       display: "Все"
@@ -131,7 +143,7 @@ banner:
       "group.don_spark_perms": 90
       "group.don_sunny_perms": 90
       "group.don_horizon_perms": 180
-      "advancedcreative.banner.post_bypass": -1
+      "advancedcreative.decorationbanners.post_bypass": -1
   storage:
     default-limit: 18
     min-pages: 10
@@ -143,7 +155,7 @@ banner:
       "group.don_spark_perms": 90
       "group.don_sunny_perms": 90
       "group.don_horizon_perms": 180
-      "advancedcreative.banner.storage_bypass": -1
+      "advancedcreative.decorationbanners.storage_bypass": -1
 
 blocked-disguises:
   - ARROW
@@ -194,10 +206,16 @@ blocked-disguises:
   - MINECART
   - CHEST_MINECART
   - FURNACE_MINECART
+  - COMMAND_BLOCK_MINECART
   - TNT_MINECART
   - HOPPER_MINECART
   - SPAWNER_MINECART
   - BREEZE_WIND_CHARGE
+  - WIND_CHARGE
+  - WITHER_SKULL
+  - SMALL_FIREBALL
+  - SHULKER_BULLET
+  - DRAGON_FIREBALL
 
 string-to-numeric-ids:
   AIR: 0:0
