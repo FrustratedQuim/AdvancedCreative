@@ -55,7 +55,7 @@ class EntityManager(
         val entity = WrapperEntity(npcUUID, EntityTypes.PLAYER)
         val playerMeta = entity.entityMeta as PlayerMeta
 
-        playerMeta.pose = EntityPose.SLEEPING
+        EntityLibPoseCompatibility.setPose(playerMeta, EntityPose.SLEEPING)
         playerMeta.isGlowing = isGlowing
         player.getClientOption(ClientOption.SKIN_PARTS).let { clientOption ->
             playerMeta.isCapeEnabled = clientOption.hasCapeEnabled()

@@ -64,7 +64,6 @@ object PaintToolCatalog {
     )
 
     private val byId = tools.associateBy { it.id }
-    private val bySlot = tools.associateBy { it.slot }
 
     fun buildLayout(toolKey: NamespacedKey, modeKey: NamespacedKey): Array<ItemStack?> {
         val contents = arrayOfNulls<ItemStack>(36)
@@ -73,8 +72,6 @@ object PaintToolCatalog {
         }
         return contents
     }
-
-    fun isPaintTool(slot: Int): Boolean = bySlot.containsKey(slot)
 
     fun resolve(item: ItemStack?, toolKey: NamespacedKey): PaintToolDefinition? {
         val meta = item?.itemMeta ?: return null
