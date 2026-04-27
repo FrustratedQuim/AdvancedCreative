@@ -71,6 +71,7 @@ roles:
       - "advancedcreative.decorationbanners.storage_bypass"
       - "advancedcreative.decorationbanners.post_bypass"
       - "advancedcreative.decorationbanners.moderation"
+      - "advancedcreative.paint"
       - "advancedcreative.grab"
       - "advancedcreative.slap"
       - "advancedcreative.jar"

@@ -17,6 +17,7 @@ import com.ratger.acreative.commands.hide.HideManager
 import com.ratger.acreative.commands.itemdb.ItemdbManager
 import com.ratger.acreative.commands.jar.JarManager
 import com.ratger.acreative.commands.lay.LayManager
+import com.ratger.acreative.commands.paint.PaintManager
 import com.ratger.acreative.commands.piss.PissManager
 import com.ratger.acreative.commands.resize.ResizeManager
 import com.ratger.acreative.commands.sit.SitManager
@@ -81,6 +82,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var effectsManager: EffectsManager
         private set
+    lateinit var paintManager: PaintManager
+        private set
     lateinit var grabManager: GrabManager
         private set
     lateinit var jarManager: JarManager
@@ -122,6 +125,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     fun pissManagerOrNull(): PissManager? = if (this::pissManager.isInitialized) pissManager else null
     fun disguiseManagerOrNull(): DisguiseManager? = if (this::disguiseManager.isInitialized) disguiseManager else null
     fun effectsManagerOrNull(): EffectsManager? = if (this::effectsManager.isInitialized) effectsManager else null
+    fun paintManagerOrNull(): PaintManager? = if (this::paintManager.isInitialized) paintManager else null
     fun slapManagerOrNull(): SlapManager? = if (this::slapManager.isInitialized) slapManager else null
     fun grabManagerOrNull(): GrabManager? = if (this::grabManager.isInitialized) grabManager else null
     fun jarManagerOrNull(): JarManager? = if (this::jarManager.isInitialized) jarManager else null
@@ -158,6 +162,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         pissManager = PissManager(this)
         disguiseManager = DisguiseManager(this)
         effectsManager = EffectsManager(this)
+        paintManager = PaintManager(this)
         grabManager = GrabManager(this)
         jarManager = JarManager(this)
         slapManager = SlapManager(this)
@@ -176,6 +181,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.PISSING) { pissManager.stopPiss(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.LAYING) { layManager.unlayPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.SITTING) { sitManager.unsitPlayer(it) }
+        playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.PAINTING) { paintManager.stopPainting(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GRABBING) { grabManager.releaseForPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.GRABBED) { grabManager.releaseForPlayer(it) }
         playerStateManager.registerDeactivator(PlayerStateManager.PlayerStateType.JARRED) { jarManager.releaseForPlayer(it) }
@@ -216,6 +222,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
             utils.stopAllPiss()
             utils.stopAllDisguises()
             utils.stopAllCustomEffects()
+            utils.stopAllPaints()
             utils.stopAllGrabs()
             utils.stopAllJars()
             utils.stopAllSlaps()

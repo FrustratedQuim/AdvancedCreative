@@ -73,6 +73,8 @@ enum class MessageKey {
     SUCCESS_DISGUISE,
     SUCCESS_DISGUISE_REMOVED,
     USAGE_EFFECTS,
+    USAGE_PAINT,
+    ERROR_PAINT_MAP_MISSING,
     USAGE_JAR,
     USAGE_GRAB,
     ERROR_EFFECT_UNKNOWN,
@@ -89,6 +91,8 @@ enum class MessageKey {
     SUCCESS_EFFECT_REMOVED,
     SUCCESS_EFFECTS_CLEARED,
     SUCCESS_EFFECT_REMOVED_TARGET,
+    INFO_PAINT_ON,
+    INFO_PAINT_OFF,
     INFO_GRAB_STARTED,
     INFO_JAR_ITEM_GIVEN,
     INFO_JAR_APPLIED,
@@ -157,6 +161,7 @@ object MessageCatalog {
             <#FFE68A>/strength <значение> <#EDC800>- <#FFF3E0>Установить силу удара
             <#FFE68A>/health <значение> <#EDC800>- <#FFF3E0>Установить максимальное здоровье
             <#FFE68A>/effects <эффект> [уровень] <#EDC800>- <#FFF3E0>Наложить эффект зелья
+            <#FFE68A>/paint <#EDC800>- <#FFF3E0>Открыть режим рисования
             <#FFE68A>/jar <игрок> [-const] <#EDC800>- <#FFF3E0>Выдать банку для поимки
             <#FFE68A>/sneeze <#EDC800>- <#FFF3E0>Чихнуть, вот это да
             <#FFE68A>/glide <#EDC800>- <#FFF3E0>Включить парение без элитр
@@ -228,6 +233,8 @@ object MessageCatalog {
         MessageKey.SUCCESS_DISGUISE to "<dark_green>▍ <#00FF40>Вы успешно превратились!",
         MessageKey.SUCCESS_DISGUISE_REMOVED to "<dark_green>▍ <#00FF40>Ваш облик восстановлен.",
         MessageKey.USAGE_EFFECTS to "<dark_red>▍ <#FF1500>Используйте /effects <эффект> [уровень]",
+        MessageKey.USAGE_PAINT to "<dark_red>▍ <#FF1500>Используйте /paint",
+        MessageKey.ERROR_PAINT_MAP_MISSING to "<dark_red>▍ <#FF1500>Не удалось открыть режим рисования: %map% не найдена или недоступна.",
         MessageKey.USAGE_JAR to "<dark_red>▍ <#FF1500>Используйте /jar <игрок>",
         MessageKey.USAGE_GRAB to "<dark_red>▍ <#FF1500>Используйте /grab <игрок>",
         MessageKey.ERROR_EFFECT_UNKNOWN to "<dark_red>▍ <#FF1500>Неизвестный эффект!",
@@ -244,6 +251,8 @@ object MessageCatalog {
         MessageKey.SUCCESS_EFFECT_REMOVED to "<dark_red>▍ <#FF1500>Эффект снят.",
         MessageKey.SUCCESS_EFFECTS_CLEARED to "<dark_red>▍ <#FF1500>Все эффекты сняты.",
         MessageKey.SUCCESS_EFFECT_REMOVED_TARGET to "<dark_red>▍ <#FF1500>Эффект снят с %player%.",
+        MessageKey.INFO_PAINT_ON to "<dark_green>▍ <#00FF40>Режим рисования включён.",
+        MessageKey.INFO_PAINT_OFF to "<dark_red>▍ <#FF1500>Режим рисования отключён.",
         MessageKey.INFO_GRAB_STARTED to "<dark_green>▍ <#00FF40>Вы схватили %target%.",
         MessageKey.INFO_JAR_ITEM_GIVEN to "<dark_green>▍ <#00FF40>Вы получили банку для %target%.",
         MessageKey.INFO_JAR_APPLIED to "<dark_green>▍ <#00FF40>%target% помещён в банку.",

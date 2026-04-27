@@ -22,6 +22,7 @@ enum class PluginCommandType(
     PISS("piss"),
     DISGUISE("disguise"),
     EFFECTS("effects"),
+    PAINT("paint"),
     JAR("jar"),
     GRAB("grab"),
     SLAP("slap"),

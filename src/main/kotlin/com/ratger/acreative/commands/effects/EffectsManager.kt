@@ -121,8 +121,12 @@ class EffectsManager(private val hooker: FunctionHooker) {
     }
 
     private fun applyEffectToPlayer(player: Player, effectType: PotionEffectType, level: Int) {
-        player.removePotionEffect(effectType)
-        player.addPotionEffect(PotionEffect(effectType, 20 * 20, level - 1, false, false, false))
+        applyOrRefreshEffect(
+            player = player,
+            effectType = effectType,
+            durationTicks = COMMAND_EFFECT_DURATION_TICKS,
+            amplifier = level - 1
+        )
     }
 
     private fun startEffectTask(player: Player, effectType: PotionEffectType, level: Int) {
@@ -171,16 +175,11 @@ class EffectsManager(private val hooker: FunctionHooker) {
     ) {
         val ownersByEffect = internalEffectOwners.computeIfAbsent(player.uniqueId) { mutableMapOf() }
         ownersByEffect.computeIfAbsent(effectType) { mutableSetOf() }.add(owner)
-        player.removePotionEffect(effectType)
-        player.addPotionEffect(
-            PotionEffect(
-                effectType,
-                durationTicks.coerceAtLeast(1),
-                amplifier.coerceAtLeast(0),
-                false,
-                false,
-                false
-            )
+        applyOrRefreshEffect(
+            player = player,
+            effectType = effectType,
+            durationTicks = durationTicks.coerceAtLeast(1),
+            amplifier = amplifier.coerceAtLeast(0)
         )
     }
 
@@ -203,9 +202,39 @@ class EffectsManager(private val hooker: FunctionHooker) {
         player.removePotionEffect(effectType)
     }
 
+    private fun applyOrRefreshEffect(
+        player: Player,
+        effectType: PotionEffectType,
+        durationTicks: Int,
+        amplifier: Int
+    ) {
+        val current = player.getPotionEffect(effectType)
+        val shouldRefresh = current == null ||
+            current.amplifier != amplifier ||
+            current.duration <= EFFECT_REFRESH_THRESHOLD_TICKS
+
+        if (!shouldRefresh) return
+
+        player.addPotionEffect(
+            PotionEffect(
+                effectType,
+                durationTicks,
+                amplifier,
+                false,
+                false,
+                false
+            )
+        )
+    }
+
     fun cacheSnapshot(): CacheSnapshot = CacheSnapshot(
         activeEffects = activeEffects.values.sumOf { it.size },
         scheduledTasks = effectTasks.values.sumOf { it.size },
         internalOwners = internalEffectOwners.values.sumOf { byEffect -> byEffect.values.sumOf { it.size } }
     )
+
+    private companion object {
+        private const val COMMAND_EFFECT_DURATION_TICKS = 20 * 20
+        private const val EFFECT_REFRESH_THRESHOLD_TICKS = 20 * 10
+    }
 }

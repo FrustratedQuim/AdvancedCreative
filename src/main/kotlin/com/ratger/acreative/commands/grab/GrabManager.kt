@@ -27,7 +27,9 @@ class GrabManager(private val hooker: FunctionHooker) {
         val targetId: UUID,
         var distance: Double,
         val targetFlightState: PlayerFlightState,
-        val taskId: Int
+        val taskId: Int,
+        var darknessCooldownTicks: Int = 0,
+        var darknessApplied: Boolean = false
     )
 
     private val sessionByHolder = mutableMapOf<UUID, GrabSession>()
@@ -229,7 +231,7 @@ class GrabManager(private val hooker: FunctionHooker) {
             }
 
             updateTargetVelocity(liveHolder, liveTarget, session.distance)
-            updateBlindness(liveHolder, liveTarget)
+            updateBlindness(liveHolder, liveTarget, session)
 
             liveTarget.allowFlight = true
             liveTarget.isFlying = true
@@ -320,19 +322,27 @@ class GrabManager(private val hooker: FunctionHooker) {
         target.setRotation(yaw, pitch)
     }
 
-    private fun updateBlindness(holder: Player, target: Player) {
+    private fun updateBlindness(holder: Player, target: Player, session: GrabSession) {
         val distance = holder.location.distance(target.location)
         if (distance <= DARKNESS_DISTANCE) {
             faceTargetToHolderHead(target, holder)
-            hooker.effectsManager.applyInternalEffect(
-                GRAB_EFFECT_OWNER,
-                target,
-                PotionEffectType.DARKNESS,
-                DARKNESS_DURATION_TICKS,
-                0
-            )
+            if (!session.darknessApplied || session.darknessCooldownTicks <= 0 || !target.hasPotionEffect(PotionEffectType.DARKNESS)) {
+                hooker.effectsManager.applyInternalEffect(
+                    GRAB_EFFECT_OWNER,
+                    target,
+                    PotionEffectType.DARKNESS,
+                    DARKNESS_DURATION_TICKS,
+                    0
+                )
+                session.darknessApplied = true
+                session.darknessCooldownTicks = DARKNESS_REFRESH_TICKS
+            } else {
+                session.darknessCooldownTicks--
+            }
             return
         }
+        session.darknessCooldownTicks = 0
+        session.darknessApplied = false
         hooker.effectsManager.removeInternalEffect(GRAB_EFFECT_OWNER, target, PotionEffectType.DARKNESS)
     }
 
@@ -361,7 +371,8 @@ class GrabManager(private val hooker: FunctionHooker) {
         private const val HARD_MAX_VELOCITY = 4.2
         private const val DELTA_EPSILON_SQUARED = 0.0009
         private const val DARKNESS_DISTANCE = 5.0
-        private const val DARKNESS_DURATION_TICKS = 40
+        private const val DARKNESS_DURATION_TICKS = 200
+        private const val DARKNESS_REFRESH_TICKS = 20
         private const val PARTICLE_PERIOD_TICKS = 2
         private const val GRAB_EFFECT_OWNER = "grab"
     }

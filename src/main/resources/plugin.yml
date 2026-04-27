@@ -63,6 +63,9 @@ commands:
   effects:
     description: Applies an effect to player
     usage: /effects <effect> [level]
+  paint:
+    description: Toggles personal paint mode
+    usage: /paint
   jar:
     description: Gives a jar item for placing a jailed player
     usage: /jar <player> [-const]
@@ -188,6 +191,9 @@ permissions:
     default: op
   advancedcreative.effects:
     description: Allows using /effects
+    default: op
+  advancedcreative.paint:
+    description: Allows using /paint
     default: op
   advancedcreative.effects.other:
     description: Allows using /effects & target

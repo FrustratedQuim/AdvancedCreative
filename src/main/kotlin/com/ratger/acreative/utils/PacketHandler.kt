@@ -39,6 +39,16 @@ class PacketHandler(private val hooker: FunctionHooker) {
 
     private fun handleInteractPacket(event: PacketReceiveEvent, player: Player) {
         val packet = WrapperPlayClientInteractEntity(event)
+        val paintManager = hooker.paintManagerOrNull()
+        if (paintManager?.handleFrameInteraction(packet.entityId) == true) {
+            event.isCancelled = true
+            if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
+                hooker.tickScheduler.runNow {
+                    paintManager.handleFrameUse(player, packet.entityId)
+                }
+            }
+            return
+        }
         if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
 
         val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
