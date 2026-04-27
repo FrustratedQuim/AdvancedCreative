@@ -31,6 +31,7 @@ class PacketHandler(private val hooker: FunctionHooker) {
     }
 
     private fun handleAnimationPacket(player: Player) {
+        if (hooker.paintManagerOrNull()?.handleSwing(player) == true) return
         if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
         hooker.tickScheduler.runNow {
             hooker.disguiseManager.sendSwingAnimation(player)

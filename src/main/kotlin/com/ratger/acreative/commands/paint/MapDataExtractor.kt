@@ -1,10 +1,12 @@
 package com.ratger.acreative.commands.paint
 
 import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.level.saveddata.maps.MapId
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.craftbukkit.CraftWorld
+import java.awt.Color
 
 object MapDataExtractor {
 
@@ -41,7 +43,7 @@ object MapDataExtractor {
         val mapView = Bukkit.createMap(world)
         runCatching { mapView.isTrackingPosition = false }
         runCatching { mapView.isLocked = true }
-        return fill(mapView.id, PaintPalette.WHITE.mapColor) ?: extract(mapView.id)
+        return fill(mapView.id, MapColorMatcher.match(255, 255, 255)) ?: extract(mapView.id)
     }
 
     fun extract(mapId: Int): Snapshot? {
@@ -88,7 +90,33 @@ object MapDataExtractor {
         return extract(targetMapId)
     }
 
-    fun describeMissing(mapId: Int): String = "map id $mapId"
+    fun colorAt(mapId: Int, x: Int, y: Int): Byte? {
+        if (x !in 0 until MAP_SIZE || y !in 0 until MAP_SIZE) return null
+        val mapView = Bukkit.getMap(mapId) ?: return null
+        val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null
+        val data = serverLevel(world).getMapData(MapId(mapId)) ?: return null
+        return data.colors[y * MAP_SIZE + x]
+    }
+
+    fun setPixels(mapId: Int, points: Collection<Pair<Int, Int>>, color: Byte): Snapshot? {
+        if (points.isEmpty()) return extract(mapId)
+        val mapView = Bukkit.getMap(mapId) ?: return null
+        val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null
+        val data = serverLevel(world).getMapData(MapId(mapId)) ?: return null
+
+        points.forEach { (x, y) ->
+            if (x in 0 until MAP_SIZE && y in 0 until MAP_SIZE) {
+                data.setColor(x, y, color)
+            }
+        }
+
+        return extract(mapId)
+    }
+
+    fun resolvePaletteColor(color: Byte): Color {
+        val packedId = color.toInt() and 0xFF
+        return Color(MapColor.getColorFromPackedId(packedId), true)
+    }
 
     private fun serverLevel(world: World): ServerLevel = (world as CraftWorld).handle
 

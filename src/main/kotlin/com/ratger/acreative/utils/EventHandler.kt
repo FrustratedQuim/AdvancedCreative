@@ -122,6 +122,9 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (hooker.paintManager.isPainting(player)) {
+            if (event.hand == EquipmentSlot.HAND) {
+                hooker.paintManager.handleInteract(player)
+            }
             event.isCancelled = true
             return
         }
@@ -377,6 +380,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (hooker.paintManager.isPainting(event.player)) {
+            hooker.paintManager.handleInteract(event.player)
             event.isCancelled = true
             return
         }
@@ -414,6 +418,11 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (target != null && damagerPlayer != null && hooker.jarManager.handleJarredAttack(damagerPlayer, target)) {
+            event.isCancelled = true
+            return
+        }
+
+        if (directDamager != null && hooker.paintManager.isPainting(directDamager)) {
             event.isCancelled = true
             return
         }
