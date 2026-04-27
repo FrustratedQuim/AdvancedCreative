@@ -6,6 +6,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 object MapColorMatcher {
 
+    const val TRANSPARENT_COLOR_ID: Byte = 0
+
     private val palette = Array(256) { packedId ->
         Color(MapColor.getColorFromPackedId(packedId), true)
     }
@@ -54,6 +56,5 @@ object MapColorMatcher {
     }
 
     private const val MIN_VISIBLE_ALPHA = 128
-    private const val TRANSPARENT_COLOR_ID: Byte = 0
     private const val RGB_MASK = 0xFFFFFF
 }

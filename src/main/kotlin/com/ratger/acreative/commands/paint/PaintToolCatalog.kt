@@ -4,11 +4,11 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
 import net.kyori.adventure.text.format.TextDecoration
+import net.minecraft.world.level.material.MapColor
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
-import java.awt.Color
 
 enum class PaintToolMode {
     COLOR_BRUSH,
@@ -106,9 +106,31 @@ object PaintToolCatalog {
             ),
             lore = listOf(loreLine),
             brushHex = hexValue,
-            mapColor = MapColorMatcher.match(Color.decode(hexValue))
+            mapColor = packedBaseColor(resolveBaseBrushColor(material))
         )
     }
+
+    private fun resolveBaseBrushColor(material: Material): MapColor = when (material) {
+        Material.WHITE_DYE -> MapColor.SNOW
+        Material.ORANGE_DYE -> MapColor.COLOR_ORANGE
+        Material.MAGENTA_DYE -> MapColor.COLOR_MAGENTA
+        Material.LIGHT_BLUE_DYE -> MapColor.COLOR_LIGHT_BLUE
+        Material.YELLOW_DYE -> MapColor.COLOR_YELLOW
+        Material.LIME_DYE -> MapColor.COLOR_LIGHT_GREEN
+        Material.PINK_DYE -> MapColor.COLOR_PINK
+        Material.GRAY_DYE -> MapColor.COLOR_GRAY
+        Material.LIGHT_GRAY_DYE -> MapColor.COLOR_LIGHT_GRAY
+        Material.CYAN_DYE -> MapColor.COLOR_CYAN
+        Material.PURPLE_DYE -> MapColor.COLOR_PURPLE
+        Material.BLUE_DYE -> MapColor.COLOR_BLUE
+        Material.BROWN_DYE -> MapColor.COLOR_BROWN
+        Material.GREEN_DYE -> MapColor.COLOR_GREEN
+        Material.RED_DYE -> MapColor.COLOR_RED
+        Material.BLACK_DYE -> MapColor.COLOR_BLACK
+        else -> error("Unknown material: $material")
+    }
+
+    private fun packedBaseColor(color: MapColor): Byte = color.getPackedId(MapColor.Brightness.NORMAL)
 
     private fun specialBrush(): PaintToolDefinition {
         val hexValue = "#FFFFFF"
@@ -139,7 +161,8 @@ object PaintToolCatalog {
                     .append(Component.text(" Вырезать", hex("#FFD700")))
             ),
             lore = listOf(loreLine),
-            itemModel = "minecraft:shears"
+            itemModel = "minecraft:shears",
+            mapColor = MapColorMatcher.TRANSPARENT_COLOR_ID
         )
     }
 

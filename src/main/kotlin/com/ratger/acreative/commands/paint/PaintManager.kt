@@ -76,9 +76,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             return true
         }
         val tool = resolveTool(player.inventory.itemInMainHand) ?: return true
-        if (tool.mode == PaintToolMode.COLOR_BRUSH) {
-            commitCurrentLookPixel(player, session, tool)
-        }
+        commitCurrentLookPixel(player, session, tool)
         return true
     }
 
@@ -98,9 +96,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     fun handleInteract(player: Player): Boolean {
         val session = sessions[player.uniqueId] ?: return false
         val tool = resolveTool(player.inventory.itemInMainHand) ?: return true
-        if (tool.mode == PaintToolMode.COLOR_BRUSH) {
-            commitCurrentLookPixel(player, session, tool)
-        }
+        commitCurrentLookPixel(player, session, tool)
         return true
     }
 
@@ -374,10 +370,9 @@ class PaintManager(private val hooker: FunctionHooker) {
     private fun commitCurrentLookPixel(player: Player, session: PaintSession, tool: PaintToolDefinition) {
         val now = System.currentTimeMillis()
         if (now - session.lastUseAtMillis <= CLICK_DEBOUNCE_MILLIS) return
-        session.lastUseAtMillis = now
-
         val hit = resolveHitPixel(player, session) ?: return
-        val brushColor = tool.mapColor ?: return
+        val brushColor = resolveStrokeColor(tool) ?: return
+        session.lastUseAtMillis = now
         val strokePoints = resolveStrokePoints(session, hit, brushColor, now)
         if (strokePoints.isEmpty()) return
 
@@ -399,7 +394,8 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun updatePreview(player: Player, session: PaintSession) {
         val tool = resolveTool(player.inventory.itemInMainHand)
-        if (tool?.mode != PaintToolMode.COLOR_BRUSH) {
+        val brushColor = tool?.let(::resolveStrokeColor)
+        if (brushColor == null) {
             clearStrokeState(session)
             restorePreviewIfNeeded(player, session)
             return
@@ -412,10 +408,6 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
-        val brushColor = tool.mapColor ?: run {
-            restorePreviewIfNeeded(player, session)
-            return
-        }
         val actualColor = resolveActualColor(session, hit.x, hit.y) ?: run {
             restorePreviewIfNeeded(player, session)
             return
@@ -563,21 +555,32 @@ class PaintManager(private val hooker: FunctionHooker) {
         val direction = player.eyeLocation.direction.clone().normalize()
         val planePoint = resolveRenderPlaneCenter(session).toVector()
         val planeNormal = Vector(session.frameDirection.normalX, 0.0, session.frameDirection.normalZ)
-        val denominator = direction.dot(planeNormal)
+        val facingDot = direction.dot(planeNormal.clone().multiply(-1.0))
+        if (facingDot <= MIN_CANVAS_FACING_DOT) return null
+
+        val projectedDirection = if (facingDot >= 0.0) {
+            direction
+        } else {
+            // Preserve sideways/up-down aim, but mirror the depth component back toward the canvas.
+            direction.clone().subtract(planeNormal.clone().multiply(2.0 * direction.dot(planeNormal))).normalize()
+        }
+
+        val denominator = projectedDirection.dot(planeNormal)
         if (abs(denominator) <= PLANE_EPSILON) return null
 
         val t = planePoint.clone().subtract(origin).dot(planeNormal) / denominator
         if (t <= 0.0) return null
 
-        val hit = origin.clone().add(direction.multiply(t))
+        val hit = origin.clone().add(projectedDirection.multiply(t))
         val relative = hit.clone().subtract(planePoint)
         val horizontal = relative.x * session.frameDirection.rightAxisX + relative.z * session.frameDirection.rightAxisZ
         val vertical = relative.y
         val half = FRAME_RENDER_SIZE / 2.0
-        if (horizontal < -half || horizontal > half || vertical < -half || vertical > half) return null
+        val clampedHorizontal = horizontal.coerceIn(-half, half)
+        val clampedVertical = vertical.coerceIn(-half, half)
 
-        val pixelX = floor(((horizontal + half) / FRAME_RENDER_SIZE) * MAP_WIDTH).toInt().coerceIn(0, MAP_WIDTH - 1)
-        val pixelY = floor(((half - vertical) / FRAME_RENDER_SIZE) * MAP_HEIGHT).toInt().coerceIn(0, MAP_HEIGHT - 1)
+        val pixelX = floor(((clampedHorizontal + half) / FRAME_RENDER_SIZE) * MAP_WIDTH).toInt().coerceIn(0, MAP_WIDTH - 1)
+        val pixelY = floor(((half - clampedVertical) / FRAME_RENDER_SIZE) * MAP_HEIGHT).toInt().coerceIn(0, MAP_HEIGHT - 1)
         return PaintPixelHit(pixelX, pixelY)
     }
 
@@ -632,6 +635,12 @@ class PaintManager(private val hooker: FunctionHooker) {
         return MapItemSupport.mapId(item)
     }
 
+    private fun resolveStrokeColor(tool: PaintToolDefinition): Byte? = when (tool.mode) {
+        PaintToolMode.COLOR_BRUSH,
+        PaintToolMode.CUT -> tool.mapColor
+        else -> null
+    }
+
     private fun resolveTool(item: BukkitItemStack?): PaintToolDefinition? = PaintToolCatalog.resolve(item, toolKey)
 
     private fun resolveDirection(player: Player): PaintFrameDirection {
@@ -649,7 +658,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val MAP_HEIGHT = 128
         private const val FRAME_DISTANCE = 0.75
         private const val FRAME_EYE_OFFSET = 0.25
-        private const val FRAME_RENDER_SIZE = 1.0
+        private const val FRAME_RENDER_SIZE = 1.05
         private const val FRAME_HANGING_CENTER_OFFSET = 0.46875
         private const val VIEWER_UPDATE_PERIOD_TICKS = 10L
         private const val CHUNK_SIZE = 16.0
@@ -657,6 +666,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val CLICK_DEBOUNCE_MILLIS = 12L
         private const val STROKE_CONTINUE_WINDOW_MILLIS = 250L
         private const val PLANE_EPSILON = 1.0E-6
+        private const val MIN_CANVAS_FACING_DOT = -0.1
         private const val PREVIEW_ALPHA = 0.42
     }
 }

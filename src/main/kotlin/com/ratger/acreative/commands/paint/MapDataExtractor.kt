@@ -43,7 +43,7 @@ object MapDataExtractor {
         val mapView = Bukkit.createMap(world)
         runCatching { mapView.isTrackingPosition = false }
         runCatching { mapView.isLocked = true }
-        return fill(mapView.id, MapColorMatcher.match(255, 255, 255)) ?: extract(mapView.id)
+        return fill(mapView.id, MapColor.SNOW.getPackedId(MapColor.Brightness.NORMAL)) ?: extract(mapView.id)
     }
 
     fun extract(mapId: Int): Snapshot? {
