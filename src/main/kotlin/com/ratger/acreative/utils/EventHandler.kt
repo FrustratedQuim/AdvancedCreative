@@ -169,9 +169,12 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (hooker.paintManager.isPainting(player)) {
-            if (event.hand == EquipmentSlot.HAND &&
-                (event.action == Action.RIGHT_CLICK_AIR || event.action == Action.RIGHT_CLICK_BLOCK)) {
-                hooker.paintManager.handleInteract(player)
+            if (event.hand == EquipmentSlot.HAND) {
+                when (event.action) {
+                    Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> hooker.paintManager.handleInteract(player)
+                    Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK -> hooker.paintManager.handleLeftClick(player)
+                    else -> {}
+                }
             }
             event.isCancelled = true
             return
@@ -331,6 +334,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onInventoryClose(event: InventoryCloseEvent) {
         val player = event.player as? Player ?: return
+        hooker.paintManager.handleInventoryClose(event)
         val closedTitle = PlainTextComponentSerializer.plainText().serialize(event.view.title())
         hooker.decorationHeadsMenuService.onInventoryClosed(player, closedTitle)
     }
@@ -339,7 +343,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as Player
         if (hooker.paintManager.isPainting(player)) {
-            event.isCancelled = true
+            hooker.paintManager.handleInventoryClick(event)
             return
         }
         if (hooker.bannerMenuService.handleStorageRawInventoryClick(event)) {
@@ -356,7 +360,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onInventoryDrag(event: InventoryDragEvent) {
         val player = event.whoClicked as? Player
         if (player != null && hooker.paintManager.isPainting(player)) {
-            event.isCancelled = true
+            hooker.paintManager.handleInventoryDrag(event)
             return
         }
         hooker.bannerMenuService.handleStorageRawInventoryDrag(event)
@@ -380,7 +384,9 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (hooker.paintManager.isPainting(event.player)) {
-            hooker.paintManager.handleInteract(event.player)
+            if (event.hand == EquipmentSlot.HAND) {
+                hooker.paintManager.handleInteract(event.player)
+            }
             event.isCancelled = true
             return
         }
@@ -412,17 +418,17 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val damagerPlayer = resolveDamagerPlayer(event.damager)
         val directDamager = event.damager as? Player
 
+        if (directDamager != null && hooker.paintManager.isPainting(directDamager)) {
+            event.isCancelled = true
+            return
+        }
+
         val target = event.entity as? Player
         if (target != null && directDamager != null && hooker.grabManager.handleHolderAttack(directDamager, target)) {
             event.isCancelled = true
             return
         }
         if (target != null && damagerPlayer != null && hooker.jarManager.handleJarredAttack(damagerPlayer, target)) {
-            event.isCancelled = true
-            return
-        }
-
-        if (directDamager != null && hooker.paintManager.isPainting(directDamager)) {
             event.isCancelled = true
             return
         }

@@ -35,6 +35,7 @@ roles:
       - "advancedcreative.glide"
       - "advancedcreative.gravity"
       - "advancedcreative.sneeze"
+      - "advancedcreative.paint"
       - "advancedcreative.edit"
   flare:
     display: "<#21d185><b>ꜰʟᴀʀᴇ"
@@ -71,7 +72,6 @@ roles:
       - "advancedcreative.decorationbanners.storage_bypass"
       - "advancedcreative.decorationbanners.post_bypass"
       - "advancedcreative.decorationbanners.moderation"
-      - "advancedcreative.paint"
       - "advancedcreative.grab"
       - "advancedcreative.slap"
       - "advancedcreative.jar"

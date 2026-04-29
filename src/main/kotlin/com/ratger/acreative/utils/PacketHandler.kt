@@ -5,7 +5,9 @@ import com.github.retrooper.packetevents.event.PacketListenerAbstract
 import com.github.retrooper.packetevents.event.PacketListenerPriority
 import com.github.retrooper.packetevents.event.PacketReceiveEvent
 import com.github.retrooper.packetevents.protocol.packettype.PacketType
+import com.github.retrooper.packetevents.protocol.player.DiggingAction
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientInteractEntity
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerDigging
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -17,13 +19,20 @@ class PacketHandler(private val hooker: FunctionHooker) {
         listener = object : PacketListenerAbstract(PacketListenerPriority.NORMAL) {
             override fun onPacketReceive(event: PacketReceiveEvent) {
                 val type = event.packetType
-                if (type != PacketType.Play.Client.ANIMATION && type != PacketType.Play.Client.INTERACT_ENTITY) return
+                if (
+                    type != PacketType.Play.Client.ANIMATION &&
+                    type != PacketType.Play.Client.INTERACT_ENTITY &&
+                    type != PacketType.Play.Client.PLAYER_DIGGING
+                ) {
+                    return
+                }
 
                 val player = event.getPlayer() as? Player ?: return
 
                 when (type) {
                     PacketType.Play.Client.ANIMATION -> handleAnimationPacket(player)
                     PacketType.Play.Client.INTERACT_ENTITY -> handleInteractPacket(event, player)
+                    PacketType.Play.Client.PLAYER_DIGGING -> handleDiggingPacket(event, player)
                 }
             }
         }
@@ -43,10 +52,15 @@ class PacketHandler(private val hooker: FunctionHooker) {
         val paintManager = hooker.paintManagerOrNull()
         if (paintManager?.handleFrameInteraction(packet.entityId) == true) {
             event.isCancelled = true
-            if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
-                hooker.tickScheduler.runNow {
-                    paintManager.handleFrameUse(player, packet.entityId)
-                }
+            hooker.tickScheduler.runNow {
+                paintManager.handleFrameUse(player, packet.entityId)
+            }
+            return
+        }
+        if (packet.action == WrapperPlayClientInteractEntity.InteractAction.ATTACK && paintManager?.isPainting(player) == true) {
+            event.isCancelled = true
+            hooker.tickScheduler.runNow {
+                paintManager.handleLeftClick(player)
             }
             return
         }
@@ -67,6 +81,30 @@ class PacketHandler(private val hooker: FunctionHooker) {
             if (hooker.utils.isSlapping(player)) {
                 hooker.slapManager.applySlap(player, target)
             }
+        }
+    }
+
+    private fun handleDiggingPacket(event: PacketReceiveEvent, player: Player) {
+        val paintManager = hooker.paintManagerOrNull() ?: return
+        if (!paintManager.isPainting(player)) {
+            return
+        }
+
+        val packet = WrapperPlayClientPlayerDigging(event)
+        when (packet.action) {
+            DiggingAction.DROP_ITEM -> {
+                event.isCancelled = true
+                hooker.tickScheduler.runNow {
+                    paintManager.handleDropAction(player, false)
+                }
+            }
+            DiggingAction.DROP_ITEM_STACK -> {
+                event.isCancelled = true
+                hooker.tickScheduler.runNow {
+                    paintManager.handleDropAction(player, true)
+                }
+            }
+            else -> {}
         }
     }
 

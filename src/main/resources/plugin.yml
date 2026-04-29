@@ -65,7 +65,7 @@ commands:
     usage: /effects <effect> [level]
   paint:
     description: Toggles personal paint mode
-    usage: /paint
+    usage: /paint [1x1-4x4]
   jar:
     description: Gives a jar item for placing a jailed player
     usage: /jar <player> [-const]

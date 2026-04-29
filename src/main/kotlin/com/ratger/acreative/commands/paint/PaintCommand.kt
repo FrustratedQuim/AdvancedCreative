@@ -11,5 +11,11 @@ class PaintCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
         hooker.paintManager.handlePaintCommand(player, args)
     }
 
-    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> = emptyList()
+    override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
+        if (args.size != 1) {
+            return emptyList()
+        }
+        val input = args[0]
+        return PaintCanvasSize.TAB_SUGGESTIONS.filter { it.startsWith(input, ignoreCase = true) }
+    }
 }

@@ -75,21 +75,6 @@ object MapDataExtractor {
         return extract(mapId)
     }
 
-    fun copy(sourceMapId: Int, targetMapId: Int): Snapshot? {
-        val source = extract(sourceMapId) ?: return null
-        val mapView = Bukkit.getMap(targetMapId) ?: return null
-        val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null
-        val data = serverLevel(world).getMapData(MapId(targetMapId)) ?: return null
-
-        for (y in 0 until MAP_SIZE) {
-            for (x in 0 until MAP_SIZE) {
-                data.setColor(x, y, source.colors[y * MAP_SIZE + x])
-            }
-        }
-
-        return extract(targetMapId)
-    }
-
     fun colorAt(mapId: Int, x: Int, y: Int): Byte? {
         if (x !in 0 until MAP_SIZE || y !in 0 until MAP_SIZE) return null
         val mapView = Bukkit.getMap(mapId) ?: return null
@@ -98,13 +83,13 @@ object MapDataExtractor {
         return data.colors[y * MAP_SIZE + x]
     }
 
-    fun setPixels(mapId: Int, points: Collection<Pair<Int, Int>>, color: Byte): Snapshot? {
+    fun setPixels(mapId: Int, points: Collection<Triple<Int, Int, Byte>>): Snapshot? {
         if (points.isEmpty()) return extract(mapId)
         val mapView = Bukkit.getMap(mapId) ?: return null
         val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null
         val data = serverLevel(world).getMapData(MapId(mapId)) ?: return null
 
-        points.forEach { (x, y) ->
+        points.forEach { (x, y, color) ->
             if (x in 0 until MAP_SIZE && y in 0 until MAP_SIZE) {
                 data.setColor(x, y, color)
             }

@@ -74,6 +74,7 @@ enum class MessageKey {
     SUCCESS_DISGUISE_REMOVED,
     USAGE_EFFECTS,
     USAGE_PAINT,
+    ERROR_PAINT_INVALID_SIZE,
     ERROR_PAINT_MAP_MISSING,
     USAGE_JAR,
     USAGE_GRAB,
@@ -161,7 +162,7 @@ object MessageCatalog {
             <#FFE68A>/strength <значение> <#EDC800>- <#FFF3E0>Установить силу удара
             <#FFE68A>/health <значение> <#EDC800>- <#FFF3E0>Установить максимальное здоровье
             <#FFE68A>/effects <эффект> [уровень] <#EDC800>- <#FFF3E0>Наложить эффект зелья
-            <#FFE68A>/paint <#EDC800>- <#FFF3E0>Открыть режим рисования
+            <#FFE68A>/paint [1x1-4x4] <#EDC800>- <#FFF3E0>Открыть режим рисования
             <#FFE68A>/jar <игрок> [-const] <#EDC800>- <#FFF3E0>Выдать банку для поимки
             <#FFE68A>/sneeze <#EDC800>- <#FFF3E0>Чихнуть, вот это да
             <#FFE68A>/glide <#EDC800>- <#FFF3E0>Включить парение без элитр
@@ -233,7 +234,18 @@ object MessageCatalog {
         MessageKey.SUCCESS_DISGUISE to "<dark_green>▍ <#00FF40>Вы успешно превратились!",
         MessageKey.SUCCESS_DISGUISE_REMOVED to "<dark_green>▍ <#00FF40>Ваш облик восстановлен.",
         MessageKey.USAGE_EFFECTS to "<dark_red>▍ <#FF1500>Используйте /effects <эффект> [уровень]",
-        MessageKey.USAGE_PAINT to "<dark_red>▍ <#FF1500>Используйте /paint",
+        MessageKey.USAGE_PAINT to "<dark_red>▍ <#FF1500>Используйте /paint [1x1-4x4]",
+        MessageKey.ERROR_PAINT_INVALID_SIZE to """
+            <dark_red>▍ <#FF1500>Недопустимый размер
+            	<#FFE68A>1x1
+            	<#FFE68A>1x2
+            	<#FFE68A>2x1
+            	<#FFE68A>2x2
+            	<#FFE68A>2x3
+            	<#FFE68A>3x2
+            	<#FFE68A>3x3
+            <#FFD700>▍ <#FFE68A>Лимит стороны: <#FFF3E0>1-4
+        """.trimIndent(),
         MessageKey.ERROR_PAINT_MAP_MISSING to "<dark_red>▍ <#FF1500>Не удалось открыть режим рисования: %map% не найдена или недоступна.",
         MessageKey.USAGE_JAR to "<dark_red>▍ <#FF1500>Используйте /jar <игрок>",
         MessageKey.USAGE_GRAB to "<dark_red>▍ <#FF1500>Используйте /grab <игрок>",

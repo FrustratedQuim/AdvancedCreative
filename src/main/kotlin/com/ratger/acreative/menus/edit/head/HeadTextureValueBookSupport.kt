@@ -1,30 +1,29 @@
 package com.ratger.acreative.menus.edit.head
 
+import com.ratger.acreative.utils.SeriesCodeGenerator
 import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.BookMeta
+import org.bukkit.inventory.meta.WritableBookMeta
 import kotlin.math.min
-import kotlin.random.Random
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 class HeadTextureValueBookSupport {
     private val mini = MiniMessage.miniMessage()
-    private val serialCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     private val whitespaceRegex = Regex("\\s+")
     private val base64CharsRegex = Regex("^[A-Za-z0-9+/=]+$")
 
     fun createValueBook(textureValue: String): ItemStack {
         val pages = splitPages(textureValue)
         return ItemStack(Material.WRITABLE_BOOK).apply {
-            editMeta(BookMeta::class.java) { meta ->
+            editMeta(WritableBookMeta::class.java) { meta ->
                 meta.customName(mini.deserialize("<!i><#C7A300>✎ <#FFD700>Value текстуры головы"))
                 meta.lore(
                     listOf(
                         "<!i><#FFE68A>Используется для <#FFF3E0>/edit",
                         "",
-                        "<!i><dark_green>▍ <#00FF40>Серия: <#7BFF00>${generateSeriesCode()}"
+                        "<!i><dark_green>▍ <#00FF40>Серия: <#7BFF00>${SeriesCodeGenerator.generate()}"
                     ).map(mini::deserialize)
                 )
                 meta.pages = pages
@@ -34,7 +33,7 @@ class HeadTextureValueBookSupport {
 
     fun extractTextureValue(bookItem: ItemStack?): String? {
         if (!isBookItem(bookItem)) return null
-        val meta = bookItem?.itemMeta as? BookMeta ?: return null
+        val meta = bookItem?.itemMeta as? WritableBookMeta ?: return null
         val joined = meta.pages.joinToString(separator = "")
         val normalized = normalizeWhitespace(joined)
         if (!isValidTextureValue(normalized)) return null
@@ -84,10 +83,4 @@ class HeadTextureValueBookSupport {
         return pages
     }
 
-    private fun generateSeriesCode(): String {
-        val suffix = (1..6)
-            .map { serialCharset[Random.nextInt(serialCharset.length)] }
-            .joinToString("")
-        return "#$suffix"
-    }
 }
