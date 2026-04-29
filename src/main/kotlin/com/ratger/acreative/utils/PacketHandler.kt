@@ -11,9 +11,12 @@ import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPl
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
+import java.util.UUID
 
 class PacketHandler(private val hooker: FunctionHooker) {
     private var listener: PacketListenerAbstract? = null
+    private val pendingPaintAnimationTasks = mutableMapOf<UUID, Int>()
+    private val suppressedNextPaintAnimations = mutableMapOf<UUID, Long>()
 
     fun register() {
         listener = object : PacketListenerAbstract(PacketListenerPriority.NORMAL) {
@@ -40,7 +43,27 @@ class PacketHandler(private val hooker: FunctionHooker) {
     }
 
     private fun handleAnimationPacket(player: Player) {
-        if (hooker.paintManagerOrNull()?.handleSwing(player) == true) return
+        val paintManager = hooker.paintManagerOrNull()
+        if (paintManager?.isPainting(player) == true) {
+            if (consumeSuppressedPaintAnimation(player)) {
+                return
+            }
+            pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
+                hooker.tickScheduler.cancel(taskId)
+            }
+            var taskId = -1
+            taskId = hooker.tickScheduler.runNow {
+                pendingPaintAnimationTasks.remove(player.uniqueId)
+                val handledByPaint = paintManager.handleSwing(player)
+                if (handledByPaint) return@runNow
+                val disguised = hooker.disguiseManager.disguisedPlayers.containsKey(player)
+                if (!disguised) return@runNow
+                hooker.disguiseManager.sendSwingAnimation(player)
+            }
+            pendingPaintAnimationTasks[player.uniqueId] = taskId
+            return
+        }
+        if (paintManager?.handleSwing(player) == true) return
         if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
         hooker.tickScheduler.runNow {
             hooker.disguiseManager.sendSwingAnimation(player)
@@ -94,24 +117,62 @@ class PacketHandler(private val hooker: FunctionHooker) {
         when (packet.action) {
             DiggingAction.DROP_ITEM -> {
                 event.isCancelled = true
+                paintManager.suppressDirectUseAfterDrop(player)
+                pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
+                    hooker.tickScheduler.cancel(taskId)
+                }
+                suppressNextPaintAnimation(player)
                 hooker.tickScheduler.runNow {
                     paintManager.handleDropAction(player, false)
                 }
             }
             DiggingAction.DROP_ITEM_STACK -> {
                 event.isCancelled = true
+                paintManager.suppressDirectUseAfterDrop(player)
+                pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
+                    hooker.tickScheduler.cancel(taskId)
+                }
+                suppressNextPaintAnimation(player)
                 hooker.tickScheduler.runNow {
                     paintManager.handleDropAction(player, true)
+                }
+                hooker.tickScheduler.runLater(1L) {
+                    if (paintManager.isPainting(player) && player.isOnline) {
+                        paintManager.resyncHeldToolSlot(player)
+                    }
                 }
             }
             else -> {}
         }
     }
 
+    private fun suppressNextPaintAnimation(player: Player) {
+        val untilMillis = System.currentTimeMillis() + SUPPRESSED_ANIMATION_WINDOW_MILLIS
+        suppressedNextPaintAnimations[player.uniqueId] = untilMillis
+    }
+
+    private fun consumeSuppressedPaintAnimation(player: Player): Boolean {
+        val untilMillis = suppressedNextPaintAnimations[player.uniqueId] ?: return false
+        val now = System.currentTimeMillis()
+        if (now > untilMillis) {
+            suppressedNextPaintAnimations.remove(player.uniqueId)
+            return false
+        }
+        suppressedNextPaintAnimations.remove(player.uniqueId)
+        return true
+    }
+
     fun unregister() {
+        pendingPaintAnimationTasks.values.forEach(hooker.tickScheduler::cancel)
+        pendingPaintAnimationTasks.clear()
+        suppressedNextPaintAnimations.clear()
         listener?.let {
             PacketEvents.getAPI().eventManager.unregisterListener(it)
             listener = null
         }
+    }
+
+    companion object {
+        private const val SUPPRESSED_ANIMATION_WINDOW_MILLIS = 250L
     }
 }

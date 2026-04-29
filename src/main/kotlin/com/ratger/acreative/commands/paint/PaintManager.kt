@@ -38,6 +38,7 @@ import org.bukkit.event.inventory.ClickType
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
+import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack as BukkitItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
 import org.bukkit.util.Vector
@@ -46,6 +47,7 @@ import ru.violence.coreapi.bukkit.api.menu.MenuRows
 import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
 import java.awt.Color
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -79,6 +81,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val buttonFactory = MenuButtonFactory(parser, ComponentsService(), hooker.tickScheduler)
     private val signInputService = SignInputService(hooker.plugin)
     private val menuTransitions = mutableSetOf<UUID>()
+    private val suppressedDirectUseUntilMillis = ConcurrentHashMap<UUID, Long>()
 
     fun handlePaintCommand(player: Player, args: Array<out String>) {
         if (args.size > 1) {
@@ -133,15 +136,21 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     fun handleDropAction(player: Player, stackDrop: Boolean): Boolean {
         val session = sessions[player.uniqueId] ?: return false
+        val inputKind = if (stackDrop) PaintInputKind.DROP_STACK else PaintInputKind.DROP_SINGLE
+        if (!tryConsumeInput(session, inputKind, DROP_ACTION_DEBOUNCE_MILLIS)) {
+            return true
+        }
+        session.previewPaused = true
         if (session.resizeMode) {
             openEaselMenu(player, session)
             return true
         }
-        if (!isWorkTool(player.inventory.itemInMainHand)) {
-            return true
-        }
         if (stackDrop) {
             undoLastAction(player, session)
+            return true
+        }
+        if (!isWorkTool(player.inventory.itemInMainHand)) {
+            return true
         } else {
             openSettingsForCurrentTool(player, session)
         }
@@ -371,12 +380,17 @@ class PaintManager(private val hooker: FunctionHooker) {
     private fun handleDirectUse(player: Player): Boolean {
         val session = sessions[player.uniqueId] ?: return false
         if (session.isMenuOpen) return true
-
-        val now = System.currentTimeMillis()
-        if (now - session.lastDirectUseAtMillis < DIRECT_USE_DEBOUNCE_MILLIS) {
+        if (isDirectUseSuppressed(player.uniqueId)) {
             return true
         }
-        session.lastDirectUseAtMillis = now
+        if (session.previewPaused) {
+            session.previewPaused = false
+            clearPreviewSuppression(session)
+        }
+
+        if (!tryConsumeInput(session, PaintInputKind.DIRECT_USE, DIRECT_USE_DEBOUNCE_MILLIS)) {
+            return true
+        }
 
         if (session.resizeMode) {
             handleResizeActivation(player, session)
@@ -406,7 +420,6 @@ class PaintManager(private val hooker: FunctionHooker) {
             PaintToolMode.BASIC_COLOR_BRUSH -> {
                 val paletteKey = requireNotNull(tool.fixedPaletteKey)
                 applyBrushLikeTool(
-                    player = player,
                     session = session,
                     hit = hit,
                     settings = session.toolSettings.basicBrush,
@@ -416,7 +429,6 @@ class PaintManager(private val hooker: FunctionHooker) {
 
             PaintToolMode.CUSTOM_BRUSH -> {
                 applyBrushLikeTool(
-                    player = player,
                     session = session,
                     hit = hit,
                     settings = session.toolSettings.customBrush,
@@ -425,19 +437,19 @@ class PaintManager(private val hooker: FunctionHooker) {
             }
 
             PaintToolMode.ERASER -> {
-                applyBinaryBrushTool(player, session, hit, session.toolSettings.eraser, BACKGROUND_COLOR_ID)
+                applyBinaryBrushTool(session, hit, session.toolSettings.eraser, BACKGROUND_COLOR_ID)
             }
 
             PaintToolMode.SHEARS -> {
-                applyBinaryBrushTool(player, session, hit, session.toolSettings.shears, MapColorMatcher.TRANSPARENT_COLOR_ID)
+                applyBinaryBrushTool(session, hit, session.toolSettings.shears, MapColorMatcher.TRANSPARENT_COLOR_ID)
             }
 
             PaintToolMode.FILL -> {
-                applyFillTool(player, session, hit)
+                applyFillTool(session, hit)
             }
 
             PaintToolMode.SHAPE -> {
-                applyShapeTool(player, session, hit)
+                applyShapeTool(session, hit)
             }
 
             PaintToolMode.EASEL -> openEaselMenu(player, session)
@@ -445,7 +457,6 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun applyBrushLikeTool(
-        player: Player,
         session: PaintSession,
         hit: PaintSurfacePixel,
         settings: PaintBrushSettings,
@@ -467,11 +478,10 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         rememberStroke(session, hit, PaintPalette.entry(paletteKey).packed(settings.shade))
-        applyHistoryChanges(player, session, changes)
+        applyHistoryChanges(session, changes)
     }
 
     private fun applyBinaryBrushTool(
-        player: Player,
         session: PaintSession,
         hit: PaintSurfacePixel,
         settings: PaintBinaryBrushSettings,
@@ -492,10 +502,10 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         rememberStroke(session, hit, color)
-        applyHistoryChanges(player, session, changes)
+        applyHistoryChanges(session, changes)
     }
 
-    private fun applyFillTool(player: Player, session: PaintSession, hit: PaintSurfacePixel) {
+    private fun applyFillTool(session: PaintSession, hit: PaintSurfacePixel) {
         if (session.currentTick < session.fillCooldownUntilTick) return
         session.fillCooldownUntilTick = session.currentTick + FILL_COOLDOWN_TICKS
 
@@ -517,10 +527,10 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         clearStrokeState(session)
-        applyHistoryChanges(player, session, changes)
+        applyHistoryChanges(session, changes)
     }
 
-    private fun applyShapeTool(player: Player, session: PaintSession, hit: PaintSurfacePixel) {
+    private fun applyShapeTool(session: PaintSession, hit: PaintSurfacePixel) {
         val settings = session.toolSettings.shape
         val entry = PaintPalette.entry(settings.paletteKey)
         val pixels = resolveShapePixels(session, hit, settings)
@@ -539,16 +549,14 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         clearStrokeState(session)
-        applyHistoryChanges(player, session, changes)
+        applyHistoryChanges(session, changes)
     }
 
-    private fun applyHistoryChanges(
-        player: Player,
-        session: PaintSession,
-        changesByMapId: Map<Int, List<PaintPixelChange>>
-    ) {
+    private fun applyHistoryChanges(session: PaintSession, changesByMapId: Map<Int, List<PaintPixelChange>>) {
         if (changesByMapId.isEmpty()) return
-        restorePreviewIfNeeded(player, session)
+        session.previewPaused = false
+        clearPreviewSuppression(session)
+        Bukkit.getPlayer(session.playerId)?.let { restorePreviewIfNeeded(it, session) }
 
         val deduplicated = changesByMapId.mapValues { (_, changes) ->
             changes
@@ -568,9 +576,15 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
         if (snapshots.isEmpty()) return
 
-        session.history += PaintHistoryEntry(deduplicated)
-        while (session.history.size > MAX_HISTORY_SIZE) {
-            session.history.removeFirst()
+        val historyEntry = PaintHistoryEntry(
+            changesByMapId = deduplicated,
+            estimatedBytes = estimateHistoryEntryBytes(deduplicated)
+        )
+        session.history += historyEntry
+        session.historyBytes += historyEntry.estimatedBytes
+        while (session.historyBytes > MAX_HISTORY_BYTES && session.history.isNotEmpty()) {
+            val removed = session.history.removeFirst()
+            session.historyBytes = (session.historyBytes - removed.estimatedBytes).coerceAtLeast(0L)
         }
 
         snapshots.forEach { snapshot ->
@@ -583,6 +597,8 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
         val entry = session.history.removeLast()
+        session.historyBytes = (session.historyBytes - entry.estimatedBytes).coerceAtLeast(0L)
+        session.previewSuppressionKey = buildCurrentPreviewSuppressionKey(player, session)
         restorePreviewIfNeeded(player, session)
         entry.changesByMapId.forEach { (mapId, changes) ->
             val snapshot = MapDataExtractor.setPixels(
@@ -704,22 +720,34 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun updatePreview(player: Player, session: PaintSession) {
         if (session.isMenuOpen) {
+            clearPreviewSuppression(session)
             restorePreviewIfNeeded(player, session)
             return
         }
+        if (session.previewPaused && isDirectUseSuppressed(player.uniqueId)) {
+            restorePreviewIfNeeded(player, session)
+            return
+        }
+        if (session.previewPaused) {
+            session.previewPaused = false
+            clearPreviewSuppression(session)
+        }
 
         val tool = resolveTool(player.inventory.itemInMainHand) ?: run {
+            clearPreviewSuppression(session)
             clearStrokeState(session)
             restorePreviewIfNeeded(player, session)
             return
         }
         if (tool.mode == PaintToolMode.EASEL) {
+            clearPreviewSuppression(session)
             clearStrokeState(session)
             restorePreviewIfNeeded(player, session)
             return
         }
 
         val hit = resolveHitPixel(player, session, allowMissingCell = false) ?: run {
+            clearPreviewSuppression(session)
             clearStrokeState(session)
             restorePreviewIfNeeded(player, session)
             return
@@ -728,6 +756,15 @@ class PaintManager(private val hooker: FunctionHooker) {
         val overlays = resolvePreviewOverlays(session, tool, hit)
         val fingerprint = overlays.joinToString("|") { overlay ->
             "${overlay.mapId}:${overlay.colorsByIndex.entries.sortedBy { it.key }.joinToString(",") { "${it.key}=${it.value.toInt() and 0xFF}" }}"
+        }
+        val suppressionKey = buildPreviewSuppressionKey(tool.id, fingerprint)
+
+        if (session.previewSuppressionKey == suppressionKey) {
+            restorePreviewIfNeeded(player, session)
+            return
+        }
+        if (session.previewSuppressionKey != null) {
+            clearPreviewSuppression(session)
         }
 
         if (fingerprint == session.previewFingerprint) {
@@ -810,6 +847,71 @@ class PaintManager(private val hooker: FunctionHooker) {
         session.lastStrokeGlobalY = null
         session.lastStrokeColor = null
         session.lastStrokeAtMillis = 0L
+    }
+
+    private fun clearPreviewSuppression(session: PaintSession) {
+        session.previewSuppressionKey = null
+    }
+
+    private fun isDirectUseSuppressed(playerId: UUID): Boolean {
+        val untilMillis = suppressedDirectUseUntilMillis[playerId] ?: return false
+        val now = System.currentTimeMillis()
+        if (now > untilMillis) {
+            suppressedDirectUseUntilMillis.remove(playerId, untilMillis)
+            return false
+        }
+        return true
+    }
+
+    private fun clearHistory(session: PaintSession) {
+        session.history.clear()
+        session.historyBytes = 0L
+    }
+
+    private fun tryConsumeInput(session: PaintSession, inputKind: PaintInputKind, debounceMillis: Long): Boolean {
+        val now = System.currentTimeMillis()
+        if (session.lastInputKind == inputKind && now - session.lastInputAtMillis < debounceMillis) {
+            return false
+        }
+        session.lastInputKind = inputKind
+        session.lastInputAtMillis = now
+        return true
+    }
+
+    fun resyncHeldToolSlot(player: Player) {
+        val session = sessions[player.uniqueId] ?: return
+        val currentSlot = player.inventory.heldItemSlot
+        val currentItem = player.inventory.itemInMainHand
+        val itemForSync = if (isWorkTool(currentItem)) {
+            currentItem.clone()
+        } else {
+            rotatedLayout(PaintToolCatalog.buildLayout(toolKey, parser, session), session.paletteRotation)
+                .getOrNull(currentSlot)
+                ?.clone()
+                ?: BukkitItemStack(Material.AIR)
+        }
+        player.inventory.setItem(currentSlot, itemForSync)
+    }
+
+    fun suppressDirectUseAfterDrop(player: Player) {
+        val untilMillis = System.currentTimeMillis() + DIRECT_USE_SUPPRESS_AFTER_DROP_MILLIS
+        suppressedDirectUseUntilMillis[player.uniqueId] = untilMillis
+    }
+
+    private fun buildCurrentPreviewSuppressionKey(player: Player, session: PaintSession): String? {
+        val tool = resolveTool(player.inventory.itemInMainHand) ?: return null
+        val fingerprint = session.previewFingerprint ?: return null
+        return buildPreviewSuppressionKey(tool.id, fingerprint)
+    }
+
+    private fun buildPreviewSuppressionKey(toolId: String, fingerprint: String): String {
+        return "$toolId|$fingerprint"
+    }
+
+    private fun estimateHistoryEntryBytes(changesByMapId: Map<Int, List<PaintPixelChange>>): Long {
+        return HISTORY_ENTRY_BASE_BYTES + changesByMapId.entries.sumOf { (_, changes) ->
+            HISTORY_MAP_GROUP_BASE_BYTES + changes.size * HISTORY_PIXEL_ESTIMATE_BYTES
+        }
     }
 
     private fun resolveActualColor(session: PaintSession, point: PaintGridPoint, x: Int, y: Int): Byte? {
@@ -1189,7 +1291,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                     return
                 }
                 clearStrokeState(session)
-                session.history.clear()
+                clearHistory(session)
                 session.resizeMode = false
                 removeResizePreview(player, session)
             }
@@ -1201,7 +1303,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 }
                 removeCanvasCell(session, target.point)
                 clearStrokeState(session)
-                session.history.clear()
+                clearHistory(session)
                 session.resizeMode = false
                 removeResizePreview(player, session)
             }
@@ -1577,7 +1679,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             }
         }
         clearStrokeState(session)
-        session.history.clear()
+        clearHistory(session)
     }
 
     private fun openColorPickerMenu(
@@ -1902,6 +2004,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 "<!i><#FFD700>Строка $rowNumber <#C7A300>[<#FFF3E0>Часть $partNumber<#C7A300>]"
             }
             meta.displayName(parser.parse(name))
+            meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
             meta.lore(
                 listOf(
                     "<!i><#FFD700>▍ <#FFE68A>Автор: <#FFF3E0>$author",
@@ -2032,14 +2135,19 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val VIEWER_UPDATE_PERIOD_TICKS = 10L
         private const val CHUNK_SIZE = 16.0
         private const val MIN_VISIBILITY_RADIUS = 32.0
-        private const val DIRECT_USE_DEBOUNCE_MILLIS = 12L
+        private const val DIRECT_USE_DEBOUNCE_MILLIS = 65L
+        private const val DIRECT_USE_SUPPRESS_AFTER_DROP_MILLIS = 250L
+        private const val DROP_ACTION_DEBOUNCE_MILLIS = 65L
         private const val STROKE_CONTINUE_WINDOW_MILLIS = 250L
         private const val PLANE_EPSILON = 1.0E-6
         private const val MIN_CANVAS_FACING_DOT = -0.1
         private const val PREVIEW_ALPHA = 0.42
         private const val FILL_COOLDOWN_TICKS = 5L
         private const val LOCATION_EPSILON = 0.01
-        private const val MAX_HISTORY_SIZE = 30
+        private const val HISTORY_PIXEL_ESTIMATE_BYTES = 40L
+        private const val HISTORY_MAP_GROUP_BASE_BYTES = 96L
+        private const val HISTORY_ENTRY_BASE_BYTES = 64L
+        private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L
         private const val GLOBAL_CANVAS_HASH_BASE = 100_000
         private val BACKGROUND_COLOR_ID: Byte = PaintPalette.SNOW.packed(PaintShade.NORMAL)
         private val THREE_ROW_BLACK_SLOTS = setOf(0, 8, 9, 17, 18, 26)

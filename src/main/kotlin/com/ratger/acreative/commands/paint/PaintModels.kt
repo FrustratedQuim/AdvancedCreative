@@ -105,7 +105,8 @@ data class PaintPixelChange(
 )
 
 data class PaintHistoryEntry(
-    val changesByMapId: Map<Int, List<PaintPixelChange>>
+    val changesByMapId: Map<Int, List<PaintPixelChange>>,
+    val estimatedBytes: Long
 )
 
 enum class PaintMenuKind {
@@ -250,6 +251,12 @@ data class PaintToolSettingsBundle(
     val shape: PaintShapeSettings = PaintShapeSettings()
 )
 
+enum class PaintInputKind {
+    DIRECT_USE,
+    DROP_SINGLE,
+    DROP_STACK
+}
+
 data class PaintResizePreview(
     val frame: WrapperEntity,
     val teamName: String,
@@ -274,7 +281,9 @@ data class PaintSession(
     val seriesCode: String,
     var previewMapIds: MutableSet<Int> = mutableSetOf(),
     var previewFingerprint: String? = null,
-    var lastDirectUseAtMillis: Long = 0L,
+    var historyBytes: Long = 0L,
+    var lastInputKind: PaintInputKind? = null,
+    var lastInputAtMillis: Long = 0L,
     var lastStrokeGlobalX: Int? = null,
     var lastStrokeGlobalY: Int? = null,
     var lastStrokeColor: Byte? = null,
@@ -286,6 +295,8 @@ data class PaintSession(
     var resizePreview: PaintResizePreview? = null,
     var currentTick: Long = 0L,
     var fillCooldownUntilTick: Long = 0L,
+    var previewPaused: Boolean = false,
+    var previewSuppressionKey: String? = null,
     var paletteRotation: Int = 0
 ) {
     fun cellsSortedTopLeft(): List<PaintCanvasCell> {
