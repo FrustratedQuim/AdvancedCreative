@@ -17,7 +17,7 @@ import com.ratger.acreative.commands.hide.HideManager
 import com.ratger.acreative.commands.itemdb.ItemdbManager
 import com.ratger.acreative.commands.jar.JarManager
 import com.ratger.acreative.commands.lay.LayManager
-import com.ratger.acreative.commands.paint.PaintManager
+import com.ratger.acreative.paint.PaintManager
 import com.ratger.acreative.commands.piss.PissManager
 import com.ratger.acreative.commands.resize.ResizeManager
 import com.ratger.acreative.commands.sit.SitManager

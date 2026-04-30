@@ -14,6 +14,7 @@ class TickScheduler(
         val action: () -> Unit
     )
 
+    private val lock = Any()
     private val tasks = linkedMapOf<Int, ScheduledTask>()
     private var bukkitTickerTaskId: Int? = null
     private var currentTick: Long = 0L
@@ -25,9 +26,11 @@ class TickScheduler(
     }
 
     fun shutdown() {
-        tasks.clear()
-        bukkitTickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
-        bukkitTickerTaskId = null
+        val tickerTaskId = synchronized(lock) {
+            tasks.clear()
+            bukkitTickerTaskId.also { bukkitTickerTaskId = null }
+        }
+        tickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
     }
 
     fun runNow(action: () -> Unit): Int {
@@ -36,43 +39,50 @@ class TickScheduler(
 
     fun runLater(delayTicks: Long, action: () -> Unit): Int {
         ensureTickerRunning(forceHealthCheck = true)
-        val id = nextTaskId++
         val normalizedDelay = delayTicks.coerceAtLeast(0L)
-        tasks[id] = ScheduledTask(
-            id = id,
-            nextRunTick = currentTick + normalizedDelay,
-            periodTicks = null,
-            action = action
-        )
-        return id
+        return synchronized(lock) {
+            val id = nextTaskId++
+            tasks[id] = ScheduledTask(
+                id = id,
+                nextRunTick = currentTick + normalizedDelay,
+                periodTicks = null,
+                action = action
+            )
+            id
+        }
     }
 
     fun runRepeating(initialDelayTicks: Long, periodTicks: Long, action: () -> Unit): Int {
         ensureTickerRunning(forceHealthCheck = true)
-        val id = nextTaskId++
-        tasks[id] = ScheduledTask(
-            id = id,
-            nextRunTick = currentTick + initialDelayTicks.coerceAtLeast(0L),
-            periodTicks = periodTicks.coerceAtLeast(1L),
-            action = action
-        )
-        return id
+        return synchronized(lock) {
+            val id = nextTaskId++
+            tasks[id] = ScheduledTask(
+                id = id,
+                nextRunTick = currentTick + initialDelayTicks.coerceAtLeast(0L),
+                periodTicks = periodTicks.coerceAtLeast(1L),
+                action = action
+            )
+            id
+        }
     }
 
     fun cancel(taskId: Int) {
-        tasks.remove(taskId)
+        synchronized(lock) {
+            tasks.remove(taskId)
+        }
     }
 
     private fun tick() {
-        currentTick++
-        lastTickAtMs = System.currentTimeMillis()
-
-        val dueTasks = tasks.values
-            .filter { it.nextRunTick <= currentTick }
-            .map { it.id }
+        val dueTasks = synchronized(lock) {
+            currentTick++
+            lastTickAtMs = System.currentTimeMillis()
+            tasks.values
+                .filter { it.nextRunTick <= currentTick }
+                .map { it.id }
+        }
 
         for (taskId in dueTasks) {
-            val task = tasks[taskId] ?: continue
+            val task = synchronized(lock) { tasks[taskId] } ?: continue
             try {
                 task.action.invoke()
             } catch (t: Throwable) {
@@ -80,33 +90,36 @@ class TickScheduler(
                 t.printStackTrace()
             }
 
-            val activeTask = tasks[taskId] ?: continue
-            if (activeTask.periodTicks == null) {
-                tasks.remove(taskId)
-            } else {
-                activeTask.nextRunTick = currentTick + activeTask.periodTicks
+            synchronized(lock) {
+                val activeTask = tasks[taskId] ?: return@synchronized
+                if (activeTask.periodTicks == null) {
+                    tasks.remove(taskId)
+                } else {
+                    activeTask.nextRunTick = currentTick + activeTask.periodTicks
+                }
             }
         }
     }
 
     private fun ensureTickerRunning(forceHealthCheck: Boolean) {
         if (!plugin.isEnabled) return
+        synchronized(lock) {
+            val isStalled = forceHealthCheck && bukkitTickerTaskId != null &&
+                tasks.isNotEmpty() &&
+                lastTickAtMs > 0L &&
+                System.currentTimeMillis() - lastTickAtMs > 3_000L
 
-        val isStalled = forceHealthCheck && bukkitTickerTaskId != null &&
-            tasks.isNotEmpty() &&
-            lastTickAtMs > 0L &&
-            System.currentTimeMillis() - lastTickAtMs > 3_000L
+            if (isStalled) {
+                bukkitTickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
+                bukkitTickerTaskId = null
+            }
 
-        if (isStalled) {
-            bukkitTickerTaskId?.let { Bukkit.getScheduler().cancelTask(it) }
-            bukkitTickerTaskId = null
+            if (bukkitTickerTaskId != null) return
+
+            lastTickAtMs = System.currentTimeMillis()
+            bukkitTickerTaskId = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
+                tick()
+            }, 1L, 1L).taskId
         }
-
-        if (bukkitTickerTaskId != null) return
-
-        lastTickAtMs = System.currentTimeMillis()
-        bukkitTickerTaskId = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
-            tick()
-        }, 1L, 1L).taskId
     }
 }

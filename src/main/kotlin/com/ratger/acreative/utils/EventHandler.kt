@@ -372,6 +372,9 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             hooker.playerStateManager.handleItemSwitch(player, event.newSlot)
             hooker.disguiseManager.updateMainHandEquipment(player)
         }
+        if (hooker.paintManager.isPainting(player)) {
+            hooker.paintManager.handleHeldToolChange(player)
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

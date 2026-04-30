@@ -3,6 +3,7 @@ package com.ratger.acreative.commands.paint
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.paint.model.PaintCanvasSize
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 

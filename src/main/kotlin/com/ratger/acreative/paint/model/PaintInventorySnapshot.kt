@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.paint
+package com.ratger.acreative.paint.model
 
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack

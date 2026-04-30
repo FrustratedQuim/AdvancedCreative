@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.menus.apply.ApplyCommandCoordinator
@@ -63,6 +64,7 @@ import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.personal.PersonalItemsRepository
 import com.ratger.acreative.menus.edit.personal.PersonalItemsService
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
+import com.ratger.acreative.menus.paint.PaintToolMarker
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -145,10 +147,10 @@ class MenuService(
                 player = player,
                 templateLines = templateLines,
                 onSubmit = { submitPlayer, input ->
-                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onSubmit(submitPlayer, input) })
+                    hooker.tickScheduler.runNow { onSubmit(submitPlayer, input) }
                 },
                 onLeave = { leavePlayer ->
-                    Bukkit.getScheduler().runTask(hooker.plugin, Runnable { onLeave(leavePlayer) })
+                    hooker.tickScheduler.runNow { onLeave(leavePlayer) }
                 }
             )
         }
@@ -257,6 +259,10 @@ class MenuService(
         val handItem = player.inventory.itemInMainHand
         if (handItem.type == Material.AIR || handItem.amount <= 0) {
             itemEditMenu.openMyItemsStandalone(player)
+            return
+        }
+        if (PaintToolMarker.isPaintTool(hooker.plugin, handItem)) {
+            hooker.messageManager.sendChat(player, MessageKey.EDIT_NOT_EDITABLE)
             return
         }
 

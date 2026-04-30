@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.paint
+package com.ratger.acreative.paint.map
 
 import net.minecraft.world.level.material.MapColor
 import java.awt.Color
@@ -21,8 +21,6 @@ object MapColorMatcher {
         val rgb = color.rgb and RGB_MASK
         return cache.getOrPut(rgb) { findNearestPackedColor(color) }
     }
-
-    fun match(red: Int, green: Int, blue: Int): Byte = match(Color(red, green, blue))
 
     private fun findNearestPackedColor(color: Color): Byte {
         var bestId = 0

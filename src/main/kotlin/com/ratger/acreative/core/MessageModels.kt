@@ -148,7 +148,8 @@ enum class MessageKey {
     HEAD_RESTORE_DAT_SUCCESS,
     HEAD_RESTORE_API_KEY_MISSING,
     HEAD_RESTORE_API_SUCCESS,
-    HEAD_RESTORE_ALREADY_POPULATED
+    HEAD_RESTORE_ALREADY_POPULATED,
+    EDIT_NOT_EDITABLE
 }
 
 object MessageCatalog {
@@ -235,17 +236,7 @@ object MessageCatalog {
         MessageKey.SUCCESS_DISGUISE_REMOVED to "<dark_green>▍ <#00FF40>Ваш облик восстановлен.",
         MessageKey.USAGE_EFFECTS to "<dark_red>▍ <#FF1500>Используйте /effects <эффект> [уровень]",
         MessageKey.USAGE_PAINT to "<dark_red>▍ <#FF1500>Используйте /paint [1x1-4x4]",
-        MessageKey.ERROR_PAINT_INVALID_SIZE to """
-            <dark_red>▍ <#FF1500>Недопустимый размер
-            	<#FFE68A>1x1
-            	<#FFE68A>1x2
-            	<#FFE68A>2x1
-            	<#FFE68A>2x2
-            	<#FFE68A>2x3
-            	<#FFE68A>3x2
-            	<#FFE68A>3x3
-            <#FFD700>▍ <#FFE68A>Лимит стороны: <#FFF3E0>1-4
-        """.trimIndent(),
+        MessageKey.ERROR_PAINT_INVALID_SIZE to "<dark_red>▍ <#FF1500>Недопустимый размер",
         MessageKey.ERROR_PAINT_MAP_MISSING to "<dark_red>▍ <#FF1500>Не удалось открыть режим рисования: %map% не найдена или недоступна.",
         MessageKey.USAGE_JAR to "<dark_red>▍ <#FF1500>Используйте /jar <игрок>",
         MessageKey.USAGE_GRAB to "<dark_red>▍ <#FF1500>Используйте /grab <игрок>",
@@ -322,6 +313,7 @@ object MessageCatalog {
         MessageKey.HEAD_RESTORE_DAT_SUCCESS to "<dark_green>▍ <#7BFF00>%amount% <#00FF40>голов успешно загружено из <#7BFF00>.dat",
         MessageKey.HEAD_RESTORE_API_KEY_MISSING to "<dark_red>▍ <#FF1500>API ключ не установлен",
         MessageKey.HEAD_RESTORE_API_SUCCESS to "<dark_green>▍ <#7BFF00>%amount% <#00FF40>голов успешно загружено из <#7BFF00>API",
-        MessageKey.HEAD_RESTORE_ALREADY_POPULATED to "<dark_red>▍ <#FF1500>База голов уже заполнена"
+        MessageKey.HEAD_RESTORE_ALREADY_POPULATED to "<dark_red>▍ <#FF1500>База голов уже заполнена",
+        MessageKey.EDIT_NOT_EDITABLE to "<dark_red>▍ <#FF1500>Невозможно редактировать"
     )
 }

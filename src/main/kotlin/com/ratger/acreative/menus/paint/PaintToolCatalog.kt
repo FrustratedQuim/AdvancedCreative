@@ -1,8 +1,17 @@
-package com.ratger.acreative.commands.paint
+package com.ratger.acreative.menus.paint
 
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.paint.model.PaintBinaryBrushSettings
+import com.ratger.acreative.paint.model.PaintBrushSettings
+import com.ratger.acreative.paint.model.PaintFillSettings
+import com.ratger.acreative.paint.model.PaintSession
+import com.ratger.acreative.paint.model.PaintShade
+import com.ratger.acreative.paint.model.PaintShapeSettings
+import com.ratger.acreative.paint.model.PaintToolMode
+import com.ratger.acreative.paint.palette.PaintPalette
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 
@@ -13,6 +22,17 @@ data class PaintToolDefinition(
     val mode: PaintToolMode,
     val fixedPaletteKey: String? = null
 )
+
+object PaintToolMarker {
+    private const val KEY_NAME = "paint_tool_id"
+
+    fun key(plugin: JavaPlugin): NamespacedKey = NamespacedKey(plugin, KEY_NAME)
+
+    fun isPaintTool(plugin: JavaPlugin, item: ItemStack?): Boolean {
+        val meta = item?.itemMeta ?: return false
+        return meta.persistentDataContainer.has(key(plugin), PersistentDataType.STRING)
+    }
+}
 
 object PaintToolCatalog {
     val tools: List<PaintToolDefinition> = listOf(
@@ -110,7 +130,10 @@ object PaintToolCatalog {
 
     private fun lore(tool: PaintToolDefinition, session: PaintSession): List<String> {
         return when (tool.mode) {
-            PaintToolMode.BASIC_COLOR_BRUSH -> buildBrushLore(session.toolSettings.basicBrush, "Обычная кисть для рисования")
+            PaintToolMode.BASIC_COLOR_BRUSH -> {
+                val settings = session.toolSettings.basicBrush(requireNotNull(tool.fixedPaletteKey))
+                buildBrushLore(settings, "Обычная кисть для рисования")
+            }
             PaintToolMode.CUSTOM_BRUSH -> buildBrushLore(session.toolSettings.customBrush, "Дополнительные цвета")
             PaintToolMode.ERASER -> buildBinaryBrushLore(session.toolSettings.eraser, "Стирает нарисованное")
             PaintToolMode.SHEARS -> buildBinaryBrushLore(session.toolSettings.shears, "Вырезают пиксели")
@@ -121,7 +144,6 @@ object PaintToolCatalog {
                 "",
                 "<!i><#FFD700>Управление:",
                 "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
-                "<!i><#C7A300> ● <#FFF3E0>Ctrl+Q, чтобы отменить",
                 ""
             )
         }
@@ -132,7 +154,7 @@ object PaintToolCatalog {
             "<!i><#C7A300>➥ <#FFE68A>$description",
             "",
             "<!i><#FFD700>Управление:",
-            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать",
+            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать ",
             "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
             "<!i><#C7A300> ● <#FFF3E0>Ctrl+Q, чтобы отменить",
             "",
@@ -150,7 +172,7 @@ object PaintToolCatalog {
             "<!i><#C7A300>➥ <#FFE68A>$description",
             "",
             "<!i><#FFD700>Управление:",
-            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать",
+            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать ",
             "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
             "<!i><#C7A300> ● <#FFF3E0>Ctrl+Q, чтобы отменить",
             "",
@@ -166,7 +188,7 @@ object PaintToolCatalog {
             "<!i><#C7A300>➥ <#FFE68A>Окрашивает область",
             "",
             "<!i><#FFD700>Управление:",
-            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать",
+            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать ",
             "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
             "<!i><#C7A300> ● <#FFF3E0>Ctrl+Q, чтобы отменить",
             "",
@@ -184,7 +206,7 @@ object PaintToolCatalog {
             "<!i><#C7A300>➥ <#FFE68A>Рисует фигурами",
             "",
             "<!i><#FFD700>Управление:",
-            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать",
+            "<!i><#C7A300> ● <#FFF3E0>ПКМ, чтобы использовать ",
             "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
             "<!i><#C7A300> ● <#FFF3E0>Ctrl+Q, чтобы отменить",
             "",
