@@ -8,6 +8,9 @@ import com.github.retrooper.packetevents.protocol.item.type.ItemTypes
 import com.github.retrooper.packetevents.protocol.nbt.NBTCompound
 import com.github.retrooper.packetevents.protocol.nbt.NBTInt
 import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
+import com.github.retrooper.packetevents.protocol.world.states.WrappedBlockState
+import com.github.retrooper.packetevents.protocol.world.states.type.StateTypes
+import com.github.retrooper.packetevents.util.Vector3f
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMapData
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
@@ -44,6 +47,7 @@ import com.ratger.acreative.paint.palette.PaintPalette
 import com.ratger.acreative.paint.palette.PaintPaletteEntry
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.ratger.acreative.utils.SeriesCodeGenerator
+import me.tofaa.entitylib.meta.display.BlockDisplayMeta
 import me.tofaa.entitylib.meta.other.ItemFrameMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.minecraft.ChatFormatting
@@ -79,6 +83,11 @@ class PaintManager(private val hooker: FunctionHooker) {
         val point: PaintGridPoint,
         val location: Location,
         val state: ResizeTargetState
+    )
+
+    private data class CanvasCellVisuals(
+        val frame: WrapperEntity,
+        val backPanel: WrapperEntity
     )
 
     private enum class ResizeTargetState {
@@ -509,7 +518,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         hooker.tickScheduler.cancel(session.previewTaskId)
         restorePreviewIfNeeded(player, session)
         removeResizePreview(player, session)
-        session.canvasCells.values.forEach { it.frame.remove() }
+        session.canvasCells.values.forEach { removeCanvasCellVisuals(it) }
         toolInventoryService.clear(player)
         session.inventorySnapshot.restore(player)
         artworkService.giveResult(player, session)
@@ -527,7 +536,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 sessions.remove(playerId)?.let { session ->
                     hooker.tickScheduler.cancel(session.viewerTaskId)
                     hooker.tickScheduler.cancel(session.previewTaskId)
-                    session.canvasCells.values.forEach { it.frame.remove() }
+                    session.canvasCells.values.forEach { removeCanvasCellVisuals(it) }
                     session.resizePreview?.frame?.remove()
                 }
             }
@@ -563,16 +572,20 @@ class PaintManager(private val hooker: FunctionHooker) {
 
         val inventorySnapshot = PaintInventorySnapshot.capture(player)
         val visibleViewers = resolveVisibleViewers(player, anchorLocation).mapTo(mutableSetOf()) { it.uniqueId }
+        mapSnapshots.values.forEach { snapshot ->
+            sendFullMapDataToViewers(visibleViewers, snapshot)
+        }
 
         val canvasCells = linkedMapOf<PaintGridPoint, PaintCanvasCell>()
         mapSnapshots.forEach { (point, snapshot) ->
             val location = frameLocations.getValue(point)
-            val frame = createFrame(player, snapshot.mapId, location, frameDirection)
-            if (!frame.spawn(PacketLocation(location.x, location.y, location.z, location.yaw, location.pitch))) {
-                canvasCells.values.forEach { it.frame.remove() }
+            val visuals = createCanvasCellVisuals(snapshot.mapId, frameDirection, visibleViewers)
+            if (!spawnCanvasCellVisuals(visuals, location)) {
+                canvasCells.values.forEach { removeCanvasCellVisuals(it) }
+                removeCanvasCellVisuals(visuals)
                 return false
             }
-            canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, frame, location)
+            canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, visuals.frame, visuals.backPanel, location)
         }
 
         val session = PaintSession(
@@ -597,26 +610,114 @@ class PaintManager(private val hooker: FunctionHooker) {
         session.previewTaskId = startPreviewTask(player.uniqueId)
 
         mapSnapshots.values.forEach { snapshot ->
-            sendFullMapDataToViewers(session, snapshot)
             scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
         }
         return true
     }
 
-    private fun createFrame(
-        player: Player,
+    private fun createCanvasCellVisuals(
         mapId: Int,
-        frameLocation: Location,
-        direction: PaintFrameDirection
+        direction: PaintFrameDirection,
+        viewerIds: Collection<UUID>
+    ): CanvasCellVisuals {
+        return CanvasCellVisuals(
+            frame = createFrame(mapId, direction, viewerIds),
+            backPanel = createBackPanel(direction, viewerIds)
+        )
+    }
+
+    private fun createFrame(
+        mapId: Int,
+        direction: PaintFrameDirection,
+        viewerIds: Collection<UUID>
     ): WrapperEntity {
         val frame = WrapperEntity(EntityTypes.GLOW_ITEM_FRAME)
-        resolveVisibleViewers(player, frameLocation).forEach { viewer ->
-            frame.addViewer(viewer.uniqueId)
-        }
+        viewerIds.forEach(frame::addViewer)
         val meta = frame.entityMeta as ItemFrameMeta
         meta.orientation = direction.orientation
         meta.item = createMapItem(mapId)
         return frame
+    }
+
+    private fun createBackPanel(
+        direction: PaintFrameDirection,
+        viewerIds: Collection<UUID>
+    ): WrapperEntity {
+        val backPanel = WrapperEntity(EntityTypes.BLOCK_DISPLAY)
+        viewerIds.forEach(backPanel::addViewer)
+
+        val meta = backPanel.entityMeta as BlockDisplayMeta
+        val blockState = WrappedBlockState.getDefaultState(
+            PacketEvents.getAPI().serverManager.version.toClientVersion(),
+            StateTypes.OAK_PLANKS
+        )
+        meta.blockId = blockState.globalId
+        applyBackPanelTransform(meta, direction)
+        return backPanel
+    }
+
+    private fun applyBackPanelTransform(meta: BlockDisplayMeta, direction: PaintFrameDirection) {
+        val size = BACK_PANEL_SIZE
+        val half = size / 2f
+        val depth = BACK_PANEL_DEPTH
+        val gap = BACK_PANEL_GAP
+
+        when (direction) {
+            PaintFrameDirection.NORTH -> {
+                meta.scale = Vector3f(size, size, depth)
+                meta.translation = Vector3f(-half, -half, -(gap + depth))
+            }
+
+            PaintFrameDirection.SOUTH -> {
+                meta.scale = Vector3f(size, size, depth)
+                meta.translation = Vector3f(-half, -half, gap)
+            }
+
+            PaintFrameDirection.EAST -> {
+                meta.scale = Vector3f(depth, size, size)
+                meta.translation = Vector3f(gap, -half, -half)
+            }
+
+            PaintFrameDirection.WEST -> {
+                meta.scale = Vector3f(depth, size, size)
+                meta.translation = Vector3f(-(gap + depth), -half, -half)
+            }
+        }
+    }
+
+    private fun spawnCanvasCellVisuals(visuals: CanvasCellVisuals, location: Location): Boolean {
+        val backPanelLocation = PacketLocation(location.x, location.y, location.z, 0f, 0f)
+        if (!visuals.backPanel.spawn(backPanelLocation)) {
+            return false
+        }
+
+        val frameLocation = PacketLocation(location.x, location.y, location.z, location.yaw, location.pitch)
+        if (!visuals.frame.spawn(frameLocation)) {
+            visuals.backPanel.remove()
+            return false
+        }
+
+        return true
+    }
+
+    private fun addCanvasCellViewer(cell: PaintCanvasCell, viewerId: UUID) {
+        cell.backPanel.addViewer(viewerId)
+        cell.frame.addViewer(viewerId)
+    }
+
+    private fun removeCanvasCellViewer(cell: PaintCanvasCell, viewerId: UUID) {
+        cell.frame.removeViewer(viewerId)
+        cell.backPanel.removeViewer(viewerId)
+    }
+
+    private fun removeCanvasCellVisuals(cell: PaintCanvasCell) {
+        cell.frame.remove()
+        cell.backPanel.remove()
+    }
+
+    private fun removeCanvasCellVisuals(visuals: CanvasCellVisuals) {
+        visuals.frame.remove()
+        visuals.backPanel.remove()
     }
 
     private fun resolveFrameLocation(player: Player, direction: PaintFrameDirection): Location {
@@ -1040,21 +1141,22 @@ class PaintManager(private val hooker: FunctionHooker) {
         currentViewers
             .filter { it !in desiredViewers }
             .forEach { viewerId ->
-                session.canvasCells.values.forEach { it.frame.removeViewer(viewerId) }
+                session.canvasCells.values.forEach { removeCanvasCellViewer(it, viewerId) }
                 session.viewers.remove(viewerId)
             }
 
-        desiredViewers.values
-            .filter { it.uniqueId !in currentViewers }
-            .forEach { viewer ->
-                session.canvasCells.values.forEach { it.frame.addViewer(viewer.uniqueId) }
-                session.viewers.add(viewer.uniqueId)
-                session.canvasCells.values.forEach { cell ->
-                    MapDataExtractor.extract(cell.mapId)?.let { snapshot ->
-                        sendFullMapData(viewer, snapshot)
-                    }
+        val enteringViewers = desiredViewers.values.filter { it.uniqueId !in currentViewers }
+        enteringViewers.forEach { viewer ->
+            session.canvasCells.values.forEach { cell ->
+                MapDataExtractor.extract(cell.mapId)?.let { snapshot ->
+                    sendFullMapData(viewer, snapshot)
                 }
             }
+        }
+        enteringViewers.forEach { viewer ->
+            session.canvasCells.values.forEach { addCanvasCellViewer(it, viewer.uniqueId) }
+            session.viewers.add(viewer.uniqueId)
+        }
     }
 
     private fun resolveVisibleViewers(owner: Player, frameLocation: Location): List<Player> {
@@ -2389,21 +2491,21 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun addCanvasCell(player: Player, session: PaintSession, point: PaintGridPoint, location: Location): Boolean {
         val snapshot = MapDataExtractor.create(player.world) ?: return false
-        val frame = createFrame(player, snapshot.mapId, location, session.frameDirection)
-        if (!frame.spawn(PacketLocation(location.x, location.y, location.z, location.yaw, location.pitch))) {
+        sendFullMapDataToViewers(session, snapshot)
+        val visuals = createCanvasCellVisuals(snapshot.mapId, session.frameDirection, session.viewers)
+        if (!spawnCanvasCellVisuals(visuals, location)) {
+            removeCanvasCellVisuals(visuals)
             return false
         }
-        session.canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, frame, location)
-        session.viewers.forEach(frame::addViewer)
+        session.canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, visuals.frame, visuals.backPanel, location)
         markCanvasTopologyChanged(session)
-        sendFullMapDataToViewers(session, snapshot)
         scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
         return true
     }
 
     private fun removeCanvasCell(session: PaintSession, point: PaintGridPoint) {
         session.canvasCells.remove(point)?.let { cell ->
-            cell.frame.remove()
+            removeCanvasCellVisuals(cell)
             markCanvasTopologyChanged(session)
         }
     }
@@ -2558,7 +2660,11 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun sendFullMapDataToViewers(session: PaintSession, snapshot: MapDataExtractor.Snapshot) {
-        session.viewers.forEach { viewerId ->
+        sendFullMapDataToViewers(session.viewers, snapshot)
+    }
+
+    private fun sendFullMapDataToViewers(viewerIds: Collection<UUID>, snapshot: MapDataExtractor.Snapshot) {
+        viewerIds.forEach { viewerId ->
             Bukkit.getPlayer(viewerId)?.let { viewer ->
                 sendFullMapData(viewer, snapshot)
             }
@@ -2612,6 +2718,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val FRAME_EYE_OFFSET = 0.25
         private const val FRAME_RENDER_SIZE = 1.05
         private const val FRAME_HANGING_CENTER_OFFSET = 0.46875
+        private const val BACK_PANEL_SIZE = 1.0f
+        private const val BACK_PANEL_DEPTH = 0.1f
+        private const val BACK_PANEL_GAP = 0.02f
         private const val VIEWER_UPDATE_PERIOD_TICKS = 10L
         private const val CHUNK_SIZE = 16.0
         private const val MIN_VISIBILITY_RADIUS = 32.0

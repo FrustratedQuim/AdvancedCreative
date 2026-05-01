@@ -97,6 +97,7 @@ data class PaintCanvasCell(
     val point: PaintGridPoint,
     val mapId: Int,
     val frame: WrapperEntity,
+    val backPanel: WrapperEntity,
     val location: Location
 )
 
