@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.commands.edit.EditTargetResolver
@@ -127,6 +128,7 @@ class MenuService(
     private val consumableRandomTeleportApplyHandler = ConsumableRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
     private val consumableApplyEffectAddApplyHandler = ConsumableApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
     private var applyStateManager: ItemEditorApplyStateManager
+    private var itemEditorApplyTarget: ApplyCommandTarget
     private val applyCoordinator = ApplyCommandCoordinator()
 
     private val itemEditMenu = ItemEditMenu(
@@ -221,7 +223,7 @@ class MenuService(
             )
         )
 
-        applyCoordinator.registerTarget(object : ApplyCommandTarget {
+        itemEditorApplyTarget = object : ApplyCommandTarget {
             override fun isWaiting(player: Player): Boolean = applyStateManager.isWaiting(player)
             override fun handle(player: Player, args: Array<out String>): Boolean {
                 applyStateManager.handleApplyCommand(player, args)
@@ -229,7 +231,8 @@ class MenuService(
             }
             override fun tabComplete(player: Player, args: Array<out String>): List<String> = applyStateManager.tabComplete(player, args)
             override fun cancel(player: Player) = applyStateManager.cancelWaiting(player, reopenMenu = false)
-        })
+        }
+        applyCoordinator.registerTarget(itemEditorApplyTarget)
 
         sessionManager.addCloseListener { player, _ ->
             applyStateManager.cancelWaiting(player, reopenMenu = false)
@@ -276,9 +279,21 @@ class MenuService(
             if (hooker.bannerMenuService.reopenPostFromApply(player)) {
                 return
             }
+            if (!hooker.systemToggleService.isEnabled(ManagedSystem.EDIT)) {
+                hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+                return
+            }
             openItemEditor(player)
             return
         }
+
+        val activeTarget = applyCoordinator.activeTarget(player)
+        if (activeTarget === itemEditorApplyTarget && !hooker.systemToggleService.isEnabled(ManagedSystem.EDIT)) {
+            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+            return
+        }
+
         applyCoordinator.handle(player, args)
     }
 
@@ -289,6 +304,18 @@ class MenuService(
     fun handlePlayerRuntimeReset(player: Player) {
         applyCoordinator.cancel(player)
         personalItemsService.commitDeferredPromotions(player.uniqueId)
+    }
+
+    fun closeAllItemEditorSessions() {
+        itemEditSessionsSnapshot().forEach { session ->
+            val player = Bukkit.getPlayer(session.playerId) ?: return@forEach
+            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            player.closeInventory()
+            val closedSession = sessionManager.closeSession(player)
+            if (closedSession != null) {
+                syncEditedItemBack(player, closedSession)
+            }
+        }
     }
 
     fun handlePlayerDisconnect(player: Player) {

@@ -40,6 +40,18 @@ class AdminManager(
         player.sendMessage(mini.deserialize("<#FFD700><st>                                                                             </st>"))
     }
 
+    fun showToggleStatus(player: Player) {
+        player.sendMessage(mini.deserialize("<#FFD700><st>                          </st><<#FFE68A><b> Toggle Status </b><#FFD700>><st>                         </st>"))
+
+        hooker.systemToggleService.statuses().forEach { status ->
+            val stateText = if (status.enabled) "<#00FF40>Вкл" else "<#FF1500>Выкл"
+            val line = "<#C7A300> ● <#FFE68A>${status.system.displayName}<#EDC800>- $stateText"
+            player.sendMessage(mini.deserialize(line))
+        }
+
+        player.sendMessage(mini.deserialize("<#FFD700><st>                                                                             </st>"))
+    }
+
     fun restoreHeadsFromDat(player: Player) {
         when (val result = hooker.subsystem.restoreCatalogFromDat()) {
             HeadCatalogRestoreService.RestoreResult.AlreadyPopulated -> {

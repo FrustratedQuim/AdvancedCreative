@@ -430,6 +430,14 @@ class MenuService(
         clearTransientPlayerState(playerId)
     }
 
+    fun closeAllSessions() {
+        sessionManager.playerIdsSnapshot().mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
+            noteApplyStateManager.cancel(player)
+            clearPlayer(player.uniqueId)
+            player.closeInventory()
+        }
+    }
+
     private fun clearTransientPlayerState(playerId: UUID) {
         sessionManager.clear(playerId)
         savedPagesFilterByPlayer.remove(playerId)

@@ -15,5 +15,7 @@ class BannerStorageSessionManager {
 
     fun remove(playerId: UUID): BannerStorageSession? = sessions.remove(playerId)
 
+    fun playerIdsSnapshot(): Set<UUID> = sessions.keys.toSet()
+
     fun totalSessions(): Int = sessions.size
 }

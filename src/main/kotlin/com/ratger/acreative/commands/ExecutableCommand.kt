@@ -18,6 +18,11 @@ abstract class ExecutableCommand(
             return true
         }
 
+        if (!isManagedSystemEnabled()) {
+            hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+            return true
+        }
+
         if (useCooldown) {
             val remainingMillis = hooker.commandManager.cooldownService.remainingMillis(player.uniqueId, type)
             if (remainingMillis > 0L) {
@@ -42,12 +47,17 @@ abstract class ExecutableCommand(
 
     fun canUse(sender: CommandSender): Boolean {
         val player = sender as? Player ?: return false
-        return hasPermission(player)
+        return hasPermission(player) && isManagedSystemEnabled()
     }
 
     protected open fun hasPermission(player: Player): Boolean {
         val permissionNode = type.permissionNode ?: return true
         return player.hasPermission(permissionNode)
+    }
+
+    private fun isManagedSystemEnabled(): Boolean {
+        val system = type.managedSystem ?: return true
+        return hooker.systemToggleService.isEnabled(system)
     }
 
     protected abstract fun handle(player: Player, args: Array<out String>)

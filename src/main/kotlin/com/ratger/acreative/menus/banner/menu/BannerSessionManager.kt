@@ -63,6 +63,9 @@ class BannerSessionManager {
         lastBannerMenuByPlayer.remove(playerId)
     }
 
+    fun playerIdsSnapshot(): Set<UUID> =
+        (publicStateByPlayer.keys + myStateByPlayer.keys + postDraftByPlayer.keys + myOriginByPlayer.keys + lastBannerMenuByPlayer.keys).toSet()
+
     fun totalEntriesCount(): Int =
         publicStateByPlayer.size + myStateByPlayer.size + postDraftByPlayer.size + myOriginByPlayer.size + lastBannerMenuByPlayer.size
 }

@@ -14,6 +14,12 @@ cooldowns: # В миллисекундах
   piss:       30000
   hideState:  1800000 # 30 минут
 
+systems:
+  edit: true
+  paint: true
+  decorationbanners: true
+  decorationheads: true
+
 roles:
   player:
     display: "none"

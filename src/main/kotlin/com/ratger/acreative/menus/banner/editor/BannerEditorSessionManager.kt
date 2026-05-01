@@ -31,5 +31,7 @@ class BannerEditorSessionManager {
         sessions.remove(playerId)
     }
 
+    fun playerIdsSnapshot(): Set<UUID> = sessions.keys.toSet()
+
     fun sessionsSnapshot(): List<BannerEditorSession> = sessions.values.toList()
 }

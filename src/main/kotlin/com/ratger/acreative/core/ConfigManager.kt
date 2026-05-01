@@ -29,6 +29,10 @@ class ConfigManager(private val hooker: FunctionHooker) {
         config.save(configFile)
     }
 
+    fun save() {
+        config.save(configFile)
+    }
+
     fun getBlockedDisguises(): Set<EntityType> {
         return config.getStringList("blocked-disguises")
             .mapNotNull { runCatching { EntityType.valueOf(it) }.getOrNull() }

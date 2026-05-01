@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.banner.menu
 
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
 import com.ratger.acreative.menus.banner.BannerButtonFactory
@@ -197,6 +198,11 @@ class BannerMenuService(
         if (!sessionManager.wasLastMenuBanner(player.uniqueId)) {
             return false
         }
+        if (!hooker.systemToggleService.isEnabled(ManagedSystem.DECORATION_BANNERS)) {
+            sessionManager.clearLastBannerMenuMarker(player.uniqueId)
+            hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+            return true
+        }
         openPostFromCommand(player)
         return true
     }
@@ -355,6 +361,16 @@ class BannerMenuService(
         }
         flushStorageSession(player, remove = true)
         sessionManager.clear(player.uniqueId)
+    }
+
+    fun closeAllSessions() {
+        val playerIds = sessionManager.playerIdsSnapshot() +
+            editorSessionManager.playerIdsSnapshot() +
+            storageSessionManager.playerIdsSnapshot()
+        playerIds.mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
+            handlePlayerDisconnect(player)
+            player.closeInventory()
+        }
     }
 
     fun handlePlayerDeath(player: Player) {

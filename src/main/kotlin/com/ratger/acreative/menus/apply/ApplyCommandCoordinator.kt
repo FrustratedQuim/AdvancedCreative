@@ -18,13 +18,15 @@ class ApplyCommandCoordinator(
 
     fun isWaiting(player: Player): Boolean = targets.any { it.isWaiting(player) }
 
+    fun activeTarget(player: Player): ApplyCommandTarget? = targets.firstOrNull { it.isWaiting(player) }
+
     fun handle(player: Player, args: Array<out String>): Boolean {
-        val active = targets.firstOrNull { it.isWaiting(player) } ?: return false
+        val active = activeTarget(player) ?: return false
         return active.handle(player, args)
     }
 
     fun tabComplete(player: Player, args: Array<out String>): List<String> {
-        val active = targets.firstOrNull { it.isWaiting(player) } ?: return emptyList()
+        val active = activeTarget(player) ?: return emptyList()
         return active.tabComplete(player, args)
     }
 

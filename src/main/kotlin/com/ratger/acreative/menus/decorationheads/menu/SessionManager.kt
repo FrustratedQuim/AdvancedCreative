@@ -50,5 +50,7 @@ class SessionManager(
         recentCategoryByPlayer.remove(playerId)
     }
 
+    fun playerIdsSnapshot(): Set<UUID> = (byPlayer.keys + recentCategoryByPlayer.keys).toSet()
+
     fun totalEntriesCount(): Int = byPlayer.size + recentCategoryByPlayer.size
 }

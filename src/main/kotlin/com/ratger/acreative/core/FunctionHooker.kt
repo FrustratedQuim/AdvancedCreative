@@ -42,6 +42,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var accountLinkRequirementService: AccountLinkRequirementService
         private set
+    lateinit var systemToggleService: SystemToggleService
+        private set
     lateinit var commandManager: CommandManager
         private set
     lateinit var playerStateManager: PlayerStateManager
@@ -129,10 +131,14 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     fun slapManagerOrNull(): SlapManager? = if (this::slapManager.isInitialized) slapManager else null
     fun grabManagerOrNull(): GrabManager? = if (this::grabManager.isInitialized) grabManager else null
     fun jarManagerOrNull(): JarManager? = if (this::jarManager.isInitialized) jarManager else null
+    fun menuServiceOrNull(): MenuService? = if (this::menuService.isInitialized) menuService else null
+    fun subsystemOrNull(): Subsystem? = if (this::subsystem.isInitialized) subsystem else null
+    fun bannerSubsystemOrNull(): BannerSubsystem? = if (this::bannerSubsystem.isInitialized) bannerSubsystem else null
 
     fun init() {
         configManager = ConfigManager(this)
         configManager.initConfigs()
+        systemToggleService = SystemToggleService(this)
 
         tickScheduler = TickScheduler(plugin)
         tickScheduler.start()
