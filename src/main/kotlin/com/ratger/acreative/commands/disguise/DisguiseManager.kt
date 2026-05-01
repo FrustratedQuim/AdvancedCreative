@@ -427,7 +427,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                 val newName = getDisplayName(player)
                 if (lastCustomName[player] != newName) {
                     lastCustomName[player] = newName
-                    sendNameMetadataToViewers(player, currentData, visible = true)
+                    sendNameMetadataToViewers(player, currentData)
                 }
             } else {
                 lastCustomName.remove(player)
@@ -479,11 +479,11 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         tasks[player] = taskId
     }
 
-    private fun sendNameMetadataToViewers(owner: Player, data: DisguiseData, visible: Boolean) {
+    private fun sendNameMetadataToViewers(owner: Player, data: DisguiseData) {
         val viewerIds = activeViewers[owner] ?: return
         viewerIds.forEach { viewerId ->
             val viewer = Bukkit.getPlayer(viewerId) ?: return@forEach
-            sendNameMetadata(viewer, data.entity.entityId, owner, visible)
+            sendNameMetadata(viewer, data.entity.entityId, owner, true)
         }
     }
 
