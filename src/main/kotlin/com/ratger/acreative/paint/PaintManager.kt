@@ -17,6 +17,7 @@ import com.ratger.acreative.menus.paint.PaintMenuController
 import com.ratger.acreative.menus.paint.PaintToolDefinition
 import com.ratger.acreative.menus.paint.PaintToolInventoryService
 import com.ratger.acreative.menus.paint.PaintToolMarker
+import com.ratger.acreative.paint.area.PaintBlockedZoneService
 import com.ratger.acreative.paint.artwork.PaintArtworkService
 import com.ratger.acreative.paint.map.MapColorMatcher
 import com.ratger.acreative.paint.map.MapDataExtractor
@@ -313,6 +314,9 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val previewBlendCache = mutableMapOf<Int, Byte>()
     private val parser = MiniMessageParser()
     private val artworkService = PaintArtworkService(hooker, parser)
+    private val blockedZoneService = PaintBlockedZoneService(
+        hooker.configManager.config.getConfigurationSection("paint.blocked-zones")
+    )
     private val toolInventoryService = PaintToolInventoryService(PaintToolMarker.key(hooker.plugin), parser)
     private val menuController = PaintMenuController(
         hooker = hooker,
@@ -357,12 +361,22 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
+        if (blockedZoneService.isBlocked(player.location)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_BLOCKED_ZONE)
+            return
+        }
+
         if (startPainting(player, requestedSize)) {
             hooker.messageManager.sendChat(player, MessageKey.INFO_PAINT_ON)
         }
     }
 
     fun isPainting(player: Player): Boolean = sessions.containsKey(player.uniqueId)
+
+    fun shouldCancelWorldAction(player: Player): Boolean {
+        val session = sessions[player.uniqueId] ?: return false
+        return session.resizeMode || hasWorkToolInHands(player)
+    }
 
     fun handleFrameInteraction(entityId: Int): Boolean = sessions.values.any { session ->
         session.canvasCells.values.any { it.frame.entityId == entityId } ||
@@ -521,8 +535,20 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun startPainting(player: Player, size: PaintCanvasSize): Boolean {
+        val frameDirection = resolveDirection(player)
+        val anchorLocation = resolveFrameLocation(player, frameDirection)
+        val points = size.initialPoints()
+        val frameLocations = points.associateWith { point ->
+            resolveCellLocation(anchorLocation, size.basePoint, point, frameDirection)
+        }
+
+        if (frameLocations.values.any { !isEmptyFrameSpace(it) }) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_NO_SPACE)
+            return false
+        }
+
         val mapSnapshots = linkedMapOf<PaintGridPoint, MapDataExtractor.Snapshot>()
-        size.initialPoints().forEach { point ->
+        points.forEach { point ->
             val snapshot = MapDataExtractor.create(player.world)
             if (snapshot == null) {
                 hooker.messageManager.sendChat(
@@ -536,13 +562,11 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         val inventorySnapshot = PaintInventorySnapshot.capture(player)
-        val frameDirection = resolveDirection(player)
-        val anchorLocation = resolveFrameLocation(player, frameDirection)
         val visibleViewers = resolveVisibleViewers(player, anchorLocation).mapTo(mutableSetOf()) { it.uniqueId }
 
         val canvasCells = linkedMapOf<PaintGridPoint, PaintCanvasCell>()
         mapSnapshots.forEach { (point, snapshot) ->
-            val location = resolveCellLocation(anchorLocation, size.basePoint, point, frameDirection)
+            val location = frameLocations.getValue(point)
             val frame = createFrame(player, snapshot.mapId, location, frameDirection)
             if (!frame.spawn(PacketLocation(location.x, location.y, location.z, location.yaw, location.pitch))) {
                 canvasCells.values.forEach { it.frame.remove() }
@@ -2566,6 +2590,10 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun isWorkTool(item: BukkitItemStack?): Boolean = toolInventoryService.isWorkTool(item)
+
+    private fun hasWorkToolInHands(player: Player): Boolean {
+        return isWorkTool(player.inventory.itemInMainHand) || isWorkTool(player.inventory.itemInOffHand)
+    }
 
     private fun isDropClick(click: ClickType): Boolean {
         return click == ClickType.DROP || click == ClickType.CONTROL_DROP

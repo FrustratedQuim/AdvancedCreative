@@ -158,26 +158,31 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
         // 1) High priority state restrictions.
         if (hooker.grabManager.blockGrabbedInteraction(player, event.action)) {
-            event.isCancelled = true
+            denyPlayerInteract(event)
             return
         }
         if (hooker.jarManager.blockJarredInteraction(player, event.action)) {
-            event.isCancelled = true
+            denyPlayerInteract(event)
             return
         }
         if (hooker.paintManager.isPainting(player)) {
-            if (event.hand == EquipmentSlot.HAND) {
+            val shouldCancelWorldAction = hooker.paintManager.shouldCancelWorldAction(player)
+            if (shouldCancelWorldAction && event.hand == EquipmentSlot.HAND) {
                 when (event.action) {
                     Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK -> hooker.paintManager.handleInteract(player)
                     Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK -> hooker.paintManager.handleLeftClick(player)
                     else -> {}
                 }
             }
-            event.isCancelled = true
-            return
+            if (shouldCancelWorldAction) {
+                denyPlayerInteract(event)
+                return
+            } else if (!utils.isFrozen(player)) {
+                return
+            }
         }
         if (utils.isFrozen(player)) {
-            event.isCancelled = true
+            denyPlayerInteract(event)
             return
         }
 
@@ -203,7 +208,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             event.isCancelled = true
             return
         }
-        if (hooker.paintManager.isPainting(player)) {
+        if (hooker.paintManager.shouldCancelWorldAction(player)) {
             event.isCancelled = true
             return
         }
@@ -464,7 +469,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onBlockPlace(event: BlockPlaceEvent) {
-        if (hooker.paintManager.isPainting(event.player)) {
+        if (hooker.paintManager.shouldCancelWorldAction(event.player)) {
             event.isCancelled = true
             return
         }
@@ -500,8 +505,13 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
                 (player.hasPermission("advancedcreative.lay") && layManager.handleRightClickBlock(player, block))
 
         if (handled) {
-            event.isCancelled = true
+            denyPlayerInteract(event)
         }
+    }
+
+    private fun denyPlayerInteract(event: PlayerInteractEvent) {
+        event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY)
+        event.setUseItemInHand(org.bukkit.event.Event.Result.DENY)
     }
 
     private fun hasPositionChanged(event: PlayerMoveEvent): Boolean {

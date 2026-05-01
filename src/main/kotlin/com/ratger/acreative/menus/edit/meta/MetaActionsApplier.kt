@@ -221,7 +221,7 @@ class MetaActionsApplier(
             }
             else -> return ItemResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
-        return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
+        return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено")))
     }
 
     private fun applyToMeta(action: ItemAction, meta: ItemMeta, item: ItemStack): ItemResult {
@@ -303,7 +303,7 @@ class MetaActionsApplier(
             is ItemAction.HeadSetFromOnline -> {
                 val skull = meta as? SkullMeta ?: return ItemResult(false, listOf(mini.deserialize("<red>Не player head")))
                 val source = Bukkit.getPlayerExact(action.name)
-                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Онлайн-игрок <white>${action.name}</white> не найден.")))
+                    ?: return ItemResult(false, listOf(mini.deserialize("<red>Онлайн-игрок <white>${action.name}</white> не найден")))
                 skull.playerProfile = PlayerProfileCopyHelper.copyProfile(source.playerProfile)
             }
             ItemAction.HeadClear -> {
@@ -320,7 +320,7 @@ class MetaActionsApplier(
             }
             else -> return ItemResult(false, listOf(mini.deserialize("<red>Ветка не поддерживается для item meta")))
         }
-        return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено.")))
+        return ItemResult(true, listOf(mini.deserialize("<green>Изменение применено")))
     }
 
     private fun toggleFlag(meta: ItemMeta, action: ItemAction.TooltipToggle, itemType: Material) {

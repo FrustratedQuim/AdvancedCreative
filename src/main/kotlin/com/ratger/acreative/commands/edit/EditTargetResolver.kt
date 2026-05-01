@@ -13,14 +13,10 @@ class EditTargetResolver {
     fun resolve(player: Player): ItemContext? {
         val item = player.inventory.itemInMainHand
         if (item.type == Material.AIR || item.amount <= 0) {
-            player.sendMessage(mini.deserialize("<red>Держите предмет в основной руке."))
+            player.sendMessage(mini.deserialize("<red>Держите предмет в основной руке"))
             return null
         }
         return ItemContext(item, snapshot(item))
-    }
-
-    fun save(player: Player, item: ItemStack) {
-        player.inventory.setItemInMainHand(item)
     }
 
     fun snapshot(item: ItemStack): ItemSnapshot {

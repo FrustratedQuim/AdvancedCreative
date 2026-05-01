@@ -417,7 +417,7 @@ class ItemEditMenu(
         runCatching { openAction() }
             .onFailure {
                 player.closeInventory()
-                player.sendMessage(parser.parse("<!i><dark_red>▍ <#FF1500>Предмет повреждён.."))
+                player.sendMessage(parser.parse("<!i><dark_red>▍ <#FF1500>Предмет повреждён"))
             }
     }
 }

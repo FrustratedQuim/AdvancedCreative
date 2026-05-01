@@ -158,6 +158,12 @@ banner:
       "group.don_horizon_perms": 180
       "advancedcreative.decorationbanners.storage_bypass": -1
 
+paint:
+  blocked-zones:
+    spawn:
+      point-1: [0, 0, 0]
+      point-2: [0, 0, 0]
+
 blocked-disguises:
   - ARROW
   - BLOCK_DISPLAY
