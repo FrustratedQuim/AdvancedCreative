@@ -41,7 +41,6 @@ roles:
       - "advancedcreative.glide"
       - "advancedcreative.gravity"
       - "advancedcreative.sneeze"
-      - "advancedcreative.paint"
       - "advancedcreative.edit"
   flare:
     display: "<#21d185><b>ꜰʟᴀʀᴇ"
@@ -50,7 +49,8 @@ roles:
       - "advancedcreative.resize"
   shine:
     display: "<#9466ff><b>ѕʜɪɴᴇ"
-    permissions: []
+    permissions:
+      - "advancedcreative.paint"
   spark:
     display: "<#cd56fc><b>ѕᴘᴀʀᴋ"
     permissions:
