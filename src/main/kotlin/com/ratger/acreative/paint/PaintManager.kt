@@ -20,6 +20,8 @@ import com.ratger.acreative.menus.paint.PaintMenuController
 import com.ratger.acreative.menus.paint.PaintToolDefinition
 import com.ratger.acreative.menus.paint.PaintToolInventoryService
 import com.ratger.acreative.menus.paint.PaintToolMarker
+import com.ratger.acreative.paint.agreement.PaintRuleConfirmationRepository
+import com.ratger.acreative.paint.agreement.PaintRuleConfirmationService
 import com.ratger.acreative.paint.area.PaintBlockedZoneService
 import com.ratger.acreative.paint.artwork.PaintArtworkService
 import com.ratger.acreative.paint.map.MapColorMatcher
@@ -323,8 +325,15 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val previewBlendCache = mutableMapOf<Int, Byte>()
     private val parser = MiniMessageParser()
     private val artworkService = PaintArtworkService(hooker, parser)
+    private val agreementRepository = PaintRuleConfirmationRepository(hooker.database)
     private val blockedZoneService = PaintBlockedZoneService(
         hooker.configManager.config.getConfigurationSection("paint.blocked-zones")
+    )
+    private val agreementService = PaintRuleConfirmationService(
+        hooker = hooker,
+        parser = parser,
+        repository = agreementRepository,
+        onConfirmed = ::handleConfirmedPaintSession
     )
     private val toolInventoryService = PaintToolInventoryService(PaintToolMarker.key(hooker.plugin), parser)
     private val menuController = PaintMenuController(
@@ -375,6 +384,17 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
+        agreementService.requestPaintSession(player, requestedSize)
+    }
+
+    private fun handleConfirmedPaintSession(player: Player, requestedSize: PaintCanvasSize) {
+        if (isPainting(player)) {
+            return
+        }
+        if (blockedZoneService.isBlocked(player.location)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_BLOCKED_ZONE)
+            return
+        }
         if (startPainting(player, requestedSize)) {
             hooker.messageManager.sendChat(player, MessageKey.INFO_PAINT_ON)
         }
@@ -505,6 +525,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     fun cleanupSessionsForPlayer(player: Player) {
         stopPainting(player)
+        agreementService.clearRuntimeState(player.uniqueId)
     }
 
     fun stopPainting(player: Player) {
@@ -526,6 +547,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     fun releaseAll() {
+        agreementService.releaseAll()
         sessions.keys.toList().forEach { playerId ->
             Bukkit.getPlayer(playerId)?.let(::stopPainting) ?: run {
                 fillPreviewCache.remove(playerId)

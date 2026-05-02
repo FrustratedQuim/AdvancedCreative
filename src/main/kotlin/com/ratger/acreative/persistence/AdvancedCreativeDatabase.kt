@@ -152,6 +152,14 @@ class AdvancedCreativeDatabase(
                 )
                 """.trimIndent()
             )
+            st.executeUpdate(
+                """
+                CREATE TABLE IF NOT EXISTS paint_rule_confirmations (
+                    player_uuid TEXT PRIMARY KEY,
+                    confirmed_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
         }
     }
 
