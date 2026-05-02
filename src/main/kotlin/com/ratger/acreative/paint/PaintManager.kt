@@ -557,7 +557,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun beginResizeMode(player: Player, session: PaintSession) {
         val desiredZoom = session.selectedZoom
-        if (session.appliedZoom != 1 && !applyCanvasZoom(player, session, 1, updateSelectedZoom = false)) {
+        if (session.appliedZoom != 1 && !applyCanvasZoom(player, session, 1)) {
             return
         }
         session.selectedZoom = desiredZoom
@@ -566,7 +566,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun handleEaselMenuClose(player: Player, session: PaintSession) {
         if (session.selectedZoom == session.appliedZoom) return
-        if (!applyCanvasZoom(player, session, session.selectedZoom, updateSelectedZoom = false)) {
+        if (!applyCanvasZoom(player, session, session.selectedZoom)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_NO_SPACE)
             session.selectedZoom = session.appliedZoom
         }
@@ -575,17 +575,13 @@ class PaintManager(private val hooker: FunctionHooker) {
     private fun applyCanvasZoom(
         player: Player,
         session: PaintSession,
-        targetZoom: Int,
-        updateSelectedZoom: Boolean = true
+        targetZoom: Int
     ): Boolean {
         val normalizedZoom = targetZoom.coerceIn(1, MAX_CANVAS_SIDE)
         if (!canApplyZoom(session, normalizedZoom)) {
             return false
         }
         if (session.appliedZoom == normalizedZoom && session.canvasCells.isNotEmpty()) {
-            if (updateSelectedZoom) {
-                session.selectedZoom = normalizedZoom
-            }
             return true
         }
 
@@ -596,17 +592,21 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         session.appliedZoom = normalizedZoom
-        if (updateSelectedZoom) {
-            session.selectedZoom = normalizedZoom
-        }
         clearStrokeState(session)
         clearPreviewSuppression(session)
+        normalizeSelectedZoom(session)
         markCanvasTopologyChanged(session)
         return true
     }
 
     private fun canApplyZoom(session: PaintSession, targetZoom: Int): Boolean {
         return targetZoom == 1 || session.maxLogicalSide() * targetZoom <= MAX_CANVAS_SIDE
+    }
+
+    private fun normalizeSelectedZoom(session: PaintSession) {
+        if (!canApplyZoom(session, session.selectedZoom)) {
+            session.selectedZoom = 1
+        }
     }
 
     private fun syncRenderedCanvas(player: Player, session: PaintSession, targetZoom: Int): Boolean {
@@ -736,7 +736,17 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun renderAnchorPoint(session: PaintSession, zoom: Int): PaintGridPoint {
-        return PaintGridPoint(session.anchorPoint.x * zoom, session.anchorPoint.y * zoom)
+        val referenceSubCell = resolveZoomReferenceSubCell(zoom)
+        return PaintGridPoint(
+            session.anchorPoint.x * zoom + referenceSubCell.x,
+            session.anchorPoint.y * zoom + referenceSubCell.y
+        )
+    }
+
+    private fun resolveZoomReferenceSubCell(zoom: Int): PaintGridPoint {
+        if (zoom <= 1) return PaintGridPoint(0, 0)
+        if (zoom == 2) return PaintGridPoint(0, 1)
+        return PaintGridPoint((zoom - 1) / 2, zoom / 2)
     }
 
     private fun resolveRenderedCellPoint(logicalPoint: PaintGridPoint, subCellX: Int, subCellY: Int, zoom: Int): PaintGridPoint {
@@ -2700,7 +2710,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
         when (target.state) {
             ResizeTargetState.ADD -> {
-                if (!addCanvasCell(player, session, target.point, target.location)) {
+                if (!addCanvasCell(player, session, target.point)) {
                     menuController.openEaselMenu(player, session)
                     return
                 }
@@ -2728,12 +2738,13 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun addCanvasCell(player: Player, session: PaintSession, point: PaintGridPoint, location: Location): Boolean {
+    private fun addCanvasCell(player: Player, session: PaintSession, point: PaintGridPoint): Boolean {
         session.logicalCells[point] = ByteArray(MAP_WIDTH * MAP_HEIGHT) { BACKGROUND_COLOR_ID }
         if (!syncRenderedCanvas(player, session, session.appliedZoom)) {
             session.logicalCells.remove(point)
             return false
         }
+        normalizeSelectedZoom(session)
         markCanvasTopologyChanged(session)
         return true
     }
@@ -2742,6 +2753,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         val player = Bukkit.getPlayer(session.playerId) ?: return
         if (session.logicalCells.remove(point) == null) return
         syncRenderedCanvas(player, session, session.appliedZoom)
+        normalizeSelectedZoom(session)
         markCanvasTopologyChanged(session)
     }
 
