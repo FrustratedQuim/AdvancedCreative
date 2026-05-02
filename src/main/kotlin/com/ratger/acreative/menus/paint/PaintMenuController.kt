@@ -543,7 +543,7 @@ class PaintMenuController(
         if (maxSide >= 3) {
             buttonFactory.actionButton(
                 material = Material.SPYGLASS,
-                name = "<!i><#C7A300>⭐ <#FFD700>Увеличение",
+                name = "<!i><#C7A300>⭐ <#FFD700>Приближение",
                 lore = listOf("<!i><#C7A300>▍ <#FFE68A>Недоступно для текущего размера"),
                 itemModifier = {
                     if (selectedZoom > 1) {
@@ -574,7 +574,7 @@ class PaintMenuController(
             }
             buttonFactory.actionButton(
                 material = Material.SPYGLASS,
-                name = "<!i><#C7A300>⭐ <#FFD700>Увеличение",
+                name = "<!i><#C7A300>⭐ <#FFD700>Приближение",
                 lore = lore,
                 itemModifier = {
                     if (selectedZoom > 1 || selectedZoom != session.appliedZoom) {
