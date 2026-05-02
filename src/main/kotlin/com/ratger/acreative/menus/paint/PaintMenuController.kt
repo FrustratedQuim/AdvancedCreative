@@ -571,8 +571,6 @@ class PaintMenuController(
                     )
                 }
                 add("")
-                add("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы вперёд")
-                add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы назад")
             }
             buttonFactory.actionButton(
                 material = Material.SPYGLASS,
