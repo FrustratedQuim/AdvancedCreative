@@ -36,6 +36,7 @@ import com.ratger.acreative.paint.model.PaintHistoryEntry
 import com.ratger.acreative.paint.model.PaintInputKind
 import com.ratger.acreative.paint.model.PaintInventorySnapshot
 import com.ratger.acreative.paint.model.PaintLineAnchor
+import com.ratger.acreative.paint.model.PaintLogicalPixelChange
 import com.ratger.acreative.paint.model.PaintPixelChange
 import com.ratger.acreative.paint.model.PaintResizePreview
 import com.ratger.acreative.paint.model.PaintSession
@@ -92,6 +93,32 @@ class PaintManager(private val hooker: FunctionHooker) {
         val backPanel: WrapperEntity
     )
 
+    private data class RenderedCellPlan(
+        val point: PaintGridPoint,
+        val location: Location,
+        val colors: ByteArray
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as RenderedCellPlan
+
+            if (point != other.point) return false
+            if (location != other.location) return false
+            if (!colors.contentEquals(other.colors)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = point.hashCode()
+            result = 31 * result + location.hashCode()
+            result = 31 * result + colors.contentHashCode()
+            return result
+        }
+    }
+
     private enum class ResizeTargetState {
         ADD,
         REMOVE_OWN,
@@ -139,7 +166,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private data class BrushPixelCacheEntry(
         val key: String,
-        val pixels: List<BrushMapPixels>
+        val pixels: List<PaintSurfacePixel>
     )
 
     private data class FillComponentCache(
@@ -216,29 +243,6 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private data class BrushMapPixels(
-        val mapId: Int,
-        val localIndices: IntArray
-    ) {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as BrushMapPixels
-
-            if (mapId != other.mapId) return false
-            if (!localIndices.contentEquals(other.localIndices)) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = mapId
-            result = 31 * result + localIndices.contentHashCode()
-            return result
-        }
-    }
-
     private data class BrushRowInterval(
         val startX: Int,
         val endX: Int
@@ -254,28 +258,6 @@ class PaintManager(private val hooker: FunctionHooker) {
         val minVertical: Double,
         val maxVertical: Double
     )
-
-    private class BrushMapPixelBuilder(private val mapId: Int) {
-        private val seen = BooleanArray(128 * 128)
-        private var indices = IntArray(512)
-        private var size = 0
-
-        fun put(index: Int) {
-            if (index !in seen.indices || seen[index]) return
-            ensureCapacity(size + 1)
-            seen[index] = true
-            indices[size] = index
-            size += 1
-        }
-
-        fun build(): BrushMapPixels = BrushMapPixels(mapId, indices.copyOf(size))
-
-        private fun ensureCapacity(required: Int) {
-            if (required <= indices.size) return
-            val newSize = max(required, indices.size * 2)
-            indices = indices.copyOf(newSize)
-        }
-    }
 
     private class PreviewOverlayBuilder(private val mapId: Int) {
         private val positionsByMapIndex = IntArray(128 * 128) { -1 }
@@ -356,6 +338,14 @@ class PaintManager(private val hooker: FunctionHooker) {
 
             override fun removeResizePreview(player: Player, session: PaintSession) {
                 this@PaintManager.removeResizePreview(player, session)
+            }
+
+            override fun beginResizeMode(player: Player, session: PaintSession) {
+                this@PaintManager.beginResizeMode(player, session)
+            }
+
+            override fun handleEaselMenuClose(player: Player, session: PaintSession) {
+                this@PaintManager.handleEaselMenuClose(player, session)
             }
         }
     )
@@ -565,6 +555,194 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
     }
 
+    private fun beginResizeMode(player: Player, session: PaintSession) {
+        val desiredZoom = session.selectedZoom
+        if (session.appliedZoom != 1 && !applyCanvasZoom(player, session, 1, updateSelectedZoom = false)) {
+            return
+        }
+        session.selectedZoom = desiredZoom
+        session.resizeMode = true
+    }
+
+    private fun handleEaselMenuClose(player: Player, session: PaintSession) {
+        if (session.selectedZoom == session.appliedZoom) return
+        if (!applyCanvasZoom(player, session, session.selectedZoom, updateSelectedZoom = false)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_NO_SPACE)
+            session.selectedZoom = session.appliedZoom
+        }
+    }
+
+    private fun applyCanvasZoom(
+        player: Player,
+        session: PaintSession,
+        targetZoom: Int,
+        updateSelectedZoom: Boolean = true
+    ): Boolean {
+        val normalizedZoom = targetZoom.coerceIn(1, MAX_CANVAS_SIDE)
+        if (!canApplyZoom(session, normalizedZoom)) {
+            return false
+        }
+        if (session.appliedZoom == normalizedZoom && session.canvasCells.isNotEmpty()) {
+            if (updateSelectedZoom) {
+                session.selectedZoom = normalizedZoom
+            }
+            return true
+        }
+
+        restorePreviewIfNeeded(player, session)
+        removeResizePreview(player, session)
+        if (!syncRenderedCanvas(player, session, normalizedZoom)) {
+            return false
+        }
+
+        session.appliedZoom = normalizedZoom
+        if (updateSelectedZoom) {
+            session.selectedZoom = normalizedZoom
+        }
+        clearStrokeState(session)
+        clearPreviewSuppression(session)
+        markCanvasTopologyChanged(session)
+        return true
+    }
+
+    private fun canApplyZoom(session: PaintSession, targetZoom: Int): Boolean {
+        return targetZoom == 1 || session.maxLogicalSide() * targetZoom <= MAX_CANVAS_SIDE
+    }
+
+    private fun syncRenderedCanvas(player: Player, session: PaintSession, targetZoom: Int): Boolean {
+        val plans = buildRenderedCellPlans(session, targetZoom)
+        if (!canOccupyRenderedPlans(session, plans)) {
+            return false
+        }
+
+        val reusableCells = session.canvasCells.values
+            .sortedWith(compareBy<PaintCanvasCell> { it.point.y }.thenBy { it.point.x })
+            .toMutableList()
+        val reusableCount = minOf(reusableCells.size, plans.size)
+        val extraPlans = plans.drop(reusableCount)
+        val extraCells = mutableListOf<PaintCanvasCell>()
+        for (plan in extraPlans) {
+            val created = createRenderedCanvasCell(player, session, plan) ?: run {
+                extraCells.forEach(::removeCanvasCellVisuals)
+                return false
+            }
+            extraCells += created
+        }
+
+        val newCanvasCells = linkedMapOf<PaintGridPoint, PaintCanvasCell>()
+        for (index in 0 until reusableCount) {
+            val reused = reuseRenderedCanvasCell(session, reusableCells[index], plans[index])
+            newCanvasCells[reused.point] = reused
+        }
+        extraCells.forEach { cell ->
+            newCanvasCells[cell.point] = cell
+        }
+
+        reusableCells.drop(reusableCount).forEach(::removeCanvasCellVisuals)
+        session.canvasCells.clear()
+        session.canvasCells.putAll(newCanvasCells)
+        return true
+    }
+
+    private fun buildRenderedCellPlans(session: PaintSession, targetZoom: Int): List<RenderedCellPlan> {
+        val renderAnchorPoint = renderAnchorPoint(session, targetZoom)
+        return session.logicalCells.keys
+            .sortedWith(compareBy<PaintGridPoint> { it.y }.thenBy { it.x })
+            .flatMap { logicalPoint ->
+                val logicalColors = session.logicalCells[logicalPoint] ?: return@flatMap emptyList()
+                buildList {
+                    for (subY in 0 until targetZoom) {
+                        for (subX in 0 until targetZoom) {
+                            val renderedPoint = resolveRenderedCellPoint(logicalPoint, subX, subY, targetZoom)
+                            add(
+                                RenderedCellPlan(
+                                    point = renderedPoint,
+                                    location = resolveCellLocation(
+                                        session.anchorLocation,
+                                        renderAnchorPoint,
+                                        renderedPoint,
+                                        session.frameDirection
+                                    ),
+                                    colors = buildRenderedMapColors(logicalColors, targetZoom, subX, subY)
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+    }
+
+    private fun canOccupyRenderedPlans(session: PaintSession, plans: List<RenderedCellPlan>): Boolean {
+        return plans.all { plan -> isFrameSpaceAvailable(session, plan.location) }
+    }
+
+    private fun isFrameSpaceAvailable(session: PaintSession, location: Location): Boolean {
+        if (!location.block.type.isAir) return false
+        return sessions.values
+            .asSequence()
+            .filter { it !== session }
+            .flatMap { it.canvasCells.values.asSequence() }
+            .none { other ->
+                other.location.world == location.world &&
+                    other.location.distanceSquared(location) < LOCATION_EPSILON
+            }
+    }
+
+    private fun createRenderedCanvasCell(
+        player: Player,
+        session: PaintSession,
+        plan: RenderedCellPlan
+    ): PaintCanvasCell? {
+        val snapshot = MapDataExtractor.createFilled(player.world, BACKGROUND_COLOR_ID) ?: return null
+        val renderedSnapshot = MapDataExtractor.replaceColors(snapshot.mapId, plan.colors) ?: return null
+        val visuals = createCanvasCellVisuals(renderedSnapshot.mapId, session.frameDirection, session.viewers)
+        if (!spawnCanvasCellVisuals(visuals, plan.location)) {
+            removeCanvasCellVisuals(visuals)
+            return null
+        }
+        sendFullMapDataToViewers(session, renderedSnapshot)
+        return PaintCanvasCell(plan.point, renderedSnapshot.mapId, visuals.frame, visuals.backPanel, plan.location)
+    }
+
+    private fun reuseRenderedCanvasCell(
+        session: PaintSession,
+        cell: PaintCanvasCell,
+        plan: RenderedCellPlan
+    ): PaintCanvasCell {
+        teleportCanvasCell(cell, plan.location)
+        MapDataExtractor.replaceColors(cell.mapId, plan.colors)?.let { snapshot ->
+            sendFullMapDataToViewers(session, snapshot)
+        }
+        return PaintCanvasCell(plan.point, cell.mapId, cell.frame, cell.backPanel, plan.location)
+    }
+
+    private fun teleportCanvasCell(cell: PaintCanvasCell, location: Location) {
+        cell.backPanel.teleport(PacketLocation(location.x, location.y, location.z, 0f, 0f))
+        cell.frame.teleport(PacketLocation(location.x, location.y, location.z, location.yaw, location.pitch))
+    }
+
+    private fun buildRenderedMapColors(logicalColors: ByteArray, zoom: Int, subCellX: Int, subCellY: Int): ByteArray {
+        val colors = ByteArray(MAP_WIDTH * MAP_HEIGHT)
+        var index = 0
+        for (actualY in 0 until MAP_HEIGHT) {
+            val logicalY = ((subCellY * MAP_HEIGHT) + actualY) / zoom
+            val logicalRowOffset = logicalY * MAP_WIDTH
+            for (actualX in 0 until MAP_WIDTH) {
+                val logicalX = ((subCellX * MAP_WIDTH) + actualX) / zoom
+                colors[index++] = logicalColors[logicalRowOffset + logicalX]
+            }
+        }
+        return colors
+    }
+
+    private fun renderAnchorPoint(session: PaintSession, zoom: Int): PaintGridPoint {
+        return PaintGridPoint(session.anchorPoint.x * zoom, session.anchorPoint.y * zoom)
+    }
+
+    private fun resolveRenderedCellPoint(logicalPoint: PaintGridPoint, subCellX: Int, subCellY: Int, zoom: Int): PaintGridPoint {
+        return PaintGridPoint(logicalPoint.x * zoom + subCellX, logicalPoint.y * zoom + subCellY)
+    }
+
     private fun startPainting(player: Player, size: PaintCanvasSize): Boolean {
         val frameDirection = resolveDirection(player)
         val anchorLocation = resolveFrameLocation(player, frameDirection)
@@ -599,6 +777,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
 
         val canvasCells = linkedMapOf<PaintGridPoint, PaintCanvasCell>()
+        val logicalCells = linkedMapOf<PaintGridPoint, ByteArray>()
         mapSnapshots.forEach { (point, snapshot) ->
             val location = frameLocations.getValue(point)
             val visuals = createCanvasCellVisuals(snapshot.mapId, frameDirection, visibleViewers)
@@ -608,6 +787,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 return false
             }
             canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, visuals.frame, visuals.backPanel, location)
+            logicalCells[point] = snapshot.colors.copyOf()
         }
 
         val session = PaintSession(
@@ -621,6 +801,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             previewTaskId = -1,
             viewers = visibleViewers,
             canvasCells = canvasCells,
+            logicalCells = logicalCells,
             seriesCode = SeriesCodeGenerator.generate()
         )
 
@@ -886,25 +1067,20 @@ class PaintManager(private val hooker: FunctionHooker) {
         val brushPixels = resolveBrushStrokePixels(session, hit, settings.normalizedSize())
         if (brushPixels.isEmpty()) return
 
-        val changes = mutableMapOf<Int, MutableList<PaintPixelChange>>()
+        val changes = linkedMapOf<Long, PaintLogicalPixelChange>()
         val fillPercent = settings.normalizedFillPercent()
         val colors = resolveMixedPaletteColors(entry, settings.shade, settings.normalizedShadeMix())
-        for (group in brushPixels) {
-            val mapColors = MapDataExtractor.colorsView(group.mapId) ?: continue
-            for (localIndex in group.localIndices) {
-                if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) continue
-                val oldColor = mapColors[localIndex]
-                val newColor = randomColor(colors)
-                if (oldColor == newColor) continue
-                changes.getOrPut(group.mapId) { mutableListOf() }.add(
-                    PaintPixelChange(localIndex % MAP_WIDTH, localIndex / MAP_WIDTH, oldColor, newColor)
-                )
-            }
+        for (pixel in brushPixels) {
+            if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) continue
+            val oldColor = resolveLogicalColor(session, pixel) ?: continue
+            val newColor = randomColor(colors)
+            if (oldColor == newColor) continue
+            putLogicalChange(changes, pixel.globalX, pixel.globalY, oldColor, newColor)
         }
 
-        suppressLargeBrushPreview(session, settings.normalizedSize())
+        suppressLargeBrushPreview(session, resolveRenderedBrushSize(session, settings.normalizedSize()))
         rememberStroke(session, hit, color)
-        applyHistoryChanges(session, changes)
+        applyHistoryChanges(session, changes.values.toList())
     }
 
     private fun applyBinaryBrushTool(
@@ -916,23 +1092,18 @@ class PaintManager(private val hooker: FunctionHooker) {
         val brushPixels = resolveBrushStrokePixels(session, hit, settings.normalizedSize())
         if (brushPixels.isEmpty()) return
 
-        val changes = mutableMapOf<Int, MutableList<PaintPixelChange>>()
+        val changes = linkedMapOf<Long, PaintLogicalPixelChange>()
         val fillPercent = settings.normalizedFillPercent()
-        for (group in brushPixels) {
-            val mapColors = MapDataExtractor.colorsView(group.mapId) ?: continue
-            for (localIndex in group.localIndices) {
-                if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) continue
-                val oldColor = mapColors[localIndex]
-                if (oldColor == color) continue
-                changes.getOrPut(group.mapId) { mutableListOf() }.add(
-                    PaintPixelChange(localIndex % MAP_WIDTH, localIndex / MAP_WIDTH, oldColor, color)
-                )
-            }
+        for (pixel in brushPixels) {
+            if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) continue
+            val oldColor = resolveLogicalColor(session, pixel) ?: continue
+            if (oldColor == color) continue
+            putLogicalChange(changes, pixel.globalX, pixel.globalY, oldColor, color)
         }
 
-        suppressLargeBrushPreview(session, settings.normalizedSize())
+        suppressLargeBrushPreview(session, resolveRenderedBrushSize(session, settings.normalizedSize()))
         rememberStroke(session, hit, color)
-        applyHistoryChanges(session, changes)
+        applyHistoryChanges(session, changes.values.toList())
     }
 
     private fun applyFillTool(session: PaintSession, hit: PaintSurfacePixel) {
@@ -944,7 +1115,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         val area = resolveFillArea(session, hit, settings.ignoreShade) ?: return
         if (area.isEmpty()) return
 
-        val changes = mutableMapOf<Int, MutableList<PaintPixelChange>>()
+        val changes = linkedMapOf<Long, PaintLogicalPixelChange>()
         val entry = PaintPalette.entry(settings.paletteKey)
         val fillPercent = settings.normalizedFillPercent()
         val colors = resolveMixedPaletteColors(entry, settings.baseShade, settings.normalizedShadeMix())
@@ -955,17 +1126,11 @@ class PaintManager(private val hooker: FunctionHooker) {
             if (oldColor == newColor) return@forEachIndex
             val globalX = area.cache.minGlobalX + index % area.cache.width
             val globalY = area.cache.minGlobalY + index / area.cache.width
-            val cellPoint = PaintGridPoint(floorDiv(globalX, MAP_WIDTH), floorDiv(globalY, MAP_HEIGHT))
-            val mapId = session.canvasCells[cellPoint]?.mapId ?: return@forEachIndex
-            val localX = floorMod(globalX, MAP_WIDTH)
-            val localY = floorMod(globalY, MAP_HEIGHT)
-            changes.getOrPut(mapId) { mutableListOf() }.add(
-                PaintPixelChange(localX, localY, oldColor, newColor)
-            )
+            putLogicalChange(changes, globalX, globalY, oldColor, newColor)
         }
 
         clearStrokeState(session)
-        applyHistoryChanges(session, changes)
+        applyHistoryChanges(session, changes.values.toList())
     }
 
     private fun applyShapeTool(session: PaintSession, hit: PaintSurfacePixel) {
@@ -979,23 +1144,19 @@ class PaintManager(private val hooker: FunctionHooker) {
         val pixels = resolveShapePixels(session, hit, settings)
         if (pixels.isEmpty()) return
 
-        val changes = mutableMapOf<Int, MutableList<PaintPixelChange>>()
-        val colorsByPoint = snapshotMapColorsByPoint(session)
+        val changes = linkedMapOf<Long, PaintLogicalPixelChange>()
         val fillPercent = settings.normalizedFillPercent()
         val colors = resolveMixedPaletteColors(entry, settings.shade, settings.normalizedShadeMix())
         pixels.forEach { pixel ->
-            val oldColor = resolveSnapshotColor(colorsByPoint, pixel) ?: return@forEach
+            val oldColor = resolveLogicalColor(session, pixel) ?: return@forEach
             if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) return@forEach
             val newColor = randomColor(colors)
             if (oldColor == newColor) return@forEach
-            val mapId = session.canvasCells[pixel.cellPoint]?.mapId ?: return@forEach
-            changes.getOrPut(mapId) { mutableListOf() }.add(
-                PaintPixelChange(pixel.localX, pixel.localY, oldColor, newColor)
-            )
+            putLogicalChange(changes, pixel.globalX, pixel.globalY, oldColor, newColor)
         }
 
         clearStrokeState(session)
-        applyHistoryChanges(session, changes)
+        applyHistoryChanges(session, changes.values.toList())
     }
 
     private fun applyLineShapeTool(
@@ -1009,7 +1170,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             clearStrokeState(session)
             applyHistoryChanges(
                 session = session,
-                changesByMapId = emptyMap(),
+                pixelChanges = emptyList(),
                 lineAnchorBefore = null,
                 lineAnchorAfter = nextAnchor
             )
@@ -1025,25 +1186,21 @@ class PaintManager(private val hooker: FunctionHooker) {
             endY = hit.globalY,
             settings = settings
         )
-        val changes = mutableMapOf<Int, MutableList<PaintPixelChange>>()
-        val colorsByPoint = snapshotMapColorsByPoint(session)
+        val changes = linkedMapOf<Long, PaintLogicalPixelChange>()
         val fillPercent = settings.normalizedFillPercent()
         val colors = resolveMixedPaletteColors(entry, settings.shade, settings.normalizedShadeMix())
         pixels.forEach { pixel ->
-            val oldColor = resolveSnapshotColor(colorsByPoint, pixel) ?: return@forEach
+            val oldColor = resolveLogicalColor(session, pixel) ?: return@forEach
             if (fillPercent < 100 && Random.nextInt(100) >= fillPercent) return@forEach
             val newColor = randomColor(colors)
             if (oldColor == newColor) return@forEach
-            val mapId = session.canvasCells[pixel.cellPoint]?.mapId ?: return@forEach
-            changes.getOrPut(mapId) { mutableListOf() }.add(
-                PaintPixelChange(pixel.localX, pixel.localY, oldColor, newColor)
-            )
+            putLogicalChange(changes, pixel.globalX, pixel.globalY, oldColor, newColor)
         }
 
         clearStrokeState(session)
         applyHistoryChanges(
             session = session,
-            changesByMapId = changes,
+            pixelChanges = changes.values.toList(),
             lineAnchorBefore = previousAnchor,
             lineAnchorAfter = nextAnchor
         )
@@ -1051,31 +1208,24 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun applyHistoryChanges(
         session: PaintSession,
-        changesByMapId: Map<Int, List<PaintPixelChange>>,
+        pixelChanges: List<PaintLogicalPixelChange>,
         lineAnchorBefore: PaintLineAnchor? = null,
         lineAnchorAfter: PaintLineAnchor? = null
     ) {
         val hasLineAnchorChange = lineAnchorBefore != lineAnchorAfter
-        if (changesByMapId.isEmpty() && !hasLineAnchorChange) return
+        if (pixelChanges.isEmpty() && !hasLineAnchorChange) return
         session.previewPaused = false
         clearPreviewSuppression(session)
         Bukkit.getPlayer(session.playerId)?.let { restorePreviewIfNeeded(it, session) }
 
-        val deduplicated = changesByMapId.filterValues { it.isNotEmpty() }
-
-        val patches = mutableListOf<MapDataExtractor.Patch>()
-        deduplicated.forEach { (mapId, changes) ->
-            val patch = MapDataExtractor.setPixelChangesPatch(mapId, changes) ?: return@forEach
-            patches += patch
-        }
-        if (deduplicated.isNotEmpty() && patches.isEmpty()) return
+        val patches = applyLogicalPixelChanges(session, pixelChanges)
         if (hasLineAnchorChange) {
             session.shapeLineAnchor = lineAnchorAfter
         }
 
         val historyEntry = PaintHistoryEntry(
-            changesByMapId = deduplicated,
-            estimatedBytes = estimateHistoryEntryBytes(deduplicated, hasLineAnchorChange),
+            pixelChanges = pixelChanges,
+            estimatedBytes = estimateHistoryEntryBytes(pixelChanges.size, hasLineAnchorChange),
             lineAnchorBefore = lineAnchorBefore,
             lineAnchorAfter = lineAnchorAfter
         )
@@ -1086,7 +1236,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             session.historyBytes = (session.historyBytes - removed.estimatedBytes).coerceAtLeast(0L)
         }
 
-        if (patches.isNotEmpty()) {
+        if (pixelChanges.isNotEmpty() || patches.isNotEmpty()) {
             markCanvasChanged(session)
         }
         patches.forEach { patch ->
@@ -1102,15 +1252,14 @@ class PaintManager(private val hooker: FunctionHooker) {
         session.historyBytes = (session.historyBytes - entry.estimatedBytes).coerceAtLeast(0L)
         session.previewSuppressionKey = buildCurrentPreviewSuppressionKey(player, session)
         restorePreviewIfNeeded(player, session)
-        val patches = mutableListOf<MapDataExtractor.Patch>()
-        entry.changesByMapId.forEach { (mapId, changes) ->
-            val patch = MapDataExtractor.setPixelChangesPatch(mapId, changes, useOldColor = true) ?: return@forEach
-            patches += patch
+        val revertedChanges = entry.pixelChanges.map { change ->
+            PaintLogicalPixelChange(change.globalX, change.globalY, change.newColor, change.oldColor)
         }
+        val patches = applyLogicalPixelChanges(session, revertedChanges)
         if (entry.hasLineAnchorChange) {
             session.shapeLineAnchor = entry.lineAnchorBefore
         }
-        if (patches.isNotEmpty()) {
+        if (revertedChanges.isNotEmpty() || patches.isNotEmpty()) {
             markCanvasChanged(session)
         }
         patches.forEach { patch ->
@@ -1372,16 +1521,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     ): List<PreviewMapOverlay> {
         val brushPixels = resolveCachedBrushPixels(session, hit, strokeStart, size)
         if (brushPixels.isEmpty()) return emptyList()
-        val overlays = mutableListOf<PreviewMapOverlay>()
-        for (group in brushPixels) {
-            val mapColors = MapDataExtractor.colorsView(group.mapId) ?: continue
-            val builder = PreviewOverlayBuilder(group.mapId)
-            for (localIndex in group.localIndices) {
-                builder.put(localIndex, blendPreviewColor(mapColors[localIndex], previewColor))
-            }
-            overlays += builder.build()
-        }
-        return overlays
+        return buildPreviewOverlays(session, brushPixels, previewColor)
     }
 
     private fun buildBrushPreviewCacheKey(
@@ -1413,16 +1553,139 @@ class PaintManager(private val hooker: FunctionHooker) {
         val colorsByMapId = snapshotMapColorsById(session)
         val grouped = mutableMapOf<Int, PreviewOverlayBuilder>()
         pixels.forEach { pixel ->
-            val mapId = session.canvasCells[pixel.cellPoint]?.mapId ?: return@forEach
-            val localIndex = pixel.localY * MAP_WIDTH + pixel.localX
-            val mapColors = colorsByMapId[mapId] ?: return@forEach
-            if (localIndex !in mapColors.indices) return@forEach
-            val oldColor = mapColors[localIndex]
-            val blended = blendPreviewColor(oldColor, previewColor)
-            grouped.getOrPut(mapId) { PreviewOverlayBuilder(mapId) }.put(localIndex, blended)
+            addRenderedPreviewPixel(
+                session = session,
+                grouped = grouped,
+                colorsByMapId = colorsByMapId,
+                logicalGlobalX = pixel.globalX,
+                logicalGlobalY = pixel.globalY,
+                previewColor = previewColor
+            )
         }
 
         return grouped.values.map { it.build() }
+    }
+
+    private fun resolveLogicalColor(session: PaintSession, pixel: PaintSurfacePixel): Byte? {
+        val colors = session.logicalCells[pixel.cellPoint] ?: return null
+        val index = pixel.localY * MAP_WIDTH + pixel.localX
+        if (index !in colors.indices) return null
+        return colors[index]
+    }
+
+    private fun putLogicalChange(
+        changes: MutableMap<Long, PaintLogicalPixelChange>,
+        globalX: Int,
+        globalY: Int,
+        oldColor: Byte,
+        newColor: Byte
+    ) {
+        val key = packGridPoint(globalX, globalY)
+        val existing = changes[key]
+        if (existing == null) {
+            changes[key] = PaintLogicalPixelChange(globalX, globalY, oldColor, newColor)
+            return
+        }
+        if (existing.oldColor == newColor) {
+            changes.remove(key)
+            return
+        }
+        changes[key] = existing.copy(newColor = newColor)
+    }
+
+    private fun applyLogicalPixelChanges(
+        session: PaintSession,
+        pixelChanges: List<PaintLogicalPixelChange>
+    ): List<MapDataExtractor.Patch> {
+        if (pixelChanges.isEmpty()) return emptyList()
+        val affectedLogicalPoints = linkedSetOf<PaintGridPoint>()
+        pixelChanges.forEach { change ->
+            val logicalPoint = PaintGridPoint(floorDiv(change.globalX, MAP_WIDTH), floorDiv(change.globalY, MAP_HEIGHT))
+            val colors = session.logicalCells[logicalPoint] ?: return@forEach
+            val localIndex = floorMod(change.globalY, MAP_HEIGHT) * MAP_WIDTH + floorMod(change.globalX, MAP_WIDTH)
+            if (localIndex !in colors.indices) return@forEach
+            colors[localIndex] = change.newColor
+            affectedLogicalPoints += logicalPoint
+        }
+        return rerenderLogicalCells(session, affectedLogicalPoints)
+    }
+
+    private fun rerenderLogicalCells(
+        session: PaintSession,
+        logicalPoints: Set<PaintGridPoint>
+    ): List<MapDataExtractor.Patch> {
+        if (logicalPoints.isEmpty()) return emptyList()
+        val patches = mutableListOf<MapDataExtractor.Patch>()
+        logicalPoints.forEach { logicalPoint ->
+            val logicalColors = session.logicalCells[logicalPoint] ?: return@forEach
+            for (subY in 0 until session.appliedZoom) {
+                for (subX in 0 until session.appliedZoom) {
+                    val renderedPoint = resolveRenderedCellPoint(logicalPoint, subX, subY, session.appliedZoom)
+                    val cell = session.canvasCells[renderedPoint] ?: continue
+                    val currentColors = MapDataExtractor.colorsView(cell.mapId) ?: continue
+                    val renderedColors = buildRenderedMapColors(logicalColors, session.appliedZoom, subX, subY)
+                    val changes = mutableListOf<PaintPixelChange>()
+                    renderedColors.indices.forEach { index ->
+                        val oldColor = currentColors[index]
+                        val newColor = renderedColors[index]
+                        if (oldColor != newColor) {
+                            changes += PaintPixelChange(index % MAP_WIDTH, index / MAP_WIDTH, oldColor, newColor)
+                        }
+                    }
+                    MapDataExtractor.setPixelChangesPatch(cell.mapId, changes)?.let { patch ->
+                        patches += patch
+                    }
+                }
+            }
+        }
+        return patches
+    }
+
+    private fun addRenderedPreviewPixel(
+        session: PaintSession,
+        grouped: MutableMap<Int, PreviewOverlayBuilder>,
+        colorsByMapId: Map<Int, ByteArray?>,
+        logicalGlobalX: Int,
+        logicalGlobalY: Int,
+        previewColor: Byte
+    ) {
+        forEachRenderedPixelIndex(session, logicalGlobalX, logicalGlobalY) { renderedPoint, localIndex ->
+            val cell = session.canvasCells[renderedPoint] ?: return@forEachRenderedPixelIndex
+            val mapColors = colorsByMapId[cell.mapId] ?: return@forEachRenderedPixelIndex
+            if (localIndex !in mapColors.indices) return@forEachRenderedPixelIndex
+            val oldColor = mapColors[localIndex]
+            grouped.getOrPut(cell.mapId) { PreviewOverlayBuilder(cell.mapId) }
+                .put(localIndex, blendPreviewColor(oldColor, previewColor))
+        }
+    }
+
+    private inline fun forEachRenderedPixelIndex(
+        session: PaintSession,
+        logicalGlobalX: Int,
+        logicalGlobalY: Int,
+        action: (PaintGridPoint, Int) -> Unit
+    ) {
+        val zoom = session.appliedZoom
+        val renderedStartX = logicalGlobalX * zoom
+        val renderedStartY = logicalGlobalY * zoom
+        for (offsetY in 0 until zoom) {
+            val renderedGlobalY = renderedStartY + offsetY
+            val renderedCellY = floorDiv(renderedGlobalY, MAP_HEIGHT)
+            val renderedLocalY = floorMod(renderedGlobalY, MAP_HEIGHT)
+            for (offsetX in 0 until zoom) {
+                val renderedGlobalX = renderedStartX + offsetX
+                val renderedCellX = floorDiv(renderedGlobalX, MAP_WIDTH)
+                val renderedLocalX = floorMod(renderedGlobalX, MAP_WIDTH)
+                action(
+                    PaintGridPoint(renderedCellX, renderedCellY),
+                    renderedLocalY * MAP_WIDTH + renderedLocalX
+                )
+            }
+        }
+    }
+
+    private fun resolveRenderedBrushSize(session: PaintSession, logicalBrushSize: Int): Int {
+        return logicalBrushSize.coerceIn(1, 50) * session.appliedZoom
     }
 
     private fun snapshotMapColorsById(session: PaintSession): Map<Int, ByteArray?> {
@@ -1431,37 +1694,25 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
     }
 
-    private fun snapshotMapColorsByPoint(session: PaintSession): Map<PaintGridPoint, ByteArray?> {
-        return session.canvasCells.mapValues { (_, cell) ->
-            MapDataExtractor.extract(cell.mapId)?.colors
-        }
-    }
-
-    private fun resolveSnapshotColor(
-        colorsByPoint: Map<PaintGridPoint, ByteArray?>,
-        pixel: PaintSurfacePixel
-    ): Byte? {
-        val colors = colorsByPoint[pixel.cellPoint] ?: return null
-        val index = pixel.localY * MAP_WIDTH + pixel.localX
-        if (index !in colors.indices) return null
-        return colors[index]
-    }
-
     private fun buildFillPreviewOverlays(
         session: PaintSession,
         area: FillArea,
         previewColor: Byte
     ): List<PreviewMapOverlay> {
         if (area.isEmpty()) return emptyList()
+        val colorsByMapId = snapshotMapColorsById(session)
         val grouped = mutableMapOf<Int, PreviewOverlayBuilder>()
         area.forEachIndex { index ->
             val globalX = area.cache.minGlobalX + index % area.cache.width
             val globalY = area.cache.minGlobalY + index / area.cache.width
-            val cellPoint = PaintGridPoint(floorDiv(globalX, MAP_WIDTH), floorDiv(globalY, MAP_HEIGHT))
-            val mapId = session.canvasCells[cellPoint]?.mapId ?: return@forEachIndex
-            val localIndex = floorMod(globalY, MAP_HEIGHT) * MAP_WIDTH + floorMod(globalX, MAP_WIDTH)
-            val blended = blendPreviewColor(area.cache.colors[index], previewColor)
-            grouped.getOrPut(mapId) { PreviewOverlayBuilder(mapId) }.put(localIndex, blended)
+            addRenderedPreviewPixel(
+                session = session,
+                grouped = grouped,
+                colorsByMapId = colorsByMapId,
+                logicalGlobalX = globalX,
+                logicalGlobalY = globalY,
+                previewColor = previewColor
+            )
         }
         return grouped.values.map { it.build() }
     }
@@ -1606,13 +1857,11 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun estimateHistoryEntryBytes(
-        changesByMapId: Map<Int, List<PaintPixelChange>>,
+        changeCount: Int,
         hasLineAnchorChange: Boolean
     ): Long {
         val lineAnchorBytes = if (hasLineAnchorChange) HISTORY_LINE_ANCHOR_ESTIMATE_BYTES else 0L
-        return HISTORY_ENTRY_BASE_BYTES + lineAnchorBytes + changesByMapId.entries.sumOf { (_, changes) ->
-            HISTORY_MAP_GROUP_BASE_BYTES + changes.size * HISTORY_PIXEL_ESTIMATE_BYTES
-        }
+        return HISTORY_ENTRY_BASE_BYTES + lineAnchorBytes + changeCount * HISTORY_PIXEL_ESTIMATE_BYTES
     }
 
     private fun blendPreviewColor(baseColorId: Byte, brushColorId: Byte): Byte {
@@ -1636,7 +1885,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         session: PaintSession,
         hit: PaintSurfacePixel,
         size: Int
-    ): List<BrushMapPixels> {
+    ): List<PaintSurfacePixel> {
         return resolveCachedBrushPixels(
             session = session,
             hit = hit,
@@ -1660,7 +1909,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         hit: PaintSurfacePixel,
         strokeStart: Pair<Int, Int>?,
         size: Int
-    ): List<BrushMapPixels> {
+    ): List<PaintSurfacePixel> {
         val cacheKey = buildBrushPixelCacheKey(session, hit, strokeStart, size)
         brushPixelCache[session.playerId]?.takeIf { it.key == cacheKey }?.let { return it.pixels }
         val pixels = collectBrushPixels(session, hit, strokeStart, size)
@@ -1689,7 +1938,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         hit: PaintSurfacePixel,
         strokeStart: Pair<Int, Int>?,
         size: Int
-    ): List<BrushMapPixels> {
+    ): List<PaintSurfacePixel> {
         if (strokeStart != null) {
             return collectBrushLinePixels(session, strokeStart.first, strokeStart.second, hit.globalX, hit.globalY, size)
         }
@@ -1701,22 +1950,17 @@ class PaintManager(private val hooker: FunctionHooker) {
         centerX: Int,
         centerY: Int,
         size: Int
-    ): List<BrushMapPixels> {
+    ): List<PaintSurfacePixel> {
         val offsets = brushStampOffsets(size)
-        val grouped = mutableMapOf<Int, BrushMapPixelBuilder>()
-        val cellCache = mutableMapOf<Long, PaintCanvasCell?>()
+        val pixels = linkedMapOf<Int, PaintSurfacePixel>()
         var offsetIndex = 0
         while (offsetIndex < offsets.size) {
-            putBrushPixel(
-                session = session,
-                grouped = grouped,
-                cellCache = cellCache,
-                pixelGlobalX = centerX + offsets[offsetIndex],
-                pixelGlobalY = centerY + offsets[offsetIndex + 1]
-            )
+            resolvePixelByGlobal(session, centerX + offsets[offsetIndex], centerY + offsets[offsetIndex + 1])?.let { pixel ->
+                pixels.putIfAbsent(pixel.globalY * GLOBAL_CANVAS_HASH_BASE + pixel.globalX, pixel)
+            }
             offsetIndex += 2
         }
-        return grouped.values.map { it.build() }
+        return pixels.values.toList()
     }
 
     private fun collectBrushLinePixels(
@@ -1726,31 +1970,31 @@ class PaintManager(private val hooker: FunctionHooker) {
         endX: Int,
         endY: Int,
         size: Int
-    ): List<BrushMapPixels> {
+    ): List<PaintSurfacePixel> {
         val radius = max(0, size.coerceIn(1, 50) - 1)
         if (radius == 0) {
-            val grouped = mutableMapOf<Int, BrushMapPixelBuilder>()
-            val cellCache = mutableMapOf<Long, PaintCanvasCell?>()
+            val pixels = linkedMapOf<Int, PaintSurfacePixel>()
             traceLine(startX, startY, endX, endY).forEach { (globalX, globalY) ->
-                putBrushPixel(session, grouped, cellCache, globalX, globalY)
+                resolvePixelByGlobal(session, globalX, globalY)?.let { pixel ->
+                    pixels.putIfAbsent(pixel.globalY * GLOBAL_CANVAS_HASH_BASE + pixel.globalX, pixel)
+                }
             }
-            return grouped.values.map { it.build() }
+            return pixels.values.toList()
         }
         if (startX == endX && startY == endY) {
             return collectBrushStampPixels(session, endX, endY, size)
         }
 
         val brushRadius = radius.toDouble()
-        val grouped = mutableMapOf<Int, BrushMapPixelBuilder>()
-        val cellCache = mutableMapOf<Long, PaintCanvasCell?>()
+        val pixels = linkedMapOf<Int, PaintSurfacePixel>()
         for (globalY in minOf(startY, endY) - radius..maxOf(startY, endY) + radius) {
             val intervals = mutableListOf<BrushRowInterval>()
             addCircleRowInterval(intervals, startX, startY, globalY, brushRadius)
             addCircleRowInterval(intervals, endX, endY, globalY, brushRadius)
             addSegmentBodyRowInterval(intervals, startX, startY, endX, endY, globalY, brushRadius)
-            putMergedBrushRowIntervals(session, grouped, cellCache, globalY, intervals)
+            putMergedBrushRowIntervals(session, pixels, globalY, intervals)
         }
-        return grouped.values.map { it.build() }
+        return pixels.values.toList()
     }
 
     private fun addCircleRowInterval(
@@ -1814,8 +2058,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun putMergedBrushRowIntervals(
         session: PaintSession,
-        grouped: MutableMap<Int, BrushMapPixelBuilder>,
-        cellCache: MutableMap<Long, PaintCanvasCell?>,
+        pixels: MutableMap<Int, PaintSurfacePixel>,
         globalY: Int,
         intervals: MutableList<BrushRowInterval>
     ) {
@@ -1829,62 +2072,26 @@ class PaintManager(private val hooker: FunctionHooker) {
                 currentEnd = max(currentEnd, interval.endX)
                 continue
             }
-            putBrushRow(session, grouped, cellCache, globalY, currentStart, currentEnd)
+            putBrushRow(session, pixels, globalY, currentStart, currentEnd)
             currentStart = interval.startX
             currentEnd = interval.endX
         }
-        putBrushRow(session, grouped, cellCache, globalY, currentStart, currentEnd)
+        putBrushRow(session, pixels, globalY, currentStart, currentEnd)
     }
 
     private fun putBrushRow(
         session: PaintSession,
-        grouped: MutableMap<Int, BrushMapPixelBuilder>,
-        cellCache: MutableMap<Long, PaintCanvasCell?>,
+        pixels: MutableMap<Int, PaintSurfacePixel>,
         globalY: Int,
         startX: Int,
         endX: Int
     ) {
         if (endX < startX) return
-        val cellY = floorDiv(globalY, MAP_HEIGHT)
-        val localY = floorMod(globalY, MAP_HEIGHT)
-        var globalX = startX
-        while (globalX <= endX) {
-            val cellX = floorDiv(globalX, MAP_WIDTH)
-            val cellEndX = minOf(endX, (cellX + 1) * MAP_WIDTH - 1)
-            val cellKey = packGridPoint(cellX, cellY)
-            val cell = if (cellCache.containsKey(cellKey)) {
-                cellCache[cellKey]
-            } else {
-                session.canvasCells[PaintGridPoint(cellX, cellY)].also { cellCache[cellKey] = it }
+        for (globalX in startX..endX) {
+            resolvePixelByGlobal(session, globalX, globalY)?.let { pixel ->
+                pixels.putIfAbsent(pixel.globalY * GLOBAL_CANVAS_HASH_BASE + pixel.globalX, pixel)
             }
-            if (cell != null) {
-                val builder = grouped.getOrPut(cell.mapId) { BrushMapPixelBuilder(cell.mapId) }
-                val rowOffset = localY * MAP_WIDTH
-                for (localX in floorMod(globalX, MAP_WIDTH)..floorMod(cellEndX, MAP_WIDTH)) {
-                    builder.put(rowOffset + localX)
-                }
-            }
-            globalX = cellEndX + 1
         }
-    }
-
-    private fun putBrushPixel(
-        session: PaintSession,
-        grouped: MutableMap<Int, BrushMapPixelBuilder>,
-        cellCache: MutableMap<Long, PaintCanvasCell?>,
-        pixelGlobalX: Int,
-        pixelGlobalY: Int
-    ) {
-        val cellX = floorDiv(pixelGlobalX, MAP_WIDTH)
-        val cellY = floorDiv(pixelGlobalY, MAP_HEIGHT)
-        val cellKey = packGridPoint(cellX, cellY)
-        val cell = if (cellCache.containsKey(cellKey)) {
-            cellCache[cellKey]
-        } else {
-            session.canvasCells[PaintGridPoint(cellX, cellY)].also { cellCache[cellKey] = it }
-        } ?: return
-        val localIndex = floorMod(pixelGlobalY, MAP_HEIGHT) * MAP_WIDTH + floorMod(pixelGlobalX, MAP_WIDTH)
-        grouped.getOrPut(cell.mapId) { BrushMapPixelBuilder(cell.mapId) }.put(localIndex)
     }
 
     private fun rememberStroke(session: PaintSession, hit: PaintSurfacePixel, color: Byte) {
@@ -1941,7 +2148,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         val cellX = floorDiv(globalX, MAP_WIDTH)
         val cellY = floorDiv(globalY, MAP_HEIGHT)
         val point = PaintGridPoint(cellX, cellY)
-        if (!session.canvasCells.containsKey(point)) return null
+        if (!session.logicalCells.containsKey(point)) return null
         val localX = floorMod(globalX, MAP_WIDTH)
         val localY = floorMod(globalY, MAP_HEIGHT)
         return PaintSurfacePixel(point, localX, localY, globalX, globalY)
@@ -1969,13 +2176,14 @@ class PaintManager(private val hooker: FunctionHooker) {
         val relative = hit.clone().subtract(planePoint)
         val canvasBounds = if (clampToCanvasBounds) resolveCanvasPlaneBounds(session) else null
         val half = FRAME_RENDER_SIZE / 2.0
+        val renderAnchorPoint = renderAnchorPoint(session, session.appliedZoom)
         val rawHorizontal = relative.x * session.frameDirection.rightAxisX + relative.z * session.frameDirection.rightAxisZ
         val rawVertical = relative.y
         val horizontal = canvasBounds?.let { rawHorizontal.coerceIn(it.minHorizontal, it.maxHorizontal) } ?: rawHorizontal
         val vertical = canvasBounds?.let { rawVertical.coerceIn(it.minVertical, it.maxVertical) } ?: rawVertical
 
-        var cellX = floor(horizontal + session.anchorPoint.x.toDouble() + 0.5).toInt()
-        var cellY = session.anchorPoint.y - floor(vertical + 0.5).toInt()
+        var cellX = floor(horizontal + renderAnchorPoint.x.toDouble() + 0.5).toInt()
+        var cellY = renderAnchorPoint.y - floor(vertical + 0.5).toInt()
         if (canvasBounds != null) {
             cellX = cellX.coerceIn(canvasBounds.minCellX, canvasBounds.maxCellX)
             cellY = cellY.coerceIn(canvasBounds.minCellY, canvasBounds.maxCellY)
@@ -1989,10 +2197,10 @@ class PaintManager(private val hooker: FunctionHooker) {
         }
         if (!allowMissingCell && point !in session.canvasCells) return null
 
-        val localHorizontal = (horizontal - (cellX - session.anchorPoint.x).toDouble()).let { value ->
+        val localHorizontal = (horizontal - (cellX - renderAnchorPoint.x).toDouble()).let { value ->
             if (canvasBounds == null) value else value.coerceIn(-half, half)
         }
-        val localVertical = (vertical - (session.anchorPoint.y - cellY).toDouble()).let { value ->
+        val localVertical = (vertical - (renderAnchorPoint.y - cellY).toDouble()).let { value ->
             if (canvasBounds == null) value else value.coerceIn(-half, half)
         }
         if (canvasBounds == null && (localHorizontal < -half || localHorizontal > half || localVertical < -half || localVertical > half)) {
@@ -2001,22 +2209,31 @@ class PaintManager(private val hooker: FunctionHooker) {
 
         val pixelX = floor(((localHorizontal + half) / FRAME_RENDER_SIZE) * MAP_WIDTH).toInt().coerceIn(0, MAP_WIDTH - 1)
         val pixelY = floor(((half - localVertical) / FRAME_RENDER_SIZE) * MAP_HEIGHT).toInt().coerceIn(0, MAP_HEIGHT - 1)
+        val renderedGlobalX = cellX * MAP_WIDTH + pixelX
+        val renderedGlobalY = cellY * MAP_HEIGHT + pixelY
+        val logicalGlobalX = floorDiv(renderedGlobalX, session.appliedZoom)
+        val logicalGlobalY = floorDiv(renderedGlobalY, session.appliedZoom)
+        val logicalCellX = floorDiv(logicalGlobalX, MAP_WIDTH)
+        val logicalCellY = floorDiv(logicalGlobalY, MAP_HEIGHT)
+        val logicalPoint = PaintGridPoint(logicalCellX, logicalCellY)
+        if (!allowMissingCell && logicalPoint !in session.logicalCells) return null
         return PaintSurfacePixel(
-            cellPoint = point,
-            localX = pixelX,
-            localY = pixelY,
-            globalX = cellX * MAP_WIDTH + pixelX,
-            globalY = cellY * MAP_HEIGHT + pixelY
+            cellPoint = logicalPoint,
+            localX = floorMod(logicalGlobalX, MAP_WIDTH),
+            localY = floorMod(logicalGlobalY, MAP_HEIGHT),
+            globalX = logicalGlobalX,
+            globalY = logicalGlobalY
         )
     }
 
     private fun resolveCanvasPlaneBounds(session: PaintSession): CanvasPlaneBounds? {
         val bounds = PaintCanvasBounds.from(session.canvasCells.keys) ?: return null
+        val renderAnchorPoint = renderAnchorPoint(session, session.appliedZoom)
         val half = FRAME_RENDER_SIZE / 2.0
-        val minHorizontal = bounds.minX.toDouble() - session.anchorPoint.x.toDouble() - half
-        val maxHorizontal = bounds.maxX.toDouble() - session.anchorPoint.x.toDouble() + half
-        val minVertical = session.anchorPoint.y.toDouble() - bounds.maxY.toDouble() - half
-        val maxVertical = session.anchorPoint.y.toDouble() - bounds.minY.toDouble() + half
+        val minHorizontal = bounds.minX.toDouble() - renderAnchorPoint.x.toDouble() - half
+        val maxHorizontal = bounds.maxX.toDouble() - renderAnchorPoint.x.toDouble() + half
+        val minVertical = renderAnchorPoint.y.toDouble() - bounds.maxY.toDouble() - half
+        val maxVertical = renderAnchorPoint.y.toDouble() - bounds.minY.toDouble() + half
         return CanvasPlaneBounds(
             minCellX = bounds.minX,
             maxCellX = bounds.maxX,
@@ -2035,9 +2252,10 @@ class PaintManager(private val hooker: FunctionHooker) {
         vertical: Double
     ): PaintGridPoint? {
         val half = FRAME_RENDER_SIZE / 2.0
+        val renderAnchorPoint = renderAnchorPoint(session, session.appliedZoom)
         return session.canvasCells.keys.minByOrNull { point ->
-            val centerHorizontal = point.x.toDouble() - session.anchorPoint.x.toDouble()
-            val centerVertical = session.anchorPoint.y.toDouble() - point.y.toDouble()
+            val centerHorizontal = point.x.toDouble() - renderAnchorPoint.x.toDouble()
+            val centerVertical = renderAnchorPoint.y.toDouble() - point.y.toDouble()
             val nearestHorizontal = horizontal.coerceIn(centerHorizontal - half, centerHorizontal + half)
             val nearestVertical = vertical.coerceIn(centerVertical - half, centerVertical + half)
             val deltaHorizontal = horizontal - nearestHorizontal
@@ -2095,7 +2313,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun buildFillComponentCache(session: PaintSession, ignoreShade: Boolean): FillComponentCache? {
-        val bounds = PaintCanvasBounds.from(session.canvasCells.keys) ?: return null
+        val bounds = PaintCanvasBounds.from(session.logicalCells.keys) ?: return null
         val minGlobalX = bounds.minX * MAP_WIDTH
         val minGlobalY = bounds.minY * MAP_HEIGHT
         val width = bounds.width * MAP_WIDTH
@@ -2104,14 +2322,13 @@ class PaintManager(private val hooker: FunctionHooker) {
         val labels = IntArray(totalPixels) { FILL_INVALID_LABEL }
         val colors = ByteArray(totalPixels)
 
-        session.canvasCells.forEach { (point, cell) ->
-            val snapshot = MapDataExtractor.extract(cell.mapId) ?: return@forEach
+        session.logicalCells.forEach { (point, logicalColors) ->
             val offsetX = point.x * MAP_WIDTH - minGlobalX
             val offsetY = point.y * MAP_HEIGHT - minGlobalY
             for (localY in 0 until MAP_HEIGHT) {
                 val targetRowStart = (offsetY + localY) * width + offsetX
                 val sourceRowStart = localY * MAP_WIDTH
-                snapshot.colors.copyInto(
+                logicalColors.copyInto(
                     destination = colors,
                     destinationOffset = targetRowStart,
                     startIndex = sourceRowStart,
@@ -2454,7 +2671,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
         val location = resolveCellLocation(session.anchorLocation, session.anchorPoint, point, session.frameDirection)
 
-        if (point in session.canvasCells) {
+        if (point in session.logicalCells) {
             return ResizeTarget(point, location, ResizeTargetState.REMOVE_OWN)
         }
 
@@ -2466,8 +2683,8 @@ class PaintManager(private val hooker: FunctionHooker) {
             return ResizeTarget(point, location, ResizeTargetState.INVALID)
         }
 
-        val bounds = PaintCanvasBounds.from(session.canvasCells.keys + point) ?: return ResizeTarget(point, location, ResizeTargetState.INVALID)
-        if (bounds.width > 4 || bounds.height > 4) {
+        val bounds = PaintCanvasBounds.from(session.logicalCells.keys + point) ?: return ResizeTarget(point, location, ResizeTargetState.INVALID)
+        if (bounds.width > MAX_CANVAS_SIDE || bounds.height > MAX_CANVAS_SIDE) {
             return ResizeTarget(point, location, ResizeTargetState.INVALID)
         }
 
@@ -2495,7 +2712,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             }
 
             ResizeTargetState.REMOVE_OWN -> {
-                if (session.canvasCells.size <= 1) {
+                if (session.logicalCells.size <= 1) {
                     menuController.openEaselMenu(player, session)
                     return
                 }
@@ -2512,32 +2729,28 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun addCanvasCell(player: Player, session: PaintSession, point: PaintGridPoint, location: Location): Boolean {
-        val snapshot = MapDataExtractor.create(player.world) ?: return false
-        sendFullMapDataToViewers(session, snapshot)
-        val visuals = createCanvasCellVisuals(snapshot.mapId, session.frameDirection, session.viewers)
-        if (!spawnCanvasCellVisuals(visuals, location)) {
-            removeCanvasCellVisuals(visuals)
+        session.logicalCells[point] = ByteArray(MAP_WIDTH * MAP_HEIGHT) { BACKGROUND_COLOR_ID }
+        if (!syncRenderedCanvas(player, session, session.appliedZoom)) {
+            session.logicalCells.remove(point)
             return false
         }
-        session.canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, visuals.frame, visuals.backPanel, location)
         markCanvasTopologyChanged(session)
-        scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
         return true
     }
 
     private fun removeCanvasCell(session: PaintSession, point: PaintGridPoint) {
-        session.canvasCells.remove(point)?.let { cell ->
-            removeCanvasCellVisuals(cell)
-            markCanvasTopologyChanged(session)
-        }
+        val player = Bukkit.getPlayer(session.playerId) ?: return
+        if (session.logicalCells.remove(point) == null) return
+        syncRenderedCanvas(player, session, session.appliedZoom)
+        markCanvasTopologyChanged(session)
     }
 
     private fun isAdjacentToCanvas(session: PaintSession, point: PaintGridPoint): Boolean {
-        return adjacentPoints(point).any { it in session.canvasCells }
+        return adjacentPoints(point).any { it in session.logicalCells }
     }
 
     private fun isWithinResizePreviewRange(session: PaintSession, point: PaintGridPoint): Boolean {
-        val bounds = PaintCanvasBounds.from(session.canvasCells.keys) ?: return false
+        val bounds = PaintCanvasBounds.from(session.logicalCells.keys) ?: return false
         return point.x in (bounds.minX - MAX_RESIZE_PREVIEW_DISTANCE_CELLS)..(bounds.maxX + MAX_RESIZE_PREVIEW_DISTANCE_CELLS) &&
             point.y in (bounds.minY - MAX_RESIZE_PREVIEW_DISTANCE_CELLS)..(bounds.maxY + MAX_RESIZE_PREVIEW_DISTANCE_CELLS)
     }
@@ -2623,14 +2836,22 @@ class PaintManager(private val hooker: FunctionHooker) {
     private fun clearCanvas(player: Player, session: PaintSession) {
         restorePreviewIfNeeded(player, session)
         var changed = false
-        session.canvasCells.values.forEach { cell ->
-            MapDataExtractor.fill(cell.mapId, BACKGROUND_COLOR_ID)?.let { snapshot ->
-                changed = true
-                sendFullMapDataToViewers(session, snapshot)
+        session.logicalCells.values.forEach { colors ->
+            var localChanged = false
+            colors.indices.forEach { index ->
+                if (colors[index] != BACKGROUND_COLOR_ID) {
+                    colors[index] = BACKGROUND_COLOR_ID
+                    localChanged = true
+                }
             }
+            changed = changed || localChanged
         }
+        val patches = rerenderLogicalCells(session, session.logicalCells.keys)
         if (changed) {
             markCanvasChanged(session)
+        }
+        patches.forEach { patch ->
+            sendMapPatchDataToViewers(session, patch)
         }
         clearStrokeState(session)
         clearHistory(session)
@@ -2759,9 +2980,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val LARGE_BRUSH_PREVIEW_SUPPRESS_MILLIS = 140L
         private const val FILL_COOLDOWN_MILLIS = 100L
         private const val LOCATION_EPSILON = 0.01
+        private const val MAX_CANVAS_SIDE = 4
         private const val MAX_RESIZE_PREVIEW_DISTANCE_CELLS = 3
         private const val HISTORY_PIXEL_ESTIMATE_BYTES = 40L
-        private const val HISTORY_MAP_GROUP_BASE_BYTES = 96L
         private const val HISTORY_ENTRY_BASE_BYTES = 64L
         private const val HISTORY_LINE_ANCHOR_ESTIMATE_BYTES = 32L
         private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L

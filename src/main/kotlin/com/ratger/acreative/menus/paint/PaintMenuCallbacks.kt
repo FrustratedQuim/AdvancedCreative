@@ -17,4 +17,8 @@ interface PaintMenuCallbacks {
     fun clearCanvas(player: Player, session: PaintSession)
 
     fun removeResizePreview(player: Player, session: PaintSession)
+
+    fun beginResizeMode(player: Player, session: PaintSession)
+
+    fun handleEaselMenuClose(player: Player, session: PaintSession)
 }

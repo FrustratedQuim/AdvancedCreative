@@ -108,8 +108,15 @@ data class PaintPixelChange(
     val newColor: Byte
 )
 
+data class PaintLogicalPixelChange(
+    val globalX: Int,
+    val globalY: Int,
+    val oldColor: Byte,
+    val newColor: Byte
+)
+
 data class PaintHistoryEntry(
-    val changesByMapId: Map<Int, List<PaintPixelChange>>,
+    val pixelChanges: List<PaintLogicalPixelChange>,
     val estimatedBytes: Long,
     val lineAnchorBefore: PaintLineAnchor? = null,
     val lineAnchorAfter: PaintLineAnchor? = null

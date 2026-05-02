@@ -144,8 +144,24 @@ object PaintToolCatalog {
                 "",
                 "<!i><#FFD700>Управление:",
                 "<!i><#C7A300> ● <#FFF3E0>Q, чтобы настроить",
+                "",
+                "<!i><#FFD700>Параметры:",
+                "<!i><#C7A300> ● <#FFE68A>Размер: <#FFF3E0>${logicalCanvasLabel(session)}",
+                "<!i><#C7A300> ● <#FFE68A>Увеличение: <#FFF3E0>${zoomLabel(session)}",
                 ""
             )
+        }
+    }
+
+    private fun logicalCanvasLabel(session: PaintSession): String {
+        val bounds = session.logicalBounds() ?: return session.initialSize.normalized()
+        return "${bounds.width}x${bounds.height}"
+    }
+
+    private fun zoomLabel(session: PaintSession): String {
+        return when (session.selectedZoom) {
+            1 -> "Нет"
+            else -> "В ${session.selectedZoom} раза"
         }
     }
 

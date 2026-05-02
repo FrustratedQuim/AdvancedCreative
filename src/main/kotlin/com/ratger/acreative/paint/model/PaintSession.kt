@@ -4,6 +4,7 @@ import me.tofaa.entitylib.wrapper.WrapperEntity
 import org.bukkit.Location
 import java.util.ArrayDeque
 import java.util.UUID
+import kotlin.math.max
 
 data class PaintResizePreview(
     val frame: WrapperEntity,
@@ -24,6 +25,7 @@ data class PaintSession(
     var previewTaskId: Int,
     val viewers: MutableSet<UUID>,
     val canvasCells: MutableMap<PaintGridPoint, PaintCanvasCell>,
+    val logicalCells: MutableMap<PaintGridPoint, ByteArray>,
     val toolSettings: PaintToolSettingsBundle = PaintToolSettingsBundle(),
     val history: ArrayDeque<PaintHistoryEntry> = ArrayDeque(),
     val seriesCode: String,
@@ -52,9 +54,23 @@ data class PaintSession(
     var brushPreviewSuppressedUntilMillis: Long = 0L,
     var previewPaused: Boolean = false,
     var previewSuppressionKey: String? = null,
-    var paletteRotation: Int = 0
+    var paletteRotation: Int = 0,
+    var appliedZoom: Int = 1,
+    var selectedZoom: Int = 1
 ) {
     fun cellsSortedTopLeft(): List<PaintCanvasCell> {
         return canvasCells.values.sortedWith(compareBy<PaintCanvasCell> { it.point.y }.thenBy { it.point.x })
+    }
+
+    fun logicalBounds(): PaintCanvasBounds? = PaintCanvasBounds.from(logicalCells.keys)
+
+    fun maxLogicalSide(): Int = logicalBounds()?.let { max(it.width, it.height) } ?: max(initialSize.width, initialSize.height)
+
+    fun allowedZoomLevels(): List<Int> {
+        return when (maxLogicalSide()) {
+            1 -> listOf(1, 2, 3, 4)
+            2 -> listOf(1, 2)
+            else -> listOf(1)
+        }
     }
 }

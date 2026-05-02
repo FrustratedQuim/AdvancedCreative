@@ -120,6 +120,15 @@ object MapDataExtractor {
         return extract(mapId)
     }
 
+    fun replaceColors(mapId: Int, colors: ByteArray): Snapshot? {
+        if (colors.size != FULL_MAP_SIZE) return null
+        val mapView = Bukkit.getMap(mapId) ?: return null
+        val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null
+        val data = serverLevel(world).getMapData(MapId(mapId)) ?: return null
+        colors.copyInto(data.colors)
+        return extract(mapId)
+    }
+
     fun colorsView(mapId: Int): ByteArray? {
         val mapView = Bukkit.getMap(mapId) ?: return null
         val world = mapView.world ?: Bukkit.getWorlds().firstOrNull() ?: return null

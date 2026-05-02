@@ -36,10 +36,7 @@ class PaintMenuController(
     fun handleInventoryClose(player: Player, session: PaintSession) {
         if (!session.isMenuOpen) return
         if (player.uniqueId in menuTransitions) return
-        session.isMenuOpen = false
-        session.openMenuKind = null
-        session.activeBasicBrushPaletteKey = null
-        session.activeColorMenuReturnTo = null
+        finalizeMenuClose(player, session, session.openMenuKind)
     }
 
     fun openSettingsForCurrentTool(player: Player, session: PaintSession) {
@@ -279,9 +276,9 @@ class PaintMenuController(
     fun openEaselMenu(player: Player, session: PaintSession) {
         session.resizeMode = false
         callbacks.removeResizePreview(player, session)
-        val menu = basePaintMenu(session, "▍ Параметры мальберта", MenuRows.THREE, 27, setOf(12, 14))
+        val menu = basePaintMenu(session, "▍ Параметры мальберта", MenuRows.THREE, 27, setOf(11, 13, 15))
         fillThreeRowBase(menu)
-        menu.setButton(12, buttonFactory.actionButton(
+        menu.setButton(11, buttonFactory.actionButton(
             material = Material.WATER_BUCKET,
             name = "<!i><#C7A300>🌧 <#FFD700>Очистить мальберт",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить")
@@ -289,13 +286,17 @@ class PaintMenuController(
             callbacks.clearCanvas(player, session)
             closeCurrentPaintMenu(player, session)
         })
-        menu.setButton(14, buttonFactory.actionButton(
+        menu.setButton(13, buttonFactory.actionButton(
             material = Material.ITEM_FRAME,
             name = "<!i><#C7A300>⭐ <#FFD700>Изменить размер",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить")
         ) {
-            session.resizeMode = true
+            callbacks.beginResizeMode(player, session)
             closeCurrentPaintMenu(player, session)
+        })
+        menu.setButton(15, zoomButton(session) { newZoom ->
+            session.selectedZoom = newZoom
+            openEaselMenu(player, session)
         })
         markMenuOpen(player, session, PaintMenuKind.EASEL, menu)
     }
@@ -462,12 +463,20 @@ class PaintMenuController(
     }
 
     private fun handlePaintMenuClose(session: PaintSession, event: CloseEvent) {
+        if (!session.isMenuOpen) return
         if (event.player.uniqueId in menuTransitions) return
         if (callbacks.session(event.player.uniqueId) != session) return
+        finalizeMenuClose(event.player, session, session.openMenuKind)
+    }
+
+    private fun finalizeMenuClose(player: Player, session: PaintSession, closedKind: PaintMenuKind?) {
         session.isMenuOpen = false
         session.openMenuKind = null
         session.activeBasicBrushPaletteKey = null
         session.activeColorMenuReturnTo = null
+        if (closedKind == PaintMenuKind.EASEL) {
+            callbacks.handleEaselMenuClose(player, session)
+        }
     }
 
     private fun markMenuOpen(player: Player, session: PaintSession, kind: PaintMenuKind, menu: Menu) {
@@ -481,10 +490,7 @@ class PaintMenuController(
     }
 
     private fun closeCurrentPaintMenu(player: Player, session: PaintSession) {
-        session.isMenuOpen = false
-        session.openMenuKind = null
-        session.activeBasicBrushPaletteKey = null
-        session.activeColorMenuReturnTo = null
+        finalizeMenuClose(player, session, null)
         markMenuTransition(player.uniqueId)
         player.closeInventory()
     }
@@ -529,6 +535,67 @@ class PaintMenuController(
         lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"),
         action = { action() }
     )
+
+    private fun zoomButton(session: PaintSession, action: (Int) -> Unit) = run {
+        val maxSide = session.maxLogicalSide()
+        val allowed = session.allowedZoomLevels()
+        val selectedZoom = session.selectedZoom
+        if (maxSide >= 3) {
+            buttonFactory.actionButton(
+                material = Material.SPYGLASS,
+                name = "<!i><#C7A300>⭐ <#FFD700>Увеличение",
+                lore = listOf("<!i><#C7A300>▍ <#FFE68A>Недоступно для текущего размера"),
+                itemModifier = {
+                    if (selectedZoom > 1) {
+                        glint(true)
+                    }
+                    this
+                }
+            )
+        } else {
+            val options = listOf(1, 2, 3, 4)
+            val lore = buildList {
+                add("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
+                add("")
+                options.forEach { option ->
+                    val label = if (option == 1) "Нет" else "В $option раза"
+                    val enabled = option in allowed
+                    val selected = selectedZoom == option
+                    add(
+                        when {
+                            selected && enabled -> "<!i><#00FF40>  » $label"
+                            selected && !enabled -> "<!i><gray>  » $label"
+                            enabled -> "<!i><#C7A300><b> </b>» $label"
+                            else -> "<!i><#FF1500><b> </b>» $label"
+                        }
+                    )
+                }
+                add("")
+                add("<!i><#FFD700>ЛКМ, <#FFE68A>чтобы вперёд")
+                add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы назад")
+            }
+            buttonFactory.actionButton(
+                material = Material.SPYGLASS,
+                name = "<!i><#C7A300>⭐ <#FFD700>Увеличение",
+                lore = lore,
+                itemModifier = {
+                    if (selectedZoom > 1 || selectedZoom != session.appliedZoom) {
+                        glint(true)
+                    }
+                    this
+                },
+                action = { event ->
+                    val currentIndex = allowed.indexOf(selectedZoom).takeIf { it >= 0 } ?: 0
+                    val newIndex = when {
+                        event.isLeft || event.isShiftLeft -> (currentIndex + 1) % allowed.size
+                        event.isRight || event.isShiftRight -> (currentIndex - 1 + allowed.size) % allowed.size
+                        else -> return@actionButton
+                    }
+                    action(allowed[newIndex])
+                }
+            )
+        }
+    }
 
     private fun shadeButton(current: PaintShade, action: (ClickEvent, PaintShade) -> Unit) = buttonFactory.listButton(
         material = Material.GLOW_INK_SAC,
