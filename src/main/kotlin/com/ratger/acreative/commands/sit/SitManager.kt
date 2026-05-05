@@ -291,6 +291,44 @@ class SitManager(private val hooker: FunctionHooker) {
             .forEach { unsitPlayer(it) }
     }
 
+    fun handleBlocksMoved(blocks: List<Block>, direction: BlockFace) {
+        blocks.forEach { block ->
+            moveSittingPlayersWithBlock(block, direction)
+        }
+    }
+
+    private fun moveSittingPlayersWithBlock(block: Block, direction: BlockFace) {
+        val destinationBlock = block.getRelative(direction)
+        sessionRegistry.byBlock(block)
+            .toList()
+            .forEach { (player, sitData) ->
+                val armorStand = player.world.getEntity(sitData.armorStandId) as? org.bukkit.entity.ArmorStand ?: return@forEach
+                val targetLocation = when (sitData.style) {
+                    SitStyle.STAIRS -> stairsSeatLocation(destinationBlock, armorStand.location.yaw)
+                    else -> armorStand.location.clone().add(direction.modX.toDouble(), direction.modY.toDouble(), direction.modZ.toDouble())
+                }
+
+                if (armorStand.passengers.contains(player)) {
+                    armorStand.removePassenger(player)
+                }
+                armorStand.teleport(targetLocation)
+                armorStand.addPassenger(player)
+                sitData.block = destinationBlock
+            }
+    }
+
+    private fun stairsSeatLocation(block: Block, yawFallback: Float): Location {
+        val stairs = block.blockData as? Stairs
+        val (yaw, offsetX, offsetZ) = when (stairs?.facing) {
+            BlockFace.NORTH -> Triple(0f, 0.0, 0.13)
+            BlockFace.SOUTH -> Triple(180f, 0.0, -0.13)
+            BlockFace.WEST -> Triple(-90f, 0.13, 0.0)
+            BlockFace.EAST -> Triple(90f, -0.13, 0.0)
+            else -> Triple(yawFallback, 0.0, 0.0)
+        }
+        return block.location.clone().add(0.5 + offsetX, 0.55, 0.5 + offsetZ).apply { this.yaw = yaw }
+    }
+
     private fun sitOnStairs(player: Player, block: Block) {
         val stairs = block.blockData as? Stairs
         val (yaw, offsetX, offsetZ) = when (stairs?.facing) {

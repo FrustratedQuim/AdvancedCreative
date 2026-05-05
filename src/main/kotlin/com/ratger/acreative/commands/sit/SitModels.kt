@@ -12,6 +12,6 @@ enum class SitStyle {
 
 data class SitSession(
     val armorStandId: UUID,
-    val block: Block?,
+    var block: Block?,
     val style: SitStyle
 )

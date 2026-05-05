@@ -15,6 +15,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockPlaceEvent
+import org.bukkit.event.block.BlockPistonExtendEvent
+import org.bukkit.event.block.BlockPistonRetractEvent
 import org.bukkit.event.entity.*
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
@@ -248,6 +250,17 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
                     .forEach { layManager.unlayPlayer(it.key) }
             }
         }
+    }
+
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    fun onBlockPistonExtend(event: BlockPistonExtendEvent) {
+        sitManager.handleBlocksMoved(event.blocks, event.direction)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    fun onBlockPistonRetract(event: BlockPistonRetractEvent) {
+        sitManager.handleBlocksMoved(event.blocks, event.direction)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
