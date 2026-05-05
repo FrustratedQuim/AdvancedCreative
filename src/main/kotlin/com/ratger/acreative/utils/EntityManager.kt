@@ -2,6 +2,7 @@ package com.ratger.acreative.utils
 
 import com.destroystokyo.paper.ClientOption
 import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.entity.data.EntityDataTypes
 import com.github.retrooper.packetevents.protocol.entity.pose.EntityPose
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
 import com.github.retrooper.packetevents.protocol.player.Equipment
@@ -32,6 +33,10 @@ class EntityManager(
     private val hooker: FunctionHooker
 ) {
 
+    private companion object {
+        private const val ENTITY_POSE_INDEX: Byte = 6
+    }
+
     fun createArmorStand(location: Location, yaw: Float): ArmorStand {
         return location.world.spawn(location, ArmorStand::class.java) { stand ->
             stand.setGravity(false)
@@ -55,7 +60,7 @@ class EntityManager(
         val entity = WrapperEntity(npcUUID, EntityTypes.PLAYER)
         val playerMeta = entity.entityMeta as PlayerMeta
 
-        EntityLibPoseCompatibility.setPose(playerMeta, EntityPose.SLEEPING)
+        playerMeta.setIndex(ENTITY_POSE_INDEX, EntityDataTypes.ENTITY_POSE, EntityPose.SLEEPING)
         playerMeta.isGlowing = isGlowing
         player.getClientOption(ClientOption.SKIN_PARTS).let { clientOption ->
             playerMeta.isCapeEnabled = clientOption.hasCapeEnabled()
