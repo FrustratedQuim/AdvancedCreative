@@ -1,6 +1,7 @@
 package com.ratger.acreative.commands.crawl
 
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes
+import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
@@ -10,7 +11,6 @@ import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.entity.Player
-import com.github.retrooper.packetevents.protocol.world.Location as PacketLocation
 
 class CrawlManager(private val hooker: FunctionHooker) {
 
@@ -18,124 +18,15 @@ class CrawlManager(private val hooker: FunctionHooker) {
         private const val UPDATE_BARRIER_PERIOD_TICKS = 2L
     }
 
-    val crawlingPlayers = mutableMapOf<Player, CrawlingPlayer>()
+    private val constraintAdapter = CrawlConstraintAdapter()
+    private val barrierPresenter = BarrierPresenter()
+    private val shulkerPresenter = ShulkerPresenter()
 
-    inner class CrawlingPlayer(val player: Player) {
-        var barrierLocation: Location? = null
-        var shulkerEntity: WrapperEntity? = null
+    private val crawlingPlayers = mutableMapOf<Player, CrawlSession>()
 
-        fun updateBarrier(): Boolean {
-            if (!player.isOnline || player.isDead || player.isFlying ||
-                player.location.block.type == Material.WATER || player.location.block.type == Material.LAVA
-            ) {
-                // Do not modify crawlingPlayers here to avoid CME during iteration.
-                // Perform local cleanup and signal the manager to uncrawl after the loop.
-                removeBarrier()
-                removeShulker()
-                return false
-            }
+    fun isCrawling(player: Player): Boolean = crawlingPlayers.containsKey(player)
 
-            val loc = player.location
-
-            val newLoc = loc.clone().add(0.0, 1.5, 0.0).toBlockLocation()
-            val overheadBlock = newLoc.block
-
-            // If overhead is AIR, show a packetized barrier for this player only
-            if (overheadBlock.type.isAir) {
-                // Remove shulker if present from previous state
-                removeShulker()
-
-                if (barrierLocation == null || barrierLocation!! != newLoc) {
-                    // Revert previous fake barrier, if any
-                    barrierLocation?.let { prev ->
-                        if (player.isOnline) {
-                            player.sendBlockChange(prev, prev.block.blockData)
-                        }
-                    }
-                    barrierLocation = newLoc
-                }
-                // Always re-send fake barrier to keep it persistent client-side
-                player.sendBlockChange(newLoc, Material.BARRIER.createBlockData())
-                return true
-            }
-
-            // Overhead is not air: revert any barrier, and if bounding box indicates partial/unsafe headroom,
-            // spawn a hidden shulker client-entity to avoid accidental standing without altering visuals.
-            removeBarrier()
-            if (shouldSpawnShulker(loc)) {
-                spawnOrMoveShulker(newLoc.add(0.5, 0.0, 0.5))
-            } else {
-                // Full block or other shape – shulker not needed
-                removeShulker()
-            }
-            return true
-        }
-
-        fun removeBarrier() {
-            barrierLocation?.let { prev ->
-                if (player.isOnline) {
-                    player.sendBlockChange(prev, prev.block.blockData)
-                }
-            }
-            barrierLocation = null
-        }
-
-        private fun shouldSpawnShulker(playerLoc: Location): Boolean {
-            // Paper API: use bounding boxes to evaluate headroom.
-            val tickLoc = playerLoc.clone()
-            val baseBlock = tickLoc.block
-            val blockSize = ((tickLoc.y - baseBlock.y) * 100.0).toInt()
-            tickLoc.y = baseBlock.y + if (blockSize >= 40) 2.49 else 1.49
-
-            val aboveBlock = tickLoc.block
-            val isAir = aboveBlock.type.isAir
-            // If it's air, shulker is not needed here (handled by packet barrier branch)
-            if (isAir) return false
-
-            // Safeguard: if Paper collision API is unavailable for some reason, fall back to type-based heuristic
-            return try {
-                val bb = aboveBlock.boundingBox
-                val containsProbe = bb.contains(tickLoc.toVector())
-                val collisions = aboveBlock.collisionShape.boundingBoxes
-                val hasCollision = collisions.isNotEmpty()
-
-                // If there is a full solid collision at the probe point, player already cannot stand -> no shulker needed
-                if (hasCollision && containsProbe) return false
-
-                // For any non-air block above (including non-colliding like buttons/torches), keep shulker to force crawling
-                !aboveBlock.type.isAir
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                // Be conservative: when unsure and block is not air, keep crawling with a shulker
-                !aboveBlock.type.isAir
-            }
-        }
-
-        private fun spawnOrMoveShulker(center: Location) {
-            val existing = shulkerEntity
-            if (existing == null || !existing.isSpawned) {
-                // Create new client-side Shulker entity, invisible for the crawling player only
-                val entity = WrapperEntity(EntityTypes.SHULKER)
-                // Hide from everyone by default, then add only the crawler as viewer
-                entity.addViewer(player.uniqueId)
-                // Try to keep it invisible/silent to avoid any visuals
-                entity.entityMeta.isInvisible = true
-                entity.entityMeta.isSilent = true
-                entity.spawn(PacketLocation(center.x, center.y, center.z, 0f, 0f))
-                shulkerEntity = entity
-            } else {
-                // Teleport/move existing to new center
-                existing.teleport(PacketLocation(center.x, center.y, center.z, 0f, 0f))
-            }
-        }
-
-        fun removeShulker() {
-            shulkerEntity?.let { ent ->
-                if (ent.isSpawned) ent.remove()
-            }
-            shulkerEntity = null
-        }
-    }
+    fun activeCrawlers(): Set<Player> = crawlingPlayers.keys
 
     fun canCrawl(player: Player): Boolean {
         val blockBelow = player.location.clone().add(0.0, -1.0, 0.0).block
@@ -154,9 +45,9 @@ class CrawlManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
             return
         }
-        val crawling = CrawlingPlayer(player)
-        crawlingPlayers[player] = crawling
-        crawling.updateBarrier()
+        val session = CrawlSession(player)
+        crawlingPlayers[player] = session
+        updateSession(session)
 
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_ON)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
@@ -167,9 +58,9 @@ class CrawlManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
             return
         }
-        crawlingPlayers.remove(player)?.let {
-            it.removeBarrier()
-            it.removeShulker()
+        crawlingPlayers.remove(player)?.let { session ->
+            barrierPresenter.clear(session)
+            shulkerPresenter.clear(session)
         }
 
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_OFF)
@@ -181,24 +72,164 @@ class CrawlManager(private val hooker: FunctionHooker) {
     fun startBarrierUpdater() {
         hooker.tickScheduler.runRepeating(0L, UPDATE_BARRIER_PERIOD_TICKS) {
             val toUncrawl = mutableListOf<Player>()
-            // Iterate over a snapshot to avoid ConcurrentModificationException
             val snapshot = crawlingPlayers.values.toList()
-            for (crawler in snapshot) {
+            for (session in snapshot) {
                 val keepCrawling = try {
-                    crawler.updateBarrier()
+                    updateSession(session)
                 } catch (t: Throwable) {
                     t.printStackTrace()
                     false
                 }
                 if (!keepCrawling) {
-                    toUncrawl.add(crawler.player)
+                    toUncrawl.add(session.player)
                 }
             }
 
-            // Process uncrawl after iteration to avoid modifying the map during traversal
-            for (p in toUncrawl) {
-                uncrawlPlayer(p)
+            for (player in toUncrawl) {
+                uncrawlPlayer(player)
             }
+        }
+    }
+
+    private fun updateSession(session: CrawlSession): Boolean {
+        val player = session.player
+        if (!player.isOnline || player.isDead || player.isFlying ||
+            player.location.block.type == Material.WATER || player.location.block.type == Material.LAVA
+        ) {
+            barrierPresenter.clear(session)
+            shulkerPresenter.clear(session)
+            return false
+        }
+
+        return when (constraintAdapter.resolve(session)) {
+            CrawlConstraintMode.BARRIER -> {
+                shulkerPresenter.clear(session)
+                barrierPresenter.apply(session)
+                true
+            }
+
+            CrawlConstraintMode.SHULKER -> {
+                barrierPresenter.clear(session)
+                shulkerPresenter.apply(session)
+                true
+            }
+
+            CrawlConstraintMode.NONE -> {
+                barrierPresenter.clear(session)
+                shulkerPresenter.clear(session)
+                true
+            }
+        }
+    }
+
+    private data class CrawlSession(
+        val player: Player,
+        var barrierLocation: Location? = null,
+        var pendingBarrierLocation: Location? = null,
+        var shulkerEntity: WrapperEntity? = null
+    )
+
+    private enum class CrawlConstraintMode {
+        BARRIER,
+        SHULKER,
+        NONE
+    }
+
+    private interface CrawlPresenter {
+        fun apply(session: CrawlSession)
+        fun clear(session: CrawlSession)
+    }
+
+    private inner class CrawlConstraintAdapter {
+        fun resolve(session: CrawlSession): CrawlConstraintMode {
+            val playerLoc = session.player.location
+            val overheadLocation = playerLoc.clone().add(0.0, 1.5, 0.0).toBlockLocation()
+            val overheadBlock = overheadLocation.block
+
+            if (overheadBlock.type.isAir) {
+                session.pendingBarrierLocation = overheadLocation
+                return CrawlConstraintMode.BARRIER
+            }
+
+            session.pendingBarrierLocation = null
+            return if (shouldSpawnShulker(playerLoc)) CrawlConstraintMode.SHULKER else CrawlConstraintMode.NONE
+        }
+
+        private fun shouldSpawnShulker(playerLoc: Location): Boolean {
+            val tickLoc = playerLoc.clone()
+            val baseBlock = tickLoc.block
+            val blockSize = ((tickLoc.y - baseBlock.y) * 100.0).toInt()
+            tickLoc.y = baseBlock.y + if (blockSize >= 40) 2.49 else 1.49
+
+            val aboveBlock = tickLoc.block
+            if (aboveBlock.type.isAir) return false
+
+            return try {
+                val boundingBox = aboveBlock.boundingBox
+                val containsProbe = boundingBox.contains(tickLoc.toVector())
+                val collisions = aboveBlock.collisionShape.boundingBoxes
+                val hasCollision = collisions.isNotEmpty()
+
+                if (hasCollision && containsProbe) return false
+                !aboveBlock.type.isAir
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                !aboveBlock.type.isAir
+            }
+        }
+    }
+
+    private inner class BarrierPresenter : CrawlPresenter {
+        override fun apply(session: CrawlSession) {
+            val player = session.player
+            val barrierLocation = session.pendingBarrierLocation ?: return
+
+            val previousBarrier = session.barrierLocation
+            if (previousBarrier != null && previousBarrier != barrierLocation && player.isOnline) {
+                player.sendBlockChange(previousBarrier, previousBarrier.block.blockData)
+            }
+
+            player.sendBlockChange(barrierLocation, Material.BARRIER.createBlockData())
+            session.barrierLocation = barrierLocation
+        }
+
+        override fun clear(session: CrawlSession) {
+            val player = session.player
+            session.barrierLocation?.let { location ->
+                if (player.isOnline) {
+                    player.sendBlockChange(location, location.block.blockData)
+                }
+            }
+            session.barrierLocation = null
+            session.pendingBarrierLocation = null
+        }
+    }
+
+    private inner class ShulkerPresenter : CrawlPresenter {
+        override fun apply(session: CrawlSession) {
+            val player = session.player
+            val playerLocation = player.location
+            val spawnLocation = playerLocation.clone().add(0.0, 1.5, 0.0).toBlockLocation().add(0.5, 0.0, 0.5)
+
+            val entity = session.shulkerEntity
+            if (entity == null || !entity.isSpawned) {
+                val shulker = WrapperEntity(EntityTypes.SHULKER)
+                shulker.addViewer(player.uniqueId)
+                shulker.entityMeta.isInvisible = true
+                shulker.entityMeta.isSilent = true
+                shulker.spawn(PacketLocation(spawnLocation.x, spawnLocation.y, spawnLocation.z, 0f, 0f))
+                session.shulkerEntity = shulker
+                return
+            }
+
+            entity.teleport(PacketLocation(spawnLocation.x, spawnLocation.y, spawnLocation.z, 0f, 0f))
+        }
+
+        override fun clear(session: CrawlSession) {
+            session.shulkerEntity?.let { entity ->
+                if (entity.isSpawned) entity.remove()
+            }
+            session.shulkerEntity = null
         }
     }
 }

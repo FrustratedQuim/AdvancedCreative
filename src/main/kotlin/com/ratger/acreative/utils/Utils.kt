@@ -16,7 +16,7 @@ class Utils(private val hooker: FunctionHooker) {
 
     fun isSitting(player: Player) = hooker.sitManagerOrNull()?.isSitting(player) ?: false
     fun isGliding(player: Player) = hooker.glideManagerOrNull()?.glidingPlayers?.contains(player) ?: false
-    fun isCrawling(player: Player) = hooker.crawlManagerOrNull()?.crawlingPlayers?.containsKey(player) ?: false
+    fun isCrawling(player: Player) = hooker.crawlManagerOrNull()?.isCrawling(player) ?: false
     fun isLaying(player: Player) = hooker.layManagerOrNull()?.layingMap?.containsKey(player) ?: false
     fun isCustomGravity(player: Player) = hooker.gravityManagerOrNull()?.gravityPlayers?.containsKey(player) ?: false
     fun isCustomSize(player: Player) = hooker.resizeManagerOrNull()?.scaledPlayers?.containsKey(player) ?: false
@@ -39,7 +39,7 @@ class Utils(private val hooker: FunctionHooker) {
 
     fun stopAllCrawls() {
         val crawlManager = hooker.crawlManagerOrNull() ?: return
-        stopAll(crawlManager.crawlingPlayers) { crawlManager.uncrawlPlayer(it) }
+        crawlManager.activeCrawlers().toList().forEach { crawlManager.uncrawlPlayer(it) }
     }
 
     fun stopAllLays() {
