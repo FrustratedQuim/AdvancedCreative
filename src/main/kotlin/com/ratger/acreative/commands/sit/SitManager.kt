@@ -24,6 +24,7 @@ class SitManager(private val hooker: FunctionHooker) {
         private const val CHECK_TASK_PERIOD_TICKS = 10L
         private const val MAX_INTERACT_DISTANCE = 3.0
         private const val EPSILON = 0.01
+        private const val BLOCK_MOVE_SPEED_MULTIPLIER = 1.6
     }
 
     private val sessionRegistry = SitSessionRegistry()
@@ -307,16 +308,45 @@ class SitManager(private val hooker: FunctionHooker) {
                 val armorStand = player.world.getEntity(sitData.armorStandId) as? org.bukkit.entity.ArmorStand ?: return@forEach
                 val targetLocation = when (sitData.style) {
                     SitStyle.STAIRS -> stairsSeatLocation(destinationBlock, armorStand.location.yaw)
-                    else -> armorStand.location.clone().add(direction.modX.toDouble(), direction.modY.toDouble(), direction.modZ.toDouble())
+                    else -> calculateSeatTargetLocation(block, destinationBlock, armorStand.location)
                 }
+                val correctedTargetLocation = moveTowardsWithClamp(
+                    current = armorStand.location,
+                    target = targetLocation
+                )
 
                 if (armorStand.passengers.contains(player)) {
                     armorStand.removePassenger(player)
                 }
-                armorStand.teleport(targetLocation)
+                armorStand.teleport(correctedTargetLocation)
                 armorStand.addPassenger(player)
                 sitData.block = destinationBlock
             }
+    }
+
+    private fun calculateSeatTargetLocation(sourceBlock: Block, destinationBlock: Block, currentSeatLocation: Location): Location {
+        val seatOffset = currentSeatLocation.toVector().subtract(sourceBlock.location.toVector())
+        return destinationBlock.location.clone().add(seatOffset)
+    }
+
+    private fun moveTowardsWithClamp(current: Location, target: Location): Location {
+        val delta = target.toVector().subtract(current.toVector())
+        if (delta.lengthSquared() <= EPSILON) return target.clone().apply {
+            yaw = target.yaw
+            pitch = target.pitch
+        }
+
+        val scaledDelta = delta.multiply(BLOCK_MOVE_SPEED_MULTIPLIER)
+        val overshootsTarget = scaledDelta.lengthSquared() >= delta.lengthSquared()
+        val finalVector = if (overshootsTarget) target.toVector() else current.toVector().add(scaledDelta)
+
+        return target.clone().apply {
+            x = finalVector.x
+            y = finalVector.y
+            z = finalVector.z
+            yaw = target.yaw
+            pitch = target.pitch
+        }
     }
 
     private fun stairsSeatLocation(block: Block, yawFallback: Float): Location {
