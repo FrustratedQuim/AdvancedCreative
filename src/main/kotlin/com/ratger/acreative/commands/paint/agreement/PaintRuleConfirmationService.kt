@@ -1,10 +1,10 @@
-package com.ratger.acreative.paint.agreement
+package com.ratger.acreative.commands.paint.agreement
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
-import com.ratger.acreative.paint.model.PaintCanvasSize
+import com.ratger.acreative.commands.paint.model.PaintCanvasSize
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player

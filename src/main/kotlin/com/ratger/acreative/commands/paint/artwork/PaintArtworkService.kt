@@ -1,11 +1,11 @@
-package com.ratger.acreative.paint.artwork
+package com.ratger.acreative.commands.paint.artwork
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
-import com.ratger.acreative.paint.model.PaintCanvasBounds
-import com.ratger.acreative.paint.model.PaintCanvasCell
-import com.ratger.acreative.paint.model.PaintSession
+import com.ratger.acreative.commands.paint.model.PaintCanvasBounds
+import com.ratger.acreative.commands.paint.model.PaintCanvasCell
+import com.ratger.acreative.commands.paint.model.PaintSession
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.block.ShulkerBox

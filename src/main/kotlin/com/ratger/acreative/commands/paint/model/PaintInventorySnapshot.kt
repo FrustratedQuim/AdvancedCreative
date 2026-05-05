@@ -1,4 +1,4 @@
-package com.ratger.acreative.paint.model
+package com.ratger.acreative.commands.paint.model
 
 import org.bukkit.GameMode
 import org.bukkit.entity.Player

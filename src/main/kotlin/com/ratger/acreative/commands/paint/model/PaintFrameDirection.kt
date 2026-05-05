@@ -1,4 +1,4 @@
-package com.ratger.acreative.paint.model
+package com.ratger.acreative.commands.paint.model
 
 import me.tofaa.entitylib.meta.other.ItemFrameMeta
 

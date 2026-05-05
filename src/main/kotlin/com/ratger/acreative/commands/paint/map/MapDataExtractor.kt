@@ -1,6 +1,6 @@
-package com.ratger.acreative.paint.map
+package com.ratger.acreative.commands.paint.map
 
-import com.ratger.acreative.paint.model.PaintPixelChange
+import com.ratger.acreative.commands.paint.model.PaintPixelChange
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.level.saveddata.maps.MapId

@@ -1,7 +1,7 @@
-package com.ratger.acreative.paint.palette
+package com.ratger.acreative.commands.paint.palette
 
-import com.ratger.acreative.paint.map.MapColorMatcher
-import com.ratger.acreative.paint.model.PaintShade
+import com.ratger.acreative.commands.paint.map.MapColorMatcher
+import com.ratger.acreative.commands.paint.model.PaintShade
 import net.minecraft.world.level.material.MapColor
 import org.bukkit.Material
 

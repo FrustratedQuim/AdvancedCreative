@@ -1,14 +1,14 @@
 package com.ratger.acreative.menus.paint
 
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
-import com.ratger.acreative.paint.model.PaintBinaryBrushSettings
-import com.ratger.acreative.paint.model.PaintBrushSettings
-import com.ratger.acreative.paint.model.PaintFillSettings
-import com.ratger.acreative.paint.model.PaintSession
-import com.ratger.acreative.paint.model.PaintShade
-import com.ratger.acreative.paint.model.PaintShapeSettings
-import com.ratger.acreative.paint.model.PaintToolMode
-import com.ratger.acreative.paint.palette.PaintPalette
+import com.ratger.acreative.commands.paint.model.PaintBinaryBrushSettings
+import com.ratger.acreative.commands.paint.model.PaintBrushSettings
+import com.ratger.acreative.commands.paint.model.PaintFillSettings
+import com.ratger.acreative.commands.paint.model.PaintSession
+import com.ratger.acreative.commands.paint.model.PaintShade
+import com.ratger.acreative.commands.paint.model.PaintShapeSettings
+import com.ratger.acreative.commands.paint.model.PaintToolMode
+import com.ratger.acreative.commands.paint.palette.PaintPalette
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.java.JavaPlugin

@@ -1,6 +1,6 @@
-package com.ratger.acreative.paint.model
+package com.ratger.acreative.commands.paint.model
 
-import com.ratger.acreative.paint.palette.PaintPalette
+import com.ratger.acreative.commands.paint.palette.PaintPalette
 
 enum class PaintMenuKind {
     BASIC_BRUSH,

@@ -1,4 +1,4 @@
-package com.ratger.acreative.paint.map
+package com.ratger.acreative.commands.paint.map
 
 import net.minecraft.world.level.material.MapColor
 import java.awt.Color

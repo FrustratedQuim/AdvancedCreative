@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.paint
 
-import com.ratger.acreative.paint.model.PaintSession
+import com.ratger.acreative.commands.paint.model.PaintSession
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack as BukkitItemStack
 import java.util.UUID

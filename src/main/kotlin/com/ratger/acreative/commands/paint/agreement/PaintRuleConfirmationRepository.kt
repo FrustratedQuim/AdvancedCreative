@@ -1,4 +1,4 @@
-package com.ratger.acreative.paint.agreement
+package com.ratger.acreative.commands.paint.agreement
 
 import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.util.UUID

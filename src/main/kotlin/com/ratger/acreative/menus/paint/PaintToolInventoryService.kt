@@ -1,7 +1,7 @@
 package com.ratger.acreative.menus.paint
 
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
-import com.ratger.acreative.paint.model.PaintSession
+import com.ratger.acreative.commands.paint.model.PaintSession
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
