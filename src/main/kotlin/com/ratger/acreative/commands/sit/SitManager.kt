@@ -292,16 +292,18 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun handleBlocksMoved(blocks: List<Block>, direction: BlockFace) {
+        val movedPlayers = mutableSetOf<UUID>()
         blocks.forEach { block ->
-            moveSittingPlayersWithBlock(block, direction)
+            moveSittingPlayersWithBlock(block, direction, movedPlayers)
         }
     }
 
-    private fun moveSittingPlayersWithBlock(block: Block, direction: BlockFace) {
+    private fun moveSittingPlayersWithBlock(block: Block, direction: BlockFace, movedPlayers: MutableSet<UUID>) {
         val destinationBlock = block.getRelative(direction)
         sessionRegistry.byBlock(block)
             .toList()
             .forEach { (player, sitData) ->
+                if (!movedPlayers.add(player.uniqueId)) return@forEach
                 val armorStand = player.world.getEntity(sitData.armorStandId) as? org.bukkit.entity.ArmorStand ?: return@forEach
                 val targetLocation = when (sitData.style) {
                     SitStyle.STAIRS -> stairsSeatLocation(destinationBlock, armorStand.location.yaw)
