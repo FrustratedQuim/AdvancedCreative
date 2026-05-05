@@ -1,4 +1,4 @@
-package com.ratger.acreative.paint.plot
+package com.ratger.acreative.integration.plotsquared.flags
 
 import com.plotsquared.core.configuration.caption.StaticCaption
 import com.plotsquared.core.plot.flag.types.BooleanFlag

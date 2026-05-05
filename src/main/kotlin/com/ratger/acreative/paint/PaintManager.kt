@@ -46,7 +46,8 @@ import com.ratger.acreative.paint.model.PaintShapeType
 import com.ratger.acreative.paint.model.PaintSurfacePixel
 import com.ratger.acreative.paint.model.PaintToolMode
 import com.ratger.acreative.paint.palette.PaintPalette
-import com.ratger.acreative.paint.plot.PaintPlotSquaredGate
+import com.ratger.acreative.integration.plotsquared.PlotSquaredFlagGate
+import com.ratger.acreative.integration.plotsquared.flags.PlotPaintFlag
 import com.ratger.acreative.paint.palette.PaintPaletteEntry
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.ratger.acreative.utils.SeriesCodeGenerator
@@ -309,7 +310,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val parser = MiniMessageParser()
     private val artworkService = PaintArtworkService(hooker, parser)
     private val agreementRepository = PaintRuleConfirmationRepository(hooker.database)
-    private val plotSquaredGate = PaintPlotSquaredGate(hooker.plugin.server.pluginManager)
+    private val plotSquaredGate = PlotSquaredFlagGate(hooker.plugin.server.pluginManager)
     private val agreementService = PaintRuleConfirmationService(
         hooker = hooker,
         parser = parser,
@@ -318,7 +319,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     )
 
     fun registerPlotSquaredFlagIntegration() {
-        plotSquaredGate.registerFlagIfNeeded()
+        plotSquaredGate.registerFlagIfNeeded(PlotPaintFlag.TRUE)
     }
     private val toolInventoryService = PaintToolInventoryService(PaintToolMarker.key(hooker.plugin), parser)
     private val menuController = PaintMenuController(
@@ -580,7 +581,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
 
     private fun isPaintBlockedByPlotFlag(player: Player): Boolean {
-        return plotSquaredGate.isPaintForbidden(player)
+        return plotSquaredGate.isUsageForbidden(player, PlotPaintFlag.TRUE, PAINT_BYPASS_PERMISSION)
     }
 
     private fun beginResizeMode(player: Player, session: PaintSession) {
@@ -705,7 +706,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun isFrameSpaceAvailable(player: Player, session: PaintSession, location: Location): Boolean {
-        if (plotSquaredGate.isPaintForbidden(player, location)) return false
+        if (plotSquaredGate.isUsageForbidden(player, location, PlotPaintFlag.TRUE, PAINT_BYPASS_PERMISSION)) return false
         if (!location.block.type.isAir) return false
         return sessions.values
             .asSequence()
@@ -2805,7 +2806,7 @@ class PaintManager(private val hooker: FunctionHooker) {
     )
 
     private fun isEmptyFrameSpace(player: Player, location: Location): Boolean {
-        if (plotSquaredGate.isPaintForbidden(player, location)) return false
+        if (plotSquaredGate.isUsageForbidden(player, location, PlotPaintFlag.TRUE, PAINT_BYPASS_PERMISSION)) return false
         if (!location.block.type.isAir) return false
         return sessions.values
             .flatMap { it.canvasCells.values }
@@ -3031,6 +3032,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val HISTORY_LINE_ANCHOR_ESTIMATE_BYTES = 32L
         private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L
         private const val GLOBAL_CANVAS_HASH_BASE = 100_000
+        private const val PAINT_BYPASS_PERMISSION = "advancedcreative.paint.bypass"
         private const val FILL_INVALID_LABEL = 0
         private const val FILL_UNLABELED = -1
         private const val STAR_POINTS = 5
