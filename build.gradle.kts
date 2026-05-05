@@ -28,6 +28,9 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.11.2")
     compileOnly("net.kyori:adventure-text-minimessage:4.26.1")
 
+    compileOnly("com.intellectualsites.plotsquared:plotsquared-core:7.5.13-SNAPSHOT")
+    compileOnly("com.intellectualsites.plotsquared:plotsquared-bukkit:7.5.13-SNAPSHOT")
+
     compileOnly("ru.violence.coreapi:common:0.1.14-1.21.4-obf") {
         isTransitive = false
     }

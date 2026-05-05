@@ -1,5 +1,6 @@
 package com.ratger.acreative.paint.model
 
+import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 
@@ -7,7 +8,8 @@ data class PaintInventorySnapshot(
     val storageContents: List<ItemStack?>,
     val armorContents: List<ItemStack?>,
     val extraContents: List<ItemStack?>,
-    val heldSlot: Int
+    val heldSlot: Int,
+    val gameMode: GameMode
 ) {
     fun restore(player: Player) {
         val inventory = player.inventory
@@ -15,6 +17,7 @@ data class PaintInventorySnapshot(
         inventory.armorContents = armorContents.map { it?.clone() }.toTypedArray()
         inventory.extraContents = extraContents.map { it?.clone() }.toTypedArray()
         inventory.heldItemSlot = heldSlot
+        player.gameMode = gameMode
     }
 
     companion object {
@@ -24,7 +27,8 @@ data class PaintInventorySnapshot(
                 storageContents = inventory.storageContents.map { it?.clone() },
                 armorContents = inventory.armorContents.map { it?.clone() },
                 extraContents = inventory.extraContents.map { it?.clone() },
-                heldSlot = inventory.heldItemSlot
+                heldSlot = inventory.heldItemSlot,
+                gameMode = player.gameMode
             )
         }
     }

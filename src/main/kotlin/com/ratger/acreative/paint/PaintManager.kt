@@ -22,7 +22,6 @@ import com.ratger.acreative.menus.paint.PaintToolInventoryService
 import com.ratger.acreative.menus.paint.PaintToolMarker
 import com.ratger.acreative.paint.agreement.PaintRuleConfirmationRepository
 import com.ratger.acreative.paint.agreement.PaintRuleConfirmationService
-import com.ratger.acreative.paint.area.PaintBlockedZoneService
 import com.ratger.acreative.paint.artwork.PaintArtworkService
 import com.ratger.acreative.paint.map.MapColorMatcher
 import com.ratger.acreative.paint.map.MapDataExtractor
@@ -47,6 +46,7 @@ import com.ratger.acreative.paint.model.PaintShapeType
 import com.ratger.acreative.paint.model.PaintSurfacePixel
 import com.ratger.acreative.paint.model.PaintToolMode
 import com.ratger.acreative.paint.palette.PaintPalette
+import com.ratger.acreative.paint.plot.PaintPlotSquaredGate
 import com.ratger.acreative.paint.palette.PaintPaletteEntry
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.ratger.acreative.utils.SeriesCodeGenerator
@@ -58,6 +58,7 @@ import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
 import net.minecraft.world.scores.PlayerTeam
 import net.minecraft.world.scores.Scoreboard
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.entity.Player
@@ -308,15 +309,17 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val parser = MiniMessageParser()
     private val artworkService = PaintArtworkService(hooker, parser)
     private val agreementRepository = PaintRuleConfirmationRepository(hooker.database)
-    private val blockedZoneService = PaintBlockedZoneService(
-        hooker.configManager.config.getConfigurationSection("paint.blocked-zones")
-    )
+    private val plotSquaredGate = PaintPlotSquaredGate(hooker.plugin.server.pluginManager)
     private val agreementService = PaintRuleConfirmationService(
         hooker = hooker,
         parser = parser,
         repository = agreementRepository,
         onConfirmed = ::handleConfirmedPaintSession
     )
+
+    fun registerPlotSquaredFlagIntegration() {
+        plotSquaredGate.registerFlagIfNeeded()
+    }
     private val toolInventoryService = PaintToolInventoryService(PaintToolMarker.key(hooker.plugin), parser)
     private val menuController = PaintMenuController(
         hooker = hooker,
@@ -369,11 +372,6 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (blockedZoneService.isBlocked(player.location)) {
-            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_BLOCKED_ZONE)
-            return
-        }
-
         agreementService.requestPaintSession(player, requestedSize)
     }
 
@@ -381,7 +379,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         if (isPainting(player)) {
             return
         }
-        if (blockedZoneService.isBlocked(player.location)) {
+        if (isPaintBlockedByPlotFlag(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_BLOCKED_ZONE)
             return
         }
@@ -513,6 +511,28 @@ class PaintManager(private val hooker: FunctionHooker) {
         event.drops.clear()
     }
 
+
+    fun stopPaintingIfTooFar(player: Player): Boolean {
+        val session = sessions[player.uniqueId] ?: return false
+        val distanceSquared = player.location.distanceSquared(session.anchorLocation)
+        if (distanceSquared <= MAX_SESSION_DISTANCE_BLOCKS * MAX_SESSION_DISTANCE_BLOCKS) {
+            return false
+        }
+        stopPainting(player)
+        hooker.messageManager.sendChat(player, MessageKey.INFO_PAINT_OFF)
+        return true
+    }
+
+    fun stopPaintingFromPlotCommand(player: Player, message: String) {
+        if (!isPainting(player)) return
+        val normalized = message.trim().lowercase()
+        if (normalized.startsWith("/p kick") || normalized.startsWith("/plot kick") ||
+            normalized.startsWith("/p ban") || normalized.startsWith("/plot ban")) {
+            stopPainting(player)
+            hooker.messageManager.sendChat(player, MessageKey.INFO_PAINT_OFF)
+        }
+    }
+
     fun cleanupSessionsForPlayer(player: Player) {
         stopPainting(player)
         agreementService.clearRuntimeState(player.uniqueId)
@@ -520,6 +540,9 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     fun stopPainting(player: Player) {
         val session = sessions.remove(player.uniqueId) ?: return
+        if (session.appliedZoom != 1) {
+            applyCanvasZoom(player, session, 1)
+        }
         fillPreviewCache.remove(player.uniqueId)
         brushPreviewCache.remove(player.uniqueId)
         brushPixelCache.remove(player.uniqueId)
@@ -553,6 +576,11 @@ class PaintManager(private val hooker: FunctionHooker) {
                 }
             }
         }
+    }
+
+
+    private fun isPaintBlockedByPlotFlag(player: Player): Boolean {
+        return plotSquaredGate.isPaintForbidden(player)
     }
 
     private fun beginResizeMode(player: Player, session: PaintSession) {
@@ -611,7 +639,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun syncRenderedCanvas(player: Player, session: PaintSession, targetZoom: Int): Boolean {
         val plans = buildRenderedCellPlans(session, targetZoom)
-        if (!canOccupyRenderedPlans(session, plans)) {
+        if (!canOccupyRenderedPlans(player, session, plans)) {
             return false
         }
 
@@ -672,11 +700,12 @@ class PaintManager(private val hooker: FunctionHooker) {
             }
     }
 
-    private fun canOccupyRenderedPlans(session: PaintSession, plans: List<RenderedCellPlan>): Boolean {
-        return plans.all { plan -> isFrameSpaceAvailable(session, plan.location) }
+    private fun canOccupyRenderedPlans(player: Player, session: PaintSession, plans: List<RenderedCellPlan>): Boolean {
+        return plans.all { plan -> isFrameSpaceAvailable(player, session, plan.location) }
     }
 
-    private fun isFrameSpaceAvailable(session: PaintSession, location: Location): Boolean {
+    private fun isFrameSpaceAvailable(player: Player, session: PaintSession, location: Location): Boolean {
+        if (plotSquaredGate.isPaintForbidden(player, location)) return false
         if (!location.block.type.isAir) return false
         return sessions.values
             .asSequence()
@@ -761,7 +790,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             resolveCellLocation(anchorLocation, size.basePoint, point, frameDirection)
         }
 
-        if (frameLocations.values.any { !isEmptyFrameSpace(it) }) {
+        if (frameLocations.values.any { !isEmptyFrameSpace(player, it) }) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_NO_SPACE)
             return false
         }
@@ -817,6 +846,7 @@ class PaintManager(private val hooker: FunctionHooker) {
 
         sessions[player.uniqueId] = session
         hooker.playerStateManager.activateState(player, PlayerStateType.PAINTING)
+        player.gameMode = GameMode.CREATIVE
         toolInventoryService.prepare(player, session)
 
         session.viewerTaskId = startViewerTask(player.uniqueId)
@@ -2685,7 +2715,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             return ResizeTarget(point, location, ResizeTargetState.REMOVE_OWN)
         }
 
-        if (!isEmptyFrameSpace(location)) {
+        if (!isEmptyFrameSpace(player, location)) {
             return ResizeTarget(point, location, ResizeTargetState.INVALID)
         }
 
@@ -2774,7 +2804,8 @@ class PaintManager(private val hooker: FunctionHooker) {
         PaintGridPoint(point.x, point.y - 1)
     )
 
-    private fun isEmptyFrameSpace(location: Location): Boolean {
+    private fun isEmptyFrameSpace(player: Player, location: Location): Boolean {
+        if (plotSquaredGate.isPaintForbidden(player, location)) return false
         if (!location.block.type.isAir) return false
         return sessions.values
             .flatMap { it.canvasCells.values }
@@ -2993,6 +3024,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val FILL_COOLDOWN_MILLIS = 100L
         private const val LOCATION_EPSILON = 0.01
         private const val MAX_CANVAS_SIDE = 4
+        private const val MAX_SESSION_DISTANCE_BLOCKS = 200.0
         private const val MAX_RESIZE_PREVIEW_DISTANCE_CELLS = 3
         private const val HISTORY_PIXEL_ESTIMATE_BYTES = 40L
         private const val HISTORY_ENTRY_BASE_BYTES = 64L

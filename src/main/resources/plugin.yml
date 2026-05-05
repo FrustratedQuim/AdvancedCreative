@@ -6,6 +6,7 @@ authors: [ ratger ]
 description: Adds some silly features
 website: https://minetoday.org
 depend: [ packetevents ]
+softdepend: [ PlotSquared ]
 
 commands:
   ahelp:
@@ -194,6 +195,9 @@ permissions:
     default: op
   advancedcreative.paint:
     description: Allows using /paint
+    default: op
+  advancedcreative.paint.bypass:
+    description: Bypass plot-paint flag restrictions
     default: op
   advancedcreative.effects.other:
     description: Allows using /effects & target

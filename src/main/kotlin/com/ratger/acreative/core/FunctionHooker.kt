@@ -169,6 +169,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         disguiseManager = DisguiseManager(this)
         effectsManager = EffectsManager(this)
         paintManager = PaintManager(this)
+        paintManager.registerPlotSquaredFlagIntegration()
         grabManager = GrabManager(this)
         jarManager = JarManager(this)
         slapManager = SlapManager(this)

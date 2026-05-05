@@ -102,6 +102,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             }
         }
 
+        hooker.paintManager.cleanupSessionsForPlayer(player)
         utils.checkFreezeUnfreeze(player)
         utils.checkSitUnsit(player)
         utils.checkLayingUnlay(player)
@@ -399,6 +400,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onPlayerCommandPreprocess(event: PlayerCommandPreprocessEvent) {
+        hooker.paintManager.stopPaintingFromPlotCommand(event.player, event.message)
         if (hooker.grabManager.blockGrabbedCommand(event.player)) {
             event.isCancelled = true
             return
@@ -465,6 +467,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val player = event.player
         if (utils.isFrozen(player) && hasPositionChanged(event)) event.isCancelled = true
         if (hooker.jarManager.blockJarredMove(player) && hasPositionChanged(event)) event.isCancelled = true
+        if (hasPositionChanged(event)) hooker.paintManager.stopPaintingIfTooFar(player)
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
