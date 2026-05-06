@@ -15,10 +15,10 @@ import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.menus.edit.restrictions.ItemRestrictionSupport
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
-import org.bukkit.Registry
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
@@ -62,12 +62,8 @@ class PlotFlagEditorService(
         var view: PlotEditorView,
         var renderedMainEntries: List<String> = emptyList(),
         var renderedMainSlots: Map<String, Int> = emptyMap(),
-        var renderedMainTotalPages: Int = 1
-    )
-
-    private data class BlockOption(
-        val value: String,
-        val modelKey: NamespacedKey
+        var renderedMainTotalPages: Int = 1,
+        val pendingBlockSelections: MutableMap<String, MutableList<String>> = mutableMapOf()
     )
 
     private data class ApplyRequest(
@@ -89,7 +85,7 @@ class PlotFlagEditorService(
     private val emptyButton = buttonFactory.itemAsIsButton(ItemStack(Material.AIR)) { }
     private val resolvedFlagsByKey: Map<String, ResolvedPlotFlagDefinition>
     private val enabledFlagsInOrder: List<ResolvedPlotFlagDefinition>
-    private val blockOptions: List<BlockOption>
+    private val blockOptions: List<ItemRestrictionSupport.BlockOption>
     private val plotEditAdminAccessPermission: String = hooker.configManager.config.getString(CONFIG_ADMIN_PERMISSION)
         ?.trim()
         .takeUnless { it.isNullOrBlank() }
@@ -121,16 +117,7 @@ class PlotFlagEditorService(
         }
         enabledFlagsInOrder = loadedDefinitions
         resolvedFlagsByKey = loadedByKey
-        blockOptions = Registry.MATERIAL.iterator().asSequence()
-            .filter { it.isBlock && it.isItem }
-            .map { material ->
-                BlockOption(
-                    value = material.key.key,
-                    modelKey = material.key
-                )
-            }
-            .sortedBy { it.value }
-            .toList()
+        blockOptions = ItemRestrictionSupport.blockOptions()
 
         hooker.menuService.registerApplyTarget(object : ApplyCommandTarget {
             override fun isWaiting(player: Player): Boolean = applyRequests.containsKey(player.uniqueId)
@@ -178,7 +165,7 @@ class PlotFlagEditorService(
         val tokens = rawMessage.trim().removePrefix("/").split(WHITESPACE_REGEX).filter { it.isNotBlank() }
         if (tokens.size < 2) return false
         if (tokens[0].lowercase() !in ROOT_ALIASES) return false
-        if (!tokens[1].equals("edit", ignoreCase = true)) return false
+        if (!tokens[1].equals("edit", ignoreCase = true) && !tokens[1].equals("e", ignoreCase = true)) return false
 
         openEditor(player)
         return true
@@ -361,13 +348,17 @@ class PlotFlagEditorService(
         val pageEntries = values.drop(page * COLLECTION_WORK_SLOTS.size).take(COLLECTION_WORK_SLOTS.size)
         session.view = PlotEditorView.Collection(entry.definition.key, page, returnMainPage, returnFilter)
 
-        val interactiveSlots = mutableSetOf(18, 26, 38, 40, 42).apply {
+        val addByCommandSlot = if (entry.definition.groupKey == "blocked-cmds") 39 else 38
+        val addByMenuSlot = if (entry.definition.groupKey == "blocked-cmds") null else 40
+        val clearSlot = if (entry.definition.groupKey == "blocked-cmds") 41 else 42
+        val interactiveSlots = mutableSetOf(18, 26, addByCommandSlot, clearSlot).apply {
+            addByMenuSlot?.let(::add)
             addAll(COLLECTION_WORK_SLOTS)
         }
         val menu = MenuUiSupport.buildMenu(
             plugin = hooker.plugin,
             parser = parser,
-            title = "<!i>▍ ${entry.definition.title} [${page + 1}/$totalPages]",
+            title = collectionMenuTitle(entry.definition.title, page, totalPages),
             rows = MenuRows.FIVE,
             menuTopRange = 0 until 45,
             interactiveTopSlots = interactiveSlots,
@@ -400,29 +391,29 @@ class PlotFlagEditorService(
             })
         }
 
-        menu.setButton(38, buttonFactory.actionButton(
+        menu.setButton(addByCommandSlot, buttonFactory.actionButton(
             material = Material.LIME_DYE,
-            name = "<!i><#00FF40>✚ <#FFD700>Добавить через команду",
-            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы указать значение")
+            name = collectionAddByCommandTitle(entry),
+            lore = emptyList()
         ) {
             beginCollectionApply(player, session, entry, page, returnMainPage, returnFilter)
         })
 
-        if (entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU) {
-            menu.setButton(40, buttonFactory.actionButton(
+        if (addByMenuSlot != null && entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU) {
+            menu.setButton(addByMenuSlot, buttonFactory.actionButton(
                 material = Material.MAGENTA_DYE,
-                name = "<!i><#C7A300>✦ <#FFD700>Добавить через меню",
-                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы открыть")
+                name = "<!i><#FF00FF>₪ Добавить блок <#FF66FF>[Меню]",
+                lore = emptyList()
             ) {
                 openBlockPickerMenu(player, session, entry, 0, page, returnMainPage, returnFilter)
             })
-        } else {
-            menu.setButton(40, gray)
+        } else if (addByMenuSlot != null) {
+            menu.setButton(addByMenuSlot, gray)
         }
 
-        menu.setButton(42, buttonFactory.actionButton(
+        menu.setButton(clearSlot, buttonFactory.actionButton(
             material = Material.RED_DYE,
-            name = "<!i><#FF1500>⚠ Очистить всё",
+            name = "<!i><#FF1500>⚠ Удалить всё",
             lore = emptyList()
         ) {
             mutatePlotFlag(
@@ -467,25 +458,29 @@ class PlotFlagEditorService(
         returnFilter: PlotFlagFilter
     ) {
         val plot = resolvePlotForView(player, session) ?: return
-        val selected = currentCollectionValues(plot, entry).toSet()
+        val selected = pendingBlockSelection(session, plot, entry).toSet()
         val totalPages = maxOf(1, (blockOptions.size + BLOCK_PICKER_WORK_SLOTS.size - 1) / BLOCK_PICKER_WORK_SLOTS.size)
         val page = requestedPage.coerceIn(0, totalPages - 1)
         val pageEntries = blockOptions.drop(page * BLOCK_PICKER_WORK_SLOTS.size).take(BLOCK_PICKER_WORK_SLOTS.size)
         session.view = PlotEditorView.BlockPicker(entry.definition.key, page, returnCollectionPage, returnMainPage, returnFilter)
 
-        val interactiveSlots = mutableSetOf(18, 26, 40).apply {
+        val interactiveSlots = mutableSetOf(18, 26).apply {
+            if (totalPages > 1) {
+                add(40)
+            }
             addAll(BLOCK_PICKER_WORK_SLOTS)
         }
         val menu = MenuUiSupport.buildMenu(
             plugin = hooker.plugin,
             parser = parser,
-            title = "<!i>▍ ${entry.definition.title} [${page + 1}/$totalPages]",
+            title = collectionMenuTitle("${entry.definition.title} → Блоки", page, totalPages),
             rows = MenuRows.FIVE,
             menuTopRange = 0 until 45,
             interactiveTopSlots = interactiveSlots,
             allowPlayerInventoryClicks = false,
             onClose = { closeEvent ->
                 if (closeEvent.player.uniqueId in menuTransitions) return@buildMenu
+                finalizePendingBlockSelection(closeEvent.player, session, entry)
                 if (sessions[closeEvent.player.uniqueId] === session) {
                     cancelApplySilently(closeEvent.player)
                     sessions.remove(closeEvent.player.uniqueId)
@@ -502,75 +497,56 @@ class PlotFlagEditorService(
             if (page > 0) {
                 openBlockPickerMenu(player, session, entry, page - 1, returnCollectionPage, returnMainPage, returnFilter)
             } else {
+                finalizePendingBlockSelection(player, session, entry)
                 openCollectionMenu(player, session, entry, returnCollectionPage, returnMainPage, returnFilter)
             }
         })
 
-        menu.setButton(26, buttonFactory.forwardButton {
-            val nextPage = if (page + 1 < totalPages) page + 1 else 0
-            openBlockPickerMenu(player, session, entry, nextPage, returnCollectionPage, returnMainPage, returnFilter)
-        })
+        if (page + 1 < totalPages) {
+            menu.setButton(26, buttonFactory.forwardButton {
+                openBlockPickerMenu(player, session, entry, page + 1, returnCollectionPage, returnMainPage, returnFilter)
+            })
+        }
 
-        menu.setButton(40, buttonFactory.actionButton(
-            material = Material.BOOK,
-            name = "<!i><#C7A300>№ <#FFD700>Страница: <#FFF3E0>${page + 1}",
-            lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
-        ) {
-            requestSignInput(
-                player = player,
-                templateLines = arrayOf("", "↑ Страница ↑", "", ""),
-                reopen = { openBlockPickerMenu(player, session, entry, page, returnCollectionPage, returnMainPage, returnFilter) }
-            ) { input ->
-                val targetPage = (input?.toIntOrNull()?.coerceIn(1, totalPages) ?: (page + 1)) - 1
-                openBlockPickerMenu(player, session, entry, targetPage, returnCollectionPage, returnMainPage, returnFilter)
-            }
-        })
+        if (totalPages > 1) {
+            menu.setButton(40, buttonFactory.actionButton(
+                material = Material.BOOK,
+                name = "<!i><#C7A300>№ <#FFD700>Страница: <#FFF3E0>${page + 1}",
+                lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
+            ) {
+                requestSignInput(
+                    player = player,
+                    templateLines = arrayOf("", "↑ Страница ↑", "", ""),
+                    reopen = { openBlockPickerMenu(player, session, entry, page, returnCollectionPage, returnMainPage, returnFilter) }
+                ) { input ->
+                    val targetPage = (input?.toIntOrNull()?.coerceIn(1, totalPages) ?: (page + 1)) - 1
+                    openBlockPickerMenu(player, session, entry, targetPage, returnCollectionPage, returnMainPage, returnFilter)
+                }
+            })
+        } else {
+            menu.setButton(40, gray)
+        }
 
         pageEntries.forEachIndexed { index, option ->
             val slot = BLOCK_PICKER_WORK_SLOTS[index]
-            menu.setButton(slot, buttonFactory.actionButton(
-                material = Material.STRUCTURE_VOID,
-                name = if (option.value in selected) {
-                    "<!i><#00FF40>${option.value}"
-                } else {
-                    "<!i><#FFD700>${option.value}"
-                },
-                lore = emptyList(),
-                itemModifier = {
-                    edit { item ->
-                        val meta = item.itemMeta ?: return@edit
-                        meta.itemModel = option.modelKey
-                        item.itemMeta = meta
-                    }
-                    if (option.value in selected) {
-                        glint(true)
-                    }
-                    this
-                }
+            val selectedNow = option.key.asString() in selected || option.key.key in selected
+            menu.setButton(slot, buttonFactory.restrictionBlockTypeEntryButton(
+                displayName = option.displayName,
+                modelId = option.modelId,
+                selected = selectedNow
             ) { clickEvent ->
-                val livePlot = resolvePlotForMutation(player, session) ?: return@actionButton
-                if (!canEditFlag(player, entry.requiredRoleKey)) return@actionButton
-                val cooldownKey = cooldownKey(player.uniqueId, session.plotReference, entry.definition.groupKey)
-                if (!acquireMutationCooldown(cooldownKey)) return@actionButton
-                val currentValues = currentCollectionValues(livePlot, entry)
-                if (option.value !in currentValues) {
-                    val nextValues = (currentValues + option.value).distinct()
-                    livePlot.setFlag(entry.flagClass, nextValues.joinToString(","))
+                if (!canEditFlag(player, entry.requiredRoleKey)) return@restrictionBlockTypeEntryButton
+                val currentValues = pendingBlockSelection(session, plot, entry).toMutableList()
+                val value = option.key.key
+                if (currentValues.none { it.equals(value, ignoreCase = true) }) {
+                    currentValues += value
+                    session.pendingBlockSelections[entry.definition.key] = currentValues
+                    clickEvent.menu.setButton(slot, buttonFactory.restrictionBlockTypeEntryButton(
+                        displayName = option.displayName,
+                        modelId = option.modelId,
+                        selected = true
+                    ) { })
                 }
-                clickEvent.menu.setButton(slot, buttonFactory.actionButton(
-                    material = Material.STRUCTURE_VOID,
-                    name = "<!i><#00FF40>${option.value}",
-                    lore = emptyList(),
-                    itemModifier = {
-                        edit { item ->
-                            val meta = item.itemMeta ?: return@edit
-                            meta.itemModel = option.modelKey
-                            item.itemMeta = meta
-                        }
-                        glint(true)
-                        this
-                    }
-                ) { })
             })
         }
 
@@ -591,7 +567,7 @@ class PlotFlagEditorService(
             PlotFlagEntryKind.PRESET -> {
                 val explicitText = explicitFlagValueText(plot, entry)
                 val selectedIndex = entry.definition.presetOptions.indexOfFirst {
-                    it.value.equals(explicitText, ignoreCase = true)
+                    presetValueMatches(entry, explicitText, it.value)
                 }.takeIf { it >= 0 } ?: 0
                 val selected = entry.definition.presetOptions[selectedIndex]
                 val active = !selected.value.equals("none", ignoreCase = true)
@@ -696,7 +672,7 @@ class PlotFlagEditorService(
 
             PlotFlagEntryKind.NUMBER -> {
                 val value = explicitFlagValueText(plot, entry)
-                val active = !value.isNullOrBlank()
+                val active = value?.toIntOrNull()?.let { it >= 0 } == true
                 val lore = buildList {
                     if (editable) {
                         add(changeHintLine())
@@ -829,11 +805,11 @@ class PlotFlagEditorService(
         val isBlockCollection = entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU
         return buttonFactory.actionButton(
             material = Material.STRUCTURE_VOID,
-            name = "<!i><#C7A300>◎ <#FFD700>$value",
+            name = "<!i><#C7A300>◎ <#FFD700>${displayCollectionValue(entry, value)}",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить"),
             itemModifier = {
                 if (isBlockCollection) {
-                    applyModel("minecraft:$value")
+                    applyModel(collectionItemModelId(value))
                 } else {
                     applyModel(entry.definition.itemModel)
                 }
@@ -857,12 +833,11 @@ class PlotFlagEditorService(
             selectedIndex = selectedIndex,
             titleBuilder = { _, _ -> "<!i><#C7A300>⚡ <#FFD700>Фильтр" },
             beforeOptionsLore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить", ""),
-            afterOptionsLore = emptyList()
+            afterOptionsLore = listOf("")
         ) { _, newIndex ->
             onChange(options[newIndex].value)
         }
     }
-
     private fun beginTextApply(player: Player, session: PlotEditorSession, entry: ResolvedPlotFlagDefinition) {
         beginApplyRequest(
             player = player,
@@ -915,20 +890,20 @@ class PlotFlagEditorService(
         returnFilter: PlotFlagFilter
     ) {
         val usageKey = if (entry.definition.groupKey == "blocked-cmds") {
-            MessageKey.EDIT_APPLY_USAGE_VALUE
+            MessageKey.EDIT_APPLY_USAGE_COMMAND
         } else {
             MessageKey.EDIT_APPLY_USAGE_ID
         }
         beginApplyRequest(
             player = player,
-            promptKind = if (entry.definition.groupKey == "blocked-cmds") EditorApplyKind.ITEM_ID else EditorApplyKind.ITEM_ID,
+            promptKind = if (entry.definition.groupKey == "blocked-cmds") EditorApplyKind.COMMAND else EditorApplyKind.ITEM_ID,
             usageMessageKey = usageKey,
             suggestions = { prefix ->
                 if (entry.definition.groupKey == "blocked-cmds") {
                     emptyList()
                 } else {
                     blockOptions.asSequence()
-                        .map { it.value }
+                        .map { it.key.key }
                         .filter { it.startsWith(prefix.lowercase()) }
                         .take(20)
                         .toList()
@@ -965,7 +940,11 @@ class PlotFlagEditorService(
             val parsed = input?.toIntOrNull()
             if (parsed != null) {
                 changed = mutatePlotFlag(player, session, entry.definition.groupKey) { livePlot ->
-                    livePlot.setFlag(entry.flagClass, parsed.coerceIn(0, 2048).toString())
+                    if (parsed < 0) {
+                        livePlot.removeFlag(entry.flagClass)
+                    } else {
+                        livePlot.setFlag(entry.flagClass, parsed.coerceIn(0, 2048).toString())
+                    }
                 }
             }
             if (changed) {
@@ -1094,13 +1073,7 @@ class PlotFlagEditorService(
         return rawInput.split(',')
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .map { token ->
-                if (entry.definition.groupKey == "blocked-cmds") {
-                    token.removePrefix("/")
-                } else {
-                    token.lowercase()
-                }
-            }
+            .map { token -> normalizeCollectionValue(entry, token) }
     }
 
     private fun currentCollectionValues(plot: Plot, entry: ResolvedPlotFlagDefinition): List<String> {
@@ -1108,6 +1081,60 @@ class PlotFlagEditorService(
         return raw.split(',')
             .map { it.trim() }
             .filter { it.isNotEmpty() }
+            .map { normalizeCollectionValue(entry, it) }
+    }
+
+    private fun pendingBlockSelection(
+        session: PlotEditorSession,
+        plot: Plot,
+        entry: ResolvedPlotFlagDefinition
+    ): List<String> {
+        return session.pendingBlockSelections[entry.definition.key]?.toList()
+            ?: currentCollectionValues(plot, entry)
+    }
+
+    private fun finalizePendingBlockSelection(
+        player: Player,
+        session: PlotEditorSession,
+        entry: ResolvedPlotFlagDefinition
+    ) {
+        val pendingValues = session.pendingBlockSelections.remove(entry.definition.key) ?: return
+        if (!canEditFlag(player, entry.requiredRoleKey)) {
+            return
+        }
+        mutatePlotFlag(player, session, entry.definition.groupKey) { livePlot ->
+            val currentValues = currentCollectionValues(livePlot, entry)
+            if (currentValues == pendingValues) {
+                return@mutatePlotFlag false
+            }
+            if (pendingValues.isEmpty()) {
+                livePlot.removeFlag(entry.flagClass)
+            } else {
+                livePlot.setFlag(entry.flagClass, pendingValues.joinToString(","))
+            }
+        }
+    }
+
+    private fun normalizeCollectionValue(entry: ResolvedPlotFlagDefinition, token: String): String {
+        return if (entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU) {
+            token.substringAfter(':').lowercase()
+        } else if (entry.definition.groupKey == "blocked-cmds") {
+            token.removePrefix("/")
+        } else {
+            token.lowercase()
+        }
+    }
+
+    private fun displayCollectionValue(entry: ResolvedPlotFlagDefinition, value: String): String {
+        return if (entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU) {
+            blockOptions.firstOrNull { it.key.key.equals(value, ignoreCase = true) }?.displayName ?: value
+        } else {
+            value
+        }
+    }
+
+    private fun collectionItemModelId(value: String): String {
+        return if (':' in value) value else "minecraft:${value}"
     }
 
     private fun explicitFlagValueText(plot: Plot, entry: ResolvedPlotFlagDefinition): String? {
@@ -1261,9 +1288,9 @@ class PlotFlagEditorService(
         selectedIndex: Int
     ): List<String> = entry.definition.presetOptions.mapIndexed { index, option ->
         if (index == selectedIndex) {
-            "<!i><#00FF40>  \u00BB ${option.label}"
+            "<!i>  <#00FF40>\u00BB ${option.label}"
         } else {
-            "<!i><#C7A300>  \u00BB ${option.label}"
+            "<!i><b> </b><#C7A300>\u00BB ${option.label}"
         }
     }
 
@@ -1273,30 +1300,47 @@ class PlotFlagEditorService(
     ): List<String> = buildList {
         add("<!i><#FFD700>${collectionValuesHeading(entry)}")
         values.take(6).forEach { value ->
-            add("<!i><#C7A300> \u25CF <#FFE68A>$value")
+            add("<!i><#C7A300> ● <#FFE68A>${displayCollectionValue(entry, value)}")
         }
         if (values.size > 6) {
-            add("<!i><#C7A300> \u25CF <#FFE68A>\u0435\u0449\u0451 ${values.size - 6}")
+            add("<!i><#C7A300> ● <#FFE68A>ещё ${values.size - 6}")
         }
     }
 
     private fun collectionValuesHeading(entry: ResolvedPlotFlagDefinition): String = when (entry.definition.groupKey) {
-        "use" -> "\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u043E \u0438\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C:"
-        "place" -> "\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u043E \u0441\u0442\u0430\u0432\u0438\u0442\u044C:"
-        "break" -> "\u0420\u0430\u0437\u0440\u0435\u0448\u0435\u043D\u043E \u043B\u043E\u043C\u0430\u0442\u044C:"
-        "blocked-cmds" -> "\u0417\u0430\u0431\u043B\u043E\u043A\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u043A\u043E\u043C\u0430\u043D\u0434\u044B:"
-        else -> "\u0422\u0435\u043A\u0443\u0449\u0438\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F:"
+        "use" -> "Разрешено использовать:"
+        "place" -> "Разрешено ставить:"
+        "break" -> "Разрешено ломать:"
+        "blocked-cmds" -> "Заблокированные:"
+        else -> "Текущие значения:"
+    }
+
+    private fun collectionMenuTitle(title: String, page: Int, totalPages: Int): String {
+        return if (totalPages > 1) {
+            "<!i>▍ $title [${page + 1}/$totalPages]"
+        } else {
+            "<!i>▍ $title"
+        }
+    }
+
+    private fun collectionAddByCommandTitle(entry: ResolvedPlotFlagDefinition): String {
+        return if (entry.definition.groupKey == "blocked-cmds") {
+            "<!i><#00FF40>₪ Добавить команду"
+        } else {
+            "<!i><#00FF40>₪ Добавить блок <#7BFF00>[Команда]"
+        }
     }
 
     private fun buildDescriptionSection(description: String): List<String> = buildList {
         add("<!i><#FFD700>\u041D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435:")
         wrapDescriptionLines(description).forEachIndexed { index, line ->
             if (index == 0) {
-                add("<!i><#C7A300> \u25CF <#FFE68A>$line")
+                add("<!i><#C7A300> \u25CF <#FFE68A>$line ")
             } else {
-                add("<!i><#FFE68A>  $line")
+                add("<!i><#FFE68A>  <b> </b>$line ")
             }
         }
+        add("")
     }
 
     private fun wrapDescriptionLines(text: String, maxLineLength: Int = 34): List<String> {
@@ -1323,6 +1367,21 @@ class PlotFlagEditorService(
         }
         return lines
     }
+    private fun presetValueMatches(entry: ResolvedPlotFlagDefinition, explicitText: String?, optionValue: String): Boolean {
+        if (optionValue.equals("none", ignoreCase = true)) {
+            return explicitText == null
+        }
+        val normalizedExplicit = when (entry.definition.groupKey) {
+            "music" -> explicitText?.removePrefix("minecraft:")
+            else -> explicitText
+        }?.lowercase()
+        val normalizedOption = when (entry.definition.groupKey) {
+            "music" -> optionValue.removePrefix("minecraft:")
+            else -> optionValue
+        }.lowercase()
+        return normalizedExplicit == normalizedOption
+    }
+
     private fun previewLine(value: String): String {
         return if (STYLE_TAG_REGEX.containsMatchIn(value)) value else "<#FFF3E0>$value"
     }

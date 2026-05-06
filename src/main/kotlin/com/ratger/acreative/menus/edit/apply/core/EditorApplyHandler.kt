@@ -29,6 +29,7 @@ enum class EditorApplyKind {
     DAMAGE_PER_BLOCK,
     USE_COOLDOWN_SECONDS,
     USE_COOLDOWN_GROUP,
+    COMMAND,
     CAN_PLACE_ON,
     CAN_BREAK,
     HEAD_ONLINE_NAME,

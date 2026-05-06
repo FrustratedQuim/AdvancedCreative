@@ -25,6 +25,7 @@ class ApplyPromptService(
             EditorApplyKind.DAMAGE_PER_BLOCK,
             EditorApplyKind.USE_COOLDOWN_SECONDS -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_AMOUNT
             EditorApplyKind.USE_COOLDOWN_GROUP -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_USE_COOLDOWN_GROUP
+            EditorApplyKind.COMMAND -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_COMMAND
             EditorApplyKind.CAN_PLACE_ON,
             EditorApplyKind.CAN_BREAK -> MessageKey.EDIT_APPLY_PROMPT_SUBTITLE_ID
             EditorApplyKind.HEAD_ONLINE_NAME,
