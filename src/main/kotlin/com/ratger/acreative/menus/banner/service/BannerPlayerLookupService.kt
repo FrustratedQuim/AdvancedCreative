@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.banner.service
 
 import com.ratger.acreative.menus.banner.model.BannerProfileSnapshot
+import com.ratger.acreative.moderation.userban.UserProfileResolver
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
@@ -10,10 +11,10 @@ import java.util.concurrent.CompletableFuture
 
 class BannerPlayerLookupService(
     private val licensedProfileLookupService: LicensedProfileLookupService
-) {
+) : UserProfileResolver {
     fun findUser(name: String): User? = BukkitHelper.getUser(name).orElse(null)
 
-    fun resolveSkinSnapshotAsync(user: User): CompletableFuture<BannerProfileSnapshot?> {
+    override fun resolveSkinSnapshotAsync(user: User): CompletableFuture<BannerProfileSnapshot?> {
         val onlineSnapshot = onlineSnapshot(user.name)
         if (onlineSnapshot != null) {
             return CompletableFuture.completedFuture(onlineSnapshot)

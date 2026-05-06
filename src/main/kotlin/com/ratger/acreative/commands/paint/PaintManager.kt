@@ -15,12 +15,17 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerMa
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
+import com.ratger.acreative.menus.banner.service.BannerPlayerLookupService
+import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
+import com.ratger.acreative.moderation.userban.UserBanEntry
+import com.ratger.acreative.moderation.userban.UserBanMenuRenderer
+import com.ratger.acreative.moderation.userban.UserBanService
 import com.ratger.acreative.menus.paint.PaintMenuCallbacks
 import com.ratger.acreative.menus.paint.PaintMenuController
 import com.ratger.acreative.menus.paint.PaintToolDefinition
 import com.ratger.acreative.menus.paint.PaintToolInventoryService
 import com.ratger.acreative.menus.paint.PaintToolMarker
-import com.ratger.acreative.commands.paint.agreement.PaintRuleConfirmationRepository
+import com.ratger.acreative.commands.paint.persistence.PaintUserStateRepository
 import com.ratger.acreative.commands.paint.agreement.PaintRuleConfirmationService
 import com.ratger.acreative.commands.paint.artwork.PaintArtworkService
 import com.ratger.acreative.commands.paint.map.MapColorMatcher
@@ -69,10 +74,13 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryDragEvent
 import org.bukkit.inventory.ItemStack as BukkitItemStack
+import ru.violence.coreapi.bukkit.api.menu.Menu
 import org.bukkit.util.Vector
 import java.awt.Color
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.cos
@@ -309,12 +317,25 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val previewBlendCache = mutableMapOf<Int, Byte>()
     private val parser = MiniMessageParser()
     private val artworkService = PaintArtworkService(hooker, parser)
-    private val agreementRepository = PaintRuleConfirmationRepository(hooker.database)
+    private val moderationExecutor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "acreative-paint-moderation").apply { isDaemon = true }
+    }
+    private val paintUserStateRepository = PaintUserStateRepository(hooker.database, PAINT_USERS_PAGE_SIZE)
+    private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService())
+    private val userBanService = UserBanService(paintUserStateRepository, playerLookupService)
+    private val userBanMenuRenderer by lazy {
+        UserBanMenuRenderer(
+            plugin = hooker.plugin,
+            parser = parser,
+            sharedButtonFactory = hooker.menuService.buttonFactory(),
+            title = "▍ Забаненые игроки"
+        )
+    }
     private val plotSquaredGate = PlotSquaredFlagGate(hooker.plugin.server.pluginManager)
     private val agreementService = PaintRuleConfirmationService(
         hooker = hooker,
         parser = parser,
-        repository = agreementRepository,
+        repository = paintUserStateRepository,
         onConfirmed = ::handleConfirmedPaintSession
     )
 
@@ -355,6 +376,94 @@ class PaintManager(private val hooker: FunctionHooker) {
     )
     private val suppressedDirectUseUntilMillis = ConcurrentHashMap<UUID, Long>()
 
+    fun toggleUserBan(player: Player, targetName: String, reason: String?) {
+        val targetUser = playerLookupService.findUser(targetName)
+        if (targetUser == null) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
+            return
+        }
+
+        moderationExecutor.submit {
+            userBanService.toggle(targetUser, reason)
+                .whenComplete { result, error ->
+                    runSync {
+                        if (!player.isOnline) return@runSync
+                        if (error != null || result == null) {
+                            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
+                            return@runSync
+                        }
+
+                        when (result) {
+                            UserBanService.ToggleResult.Unbanned -> hooker.messageManager.sendChat(
+                                player,
+                                MessageKey.PAINT_USER_UNBANNED,
+                                mapOf("player" to targetUser.name)
+                            )
+                            is UserBanService.ToggleResult.Banned -> hooker.messageManager.sendChat(
+                                player,
+                                MessageKey.PAINT_USER_BANNED,
+                                mapOf("player" to result.entry.playerName)
+                            )
+                        }
+                    }
+                }
+        }
+    }
+
+    fun openBannedUsers(player: Player, requestedPage: Int = 1, currentMenu: Menu? = null) {
+        moderationExecutor.submit {
+            val pageResult = userBanService.page(requestedPage)
+            runSync {
+                if (!player.isOnline) return@runSync
+                userBanMenuRenderer.render(
+                    player = player,
+                    pageResult = pageResult,
+                    onEntry = { entry -> unbanUserFromMenu(player, entry, pageResult.page, currentMenu) },
+                    onBack = if (pageResult.page > 1) {
+                        { openBannedUsers(player, pageResult.page - 1) }
+                    } else {
+                        null
+                    },
+                    onForward = if (pageResult.page < pageResult.totalPages) {
+                        { openBannedUsers(player, pageResult.page + 1) }
+                    } else {
+                        null
+                    },
+                    currentMenu = currentMenu
+                )
+            }
+        }
+    }
+
+    private fun unbanUserFromMenu(player: Player, entry: UserBanEntry, currentPage: Int, currentMenu: Menu? = null) {
+        moderationExecutor.submit {
+            val removed = userBanService.unban(entry.playerUuid)
+            runSync {
+                if (!player.isOnline) return@runSync
+                if (removed) {
+                    hooker.messageManager.sendChat(
+                        player,
+                        MessageKey.PAINT_USER_UNBANNED,
+                        mapOf("player" to entry.playerName)
+                    )
+                }
+                openBannedUsers(player, currentPage, currentMenu)
+            }
+        }
+    }
+
+    fun shutdown() {
+        moderationExecutor.shutdownNow()
+    }
+
+    private fun runSync(action: () -> Unit) {
+        if (Bukkit.isPrimaryThread()) {
+            action()
+        } else {
+            Bukkit.getScheduler().runTask(hooker.plugin, Runnable { action() })
+        }
+    }
+
     fun handlePaintCommand(player: Player, args: Array<out String>) {
         if (args.size > 1) {
             hooker.messageManager.sendChat(player, MessageKey.USAGE_PAINT)
@@ -373,11 +482,20 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
+        if (userBanService.isBanned(player.uniqueId)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_USER_BANNED)
+            return
+        }
+
         agreementService.requestPaintSession(player, requestedSize)
     }
 
     private fun handleConfirmedPaintSession(player: Player, requestedSize: PaintCanvasSize) {
         if (isPainting(player)) {
+            return
+        }
+        if (userBanService.isBanned(player.uniqueId)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_USER_BANNED)
             return
         }
         if (isPaintBlockedByPlotFlag(player)) {
@@ -3008,6 +3126,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val BACK_PANEL_SIZE = 1.0f
         private const val BACK_PANEL_DEPTH = 0.1f
         private const val BACK_PANEL_GAP = 0.02f
+        private const val PAINT_USERS_PAGE_SIZE = 45
         private const val VIEWER_UPDATE_PERIOD_TICKS = 10L
         private const val CHUNK_SIZE = 16.0
         private const val MIN_VISIBILITY_RADIUS = 32.0

@@ -4,6 +4,8 @@ import org.bukkit.DyeColor
 import org.bukkit.Material
 import org.bukkit.block.banner.PatternType
 import org.bukkit.inventory.ItemStack
+import com.ratger.acreative.moderation.userban.UserBanEntry
+import com.ratger.acreative.moderation.userban.UserProfileSnapshot
 import java.util.UUID
 
 enum class BannerCategory(
@@ -60,18 +62,9 @@ data class BannedPatternEntry(
     val bannedAtEpochMillis: Long
 )
 
-data class BannerProfileSnapshot(
-    val value: String,
-    val signature: String?
-)
+typealias BannerProfileSnapshot = UserProfileSnapshot
 
-data class BannedUserEntry(
-    val playerUuid: UUID,
-    val playerName: String,
-    val reason: String?,
-    val profileSnapshot: BannerProfileSnapshot?,
-    val bannedAtEpochMillis: Long
-)
+typealias BannedUserEntry = UserBanEntry
 
 data class BannerPageResult<T>(
     val entries: List<T>,

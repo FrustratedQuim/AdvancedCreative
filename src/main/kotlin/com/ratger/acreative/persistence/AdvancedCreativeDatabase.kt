@@ -17,6 +17,7 @@ class AdvancedCreativeDatabase(
             configureDatabase(conn)
             conn.autoCommit = false
             createTables(conn)
+            migratePaintUsers(conn)
             createIndexes(conn)
             validateForeignKeys(conn)
             conn.commit()
@@ -101,6 +102,22 @@ class AdvancedCreativeDatabase(
             )
             st.executeUpdate(
                 """
+                CREATE TABLE IF NOT EXISTS paint_users (
+                    player_uuid TEXT PRIMARY KEY,
+                    rules_confirmed INTEGER NOT NULL DEFAULT 0,
+                    rules_confirmed_at INTEGER,
+                    player_name TEXT,
+                    player_name_lower TEXT,
+                    ban_reason TEXT,
+                    skin_value TEXT,
+                    skin_signature TEXT,
+                    paint_banned INTEGER NOT NULL DEFAULT 0,
+                    banned_at INTEGER
+                )
+                """.trimIndent()
+            )
+            st.executeUpdate(
+                """
                 CREATE TABLE IF NOT EXISTS head_catalog_entries (
                     stable_key TEXT PRIMARY KEY,
                     display_name TEXT NOT NULL,
@@ -152,14 +169,97 @@ class AdvancedCreativeDatabase(
                 )
                 """.trimIndent()
             )
-            st.executeUpdate(
-                """
-                CREATE TABLE IF NOT EXISTS paint_rule_confirmations (
-                    player_uuid TEXT PRIMARY KEY,
-                    confirmed_at INTEGER NOT NULL
+        }
+    }
+
+    private fun migratePaintUsers(conn: Connection) {
+        if (tableExists(conn, "paint_rule_confirmations")) {
+            conn.createStatement().use { st ->
+                st.executeUpdate(
+                    """
+                    INSERT OR IGNORE INTO paint_users(player_uuid)
+                    SELECT player_uuid
+                    FROM paint_rule_confirmations
+                    """.trimIndent()
                 )
-                """.trimIndent()
-            )
+                st.executeUpdate(
+                    """
+                    UPDATE paint_users
+                    SET rules_confirmed=1,
+                        rules_confirmed_at=(
+                            SELECT confirmed_at
+                            FROM paint_rule_confirmations
+                            WHERE paint_rule_confirmations.player_uuid=paint_users.player_uuid
+                        )
+                    WHERE player_uuid IN (SELECT player_uuid FROM paint_rule_confirmations)
+                    """.trimIndent()
+                )
+                st.executeUpdate("DROP TABLE paint_rule_confirmations")
+            }
+        }
+
+        if (tableExists(conn, "paint_blocked_players")) {
+            conn.createStatement().use { st ->
+                st.executeUpdate(
+                    """
+                    INSERT OR IGNORE INTO paint_users(player_uuid)
+                    SELECT player_uuid
+                    FROM paint_blocked_players
+                    """.trimIndent()
+                )
+                st.executeUpdate(
+                    """
+                    UPDATE paint_users
+                    SET player_name=(
+                            SELECT player_name
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        ),
+                        player_name_lower=(
+                            SELECT player_name_lower
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        ),
+                        ban_reason=(
+                            SELECT reason
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        ),
+                        skin_value=(
+                            SELECT skin_value
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        ),
+                        skin_signature=(
+                            SELECT skin_signature
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        ),
+                        paint_banned=1,
+                        banned_at=(
+                            SELECT blocked_at
+                            FROM paint_blocked_players
+                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
+                        )
+                    WHERE player_uuid IN (SELECT player_uuid FROM paint_blocked_players)
+                    """.trimIndent()
+                )
+                st.executeUpdate("DROP TABLE paint_blocked_players")
+            }
+        }
+    }
+
+    private fun tableExists(conn: Connection, tableName: String): Boolean {
+        conn.prepareStatement(
+            """
+            SELECT 1
+            FROM sqlite_master
+            WHERE type='table' AND name=?
+            LIMIT 1
+            """.trimIndent()
+        ).use { ps ->
+            ps.setString(1, tableName)
+            ps.executeQuery().use { rs -> return rs.next() }
         }
     }
 
@@ -208,6 +308,12 @@ class AdvancedCreativeDatabase(
                 """
                 CREATE INDEX IF NOT EXISTS idx_banner_blocked_players_blocked_at
                 ON banner_blocked_players(blocked_at DESC, player_name_lower ASC)
+                """.trimIndent()
+            )
+            st.executeUpdate(
+                """
+                CREATE INDEX IF NOT EXISTS idx_paint_users_banned_at
+                ON paint_users(paint_banned, banned_at DESC, player_name_lower ASC)
                 """.trimIndent()
             )
             st.executeUpdate(

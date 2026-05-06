@@ -237,6 +237,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         if (this::messageManager.isInitialized) {
             messageManager.clearAllTasks()
         }
+        if (this::paintManager.isInitialized) {
+            paintManager.shutdown()
+        }
         if (this::tickScheduler.isInitialized) {
             tickScheduler.shutdown()
         }

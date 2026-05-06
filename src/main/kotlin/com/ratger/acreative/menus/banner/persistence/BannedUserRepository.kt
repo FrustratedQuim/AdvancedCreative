@@ -2,110 +2,38 @@ package com.ratger.acreative.menus.banner.persistence
 
 import com.ratger.acreative.menus.banner.model.BannedUserEntry
 import com.ratger.acreative.menus.banner.model.BannerPageResult
-import com.ratger.acreative.menus.banner.model.BannerProfileSnapshot
+import com.ratger.acreative.moderation.userban.UserBanRepository
+import com.ratger.acreative.moderation.userban.UserBanStorage
 import com.ratger.acreative.persistence.AdvancedCreativeDatabase
-import java.sql.ResultSet
-import java.util.Locale
 import java.util.UUID
 
 class BannedUserRepository(
-    private val database: AdvancedCreativeDatabase,
-    private val pageSize: Int
+    database: AdvancedCreativeDatabase,
+    pageSize: Int
 ) {
-    fun find(playerUuid: UUID): BannedUserEntry? = database.connection().use { conn ->
-        conn.prepareStatement("SELECT * FROM banner_blocked_players WHERE player_uuid=? LIMIT 1").use { ps ->
-            ps.setString(1, playerUuid.toString())
-            ps.executeQuery().use { rs ->
-                if (rs.next()) readCurrentEntry(rs) else null
-            }
-        }
-    }
+    private val repository = UserBanRepository(
+        database = database,
+        pageSize = pageSize,
+        tableName = TABLE_NAME
+    )
 
-    fun isBanned(playerUuid: UUID): Boolean = find(playerUuid) != null
+    fun sharedRepository(): UserBanStorage = repository
 
-    fun save(entry: BannedUserEntry) {
-        database.connection().use { conn ->
-            conn.prepareStatement(
-                """
-                INSERT OR REPLACE INTO banner_blocked_players(
-                    player_uuid,
-                    player_name,
-                    player_name_lower,
-                    reason,
-                    skin_value,
-                    skin_signature,
-                    blocked_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """.trimIndent()
-            ).use { ps ->
-                ps.setString(1, entry.playerUuid.toString())
-                ps.setString(2, entry.playerName)
-                ps.setString(3, entry.playerName.lowercase(Locale.ROOT))
-                ps.setString(4, entry.reason)
-                ps.setString(5, entry.profileSnapshot?.value)
-                ps.setString(6, entry.profileSnapshot?.signature)
-                ps.setLong(7, entry.bannedAtEpochMillis)
-                ps.executeUpdate()
-            }
-        }
-    }
+    fun isBanned(playerUuid: UUID): Boolean = repository.isBanned(playerUuid)
 
-    fun delete(playerUuid: UUID): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM banner_blocked_players WHERE player_uuid=?").use { ps ->
-            ps.setString(1, playerUuid.toString())
-            ps.executeUpdate() > 0
-        }
-    }
+    fun delete(playerUuid: UUID): Boolean = repository.delete(playerUuid)
 
     fun page(page: Int): BannerPageResult<BannedUserEntry> {
-        val totalItems = count()
-        val totalPages = if (totalItems == 0) 1 else ((totalItems + pageSize - 1) / pageSize)
-        val safePage = page.coerceIn(1, totalPages)
-        val offset = (safePage - 1) * pageSize
-
+        val userPage = repository.page(page)
         return BannerPageResult(
-            entries = list(offset),
-            page = safePage,
-            totalPages = totalPages,
-            totalItems = totalItems
+            entries = userPage.entries,
+            page = userPage.page,
+            totalPages = userPage.totalPages,
+            totalItems = userPage.totalItems
         )
     }
 
-    private fun count(): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_blocked_players").use { ps ->
-            ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
-        }
-    }
-
-    private fun list(offset: Int): List<BannedUserEntry> = database.connection().use { conn ->
-        conn.prepareStatement(
-            """
-            SELECT *
-            FROM banner_blocked_players
-            ORDER BY blocked_at DESC, player_name_lower ASC
-            LIMIT ? OFFSET ?
-            """.trimIndent()
-        ).use { ps ->
-            ps.setInt(1, pageSize)
-            ps.setInt(2, offset)
-            ps.executeQuery().use { rs ->
-                buildList {
-                    while (rs.next()) {
-                        add(readCurrentEntry(rs))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun readCurrentEntry(rs: ResultSet): BannedUserEntry {
-        return BannedUserEntry(
-            playerUuid = UUID.fromString(rs.getString("player_uuid")),
-            playerName = rs.getString("player_name"),
-            reason = rs.getString("reason"),
-            profileSnapshot = rs.getString("skin_value")?.let { BannerProfileSnapshot(it, rs.getString("skin_signature")) },
-            bannedAtEpochMillis = rs.getLong("blocked_at")
-        )
+    private companion object {
+        const val TABLE_NAME = "banner_blocked_players"
     }
 }

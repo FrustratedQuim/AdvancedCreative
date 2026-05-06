@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.banner.service
 
 import com.ratger.acreative.menus.banner.model.BannedPatternEntry
 import com.ratger.acreative.menus.banner.model.BannedUserEntry
+import com.ratger.acreative.moderation.userban.UserBanService
 import com.ratger.acreative.menus.banner.model.BannerPageResult
 import com.ratger.acreative.menus.banner.persistence.BannedPatternRepository
 import com.ratger.acreative.menus.banner.persistence.BannedUserRepository
@@ -14,8 +15,10 @@ class BannerModerationService(
     private val bannedPatternRepository: BannedPatternRepository,
     private val bannedUserRepository: BannedUserRepository,
     private val publicationService: BannerPublicationService,
-    private val playerLookupService: BannerPlayerLookupService
+    playerLookupService: BannerPlayerLookupService
 ) {
+    private val userBanService = UserBanService(bannedUserRepository.sharedRepository(), playerLookupService)
+
     enum class PatternToggleResult {
         BANNED,
         UNBANNED,
@@ -42,22 +45,11 @@ class BannerModerationService(
     }
 
     fun toggleUserBan(user: User, reason: String?): CompletableFuture<UserToggleResult> {
-        val alreadyBanned = bannedUserRepository.find(user.getUniqueId())
-        if (alreadyBanned != null) {
-            bannedUserRepository.delete(user.getUniqueId())
-            return CompletableFuture.completedFuture(UserToggleResult.Unbanned)
-        }
-
-        return playerLookupService.resolveSkinSnapshotAsync(user).thenApply { snapshot ->
-            val entry = BannedUserEntry(
-                playerUuid = user.getUniqueId(),
-                playerName = user.getName(),
-                reason = reason?.trim()?.takeIf { it.isNotBlank() },
-                profileSnapshot = snapshot,
-                bannedAtEpochMillis = System.currentTimeMillis()
-            )
-            bannedUserRepository.save(entry)
-            UserToggleResult.Banned(entry)
+        return userBanService.toggle(user, reason).thenApply { result ->
+            when (result) {
+                UserBanService.ToggleResult.Unbanned -> UserToggleResult.Unbanned
+                is UserBanService.ToggleResult.Banned -> UserToggleResult.Banned(result.entry)
+            }
         }
     }
 

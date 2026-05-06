@@ -66,7 +66,7 @@ commands:
     usage: /effects <effect> [level]
   paint:
     description: Toggles personal paint mode
-    usage: /paint [1x1-4x4]
+    usage: /paint [1x1-4x4|ban|banlist]
   jar:
     description: Gives a jar item for placing a jailed player
     usage: /jar <player> [-const]
@@ -198,6 +198,9 @@ permissions:
     default: op
   advancedcreative.paint.bypass:
     description: Bypass plot-paint flag restrictions
+    default: op
+  advancedcreative.paint.moderation:
+    description: Allows using paint moderation commands
     default: op
   advancedcreative.effects.other:
     description: Allows using /effects & target
