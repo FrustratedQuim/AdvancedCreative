@@ -396,12 +396,12 @@ class PaintManager(private val hooker: FunctionHooker) {
                         when (result) {
                             UserBanService.ToggleResult.Unbanned -> hooker.messageManager.sendChat(
                                 player,
-                                MessageKey.PAINT_USER_UNBANNED,
+                                MessageKey.USER_UNBANNED,
                                 mapOf("player" to targetUser.name)
                             )
                             is UserBanService.ToggleResult.Banned -> hooker.messageManager.sendChat(
                                 player,
-                                MessageKey.PAINT_USER_BANNED,
+                                MessageKey.USER_BANNED,
                                 mapOf("player" to result.entry.playerName)
                             )
                         }
@@ -443,7 +443,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 if (removed) {
                     hooker.messageManager.sendChat(
                         player,
-                        MessageKey.PAINT_USER_UNBANNED,
+                        MessageKey.USER_UNBANNED,
                         mapOf("player" to entry.playerName)
                     )
                 }

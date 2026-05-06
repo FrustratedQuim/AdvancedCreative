@@ -28,19 +28,17 @@ class PaintUserStateRepository(
         }
     }
 
-    override fun saveConfirmed(playerId: UUID, confirmedAtEpochMillis: Long) {
+    override fun saveConfirmed(playerId: UUID) {
         database.connection().use { conn ->
             conn.prepareStatement(
                 """
-                INSERT INTO paint_users(player_uuid, rules_confirmed, rules_confirmed_at)
-                VALUES (?, 1, ?)
+                INSERT INTO paint_users(player_uuid, rules_confirmed)
+                VALUES (?, 1)
                 ON CONFLICT(player_uuid) DO UPDATE SET
-                    rules_confirmed=1,
-                    rules_confirmed_at=excluded.rules_confirmed_at
+                    rules_confirmed=1
                 """.trimIndent()
             ).use { ps ->
                 ps.setString(1, playerId.toString())
-                ps.setLong(2, confirmedAtEpochMillis)
                 ps.executeUpdate()
             }
         }

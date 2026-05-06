@@ -105,7 +105,6 @@ class AdvancedCreativeDatabase(
                 CREATE TABLE IF NOT EXISTS paint_users (
                     player_uuid TEXT PRIMARY KEY,
                     rules_confirmed INTEGER NOT NULL DEFAULT 0,
-                    rules_confirmed_at INTEGER,
                     player_name TEXT,
                     player_name_lower TEXT,
                     ban_reason TEXT,
@@ -185,12 +184,7 @@ class AdvancedCreativeDatabase(
                 st.executeUpdate(
                     """
                     UPDATE paint_users
-                    SET rules_confirmed=1,
-                        rules_confirmed_at=(
-                            SELECT confirmed_at
-                            FROM paint_rule_confirmations
-                            WHERE paint_rule_confirmations.player_uuid=paint_users.player_uuid
-                        )
+                    SET rules_confirmed=1
                     WHERE player_uuid IN (SELECT player_uuid FROM paint_rule_confirmations)
                     """.trimIndent()
                 )

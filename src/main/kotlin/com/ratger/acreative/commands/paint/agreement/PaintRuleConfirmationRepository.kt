@@ -5,5 +5,5 @@ import java.util.UUID
 interface PaintRuleConfirmationRepository {
     fun hasConfirmed(playerId: UUID): Boolean
 
-    fun saveConfirmed(playerId: UUID, confirmedAtEpochMillis: Long = System.currentTimeMillis())
+    fun saveConfirmed(playerId: UUID)
 }

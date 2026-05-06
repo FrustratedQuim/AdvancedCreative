@@ -334,14 +334,14 @@ class BannerMenuService(
                         BannerModerationService.UserToggleResult.Unbanned -> {
                             hooker.messageManager.sendChat(
                                 player,
-                                MessageKey.BANNER_USER_UNBANNED,
+                                MessageKey.USER_UNBANNED,
                                 mapOf("player" to targetUser.name)
                             )
                         }
                         is BannerModerationService.UserToggleResult.Banned -> {
                             hooker.messageManager.sendChat(
                                 player,
-                                MessageKey.BANNER_USER_BANNED,
+                                MessageKey.USER_BANNED,
                                 mapOf("player" to result.entry.playerName)
                             )
                         }
@@ -717,7 +717,7 @@ class BannerMenuService(
                 }
                 hooker.messageManager.sendChat(
                     player,
-                    MessageKey.BANNER_USER_UNBANNED,
+                    MessageKey.USER_UNBANNED,
                     mapOf("player" to entry.playerName)
                 )
                 openBannedUsers(player, currentPage, currentMenu)
