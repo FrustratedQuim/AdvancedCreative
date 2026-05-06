@@ -75,6 +75,7 @@ roles:
       - "advancedcreative.freeze.other"
       - "advancedcreative.effects.other"
       - "advancedcreative.hide.bypass"
+      - "advancedcreative.paint.bypass"
       - "advancedcreative.decorationbanners.storage_bypass"
       - "advancedcreative.decorationbanners.post_bypass"
       - "advancedcreative.decorationbanners.moderation"
