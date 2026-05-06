@@ -9,7 +9,8 @@ class PermissionManager(private val hooker: FunctionHooker) {
         val key: String,
         val display: String,
         val prefix: String,
-        val rankPermissions: List<String>
+        val rankPermissions: List<String>,
+        val permissions: List<String>
     )
 
     private val permissionToRole = mutableMapOf<String, String>()
@@ -35,12 +36,14 @@ class PermissionManager(private val hooker: FunctionHooker) {
                     ?: ""
                 val display = if (rawDisplay.contains('<')) stripMiniMessage(rawDisplay) else rawDisplay
                 val rankPermissions = sec.getStringList("$roleKey.rank-permissions")
+                val permissions = sec.getStringList("$roleKey.permissions")
                 val normalizedRoleKey = roleKey.lowercase()
                 roles[normalizedRoleKey] = Role(
                     key = normalizedRoleKey,
                     display = display,
                     prefix = prefix,
-                    rankPermissions = rankPermissions
+                    rankPermissions = rankPermissions,
+                    permissions = permissions
                 )
                 roleOrder += normalizedRoleKey
                 sec.getStringList("$roleKey.permissions").forEach { permission ->

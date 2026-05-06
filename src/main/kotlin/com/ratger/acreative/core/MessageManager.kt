@@ -36,6 +36,10 @@ class MessageManager(
         send(player, MessageChannel.CHAT, key, variables)
     }
 
+    fun sendMiniMessageChat(player: Player, message: String) {
+        player.sendMessage(renderMiniMessage(message))
+    }
+
     fun sendActionBar(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap()) {
         send(player, MessageChannel.ACTION_BAR, key, variables)
     }
@@ -171,7 +175,11 @@ class MessageManager(
 
     private fun renderComponent(key: MessageKey, variables: Map<String, String>): Component {
         val rawMessage = MessageCatalog.templates[key] ?: MessageCatalog.templates[MessageKey.INFO_EMPTY].orEmpty()
-        return miniMessage.deserialize(replaceVariables(rawMessage, variables))
+        return renderMiniMessage(replaceVariables(rawMessage, variables))
+    }
+
+    fun renderMiniMessage(message: String): Component {
+        return miniMessage.deserialize(message.trimEnd())
     }
 
     private fun resolvePlayers(players: Collection<Player> = emptyList(), uuids: Collection<UUID> = emptyList()): Set<Player> {
