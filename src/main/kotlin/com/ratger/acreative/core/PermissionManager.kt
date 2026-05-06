@@ -5,10 +5,16 @@ import org.bukkit.entity.Player
 
 class PermissionManager(private val hooker: FunctionHooker) {
 
-    data class Role(val key: String, val display: String)
+    data class Role(
+        val key: String,
+        val display: String,
+        val prefix: String,
+        val rankPermissions: List<String>
+    )
 
     private val permissionToRole = mutableMapOf<String, String>()
     private val roles = mutableMapOf<String, Role>()
+    private val roleOrder = mutableListOf<String>()
 
     init {
         reload()
@@ -17,14 +23,26 @@ class PermissionManager(private val hooker: FunctionHooker) {
     fun reload() {
         permissionToRole.clear()
         roles.clear()
+        roleOrder.clear()
 
         val root = hooker.configManager.config
         val rolesSec = root.getConfigurationSection("roles")
         rolesSec?.let { sec ->
             sec.getKeys(false).forEach { roleKey ->
-                val display = sec.getString("$roleKey.display") ?: NONE_DISPLAY
+                val rawDisplay = sec.getString("$roleKey.display") ?: NONE_DISPLAY
+                val prefix = sec.getString("$roleKey.prefix")
+                    ?: rawDisplay.takeIf { it.contains('<') }
+                    ?: ""
+                val display = if (rawDisplay.contains('<')) stripMiniMessage(rawDisplay) else rawDisplay
+                val rankPermissions = sec.getStringList("$roleKey.rank-permissions")
                 val normalizedRoleKey = roleKey.lowercase()
-                roles[normalizedRoleKey] = Role(normalizedRoleKey, display)
+                roles[normalizedRoleKey] = Role(
+                    key = normalizedRoleKey,
+                    display = display,
+                    prefix = prefix,
+                    rankPermissions = rankPermissions
+                )
+                roleOrder += normalizedRoleKey
                 sec.getStringList("$roleKey.permissions").forEach { permission ->
                     permissionToRole[permission.lowercase()] = normalizedRoleKey
                 }
@@ -36,6 +54,37 @@ class PermissionManager(private val hooker: FunctionHooker) {
         val permissionNode = normalizePermissionKey(permissionOrCommand)
         val roleKey = permissionToRole[permissionNode] ?: return null
         return roles[roleKey]
+    }
+
+    fun getRole(roleKey: String): Role? = roles[roleKey.lowercase()]
+
+    fun orderedRoles(): List<Role> = roleOrder.mapNotNull { roles[it] }
+
+    fun defaultRoleKey(): String = roleOrder.firstOrNull() ?: "player"
+
+    fun resolveHighestRole(player: Player): Role? {
+        val ordered = orderedRoles()
+        if (ordered.isEmpty()) {
+            return null
+        }
+
+        var highestRole = ordered.first()
+        ordered.forEach { role ->
+            if (role.rankPermissions.any(player::hasPermission)) {
+                highestRole = role
+            }
+        }
+        return highestRole
+    }
+
+    fun hasAtLeastRole(player: Player, requiredRoleKey: String): Boolean {
+        val requiredIndex = roleOrder.indexOf(requiredRoleKey.lowercase())
+        if (requiredIndex < 0) {
+            return false
+        }
+        val currentRole = resolveHighestRole(player) ?: return false
+        val currentIndex = roleOrder.indexOf(currentRole.key)
+        return currentIndex >= requiredIndex
     }
 
     fun sendPermissionDenied(player: Player, permissionOrCommand: String) {
@@ -62,6 +111,12 @@ class PermissionManager(private val hooker: FunctionHooker) {
         } else {
             getPermissionNodeForCommand(normalized).lowercase()
         }
+    }
+
+    private fun stripMiniMessage(input: String): String {
+        return input
+            .replace(Regex("<[^>]+>"), "")
+            .trim()
     }
 
     private companion object {

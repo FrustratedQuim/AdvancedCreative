@@ -155,7 +155,9 @@ enum class MessageKey {
     HEAD_RESTORE_API_KEY_MISSING,
     HEAD_RESTORE_API_SUCCESS,
     HEAD_RESTORE_ALREADY_POPULATED,
-    EDIT_NOT_EDITABLE
+    EDIT_NOT_EDITABLE,
+    PLOT_EDIT_NOT_ON_PLOT,
+    PLOT_EDIT_NOT_OWNER
 }
 
 object MessageCatalog {
@@ -326,6 +328,8 @@ object MessageCatalog {
         MessageKey.HEAD_RESTORE_API_KEY_MISSING to "<dark_red>▍ <#FF1500>API ключ не установлен",
         MessageKey.HEAD_RESTORE_API_SUCCESS to "<dark_green>▍ <#7BFF00>%amount% <#00FF40>голов успешно загружено из <#7BFF00>API",
         MessageKey.HEAD_RESTORE_ALREADY_POPULATED to "<dark_red>▍ <#FF1500>База голов уже заполнена",
-        MessageKey.EDIT_NOT_EDITABLE to "<dark_red>▍ <#FF1500>Невозможно редактировать"
+        MessageKey.EDIT_NOT_EDITABLE to "<dark_red>▍ <#FF1500>Невозможно редактировать",
+        MessageKey.PLOT_EDIT_NOT_ON_PLOT to "<dark_red>▍ <#FF1500>Вы должны быть на участке",
+        MessageKey.PLOT_EDIT_NOT_OWNER to "<dark_red>▍ <#FF1500>Вы не являетесь владельцем участка"
     )
 }

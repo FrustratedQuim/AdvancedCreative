@@ -42,6 +42,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.paintManager.cleanupSessionsForPlayer(player)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
+        hooker.plotFlagEditorService.handleRuntimeReset(player)
         hooker.commandManager.cooldownService.clearPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
@@ -63,6 +64,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.paintManager.handlePlayerDeath(event)
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
+        hooker.plotFlagEditorService.handleRuntimeReset(player)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkPissStop(player)
@@ -419,6 +421,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
             return
         }
         if (hooker.jarManager.isJarred(event.player)) {
+            event.isCancelled = true
+            return
+        }
+        if (hooker.plotFlagEditorService.handleCommandAlias(event.player, event.message)) {
             event.isCancelled = true
         }
     }

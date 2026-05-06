@@ -26,6 +26,7 @@ import com.ratger.acreative.commands.slap.SlapManager
 import com.ratger.acreative.commands.sneeze.SneezeManager
 import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
+import com.ratger.acreative.integration.plotsquared.editor.PlotFlagEditorService
 import com.ratger.acreative.menus.decorationheads.service.Subsystem
 import com.ratger.acreative.menus.banner.service.Subsystem as BannerSubsystem
 import com.ratger.acreative.menus.MenuService
@@ -106,6 +107,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var adminManager: AdminManager
         private set
+    lateinit var plotFlagEditorService: PlotFlagEditorService
+        private set
     lateinit var subsystem: Subsystem
         private set
     lateinit var bannerSubsystem: BannerSubsystem
@@ -175,6 +178,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
         menuService = MenuService(this)
+        plotFlagEditorService = PlotFlagEditorService(this)
         adminManager = AdminManager(this)
         subsystem = Subsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
         subsystem.init()
@@ -251,6 +255,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         }
         if (this::bannerSubsystem.isInitialized) {
             bannerSubsystem.shutdown()
+        }
+        if (this::plotFlagEditorService.isInitialized) {
+            plugin.server.onlinePlayers.forEach { plotFlagEditorService.handleRuntimeReset(it) }
         }
         if (this::menuService.isInitialized) {
             menuService.shutdown()
