@@ -8,6 +8,7 @@ import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import ru.violence.coreapi.bukkit.api.util.BukkitHelper
 
 class PaintCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.PAINT) {
     override fun handle(player: Player, args: Array<out String>) {
@@ -19,6 +20,7 @@ class PaintCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
                     hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
                     return
                 }
+                if (!hasKnownUser(player, targetName)) return
                 val reason = args.drop(2).joinToString(" ").trim().takeIf { it.isNotBlank() }
                 hooker.paintManager.toggleUserBan(player, targetName, reason)
             }
@@ -57,6 +59,15 @@ class PaintCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
             true
         } else {
             hooker.permissionManager.sendPermissionDenied(player, "paint.moderation")
+            false
+        }
+    }
+
+    private fun hasKnownUser(player: Player, targetName: String): Boolean {
+        return if (BukkitHelper.getUser(targetName).isPresent) {
+            true
+        } else {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
             false
         }
     }

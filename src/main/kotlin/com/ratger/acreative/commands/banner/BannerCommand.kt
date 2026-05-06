@@ -7,6 +7,7 @@ import com.ratger.acreative.core.MessageKey
 import org.bukkit.Bukkit
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
+import ru.violence.coreapi.bukkit.api.util.BukkitHelper
 
 class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.BANNER) {
     override fun handle(player: Player, args: Array<out String>) {
@@ -22,6 +23,9 @@ class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
                 val targetName = args.getOrNull(1)
                 if (targetName.isNullOrBlank()) {
                     hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+                    return
+                }
+                if (!hasKnownUser(player, targetName)) {
                     return
                 }
                 val reason = args.drop(2).joinToString(" ").trim().takeIf { it.isNotBlank() }
@@ -60,6 +64,15 @@ class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
             true
         } else {
             hooker.permissionManager.sendPermissionDenied(player, "decorationbanners.moderation")
+            false
+        }
+    }
+
+    private fun hasKnownUser(player: Player, targetName: String): Boolean {
+        return if (BukkitHelper.getUser(targetName).isPresent) {
+            true
+        } else {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
             false
         }
     }
