@@ -43,6 +43,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var accountLinkRequirementService: AccountLinkRequirementService
         private set
+    lateinit var serverPerformanceService: ServerPerformanceService
+        private set
     lateinit var systemToggleService: SystemToggleService
         private set
     lateinit var commandManager: CommandManager
@@ -151,6 +153,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         messageManager = MessageManager(this)
         permissionManager = PermissionManager(this)
         accountLinkRequirementService = AccountLinkRequirementService(this)
+        serverPerformanceService = ServerPerformanceService()
         database = AdvancedCreativeDatabase(plugin.dataFolder)
         database.init()
         playerStateManager = PlayerStateManager(this)

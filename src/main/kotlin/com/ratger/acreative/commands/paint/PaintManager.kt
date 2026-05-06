@@ -482,6 +482,10 @@ class PaintManager(private val hooker: FunctionHooker) {
             return
         }
 
+        if (!canActivatePaint(player)) {
+            return
+        }
+
         if (userBanService.isBanned(player.uniqueId)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_USER_BANNED)
             return
@@ -492,6 +496,9 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun handleConfirmedPaintSession(player: Player, requestedSize: PaintCanvasSize) {
         if (isPainting(player)) {
+            return
+        }
+        if (!canActivatePaint(player)) {
             return
         }
         if (userBanService.isBanned(player.uniqueId)) {
@@ -700,6 +707,18 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun isPaintBlockedByPlotFlag(player: Player): Boolean {
         return plotSquaredGate.isUsageForbidden(player, PlotPaintFlag.TRUE, PAINT_BYPASS_PERMISSION)
+    }
+
+    private fun canActivatePaint(player: Player): Boolean {
+        if (!hooker.accountLinkRequirementService.hasRequiredLink(player)) {
+            hooker.accountLinkRequirementService.sendLinkRequiredMessage(player)
+            return false
+        }
+        if (!hooker.serverPerformanceService.isStableForTickSensitiveActivation(MIN_PAINT_ACTIVATION_TPS)) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_PAINT_SERVER_UNSTABLE)
+            return false
+        }
+        return true
     }
 
     private fun beginResizeMode(player: Player, session: PaintSession) {
@@ -3152,6 +3171,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L
         private const val GLOBAL_CANVAS_HASH_BASE = 100_000
         private const val PAINT_BYPASS_PERMISSION = "advancedcreative.paint.bypass"
+        private const val MIN_PAINT_ACTIVATION_TPS = 18.0
         private const val FILL_INVALID_LABEL = 0
         private const val FILL_UNLABELED = -1
         private const val STAR_POINTS = 5
