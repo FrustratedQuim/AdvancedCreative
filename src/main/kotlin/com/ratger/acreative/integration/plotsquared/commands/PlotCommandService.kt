@@ -20,7 +20,7 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-class PlotSquaredCommandAliasService(
+class PlotCommandService(
     private val hooker: FunctionHooker
 ) : CommandExecutor, TabCompleter {
 
