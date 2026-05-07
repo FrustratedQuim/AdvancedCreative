@@ -1,8 +1,6 @@
 package com.ratger.acreative.integration.plotsquared.commands
 
-import com.plotsquared.core.PlotSquared
 import com.plotsquared.core.configuration.Settings
-import com.plotsquared.core.database.DBFunc
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
 import com.ratger.acreative.core.ManagedSystem
@@ -20,7 +18,6 @@ import ru.violence.coreapi.bukkit.api.util.ext.player
 import ru.violence.coreapi.bukkit.api.util.ext.user
 import java.util.Locale
 import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
 
 class PlotCommandService(
     private val hooker: FunctionHooker
@@ -32,28 +29,14 @@ class PlotCommandService(
         val tabCompleter: TabCompleter?
     )
 
-    private data class OwnerNameEntry(
-        val uuid: UUID,
-        val name: String
-    )
-
     private data class CsvSegments(
         val prefix: String,
         val current: String
     )
 
     private val registeredCommands = LinkedHashMap<String, RegisteredRootCommand>()
-    private val ownerNamesByLowerName = LinkedHashMap<String, OwnerNameEntry>()
-    private val ownerCacheLock = Any()
-    private val pendingWarmups = ConcurrentHashMap.newKeySet<UUID>()
-    private val homeBasePlotCountByOwner = ConcurrentHashMap<UUID, Int>()
-    private val massClaimLocks = ConcurrentHashMap.newKeySet<String>()
-
-    @Volatile
-    private var ownerCacheUpdatedAt = 0L
-
-    @Volatile
-    private var ownerWarmupInFlight = false
+    private val ownerSuggestions = PlotOwnerSuggestionService()
+    private val massClaimService = PlotMassClaimService(hooker)
 
     fun install() {
         if (!isPlotSquaredEnabled()) {
@@ -139,7 +122,7 @@ class PlotCommandService(
             in REMOVE_COMMANDS if args.size > commandIndex + 1 -> {
                 rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
-                        resolveScopedNames(plot.members + plot.trusted + plot.denied)
+                        ownerSuggestions.resolveScopedNames(plot.members + plot.trusted + plot.denied)
                     }
                 }
             }
@@ -193,84 +176,13 @@ class PlotCommandService(
                     hooker.permissionManager.sendPermissionDenied(player, PLOT_MASSCLAIM_PERMISSION)
                     return true
                 }
-                handleMassClaim(player, args, commandIndex + 1)
+                massClaimService.handle(player, args.getOrNull(commandIndex + 1), args.getOrNull(commandIndex + 2))
                 true
             }
             else -> false
         }
     }
 
-
-    private fun handleMassClaim(player: Player, args: Array<out String>, sizeArgIndex: Int) {
-        if (!hooker.serverPerformanceService.isStableForTickSensitiveActivation(MIN_MASSCLAIM_ACTIVATION_TPS)) {
-            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_SERVER_UNSTABLE)
-            return
-        }
-        val sizeToken = args.getOrNull(sizeArgIndex) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_UNKNOWN_SIZE); return
-        }
-        val parsed = parseMassClaimSize(sizeToken) ?: run {
-            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_UNKNOWN_SIZE); return
-        }
-        val (w,h)=parsed
-        if (w < 1 || h < 1) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_MIN_SIZE); return }
-        if (w > MAX_MASSCLAIM_SIZE || h > MAX_MASSCLAIM_SIZE) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_MAX_SIZE, mapOf("max" to "${MAX_MASSCLAIM_SIZE}x${MAX_MASSCLAIM_SIZE}")); return }
-        val pp = PlotPlayer.from(player)
-        val base = pp.currentPlot ?: run { hooker.messageManager.sendChat(player, MessageKey.PLOT_EDIT_NOT_ON_PLOT); return }
-        val needed = w*h
-        val occupied = if (Settings.Limit.GLOBAL) pp.plotCount else pp.getPlotCount(pp.location.worldName)
-        val allowed = pp.allowedPlots
-        if (allowed < Settings.Limit.MAX_PLOTS && occupied + needed > allowed) {
-            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_LIMIT, mapOf("num" to allowed.toString())); return
-        }
-        val directions = facingDirections(player)
-        val targets = ArrayList<Plot>()
-        for (dy in 0 until h) for (dx in 0 until w) {
-            val xOff = directions[0] * dx + directions[2] * dy
-            val yOff = directions[1] * dx + directions[3] * dy
-            val plot = base.getRelative(xOff, yOff) ?: run { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
-            if (plot.hasOwner() && !plot.isOwner(pp.uuid)) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
-            targets += plot
-        }
-        val lockKey = buildLockKey(targets)
-        if (!massClaimLocks.add(lockKey)) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
-        try {
-            for (plot in targets) {
-                if (!plot.hasOwner()) {
-                    val claimed = plot.claim(pp, false, null, true, false)
-                    if (!claimed) {
-                        hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE)
-                        return
-                    }
-                }
-            }
-            val baseId = "${base.id.x};${base.id.y}"
-            Bukkit.dispatchCommand(player, "plot $baseId merge all")
-        } finally { massClaimLocks.remove(lockKey) }
-    }
-
-    private fun parseMassClaimSize(raw: String): Pair<Int, Int>? {
-        val token = raw.trim().lowercase(Locale.ROOT).replace('х', 'x')
-        val parts = token.split('x')
-        if (parts.size != 2) return null
-        val w = parts[0].toIntOrNull() ?: return null
-        val h = parts[1].toIntOrNull() ?: return null
-        return w to h
-    }
-
-    private fun facingDirections(player: Player): IntArray {
-        val yaw = player.location.yaw
-        return when (((yaw % 360) + 360).let { ((it + 45) / 90).toInt() % 4 }) {
-            // Bukkit yaw: 0=south, 90=west, 180=north, 270=east
-            // return [forwardX, forwardZ, rightX, rightZ]
-            0 -> intArrayOf(0, 1, -1, 0)
-            1 -> intArrayOf(-1, 0, 0, -1)
-            2 -> intArrayOf(0, -1, 1, 0)
-            else -> intArrayOf(1, 0, 0, 1)
-        }
-    }
-
-    private fun buildLockKey(plots: List<Plot>): String = plots.asSequence().map { "${it.area?.id ?: "unknown"}:${it.id.x};${it.id.y}" }.sorted().joinToString("|")
 
     private fun sendUsageInfo(player: Player) {
         val plotPlayer = PlotPlayer.from(player)
@@ -314,16 +226,19 @@ class PlotCommandService(
                 completeCsv(args[commandIndex + 1], knownUserCommandCompletions(commandName))
             }
             in VISIT_COMMANDS if args.size == commandIndex + 2 -> {
-                completeCsv(args[commandIndex + 1], plotOwnerNames())
+                completeCsv(args[commandIndex + 1], ownerSuggestions.plotOwnerNames(MAX_TAB_RESULTS))
             }
             in VISIT_COMMANDS if args.size == commandIndex + 3 -> {
-                completeVisitTargets(args[commandIndex + 1], args[commandIndex + 2])
+                ownerSuggestions.completeVisitTargets(args[commandIndex + 1], args[commandIndex + 2], MAX_TAB_RESULTS)
             }
             in HOME_COMMANDS if args.size == commandIndex + 2 -> {
                 completeHomePages(player, args[commandIndex + 1])
             }
             in MASSCLAIM_COMMANDS if args.size == commandIndex + 2 -> {
-                listOf("2x2", "2x3", "5x5").filter { it.startsWith(args[commandIndex + 1], ignoreCase = true) }
+                listOf("1", "2", "3", "4", "5").filter { it.startsWith(args[commandIndex + 1], ignoreCase = true) }
+            }
+            in MASSCLAIM_COMMANDS if args.size == commandIndex + 3 -> {
+                listOf("1", "2", "3", "4", "5").filter { it.startsWith(args[commandIndex + 2], ignoreCase = true) }
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
@@ -332,7 +247,7 @@ class PlotCommandService(
                 completeCsv(args[commandIndex + 1], currentPlotRelationNames(player, args))
             }
             in LIST_COMMANDS if args.size == commandIndex + 3 && args[commandIndex + 1].equals("player", ignoreCase = true) -> {
-                completeCsv(args[commandIndex + 2], plotOwnerNames())
+                completeCsv(args[commandIndex + 2], ownerSuggestions.plotOwnerNames(MAX_TAB_RESULTS))
             }
             "grant" if args.size == commandIndex + 3 && args[commandIndex + 1].lowercase(Locale.ROOT) in GRANT_PLAYER_SUBCOMMANDS -> {
                 completeCsv(args[commandIndex + 2], onlinePlayerNames())
@@ -398,7 +313,7 @@ class PlotCommandService(
 
     private fun rewritePlotOwnerArgument(args: Array<String>, index: Int): Array<String> {
         val input = args.getOrNull(index) ?: return args
-        val resolved = resolvePlotOwnerName(input) ?: return args
+        val resolved = ownerSuggestions.resolvePlotOwnerName(input) ?: return args
         args[index] = resolved
         return args
     }
@@ -416,16 +331,6 @@ class PlotCommandService(
             ?: return null
 
         return user.player?.name ?: user.name
-    }
-
-    private fun resolvePlotOwnerName(input: String): String? {
-        refreshOwnerCacheIfNeeded()
-        return ownerNamesByLowerName[normalizeNameKey(input)]?.name
-    }
-
-    private fun resolvePlotOwnerUuid(input: String): UUID? {
-        refreshOwnerCacheIfNeeded()
-        return ownerNamesByLowerName[normalizeNameKey(input)]?.uuid
     }
 
     private fun resolvePlotScopedUserName(
@@ -449,214 +354,30 @@ class PlotCommandService(
             .toList()
 
     private fun knownUserCommandCompletions(commandName: String): List<String> =
-        if (commandName in EVERYONE_TARGET_COMMANDS) {
-            onlinePlayerNames() + EVERYONE_TOKEN
-        } else {
-            onlinePlayerNames()
-        }
+        if (commandName in EVERYONE_TARGET_COMMANDS) onlinePlayerNames() + EVERYONE_TOKEN else onlinePlayerNames()
 
     private fun completeHomePages(player: Player, raw: String): List<String> {
-        val pageCount = countHomeBasePlots(player)
-        if (pageCount <= 0) {
-            return emptyList()
-        }
-
+        val pageCount = ownerSuggestions.countHomeBasePlots(PlotPlayer.from(player).uuid)
+        if (pageCount <= 0) return emptyList()
         val prefix = raw.trim()
-        return (1..pageCount).asSequence()
-            .map(Int::toString)
-            .filter { it.startsWith(prefix) }
-            .take(MAX_TAB_RESULTS)
-            .toList()
+        return (1..pageCount).asSequence().map(Int::toString).filter { it.startsWith(prefix) }.take(MAX_TAB_RESULTS).toList()
     }
 
-    private fun completeVisitTargets(rawOwner: String, rawTarget: String): List<String> {
-        val ownerUuid = resolvePlotOwnerUuid(rawOwner) ?: return emptyList()
-        val pageCount = homeBasePlotCountByOwner.computeIfAbsent(ownerUuid, ::scanHomeBasePlotCount)
-        if (pageCount <= 0) {
-            return emptyList()
-        }
+    fun invalidateOwnerSuggestions() = ownerSuggestions.invalidateOwnerSuggestions()
 
-        val prefix = rawTarget.trim()
-        val numeric = (1..pageCount).asSequence().map(Int::toString)
-        val extras = sequenceOf("last")
-
-        return (numeric + extras)
-            .filter { it.startsWith(prefix, ignoreCase = true) }
-            .take(MAX_TAB_RESULTS)
-            .toList()
-    }
-
-    private fun countHomeBasePlots(player: Player): Int {
-        val ownerId = PlotPlayer.from(player).uuid
-        return homeBasePlotCountByOwner.computeIfAbsent(ownerId, ::scanHomeBasePlotCount)
-    }
-
-    fun invalidateOwnerSuggestions() {
-        invalidateOwnerCache()
-    }
-
-    fun invalidateHomeCount(ownerId: UUID) {
-        homeBasePlotCountByOwner.remove(ownerId)
-    }
+    fun invalidateHomeCount(ownerId: UUID) = ownerSuggestions.invalidateHomeCount(ownerId)
 
     private fun currentPlotPlayerNames(player: Player, args: Array<out String>): List<String> {
         val plot = resolveTargetPlot(player, args) ?: return emptyList()
-        return plot.playersInPlot
-            .mapNotNull { it.name.takeIf(String::isNotBlank) }
-            .distinctBy(::normalizeNameKey)
+        return plot.playersInPlot.mapNotNull { it.name.takeIf(String::isNotBlank) }.distinctBy(::normalizeNameKey)
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
     }
 
     private fun currentPlotRelationNames(player: Player, args: Array<out String>): List<String> {
         val plot = resolveTargetPlot(player, args) ?: return emptyList()
-        return resolveScopedNames(plot.members + plot.trusted + plot.denied)
+        return ownerSuggestions.resolveScopedNames(plot.members + plot.trusted + plot.denied)
     }
 
-    private fun resolveScopedNames(uuids: Collection<UUID>): List<String> {
-        if (uuids.isEmpty()) {
-            return emptyList()
-        }
-
-        val pipeline = PlotSquared.get().impromptuUUIDPipeline
-        val names = LinkedHashMap<String, String>()
-        val unresolved = LinkedHashSet<UUID>()
-
-        for (uuid in uuids) {
-            if (isReservedPlotUuid(uuid)) {
-                continue
-            }
-
-            val onlineName = Bukkit.getPlayer(uuid)?.name
-                ?: PlotSquared.platform().playerManager().getPlayerIfExists(uuid)?.name
-            when {
-                !onlineName.isNullOrBlank() -> names.putIfAbsent(normalizeNameKey(onlineName), onlineName)
-                else -> {
-                    val mapping = pipeline.getImmediately(uuid)
-                    if (mapping?.username().isNullOrBlank()) {
-                        unresolved += uuid
-                    } else {
-                        val mappingName = mapping.username()
-                        names.putIfAbsent(normalizeNameKey(mappingName), mappingName)
-                    }
-                }
-            }
-        }
-
-        warmupNamesAsync(unresolved, invalidateOwners = false)
-
-        return names.values
-            .sortedWith(String.CASE_INSENSITIVE_ORDER)
-    }
-
-    private fun plotOwnerNames(): List<String> {
-        refreshOwnerCacheIfNeeded()
-        return ownerNamesByLowerName.values
-            .asSequence()
-            .map { it.name }
-            .distinctBy(::normalizeNameKey)
-            .sortedWith(String.CASE_INSENSITIVE_ORDER)
-            .take(MAX_TAB_RESULTS)
-            .toList()
-    }
-
-    private fun refreshOwnerCacheIfNeeded() {
-        val now = System.currentTimeMillis()
-        if (now - ownerCacheUpdatedAt < OWNER_CACHE_TTL_MILLIS && ownerNamesByLowerName.isNotEmpty()) {
-            return
-        }
-
-        synchronized(ownerCacheLock) {
-            if (now - ownerCacheUpdatedAt < OWNER_CACHE_TTL_MILLIS && ownerNamesByLowerName.isNotEmpty()) {
-                return
-            }
-
-            val pipeline = PlotSquared.get().impromptuUUIDPipeline
-            val fresh = LinkedHashMap<String, OwnerNameEntry>()
-            val unresolved = LinkedHashSet<UUID>()
-
-            for (area in PlotSquared.get().plotAreaManager.allPlotAreas) {
-                for (plot in area.plots) {
-                    if (!plot.hasOwner()) {
-                        continue
-                    }
-
-                    for (uuid in plot.owners) {
-                        if (isReservedPlotUuid(uuid)) {
-                            continue
-                        }
-
-                        val onlineName = Bukkit.getPlayer(uuid)?.name
-                            ?: PlotSquared.platform().playerManager().getPlayerIfExists(uuid)?.name
-                        val resolvedName = onlineName
-                            ?: pipeline.getImmediately(uuid)?.username()
-
-                        if (resolvedName.isNullOrBlank()) {
-                            unresolved += uuid
-                        } else {
-                            val key = normalizeNameKey(resolvedName)
-                            fresh.putIfAbsent(key, OwnerNameEntry(uuid, resolvedName))
-                        }
-                    }
-                }
-            }
-
-            ownerNamesByLowerName.clear()
-            ownerNamesByLowerName.putAll(fresh)
-            ownerCacheUpdatedAt = now
-            warmupNamesAsync(unresolved, invalidateOwners = true)
-        }
-    }
-
-    private fun invalidateOwnerCache() {
-        synchronized(ownerCacheLock) {
-            ownerCacheUpdatedAt = 0L
-            ownerNamesByLowerName.clear()
-        }
-    }
-
-    private fun scanHomeBasePlotCount(ownerId: UUID): Int =
-        PlotSquared.get().plotAreaManager.allPlotAreas
-            .sumOf { area ->
-                area.plots.count { plot ->
-                    plot.isBasePlot && plot.isOwner(ownerId)
-                }
-            }
-
-    private fun warmupNamesAsync(uuids: Set<UUID>, invalidateOwners: Boolean) {
-        if (uuids.isEmpty()) {
-            return
-        }
-
-        val request = uuids.asSequence()
-            .filterNot(::isReservedPlotUuid)
-            .distinct()
-            .filter { pendingWarmups.add(it) }
-            .toSet()
-        if (request.isEmpty()) {
-            return
-        }
-
-        if (invalidateOwners) {
-            synchronized(ownerCacheLock) {
-                if (ownerWarmupInFlight) {
-                    request.forEach(pendingWarmups::remove)
-                    return
-                }
-                ownerWarmupInFlight = true
-            }
-        }
-
-        PlotSquared.get().impromptuUUIDPipeline.getNames(request)
-            .whenComplete { _, _ ->
-                request.forEach(pendingWarmups::remove)
-                if (invalidateOwners) {
-                    synchronized(ownerCacheLock) {
-                        ownerWarmupInFlight = false
-                        ownerCacheUpdatedAt = 0L
-                    }
-                }
-            }
-    }
 
     private fun completeCsv(raw: String, values: List<String>): List<String> {
         val segments = splitCsvSegments(raw)
@@ -719,13 +440,10 @@ class PlotCommandService(
 
     private fun normalizeNameKey(name: String): String = name.trim().lowercase(Locale.ROOT)
 
-    private fun isReservedPlotUuid(uuid: UUID): Boolean =
-        uuid == DBFunc.SERVER || uuid == DBFunc.EVERYONE
 
     private companion object {
         private const val PLOT_SQUARED_PLUGIN_NAME = "PlotSquared"
         private const val EVERYONE_TOKEN = "*"
-        private const val OWNER_CACHE_TTL_MILLIS = 60_000L
         private const val MAX_TAB_RESULTS = 100
 
         private val ROOT_ALIASES = setOf("plots", "p", "plot", "ps", "plotsquared", "p2", "2", "plotme")
@@ -745,7 +463,5 @@ class PlotCommandService(
         private val MASSCLAIM_COMMANDS = setOf("massclaim", "mc")
         private const val PLOT_USAGE_PERMISSION = "acreative.plots.usage"
         private const val PLOT_MASSCLAIM_PERMISSION = "acreative.plots.massclaim"
-        private const val MAX_MASSCLAIM_SIZE = 10
-        private const val MIN_MASSCLAIM_ACTIVATION_TPS = 18.0
     }
 }
