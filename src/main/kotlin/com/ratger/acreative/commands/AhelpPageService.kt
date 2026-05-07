@@ -141,12 +141,12 @@ class AhelpPageService(
         val totalPages = pages.size
 
         return buildString {
-            appendLine("<#FFD700><st>                      </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                      </st>")
+            appendLine("<#FFD700><st>                       </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                        </st>")
             appendLine("<#EDC800>Доступно для ${roleLabel(currentPage.role)}")
             currentPage.entries.forEach { entry ->
                 appendLine("<#C7A300> ● <#FFE68A>${escapeMiniMessage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
             }
-            appendLine("<#FFD700><st>                           </st> <st>                    </st> <st>          </st>")
+            appendLine("<#FFD700><st>                                                                                </st>")
             append("<#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>→ ( ${buildNavigation(currentPageNumber, totalPages)} <#FFD700>)")
         }.trimEnd()
     }
