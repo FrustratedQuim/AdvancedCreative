@@ -33,7 +33,7 @@ class AdminManager(
         player.sendMessage(mini.deserialize("<#FFE68A><b>Всего</b> <#EDC800>- <#FFF3E0>$totalText"))
 
         report.mainBlocks.forEach { block ->
-            val line = "<#C7A300> ● <#FFE68A>${block.title}<#EDC800>- <#FFF3E0>${formatBytes(block.bytes)} <gray>(${formatUnits(block.units)} ед.)"
+            val line = "<#C7A300> ● <#FFE68A>${block.title} <#EDC800>- <#FFF3E0>${formatBytes(block.bytes)} <gray>(${formatUnits(block.units)} ед.)"
             player.sendMessage(mini.deserialize(line))
         }
 
@@ -132,7 +132,7 @@ class AdminManager(
         )
 
         val headsBlock = MemoryBlock(
-            title = "Головы (${headsSnapshot.dynamicCount}/${headsSnapshot.dynamicLimit}, search ${headsSnapshot.searchCount}/${headsSnapshot.searchLimit})",
+            title = "Головы",
             bytes = headsSnapshot.dynamicEntries.sumOf { entry ->
                 estimateStringBytes(entry.stableKey) +
                     estimateStringBytes(entry.name) +
