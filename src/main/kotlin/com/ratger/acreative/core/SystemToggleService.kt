@@ -28,7 +28,7 @@ class SystemToggleService(
 
     fun setEnabled(system: ManagedSystem, enabled: Boolean): Boolean {
         states[system] = enabled
-        hooker.configManager.config.set(path(system), enabled)
+        hooker.configManager.set(path(system), enabled)
         hooker.configManager.save()
 
         if (!enabled) {

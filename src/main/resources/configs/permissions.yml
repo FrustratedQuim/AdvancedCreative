@@ -1,0 +1,79 @@
+roles:
+  player:
+    display: "Player"
+    prefix: "<#8C8C8C><b>ɢᴀᴍᴇʀ</b>"
+    permissions:
+      - "advancedcreative.ahelp"
+      - "advancedcreative.itemdb"
+      - "advancedcreative.sit"
+      - "advancedcreative.lay"
+      - "advancedcreative.crawl"
+      - "advancedcreative.hide"
+      - "advancedcreative.strength"
+      - "advancedcreative.health"
+      - "advancedcreative.effects"
+      - "advancedcreative.decorationheads"
+      - "advancedcreative.decorationbanners"
+  rise:
+    display: "<#24b2b2><b>ʀɪѕᴇ</b>"
+    rank-permissions:
+      - "group.don_rise_perms"
+    permissions:
+      - "advancedcreative.glide"
+      - "advancedcreative.gravity"
+      - "advancedcreative.sneeze"
+      - "advancedcreative.edit"
+  flare:
+    display: "<#21d185><b>ꜰʟᴀʀᴇ</b>"
+    rank-permissions:
+      - "group.don_flare_perms"
+    permissions:
+      - "advancedcreative.freeze"
+      - "advancedcreative.resize"
+  shine:
+    display: "<#9466ff><b>ѕʜɪɴᴇ</b>"
+    rank-permissions:
+      - "group.don_shine_perms"
+    permissions:
+      - "advancedcreative.paint"
+  spark:
+    display: "<#cd56fc><b>ѕᴘᴀʀᴋ</b>"
+    rank-permissions:
+      - "group.don_spark_perms"
+    permissions:
+      - "advancedcreative.glow"
+      - "advancedcreative.disguise"
+  sunny:
+    display: "<#ff7e33><b>ѕᴜɴɴʏ</b>"
+    rank-permissions:
+      - "group.don_sunny_perms"
+    permissions:
+      - "advancedcreative.sithead"
+  horizon:
+    display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ</b>"
+    rank-permissions:
+      - "group.don_horizon_perms"
+    permissions:
+      - "advancedcreative.spit"
+      - "advancedcreative.piss"
+      - "advancedcreative.disguise.nick"
+      - "advancedcreative.disguise.extended"
+  moder:
+    display: "Moder"
+    prefix: "<#9C4804><b>ᴍ<#AF5105>ᴏ<#C25A05>ᴅ<#D56206>ᴇ<#E86B06>ʀ</b>"
+    rank-permissions:
+      - "advancedcreative.acreative"
+    permissions:
+      - "advancedcreative.acreative"
+      - "advancedcreative.sithead.other"
+      - "advancedcreative.freeze.other"
+      - "advancedcreative.effects.other"
+      - "advancedcreative.hide.bypass"
+      - "advancedcreative.paint.bypass"
+      - "advancedcreative.paint.moderation"
+      - "advancedcreative.decorationbanners.storage_bypass"
+      - "advancedcreative.decorationbanners.post_bypass"
+      - "advancedcreative.decorationbanners.moderation"
+      - "advancedcreative.grab"
+      - "advancedcreative.slap"
+      - "advancedcreative.jar"
