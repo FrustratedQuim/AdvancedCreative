@@ -328,7 +328,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             plugin = hooker.plugin,
             parser = parser,
             sharedButtonFactory = hooker.menuService.buttonFactory(),
-            title = "â– Ð—Ð°Ð±Ð°Ð½ÐµÐ½Ñ‹Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ¸"
+            title = "▍ Забаненные игроки"
         )
     }
     private val plotSquaredGate = PlotSquaredFlagGate(hooker.plugin.server.pluginManager)
@@ -940,7 +940,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 hooker.messageManager.sendChat(
                     player,
                     MessageKey.ERROR_PAINT_MAP_MISSING,
-                    mapOf("map" to "Ð½Ð¾Ð²Ð°Ñ ÐºÐ°Ñ€Ñ‚Ð° Ð´Ð»Ñ Ð¼Ð¸Ñ€Ð° ${player.world.name}")
+                    mapOf("map" to "новая карта для мира ${player.world.name}")
                 )
                 return false
             }

@@ -1,7 +1,7 @@
 ﻿roles:
   player:
     display: "Player"
-    prefix: "<#8C8C8C><b>É¢á´€á´á´‡Ê€</b>"
+    prefix: "<#8C8C8C><b>ɢᴀᴍᴇʀ</b>"
     permissions:
       - "acreative.ahelp"
       - "acreative.itemdb"
@@ -15,7 +15,7 @@
       - "acreative.decorationheads"
       - "acreative.decorationbanners"
   rise:
-    display: "<#24b2b2><b>Ê€ÉªÑ•á´‡</b>"
+    display: "<#24b2b2><b>ʀɪѕᴇ</b>"
     rank-permissions:
       - "group.don_rise_perms"
     permissions:
@@ -24,33 +24,33 @@
       - "acreative.sneeze"
       - "acreative.edit"
   flare:
-    display: "<#21d185><b>êœ°ÊŸá´€Ê€á´‡</b>"
+    display: "<#21d185><b>ꜰʟᴀʀᴇ</b>"
     rank-permissions:
       - "group.don_flare_perms"
     permissions:
       - "acreative.freeze"
       - "acreative.resize"
   shine:
-    display: "<#9466ff><b>Ñ•ÊœÉªÉ´á´‡</b>"
+    display: "<#9466ff><b>ѕʜɪɴᴇ</b>"
     rank-permissions:
       - "group.don_shine_perms"
     permissions:
       - "acreative.paint"
   spark:
-    display: "<#cd56fc><b>Ñ•á´˜á´€Ê€á´‹</b>"
+    display: "<#cd56fc><b>ѕᴘᴀʀᴋ</b>"
     rank-permissions:
       - "group.don_spark_perms"
     permissions:
       - "acreative.glow"
       - "acreative.disguise"
   sunny:
-    display: "<#ff7e33><b>Ñ•á´œÉ´É´Ê</b>"
+    display: "<#ff7e33><b>ѕᴜɴɴʏ</b>"
     rank-permissions:
       - "group.don_sunny_perms"
     permissions:
       - "acreative.sithead"
   horizon:
-    display: "<#ffcc00><b>Êœá´Ê€Éªá´¢á´É´</b>"
+    display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ</b>"
     rank-permissions:
       - "group.don_horizon_perms"
     permissions:
@@ -60,7 +60,7 @@
       - "acreative.disguise.extended"
   moder:
     display: "Moder"
-    prefix: "<#9C4804><b>á´<#AF5105>á´<#C25A05>á´…<#D56206>á´‡<#E86B06>Ê€</b>"
+    prefix: "<#9C4804><b>ᴍ<#AF5105>ᴏ<#C25A05>ᴅ<#D56206>ᴇ<#E86B06>ʀ</b>"
     rank-permissions:
       - "acreative.acreative"
     permissions:

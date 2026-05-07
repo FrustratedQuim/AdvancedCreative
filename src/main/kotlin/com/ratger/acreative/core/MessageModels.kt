@@ -13,7 +13,6 @@ enum class MessageTaskState {
 }
 
 enum class MessageKey {
-    AHELP,
     PERMISSION_UNKNOWN,
     PERMISSION_REQUIRED,
     INFO_EMPTY,
@@ -165,28 +164,6 @@ enum class MessageKey {
 
 object MessageCatalog {
     val templates: Map<MessageKey, String> = mapOf(
-        MessageKey.AHELP to """
-            <#FFD700><st>                      </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                      </st>
-            <#FFE68A>/sit <#EDC800>- <#FFF3E0>Сесть
-            <#FFE68A>/lay <#EDC800>- <#FFF3E0>Лечь
-            <#FFE68A>/crawl <#EDC800>- <#FFF3E0>Ползти
-            <#FFE68A>/hide <игрок> <#EDC800>- <#FFF3E0>Скрыть игрока
-            <#FFE68A>/strength <значение> <#EDC800>- <#FFF3E0>Установить силу удара
-            <#FFE68A>/health <значение> <#EDC800>- <#FFF3E0>Установить максимальное здоровье
-            <#FFE68A>/effects <эффект> [уровень] <#EDC800>- <#FFF3E0>Наложить эффект зелья
-            <#FFE68A>/paint [1x1-4x4] <#EDC800>- <#FFF3E0>Открыть режим рисования
-            <#FFE68A>/jar <игрок> [-const] <#EDC800>- <#FFF3E0>Выдать банку для поимки
-            <#FFE68A>/sneeze <#EDC800>- <#FFF3E0>Чихнуть, вот это да
-            <#FFE68A>/glide <#EDC800>- <#FFF3E0>Включить парение без элитр
-            <#FFE68A>/gravity <значение> <#EDC800>- <#FFF3E0>Изменить свою гравитацию
-            <#FFE68A>/resize <значение> <#EDC800>- <#FFF3E0>Изменить размер персонажа
-            <#FFE68A>/freeze <#EDC800>- <#FFF3E0>Замёрзнуть? Буквально
-            <#FFE68A>/disguise <существо> <#EDC800>- <#FFF3E0>Превратиться в что-то
-            <#FFE68A>/glow <#EDC800>- <#FFF3E0>Включить свечение
-            <#FFE68A>/spit <#EDC800>- <#FFF3E0>Плюнуть, агрессивно
-            <#FFE68A>/piss <#EDC800>- <#FFF3E0>Пописать на негодяев
-            <#FFD700><st>                                                                             </st>
-        """.trimIndent(),
         MessageKey.PERMISSION_UNKNOWN to "<dark_red>▍ <#FF1500>У вас недостаточно прав",
         MessageKey.PERMISSION_REQUIRED to "<dark_red>▍ <#FF1500>Команда доступна с привилегии <b>%role_display%",
         MessageKey.INFO_EMPTY to "",

@@ -303,7 +303,7 @@ class HideManager(private val hooker: FunctionHooker) {
     fun reapplyAllHides(player: Player) {
         val playerId = player.uniqueId
 
-        // ÐŸÐ¾Ð²Ñ‚Ð¾Ñ€Ð½Ð¾ ÑÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ ÑÐºÑ€Ñ‹Ñ‚Ñ‹Ñ… Ð¸Ð³Ñ€Ð¾ÐºÐ¾Ð²
+        // Повторно скрываем скрытых игроков
         val hiddenSet = hiddenPlayers[playerId] ?: emptySet()
         hiddenSet.forEach { targetId ->
             val target = Bukkit.getPlayer(targetId)
@@ -312,7 +312,7 @@ class HideManager(private val hooker: FunctionHooker) {
             }
         }
 
-        // Ð¡ÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ Ð¸Ð³Ñ€Ð¾ÐºÐ° Ð¾Ñ‚ Ñ‚ÐµÑ…, ÐºÑ‚Ð¾ ÑÐºÑ€Ñ‹Ð» ÐµÐ³Ð¾
+        // Скрываем игрока от тех, кто скрыл его
         hiddenPlayers.forEach { (hiderId, targets) ->
             if (playerId in targets) {
                 val hider = Bukkit.getPlayer(hiderId)
