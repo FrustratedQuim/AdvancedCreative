@@ -3,8 +3,10 @@ package com.ratger.acreative.integration.plotsquared.commands
 import com.plotsquared.bukkit.util.BukkitUtil
 import com.plotsquared.core.PlotSquared
 import com.plotsquared.core.configuration.caption.StaticCaption
+import com.plotsquared.core.database.DBFunc
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
+import com.plotsquared.core.util.query.PlotQuery
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -106,14 +108,20 @@ class PlotCommandService(
         val rewritten = copyArgs(args)
 
         return when (commandName) {
-            in EXISTING_USER_COMMANDS if args.size > commandIndex + 1 -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 1, ::resolveExistingUserName)
+            in KNOWN_USER_COMMANDS if args.size > commandIndex + 1 -> {
+                rewriteCsvArgument(
+                    player,
+                    rewritten,
+                    commandIndex + 1,
+                    allowEveryone = commandName in EVERYONE_TARGET_COMMANDS,
+                    resolver = ::resolveExistingUserName
+                )
             }
             in VISIT_COMMANDS if args.size > commandIndex + 1 -> {
                 rewritePlotOwnerArgument(rewritten, commandIndex + 1)
             }
             in KICK_COMMANDS if args.size > commandIndex + 1 -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 1) { input ->
+                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
                         plot.playersInPlot
                             .mapNotNull { it.name.takeIf(String::isNotBlank) }
@@ -121,7 +129,7 @@ class PlotCommandService(
                 }
             }
             in REMOVE_COMMANDS if args.size > commandIndex + 1 -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 1) { input ->
+                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
                         resolveScopedNames(plot.members + plot.trusted + plot.denied)
                     }
@@ -131,10 +139,22 @@ class PlotCommandService(
                 rewritePlotOwnerArgument(rewritten, commandIndex + 2)
             }
             "grant" if args.size > commandIndex + 2 && args[commandIndex + 1].lowercase(Locale.ROOT) in GRANT_PLAYER_SUBCOMMANDS -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 2, ::resolveExistingUserName)
+                rewriteCsvArgument(
+                    player,
+                    rewritten,
+                    commandIndex + 2,
+                    allowEveryone = false,
+                    resolver = ::resolveExistingUserName
+                )
             }
             "set" if args.size > commandIndex + 2 && args[commandIndex + 1].lowercase(Locale.ROOT) in OWNER_SUBCOMMANDS -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 2, ::resolveExistingUserName)
+                rewriteCsvArgument(
+                    player,
+                    rewritten,
+                    commandIndex + 2,
+                    allowEveryone = false,
+                    resolver = ::resolveExistingUserName
+                )
             }
             else -> rewritten
         }
@@ -149,11 +169,14 @@ class PlotCommandService(
         val commandName = args.getOrNull(commandIndex)?.lowercase(Locale.ROOT) ?: return null
 
         return when (commandName) {
-            in EXISTING_USER_COMMANDS if args.size == commandIndex + 2 -> {
-                completeCsv(args[commandIndex + 1], onlinePlayerNames())
+            in KNOWN_USER_COMMANDS if args.size == commandIndex + 2 -> {
+                completeCsv(args[commandIndex + 1], knownUserCommandCompletions(commandName))
             }
             in VISIT_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], plotOwnerNames())
+            }
+            in HOME_COMMANDS if args.size == commandIndex + 2 -> {
+                completeHomePages(player, args[commandIndex + 1])
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
@@ -178,6 +201,7 @@ class PlotCommandService(
         player: Player,
         args: Array<String>,
         index: Int,
+        allowEveryone: Boolean,
         resolver: (String) -> String?
     ): Array<String>? {
         val rawValue = args.getOrNull(index) ?: return args
@@ -192,7 +216,7 @@ class PlotCommandService(
 
         val normalized = ArrayList<String>(segments.size)
         for (segment in segments) {
-            if (segment == EVERYONE_TOKEN) {
+            if (allowEveryone && segment == EVERYONE_TOKEN) {
                 normalized += EVERYONE_TOKEN
                 continue
             }
@@ -256,6 +280,35 @@ class PlotCommandService(
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
             .toList()
 
+    private fun knownUserCommandCompletions(commandName: String): List<String> =
+        if (commandName in EVERYONE_TARGET_COMMANDS) {
+            onlinePlayerNames() + EVERYONE_TOKEN
+        } else {
+            onlinePlayerNames()
+        }
+
+    private fun completeHomePages(player: Player, raw: String): List<String> {
+        val pageCount = countHomeBasePlots(player)
+        if (pageCount <= 0) {
+            return emptyList()
+        }
+
+        val prefix = raw.trim()
+        return (1..pageCount).asSequence()
+            .map(Int::toString)
+            .filter { it.startsWith(prefix) }
+            .take(MAX_TAB_RESULTS)
+            .toList()
+    }
+
+    private fun countHomeBasePlots(player: Player): Int {
+        val ownerId = PlotPlayer.from(player).uuid
+        return PlotQuery.newQuery()
+            .thatPasses { plot -> plot.isOwner(ownerId) }
+            .whereBasePlot()
+            .count()
+    }
+
     private fun currentPlotPlayerNames(player: Player, args: Array<out String>): List<String> {
         val plot = resolveTargetPlot(player, args) ?: return emptyList()
         return plot.playersInPlot
@@ -278,7 +331,11 @@ class PlotCommandService(
         val names = LinkedHashMap<String, String>()
         val unresolved = LinkedHashSet<UUID>()
 
-        uuids.forEach { uuid ->
+        for (uuid in uuids) {
+            if (isReservedPlotUuid(uuid)) {
+                continue
+            }
+
             val onlineName = Bukkit.getPlayer(uuid)?.name
                 ?: PlotSquared.platform().playerManager().getPlayerIfExists(uuid)?.name
             when {
@@ -327,28 +384,31 @@ class PlotCommandService(
             val fresh = LinkedHashMap<String, OwnerNameEntry>()
             val unresolved = LinkedHashSet<UUID>()
 
-            PlotSquared.get().plotAreaManager.allPlotAreas
-                .forEach { area ->
-                    area.plots.forEach { plot ->
-                        if (!plot.hasOwner()) {
-                            return@forEach
+            for (area in PlotSquared.get().plotAreaManager.allPlotAreas) {
+                for (plot in area.plots) {
+                    if (!plot.hasOwner()) {
+                        continue
+                    }
+
+                    for (uuid in plot.owners) {
+                        if (isReservedPlotUuid(uuid)) {
+                            continue
                         }
 
-                        plot.owners.forEach { uuid ->
-                            val onlineName = Bukkit.getPlayer(uuid)?.name
-                                ?: PlotSquared.platform().playerManager().getPlayerIfExists(uuid)?.name
-                            val resolvedName = onlineName
-                                ?: pipeline.getImmediately(uuid)?.username()
+                        val onlineName = Bukkit.getPlayer(uuid)?.name
+                            ?: PlotSquared.platform().playerManager().getPlayerIfExists(uuid)?.name
+                        val resolvedName = onlineName
+                            ?: pipeline.getImmediately(uuid)?.username()
 
-                            if (resolvedName.isNullOrBlank()) {
-                                unresolved += uuid
-                            } else {
-                                val key = normalizeNameKey(resolvedName)
-                                fresh.putIfAbsent(key, OwnerNameEntry(uuid, resolvedName))
-                            }
+                        if (resolvedName.isNullOrBlank()) {
+                            unresolved += uuid
+                        } else {
+                            val key = normalizeNameKey(resolvedName)
+                            fresh.putIfAbsent(key, OwnerNameEntry(uuid, resolvedName))
                         }
                     }
                 }
+            }
 
             ownerNamesByLowerName.clear()
             ownerNamesByLowerName.putAll(fresh)
@@ -362,7 +422,11 @@ class PlotCommandService(
             return
         }
 
-        val request = uuids.filter { pendingWarmups.add(it) }.toSet()
+        val request = uuids.asSequence()
+            .filterNot(::isReservedPlotUuid)
+            .distinct()
+            .filter { pendingWarmups.add(it) }
+            .toSet()
         if (request.isEmpty()) {
             return
         }
@@ -450,6 +514,9 @@ class PlotCommandService(
 
     private fun normalizeNameKey(name: String): String = name.trim().lowercase(Locale.ROOT)
 
+    private fun isReservedPlotUuid(uuid: UUID): Boolean =
+        uuid == DBFunc.SERVER || uuid == DBFunc.EVERYONE
+
     private companion object {
         private const val PLOT_SQUARED_PLUGIN_NAME = "PlotSquared"
         private const val EVERYONE_TOKEN = "*"
@@ -459,10 +526,14 @@ class PlotCommandService(
         private val UNKNOWN_PLAYER_CAPTION = StaticCaption.of("<dark_gray>[<gold>Creative<dark_gray>] <red>Неизвестный игрок")
 
         private val ROOT_ALIASES = setOf("plots", "p", "plot", "ps", "plotsquared", "p2", "2", "plotme")
-        private val EXISTING_USER_COMMANDS = setOf("add", "trust", "deny", "setowner", "owner", "so", "seto")
+        private val EVERYONE_TARGET_COMMANDS = setOf("add", "trust", "t")
+        private val KNOWN_USER_COMMANDS = EVERYONE_TARGET_COMMANDS + setOf(
+            "deny", "d", "ban", "setowner", "owner", "so", "seto"
+        )
         private val VISIT_COMMANDS = setOf("visit", "v", "tp", "teleport", "goto", "warp")
+        private val HOME_COMMANDS = setOf("home", "h")
         private val KICK_COMMANDS = setOf("kick")
-        private val REMOVE_COMMANDS = setOf("remove", "untrust", "undeny")
+        private val REMOVE_COMMANDS = setOf("remove", "r", "untrust", "ut", "undeny", "ud", "unban")
         private val LIST_COMMANDS = setOf("list", "l", "find", "search")
         private val GRANT_PLAYER_SUBCOMMANDS = setOf("add", "check")
         private val OWNER_SUBCOMMANDS = setOf("owner", "setowner", "so", "seto")
