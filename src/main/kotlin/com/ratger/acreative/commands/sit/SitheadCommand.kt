@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.sit
+﻿package com.ratger.acreative.commands.sit
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -14,9 +14,9 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
     }
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        if (sender.hasPermission("advancedcreative.sithead.other")) {
+        if (sender.hasPermission("acreative.sithead.other")) {
             val completions = mutableListOf<String>()
-            if (args.size < 2 && sender.hasPermission("advancedcreative.sithead")) completions.add("toggle")
+            if (args.size < 2 && sender.hasPermission("acreative.sithead")) completions.add("toggle")
             if (args.size < 3 && !args.contains("toggle")) {
                 completions.addAll(completeOnlinePlayers(args))
                 return completions.filter { it.startsWith(args[args.size - 1], ignoreCase = true) }
@@ -24,7 +24,7 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
             return completions
         }
 
-        return if (args.size < 2 && sender.hasPermission("advancedcreative.sithead")) listOf("toggle") else emptyList()
+        return if (args.size < 2 && sender.hasPermission("acreative.sithead")) listOf("toggle") else emptyList()
     }
 
     private fun completeOnlinePlayers(args: Array<out String>): List<String> {
@@ -37,3 +37,4 @@ class SitheadCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
         }
     }
 }
+

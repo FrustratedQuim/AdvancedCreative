@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.hide
+﻿package com.ratger.acreative.commands.hide
 
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
@@ -49,7 +49,7 @@ class HideManager(private val hooker: FunctionHooker) {
             hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_SELF)
             return
         }
-        if (target.hasPermission("advancedcreative.hide.bypass")) {
+        if (target.hasPermission("acreative.hide.bypass")) {
             hooker.messageManager.sendChat(hider, MessageKey.ERROR_HIDE_BYPASS)
             return
         }
@@ -303,7 +303,7 @@ class HideManager(private val hooker: FunctionHooker) {
     fun reapplyAllHides(player: Player) {
         val playerId = player.uniqueId
 
-        // Повторно скрываем скрытых игроков
+        // ÐŸÐ¾Ð²Ñ‚Ð¾Ñ€Ð½Ð¾ ÑÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ ÑÐºÑ€Ñ‹Ñ‚Ñ‹Ñ… Ð¸Ð³Ñ€Ð¾ÐºÐ¾Ð²
         val hiddenSet = hiddenPlayers[playerId] ?: emptySet()
         hiddenSet.forEach { targetId ->
             val target = Bukkit.getPlayer(targetId)
@@ -312,7 +312,7 @@ class HideManager(private val hooker: FunctionHooker) {
             }
         }
 
-        // Скрываем игрока от тех, кто скрыл его
+        // Ð¡ÐºÑ€Ñ‹Ð²Ð°ÐµÐ¼ Ð¸Ð³Ñ€Ð¾ÐºÐ° Ð¾Ñ‚ Ñ‚ÐµÑ…, ÐºÑ‚Ð¾ ÑÐºÑ€Ñ‹Ð» ÐµÐ³Ð¾
         hiddenPlayers.forEach { (hiderId, targets) ->
             if (playerId in targets) {
                 val hider = Bukkit.getPlayer(hiderId)
@@ -324,3 +324,4 @@ class HideManager(private val hooker: FunctionHooker) {
     }
 
 }
+

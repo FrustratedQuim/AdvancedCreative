@@ -1,79 +1,80 @@
-roles:
+﻿roles:
   player:
     display: "Player"
-    prefix: "<#8C8C8C><b>ɢᴀᴍᴇʀ</b>"
+    prefix: "<#8C8C8C><b>É¢á´€á´á´‡Ê€</b>"
     permissions:
-      - "advancedcreative.ahelp"
-      - "advancedcreative.itemdb"
-      - "advancedcreative.sit"
-      - "advancedcreative.lay"
-      - "advancedcreative.crawl"
-      - "advancedcreative.hide"
-      - "advancedcreative.strength"
-      - "advancedcreative.health"
-      - "advancedcreative.effects"
-      - "advancedcreative.decorationheads"
-      - "advancedcreative.decorationbanners"
+      - "acreative.ahelp"
+      - "acreative.itemdb"
+      - "acreative.sit"
+      - "acreative.lay"
+      - "acreative.crawl"
+      - "acreative.hide"
+      - "acreative.strength"
+      - "acreative.health"
+      - "acreative.effects"
+      - "acreative.decorationheads"
+      - "acreative.decorationbanners"
   rise:
-    display: "<#24b2b2><b>ʀɪѕᴇ</b>"
+    display: "<#24b2b2><b>Ê€ÉªÑ•á´‡</b>"
     rank-permissions:
       - "group.don_rise_perms"
     permissions:
-      - "advancedcreative.glide"
-      - "advancedcreative.gravity"
-      - "advancedcreative.sneeze"
-      - "advancedcreative.edit"
+      - "acreative.glide"
+      - "acreative.gravity"
+      - "acreative.sneeze"
+      - "acreative.edit"
   flare:
-    display: "<#21d185><b>ꜰʟᴀʀᴇ</b>"
+    display: "<#21d185><b>êœ°ÊŸá´€Ê€á´‡</b>"
     rank-permissions:
       - "group.don_flare_perms"
     permissions:
-      - "advancedcreative.freeze"
-      - "advancedcreative.resize"
+      - "acreative.freeze"
+      - "acreative.resize"
   shine:
-    display: "<#9466ff><b>ѕʜɪɴᴇ</b>"
+    display: "<#9466ff><b>Ñ•ÊœÉªÉ´á´‡</b>"
     rank-permissions:
       - "group.don_shine_perms"
     permissions:
-      - "advancedcreative.paint"
+      - "acreative.paint"
   spark:
-    display: "<#cd56fc><b>ѕᴘᴀʀᴋ</b>"
+    display: "<#cd56fc><b>Ñ•á´˜á´€Ê€á´‹</b>"
     rank-permissions:
       - "group.don_spark_perms"
     permissions:
-      - "advancedcreative.glow"
-      - "advancedcreative.disguise"
+      - "acreative.glow"
+      - "acreative.disguise"
   sunny:
-    display: "<#ff7e33><b>ѕᴜɴɴʏ</b>"
+    display: "<#ff7e33><b>Ñ•á´œÉ´É´Ê</b>"
     rank-permissions:
       - "group.don_sunny_perms"
     permissions:
-      - "advancedcreative.sithead"
+      - "acreative.sithead"
   horizon:
-    display: "<#ffcc00><b>ʜᴏʀɪᴢᴏɴ</b>"
+    display: "<#ffcc00><b>Êœá´Ê€Éªá´¢á´É´</b>"
     rank-permissions:
       - "group.don_horizon_perms"
     permissions:
-      - "advancedcreative.spit"
-      - "advancedcreative.piss"
-      - "advancedcreative.disguise.nick"
-      - "advancedcreative.disguise.extended"
+      - "acreative.spit"
+      - "acreative.piss"
+      - "acreative.disguise.nick"
+      - "acreative.disguise.extended"
   moder:
     display: "Moder"
-    prefix: "<#9C4804><b>ᴍ<#AF5105>ᴏ<#C25A05>ᴅ<#D56206>ᴇ<#E86B06>ʀ</b>"
+    prefix: "<#9C4804><b>á´<#AF5105>á´<#C25A05>á´…<#D56206>á´‡<#E86B06>Ê€</b>"
     rank-permissions:
-      - "advancedcreative.acreative"
+      - "acreative.acreative"
     permissions:
-      - "advancedcreative.acreative"
-      - "advancedcreative.sithead.other"
-      - "advancedcreative.freeze.other"
-      - "advancedcreative.effects.other"
-      - "advancedcreative.hide.bypass"
-      - "advancedcreative.paint.bypass"
-      - "advancedcreative.paint.moderation"
-      - "advancedcreative.decorationbanners.storage_bypass"
-      - "advancedcreative.decorationbanners.post_bypass"
-      - "advancedcreative.decorationbanners.moderation"
-      - "advancedcreative.grab"
-      - "advancedcreative.slap"
-      - "advancedcreative.jar"
+      - "acreative.acreative"
+      - "acreative.sithead.other"
+      - "acreative.freeze.other"
+      - "acreative.effects.other"
+      - "acreative.hide.bypass"
+      - "acreative.paint.bypass"
+      - "acreative.paint.moderation"
+      - "acreative.decorationbanners.storage_bypass"
+      - "acreative.decorationbanners.post_bypass"
+      - "acreative.decorationbanners.moderation"
+      - "acreative.grab"
+      - "acreative.slap"
+      - "acreative.jar"
+

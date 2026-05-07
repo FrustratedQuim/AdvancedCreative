@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.banner
+﻿package com.ratger.acreative.commands.banner
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -30,7 +30,7 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
             1 -> {
                 val input = args[0]
                 val suggestions = if (input.equals("-m", ignoreCase = true)) {
-                    mutableListOf<String>()
+                    mutableListOf()
                 } else {
                     (hooker.bannerMenuService.authorSuggestions(input) + onlineNameSuggestions(input)).toMutableList()
                 }
@@ -53,7 +53,7 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
     }
 
     private companion object {
-        const val MODERATION_PERMISSION = "advancedcreative.decorationbanners.moderation"
+        const val MODERATION_PERMISSION = "acreative.decorationbanners.moderation"
     }
 
     private fun onlineNameSuggestions(prefix: String): List<String> {
@@ -62,3 +62,4 @@ class DecorationBannersCommand(hooker: FunctionHooker) : ExecutableCommand(hooke
             .filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }
+

@@ -1,6 +1,6 @@
-plotsquared:
+﻿plotsquared:
   edit:
-    plotEditAdminAccess: "advancedcreative.acreative"
+    plotEditAdminAccess: "acreative.acreative"
     enabled-flags:
       - "time"
       - "weather"
@@ -173,3 +173,4 @@ plotsquared:
         - "deny-exit"
         - "blocked-cmds"
         - "server-plot"
+

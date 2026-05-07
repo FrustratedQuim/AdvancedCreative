@@ -1,4 +1,4 @@
-banner:
+﻿banner:
   post:
     default-limit: 18
     limits:
@@ -8,7 +8,7 @@ banner:
       "group.don_spark_perms": 90
       "group.don_sunny_perms": 90
       "group.don_horizon_perms": 180
-      "advancedcreative.decorationbanners.post_bypass": -1
+      "acreative.decorationbanners.post_bypass": -1
   storage:
     default-limit: 18
     min-pages: 10
@@ -20,4 +20,5 @@ banner:
       "group.don_spark_perms": 90
       "group.don_sunny_perms": 90
       "group.don_horizon_perms": 180
-      "advancedcreative.decorationbanners.storage_bypass": -1
+      "acreative.decorationbanners.storage_bypass": -1
+

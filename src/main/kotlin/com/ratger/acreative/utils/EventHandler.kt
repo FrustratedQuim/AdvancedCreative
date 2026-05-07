@@ -1,4 +1,4 @@
-package com.ratger.acreative.utils
+﻿package com.ratger.acreative.utils
 
 import com.ratger.acreative.commands.sit.SitStyle
 import com.ratger.acreative.core.FunctionHooker
@@ -151,7 +151,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
                 event.isCancelled = true
                 return
             }
-            if (player.hasPermission("advancedcreative.sithead") && !hooker.sitheadManager.isInteractionBlocked(player)) {
+            if (player.hasPermission("acreative.sithead") && !hooker.sitheadManager.isInteractionBlocked(player)) {
                 sitManager.sitOnHead(player, target)
             }
         }
@@ -523,8 +523,8 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val aboveBlock = block.location.clone().add(0.0, 1.0, 0.0).block
         if (aboveBlock.type.isSolid) return
 
-        val handled = (player.hasPermission("advancedcreative.sit") && sitManager.handleRightClickBlock(player, block)) ||
-                (player.hasPermission("advancedcreative.lay") && layManager.handleRightClickBlock(player, block))
+        val handled = (player.hasPermission("acreative.sit") && sitManager.handleRightClickBlock(player, block)) ||
+                (player.hasPermission("acreative.lay") && layManager.handleRightClickBlock(player, block))
 
         if (handled) {
             denyPlayerInteract(event)
@@ -541,3 +541,4 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         return event.from.x != to.x || event.from.y != to.y || event.from.z != to.z
     }
 }
+

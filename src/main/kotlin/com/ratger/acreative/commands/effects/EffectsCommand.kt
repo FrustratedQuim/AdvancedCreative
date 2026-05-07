@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.effects
+﻿package com.ratger.acreative.commands.effects
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -24,7 +24,7 @@ class EffectsCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
 
             2 -> LEVEL_SUGGESTIONS.filter { it.startsWith(args[1], ignoreCase = true) }
             3 -> {
-                if (sender.hasPermission("advancedcreative.effects.other")) {
+                if (sender.hasPermission("acreative.effects.other")) {
                     Bukkit.getOnlinePlayers().map { it.name }.filter { it.startsWith(args[2], ignoreCase = true) }
                 } else {
                     emptyList()
@@ -35,3 +35,4 @@ class EffectsCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginC
         }
     }
 }
+

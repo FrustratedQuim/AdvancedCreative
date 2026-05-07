@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.disguise
+﻿package com.ratger.acreative.commands.disguise
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -9,7 +9,7 @@ import org.bukkit.entity.EntityType
 
 class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCommandType.DISGUISE) {
     private companion object {
-        const val EXTENDED_PERMISSION = "advancedcreative.disguise.extended"
+        const val EXTENDED_PERMISSION = "acreative.disguise.extended"
     }
 
     override fun handle(player: Player, args: Array<out String>) {
@@ -45,7 +45,7 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
         val availableFlags = buildList {
             add("-self")
             add("-noself")
-            if (sender.hasPermission("advancedcreative.disguise.nick")) {
+            if (sender.hasPermission("acreative.disguise.nick")) {
                 add("-withnick")
                 add("-nonick")
             }
@@ -58,3 +58,4 @@ class DisguiseCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, Plugin
             .toList()
     }
 }
+

@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.sit
+﻿package com.ratger.acreative.commands.sit
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
@@ -13,7 +13,7 @@ class SitheadManager(private val hooker: FunctionHooker) {
 
     fun prepareToSithead(sender: Player, targetName: String?, playerName: String?) {
         if (targetName == null) {
-            if (sender.hasPermission("advancedcreative.sithead.other")) {
+            if (sender.hasPermission("acreative.sithead.other")) {
                 hooker.messageManager.sendChat(sender, MessageKey.USAGE_SITHEAD_OTHER)
             } else {
                 hooker.messageManager.sendChat(sender, MessageKey.USAGE_SITHEAD)
@@ -21,7 +21,7 @@ class SitheadManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (targetName == "toggle" && sender.hasPermission("advancedcreative.sithead")) {
+        if (targetName == "toggle" && sender.hasPermission("acreative.sithead")) {
             if (blockInteractPlayers.contains(sender.uniqueId)) {
                 blockInteractPlayers.remove(sender.uniqueId)
                 hooker.messageManager.sendChat(sender, MessageKey.SITHEAD_UNBLOCK_INTERACT)
@@ -32,7 +32,7 @@ class SitheadManager(private val hooker: FunctionHooker) {
             return
         }
 
-        if (!sender.hasPermission("advancedcreative.sithead.other")) {
+        if (!sender.hasPermission("acreative.sithead.other")) {
             hooker.messageManager.sendChat(sender, MessageKey.PERMISSION_UNKNOWN)
             return
         }
@@ -153,3 +153,4 @@ class SitheadManager(private val hooker: FunctionHooker) {
         return blockInteractPlayers.contains(player.uniqueId)
     }
 }
+

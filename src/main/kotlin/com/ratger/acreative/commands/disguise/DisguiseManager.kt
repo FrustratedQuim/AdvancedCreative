@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.disguise
+﻿package com.ratger.acreative.commands.disguise
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.entity.data.EntityData
@@ -36,7 +36,7 @@ data class DisguiseData(
 
 class DisguiseManager(private val hooker: FunctionHooker) {
     private companion object {
-        const val EXTENDED_PERMISSION = "advancedcreative.disguise.extended"
+        const val EXTENDED_PERMISSION = "acreative.disguise.extended"
         const val CUSTOM_NAME_INDEX = 2
         const val CUSTOM_NAME_VISIBLE_INDEX = 3
     }
@@ -205,7 +205,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         }
 
         val parsedFlags = DisguiseFlags.parse(flags)
-        if (parsedFlags.requiresNickPermission && !player.hasPermission("advancedcreative.disguise.nick")) {
+        if (parsedFlags.requiresNickPermission && !player.hasPermission("acreative.disguise.nick")) {
             hooker.permissionManager.sendPermissionDenied(player, "disguise.nick")
             return
         }
@@ -543,3 +543,4 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         return EntityTypes.getByName("minecraft:${this.name.lowercase()}")
     }
 }
+

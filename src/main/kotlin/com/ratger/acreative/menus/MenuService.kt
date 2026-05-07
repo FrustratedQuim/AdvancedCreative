@@ -1,4 +1,4 @@
-package com.ratger.acreative.menus
+﻿package com.ratger.acreative.menus
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.ManagedSystem
@@ -77,7 +77,7 @@ class MenuService(
     private val hooker: FunctionHooker
 ) {
     private companion object {
-        const val EDIT_PERMISSION = "advancedcreative.edit"
+        const val EDIT_PERMISSION = "acreative.edit"
     }
 
     data class MemorySnapshot(
@@ -372,3 +372,4 @@ class MenuService(
         personalDataExecutor.shutdownNow()
     }
 }
+

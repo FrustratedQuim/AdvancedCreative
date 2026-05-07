@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.paint
+﻿package com.ratger.acreative.commands.paint
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -73,6 +73,7 @@ class PaintCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCom
     }
 
     private companion object {
-        const val MODERATION_PERMISSION = "advancedcreative.paint.moderation"
+        const val MODERATION_PERMISSION = "acreative.paint.moderation"
     }
 }
+

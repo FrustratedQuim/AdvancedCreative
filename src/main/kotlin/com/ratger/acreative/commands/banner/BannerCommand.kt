@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.banner
+﻿package com.ratger.acreative.commands.banner
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -78,6 +78,7 @@ class BannerCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
     }
 
     private companion object {
-        const val MODERATION_PERMISSION = "advancedcreative.decorationbanners.moderation"
+        const val MODERATION_PERMISSION = "acreative.decorationbanners.moderation"
     }
 }
+

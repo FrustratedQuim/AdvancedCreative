@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.freeze
+﻿package com.ratger.acreative.commands.freeze
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
@@ -10,7 +10,7 @@ internal class FreezeTargetResolver(private val hooker: FunctionHooker) {
     data class ResolutionResult(val target: Player, val initiator: Player?)
 
     fun resolve(initiator: Player, targetName: String?): ResolutionResult? {
-        if (targetName == null || !initiator.hasPermission("advancedcreative.freeze.other")) {
+        if (targetName == null || !initiator.hasPermission("acreative.freeze.other")) {
             return ResolutionResult(target = initiator, initiator = initiator)
         }
 
@@ -23,3 +23,4 @@ internal class FreezeTargetResolver(private val hooker: FunctionHooker) {
         return ResolutionResult(target = target, initiator = initiator)
     }
 }
+

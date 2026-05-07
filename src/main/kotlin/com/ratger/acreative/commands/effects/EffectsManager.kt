@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.effects
+﻿package com.ratger.acreative.commands.effects
 
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
@@ -29,7 +29,7 @@ class EffectsManager(private val hooker: FunctionHooker) {
             return
         }
 
-        val target = if (targetName != null && player.hasPermission("advancedcreative.effects.other")) {
+        val target = if (targetName != null && player.hasPermission("acreative.effects.other")) {
             Bukkit.getPlayer(targetName) ?: run {
                 hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
                 return
@@ -238,3 +238,4 @@ class EffectsManager(private val hooker: FunctionHooker) {
         private const val EFFECT_REFRESH_THRESHOLD_TICKS = 20 * 10
     }
 }
+

@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.paint
+﻿package com.ratger.acreative.commands.paint
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.component.ComponentTypes
@@ -328,7 +328,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             plugin = hooker.plugin,
             parser = parser,
             sharedButtonFactory = hooker.menuService.buttonFactory(),
-            title = "▍ Забаненые игроки"
+            title = "â– Ð—Ð°Ð±Ð°Ð½ÐµÐ½Ñ‹Ðµ Ð¸Ð³Ñ€Ð¾ÐºÐ¸"
         )
     }
     private val plotSquaredGate = PlotSquaredFlagGate(hooker.plugin.server.pluginManager)
@@ -940,7 +940,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                 hooker.messageManager.sendChat(
                     player,
                     MessageKey.ERROR_PAINT_MAP_MISSING,
-                    mapOf("map" to "новая карта для мира ${player.world.name}")
+                    mapOf("map" to "Ð½Ð¾Ð²Ð°Ñ ÐºÐ°Ñ€Ñ‚Ð° Ð´Ð»Ñ Ð¼Ð¸Ñ€Ð° ${player.world.name}")
                 )
                 return false
             }
@@ -3170,7 +3170,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val HISTORY_LINE_ANCHOR_ESTIMATE_BYTES = 32L
         private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L
         private const val GLOBAL_CANVAS_HASH_BASE = 100_000
-        private const val PAINT_BYPASS_PERMISSION = "advancedcreative.paint.bypass"
+        private const val PAINT_BYPASS_PERMISSION = "acreative.paint.bypass"
         private const val MIN_PAINT_ACTIVATION_TPS = 18.0
         private const val FILL_INVALID_LABEL = 0
         private const val FILL_UNLABELED = -1
@@ -3183,3 +3183,4 @@ class PaintManager(private val hooker: FunctionHooker) {
         private val BACKGROUND_COLOR_ID: Byte = MapDataExtractor.DEFAULT_CANVAS_COLOR_ID
     }
 }
+

@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands
+﻿package com.ratger.acreative.commands
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.PermissionManager
@@ -20,112 +20,112 @@ class AhelpPageService(
     )
 
     private val helpEntriesByPermission: Map<String, List<HelpEntry>> = mapOf(
-        "advancedcreative.itemdb" to listOf(
-            entry("/itemdb", "Показать строковый и числовой ID предмета", PluginCommandType.ITEMDB)
+        "acreative.itemdb" to listOf(
+            entry("/itemdb", "ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ ÑÑ‚Ñ€Ð¾ÐºÐ¾Ð²Ñ‹Ð¹ Ð¸ Ñ‡Ð¸ÑÐ»Ð¾Ð²Ð¾Ð¹ ID Ð¿Ñ€ÐµÐ´Ð¼ÐµÑ‚Ð°", PluginCommandType.ITEMDB)
         ),
-        "advancedcreative.sit" to listOf(
-            entry("/sit", "Сесть", PluginCommandType.SIT)
+        "acreative.sit" to listOf(
+            entry("/sit", "Ð¡ÐµÑÑ‚ÑŒ", PluginCommandType.SIT)
         ),
-        "advancedcreative.lay" to listOf(
-            entry("/lay", "Лечь", PluginCommandType.LAY)
+        "acreative.lay" to listOf(
+            entry("/lay", "Ð›ÐµÑ‡ÑŒ", PluginCommandType.LAY)
         ),
-        "advancedcreative.crawl" to listOf(
-            entry("/crawl", "Ползти", PluginCommandType.CRAWL)
+        "acreative.crawl" to listOf(
+            entry("/crawl", "ÐŸÐ¾Ð»Ð·Ñ‚Ð¸", PluginCommandType.CRAWL)
         ),
-        "advancedcreative.hide" to listOf(
-            entry("/hide <игрок>", "Скрыть игрока для себя", PluginCommandType.HIDE)
+        "acreative.hide" to listOf(
+            entry("/hide <Ð¸Ð³Ñ€Ð¾Ðº>", "Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¸Ð³Ñ€Ð¾ÐºÐ° Ð´Ð»Ñ ÑÐµÐ±Ñ", PluginCommandType.HIDE)
         ),
-        "advancedcreative.strength" to listOf(
-            entry("/strength <значение>", "Изменить силу удара", PluginCommandType.STRENGTH)
+        "acreative.strength" to listOf(
+            entry("/strength <Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ>", "Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ ÑÐ¸Ð»Ñƒ ÑƒÐ´Ð°Ñ€Ð°", PluginCommandType.STRENGTH)
         ),
-        "advancedcreative.health" to listOf(
-            entry("/health <значение>", "Изменить максимальное здоровье", PluginCommandType.HEALTH)
+        "acreative.health" to listOf(
+            entry("/health <Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ>", "Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½Ð¾Ðµ Ð·Ð´Ð¾Ñ€Ð¾Ð²ÑŒÐµ", PluginCommandType.HEALTH)
         ),
-        "advancedcreative.effects" to listOf(
-            entry("/effects <эффект> [уровень]", "Выдать себе постоянный эффект", PluginCommandType.EFFECTS)
+        "acreative.effects" to listOf(
+            entry("/effects <ÑÑ„Ñ„ÐµÐºÑ‚> [ÑƒÑ€Ð¾Ð²ÐµÐ½ÑŒ]", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ ÑÐµÐ±Ðµ Ð¿Ð¾ÑÑ‚Ð¾ÑÐ½Ð½Ñ‹Ð¹ ÑÑ„Ñ„ÐµÐºÑ‚", PluginCommandType.EFFECTS)
         ),
-        "advancedcreative.decorationheads" to listOf(
-            entry("/decorationheads", "Открыть меню декоративных голов", PluginCommandType.DECORATIONHEADS)
+        "acreative.decorationheads" to listOf(
+            entry("/decorationheads", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¼ÐµÐ½ÑŽ Ð´ÐµÐºÐ¾Ñ€Ð°Ñ‚Ð¸Ð²Ð½Ñ‹Ñ… Ð³Ð¾Ð»Ð¾Ð²", PluginCommandType.DECORATIONHEADS)
         ),
-        "advancedcreative.decorationbanners" to listOf(
-            entry("/banner", "Открыть меню флагов и публикации", PluginCommandType.BANNER),
-            entry("/decorationbanners [игрок]", "Открыть галерею опубликованных флагов", PluginCommandType.DECORATIONBANNERS),
-            entry("/myflags", "Открыть личное хранилище флагов", PluginCommandType.MYFLAGS),
-            entry("/banneredit", "Открыть редактор флагов", PluginCommandType.BANNEREDIT)
+        "acreative.decorationbanners" to listOf(
+            entry("/banner", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð¼ÐµÐ½ÑŽ Ñ„Ð»Ð°Ð³Ð¾Ð² Ð¸ Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ°Ñ†Ð¸Ð¸", PluginCommandType.BANNER),
+            entry("/decorationbanners [Ð¸Ð³Ñ€Ð¾Ðº]", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð³Ð°Ð»ÐµÑ€ÐµÑŽ Ð¾Ð¿ÑƒÐ±Ð»Ð¸ÐºÐ¾Ð²Ð°Ð½Ð½Ñ‹Ñ… Ñ„Ð»Ð°Ð³Ð¾Ð²", PluginCommandType.DECORATIONBANNERS),
+            entry("/myflags", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð»Ð¸Ñ‡Ð½Ð¾Ðµ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ñ„Ð»Ð°Ð³Ð¾Ð²", PluginCommandType.MYFLAGS),
+            entry("/banneredit", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¾Ñ€ Ñ„Ð»Ð°Ð³Ð¾Ð²", PluginCommandType.BANNEREDIT)
         ),
-        "advancedcreative.glide" to listOf(
-            entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
+        "acreative.glide" to listOf(
+            entry("/glide", "ÐŸÐµÑ€ÐµÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð°Ñ€ÐµÐ½Ð¸Ðµ Ð±ÐµÐ· ÑÐ»Ð¸Ñ‚Ñ€", PluginCommandType.GLIDE)
         ),
-        "advancedcreative.gravity" to listOf(
-            entry("/gravity <значение>", "Изменить гравитацию", PluginCommandType.GRAVITY)
+        "acreative.gravity" to listOf(
+            entry("/gravity <Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ>", "Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ð³Ñ€Ð°Ð²Ð¸Ñ‚Ð°Ñ†Ð¸ÑŽ", PluginCommandType.GRAVITY)
         ),
-        "advancedcreative.sneeze" to listOf(
-            entry("/sneeze", "Чихнуть", PluginCommandType.SNEEZE)
+        "acreative.sneeze" to listOf(
+            entry("/sneeze", "Ð§Ð¸Ñ…Ð½ÑƒÑ‚ÑŒ", PluginCommandType.SNEEZE)
         ),
-        "advancedcreative.edit" to listOf(
-            entry("/edit", "Открыть редактор предмета", PluginCommandType.EDIT)
+        "acreative.edit" to listOf(
+            entry("/edit", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ€ÐµÐ´Ð°ÐºÑ‚Ð¾Ñ€ Ð¿Ñ€ÐµÐ´Ð¼ÐµÑ‚Ð°", PluginCommandType.EDIT)
         ),
-        "advancedcreative.freeze" to listOf(
-            entry("/freeze", "Заморозить себя", PluginCommandType.FREEZE)
+        "acreative.freeze" to listOf(
+            entry("/freeze", "Ð—Ð°Ð¼Ð¾Ñ€Ð¾Ð·Ð¸Ñ‚ÑŒ ÑÐµÐ±Ñ", PluginCommandType.FREEZE)
         ),
-        "advancedcreative.resize" to listOf(
-            entry("/resize <значение>", "Изменить размер персонажа", PluginCommandType.RESIZE)
+        "acreative.resize" to listOf(
+            entry("/resize <Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ>", "Ð˜Ð·Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ Ñ€Ð°Ð·Ð¼ÐµÑ€ Ð¿ÐµÑ€ÑÐ¾Ð½Ð°Ð¶Ð°", PluginCommandType.RESIZE)
         ),
-        "advancedcreative.paint" to listOf(
-            entry("/paint [1x1-4x4]", "Открыть режим рисования", PluginCommandType.PAINT)
+        "acreative.paint" to listOf(
+            entry("/paint [1x1-4x4]", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ñ€ÐµÐ¶Ð¸Ð¼ Ñ€Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ñ", PluginCommandType.PAINT)
         ),
-        "advancedcreative.glow" to listOf(
-            entry("/glow", "Переключить свечение", PluginCommandType.GLOW)
+        "acreative.glow" to listOf(
+            entry("/glow", "ÐŸÐµÑ€ÐµÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ ÑÐ²ÐµÑ‡ÐµÐ½Ð¸Ðµ", PluginCommandType.GLOW)
         ),
-        "advancedcreative.disguise" to listOf(
-            entry("/disguise <существо> [-self|-noself]", "Превратиться в существо", PluginCommandType.DISGUISE)
+        "acreative.disguise" to listOf(
+            entry("/disguise <ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾> [-self|-noself]", "ÐŸÑ€ÐµÐ²Ñ€Ð°Ñ‚Ð¸Ñ‚ÑŒÑÑ Ð² ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾", PluginCommandType.DISGUISE)
         ),
-        "advancedcreative.sithead" to listOf(
-            entry("/sithead toggle", "Переключить посадку на голову по клику", PluginCommandType.SITHEAD)
+        "acreative.sithead" to listOf(
+            entry("/sithead toggle", "ÐŸÐµÑ€ÐµÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð¾ÑÐ°Ð´ÐºÑƒ Ð½Ð° Ð³Ð¾Ð»Ð¾Ð²Ñƒ Ð¿Ð¾ ÐºÐ»Ð¸ÐºÑƒ", PluginCommandType.SITHEAD)
         ),
-        "advancedcreative.spit" to listOf(
-            entry("/spit", "Плюнуть", PluginCommandType.SPIT)
+        "acreative.spit" to listOf(
+            entry("/spit", "ÐŸÐ»ÑŽÐ½ÑƒÑ‚ÑŒ", PluginCommandType.SPIT)
         ),
-        "advancedcreative.piss" to listOf(
-            entry("/piss", "Пописсать", PluginCommandType.PISS)
+        "acreative.piss" to listOf(
+            entry("/piss", "ÐŸÐ¾Ð¿Ð¸ÑÑÐ°Ñ‚ÑŒ", PluginCommandType.PISS)
         ),
-        "advancedcreative.disguise.nick" to listOf(
-            entry("/disguise <существо> -withnick", "Скрыть ник в облике", PluginCommandType.DISGUISE)
+        "acreative.disguise.nick" to listOf(
+            entry("/disguise <ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾> -withnick", "Ð¡ÐºÑ€Ñ‹Ñ‚ÑŒ Ð½Ð¸Ðº Ð² Ð¾Ð±Ð»Ð¸ÐºÐµ", PluginCommandType.DISGUISE)
         ),
-        "advancedcreative.disguise.extended" to listOf(
-            entry("/disguise <существо>", "Использовать расширенный список обликов", PluginCommandType.DISGUISE)
+        "acreative.disguise.extended" to listOf(
+            entry("/disguise <ÑÑƒÑ‰ÐµÑÑ‚Ð²Ð¾>", "Ð˜ÑÐ¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÑŒ Ñ€Ð°ÑÑˆÐ¸Ñ€ÐµÐ½Ð½Ñ‹Ð¹ ÑÐ¿Ð¸ÑÐ¾Ðº Ð¾Ð±Ð»Ð¸ÐºÐ¾Ð²", PluginCommandType.DISGUISE)
         ),
-        "advancedcreative.acreative" to listOf(
-            entry("/acreative", "Управление системами и служебными функциями", PluginCommandType.ACREATIVE)
+        "acreative.acreative" to listOf(
+            entry("/acreative", "Ð£Ð¿Ñ€Ð°Ð²Ð»ÐµÐ½Ð¸Ðµ ÑÐ¸ÑÑ‚ÐµÐ¼Ð°Ð¼Ð¸ Ð¸ ÑÐ»ÑƒÐ¶ÐµÐ±Ð½Ñ‹Ð¼Ð¸ Ñ„ÑƒÐ½ÐºÑ†Ð¸ÑÐ¼Ð¸", PluginCommandType.ACREATIVE)
         ),
-        "advancedcreative.sithead.other" to listOf(
-            entry("/sithead <цель> [игрок]", "Посадить игрока на голову другого", PluginCommandType.SITHEAD)
+        "acreative.sithead.other" to listOf(
+            entry("/sithead <Ñ†ÐµÐ»ÑŒ> [Ð¸Ð³Ñ€Ð¾Ðº]", "ÐŸÐ¾ÑÐ°Ð´Ð¸Ñ‚ÑŒ Ð¸Ð³Ñ€Ð¾ÐºÐ° Ð½Ð° Ð³Ð¾Ð»Ð¾Ð²Ñƒ Ð´Ñ€ÑƒÐ³Ð¾Ð³Ð¾", PluginCommandType.SITHEAD)
         ),
-        "advancedcreative.freeze.other" to listOf(
-            entry("/freeze <игрок>", "Заморозить другого игрока", PluginCommandType.FREEZE)
+        "acreative.freeze.other" to listOf(
+            entry("/freeze <Ð¸Ð³Ñ€Ð¾Ðº>", "Ð—Ð°Ð¼Ð¾Ñ€Ð¾Ð·Ð¸Ñ‚ÑŒ Ð´Ñ€ÑƒÐ³Ð¾Ð³Ð¾ Ð¸Ð³Ñ€Ð¾ÐºÐ°", PluginCommandType.FREEZE)
         ),
-        "advancedcreative.effects.other" to listOf(
-            entry("/effects <эффект> [уровень] [игрок]", "Выдать постоянный эффект другому игроку", PluginCommandType.EFFECTS)
+        "acreative.effects.other" to listOf(
+            entry("/effects <ÑÑ„Ñ„ÐµÐºÑ‚> [ÑƒÑ€Ð¾Ð²ÐµÐ½ÑŒ] [Ð¸Ð³Ñ€Ð¾Ðº]", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ Ð¿Ð¾ÑÑ‚Ð¾ÑÐ½Ð½Ñ‹Ð¹ ÑÑ„Ñ„ÐµÐºÑ‚ Ð´Ñ€ÑƒÐ³Ð¾Ð¼Ñƒ Ð¸Ð³Ñ€Ð¾ÐºÑƒ", PluginCommandType.EFFECTS)
         ),
-        "advancedcreative.paint.moderation" to listOf(
-            entry("/paint ban <игрок> [причина]", "Выдать или снять бан на рисование", PluginCommandType.PAINT),
-            entry("/paint banlist", "Открыть список банов рисования", PluginCommandType.PAINT)
+        "acreative.paint.moderation" to listOf(
+            entry("/paint ban <Ð¸Ð³Ñ€Ð¾Ðº> [Ð¿Ñ€Ð¸Ñ‡Ð¸Ð½Ð°]", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ Ð¸Ð»Ð¸ ÑÐ½ÑÑ‚ÑŒ Ð±Ð°Ð½ Ð½Ð° Ñ€Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ðµ", PluginCommandType.PAINT),
+            entry("/paint banlist", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº Ð±Ð°Ð½Ð¾Ð² Ñ€Ð¸ÑÐ¾Ð²Ð°Ð½Ð¸Ñ", PluginCommandType.PAINT)
         ),
-        "advancedcreative.decorationbanners.moderation" to listOf(
-            entry("/banner ban", "Выдать или снять бан с узора в руке", PluginCommandType.BANNER),
-            entry("/banner banlist", "Открыть список забаненных узоров", PluginCommandType.BANNER),
-            entry("/banner banuser <игрок> [причина]", "Выдать или снять бан с игрока", PluginCommandType.BANNER),
-            entry("/banner banuserlist", "Открыть список забаненных игроков", PluginCommandType.BANNER),
-            entry("/decorationbanners [игрок] [-m]", "Открыть галерею флагов в режиме модерации", PluginCommandType.DECORATIONBANNERS)
+        "acreative.decorationbanners.moderation" to listOf(
+            entry("/banner ban", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ Ð¸Ð»Ð¸ ÑÐ½ÑÑ‚ÑŒ Ð±Ð°Ð½ Ñ ÑƒÐ·Ð¾Ñ€Ð° Ð² Ñ€ÑƒÐºÐµ", PluginCommandType.BANNER),
+            entry("/banner banlist", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº Ð·Ð°Ð±Ð°Ð½ÐµÐ½Ð½Ñ‹Ñ… ÑƒÐ·Ð¾Ñ€Ð¾Ð²", PluginCommandType.BANNER),
+            entry("/banner banuser <Ð¸Ð³Ñ€Ð¾Ðº> [Ð¿Ñ€Ð¸Ñ‡Ð¸Ð½Ð°]", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ Ð¸Ð»Ð¸ ÑÐ½ÑÑ‚ÑŒ Ð±Ð°Ð½ Ñ Ð¸Ð³Ñ€Ð¾ÐºÐ°", PluginCommandType.BANNER),
+            entry("/banner banuserlist", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ ÑÐ¿Ð¸ÑÐ¾Ðº Ð·Ð°Ð±Ð°Ð½ÐµÐ½Ð½Ñ‹Ñ… Ð¸Ð³Ñ€Ð¾ÐºÐ¾Ð²", PluginCommandType.BANNER),
+            entry("/decorationbanners [Ð¸Ð³Ñ€Ð¾Ðº] [-m]", "ÐžÑ‚ÐºÑ€Ñ‹Ñ‚ÑŒ Ð³Ð°Ð»ÐµÑ€ÐµÑŽ Ñ„Ð»Ð°Ð³Ð¾Ð² Ð² Ñ€ÐµÐ¶Ð¸Ð¼Ðµ Ð¼Ð¾Ð´ÐµÑ€Ð°Ñ†Ð¸Ð¸", PluginCommandType.DECORATIONBANNERS)
         ),
-        "advancedcreative.grab" to listOf(
-            entry("/grab <игрок> [-force]", "Схватить игрока перед собой", PluginCommandType.GRAB)
+        "acreative.grab" to listOf(
+            entry("/grab <Ð¸Ð³Ñ€Ð¾Ðº> [-force]", "Ð¡Ñ…Ð²Ð°Ñ‚Ð¸Ñ‚ÑŒ Ð¸Ð³Ñ€Ð¾ÐºÐ° Ð¿ÐµÑ€ÐµÐ´ ÑÐ¾Ð±Ð¾Ð¹", PluginCommandType.GRAB)
         ),
-        "advancedcreative.slap" to listOf(
-            entry("/slap", "Переключить режим пощечин", PluginCommandType.SLAP)
+        "acreative.slap" to listOf(
+            entry("/slap", "ÐŸÐµÑ€ÐµÐºÐ»ÑŽÑ‡Ð¸Ñ‚ÑŒ Ñ€ÐµÐ¶Ð¸Ð¼ Ð¿Ð¾Ñ‰ÐµÑ‡Ð¸Ð½", PluginCommandType.SLAP)
         ),
-        "advancedcreative.jar" to listOf(
-            entry("/jar <игрок> [-const]", "Выдать банку для поимки игрока", PluginCommandType.JAR)
+        "acreative.jar" to listOf(
+            entry("/jar <Ð¸Ð³Ñ€Ð¾Ðº> [-const]", "Ð’Ñ‹Ð´Ð°Ñ‚ÑŒ Ð±Ð°Ð½ÐºÑƒ Ð´Ð»Ñ Ð¿Ð¾Ð¸Ð¼ÐºÐ¸ Ð¸Ð³Ñ€Ð¾ÐºÐ°", PluginCommandType.JAR)
         )
     )
 
@@ -141,28 +141,32 @@ class AhelpPageService(
         val totalPages = pages.size
 
         return buildString {
-            appendLine("<#FFD700><st>                      </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                      </st>")
-            appendLine("<#EDC800>Доступно для ${roleLabel(currentPage.role)}")
+            appendLine("<#FFD700><st>                      </st><<#FFE68A><b> ÐŸÐ¾Ð»ÐµÐ·Ð½Ñ‹Ðµ ÐºÐ¾Ð¼Ð°Ð½Ð´Ñ‹ </b><#FFD700>><st>                      </st>")
+            appendLine("<#EDC800>Ð”Ð¾ÑÑ‚ÑƒÐ¿Ð½Ð¾ Ð´Ð»Ñ ${roleLabel(currentPage.role)}")
             currentPage.entries.forEach { entry ->
-                appendLine("<#C7A300> ● <#FFE68A>${escapeMiniMessage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
+                appendLine("<#C7A300> â— <#FFE68A>${escapeMiniMessage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
             }
             appendLine("<#FFD700><st>                           </st> <st>                    </st> <st>          </st>")
-            append("<#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>→ ( ${buildNavigation(currentPageNumber, totalPages)} <#FFD700>)")
+            append("<#FFD700>â– <#FFE68A>Ð¡Ñ‚Ñ€Ð°Ð½Ð¸Ñ†Ð°: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>â†’ ( ${buildNavigation(currentPageNumber, totalPages)} <#FFD700>)")
         }.trimEnd()
     }
 
     private fun buildPages(player: Player): List<HelpPage> {
         return hooker.permissionManager.orderedRoles()
-            .filter { role -> shouldIncludeRoleSection(player, role) }
             .flatMap { role ->
-                val entries = role.permissions
-                    .asSequence()
-                    .flatMap { permission -> helpEntriesByPermission[permission.lowercase()].orEmpty().asSequence() }
-                    .filter(::isEnabled)
-                    .toList()
+                val entries = buildRoleEntries(player, role)
 
                 entries.chunked(PAGE_SIZE).map { chunk -> HelpPage(role = role, entries = chunk) }
             }
+    }
+
+    private fun buildRoleEntries(player: Player, role: PermissionManager.Role): List<HelpEntry> {
+        return role.permissions
+            .asSequence()
+            .filter { permission -> shouldIncludePermission(player, role, permission) }
+            .flatMap { permission -> helpEntriesByPermission[permission.lowercase()].orEmpty().asSequence() }
+            .filter(::isEnabled)
+            .toList()
     }
 
     private fun isEnabled(entry: HelpEntry): Boolean {
@@ -219,10 +223,10 @@ class AhelpPageService(
 
     private fun buildEmptyState(): String {
         return """
-            <#FFD700><st>                      </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                      </st>
-            <#EDC800>Для вас сейчас нет доступных команд
+            <#FFD700><st>                      </st><<#FFE68A><b> ÐŸÐ¾Ð»ÐµÐ·Ð½Ñ‹Ðµ ÐºÐ¾Ð¼Ð°Ð½Ð´Ñ‹ </b><#FFD700>><st>                      </st>
+            <#EDC800>Ð”Ð»Ñ Ð²Ð°Ñ ÑÐµÐ¹Ñ‡Ð°Ñ Ð½ÐµÑ‚ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð½Ñ‹Ñ… ÐºÐ¾Ð¼Ð°Ð½Ð´
             <#FFD700><st>                           </st> <st>                    </st> <st>          </st>
-            <#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>1/1
+            <#FFD700>â– <#FFE68A>Ð¡Ñ‚Ñ€Ð°Ð½Ð¸Ñ†Ð°: <#FFF3E0>1/1
         """.trimIndent()
     }
 
@@ -232,12 +236,12 @@ class AhelpPageService(
             .replace("<", "\\<")
     }
 
-    private fun shouldIncludeRoleSection(player: Player, role: PermissionManager.Role): Boolean {
-        if (role.key != MODER_ROLE_KEY) {
-            return true
+    private fun shouldIncludePermission(player: Player, role: PermissionManager.Role, permission: String): Boolean {
+        return if (role.key == MODER_ROLE_KEY) {
+            player.hasPermission(permission)
+        } else {
+            true
         }
-
-        return role.rankPermissions.any(player::hasPermission) || role.permissions.any(player::hasPermission)
     }
 
     private fun entry(usage: String, description: String, commandType: PluginCommandType): HelpEntry {
@@ -249,6 +253,7 @@ class AhelpPageService(
         const val PLAYER_ROLE_KEY = "player"
         const val MODER_ROLE_KEY = "moder"
         const val LEGACY_PLAYER_PREFIX = "<#FFF3E0>Player"
-        const val PLAYER_HELP_PREFIX = "<#8C8C8C><b>ɢᴀᴍᴇʀ</b>"
+        const val PLAYER_HELP_PREFIX = "<#8C8C8C><b>É¢á´€á´á´‡Ê€</b>"
     }
 }
+

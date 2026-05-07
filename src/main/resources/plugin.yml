@@ -1,4 +1,4 @@
-name: ${name}
+﻿name: ${name}
 version: ${version}
 main: com.ratger.acreative.AdvancedCreative
 api-version: '1.21'
@@ -109,118 +109,119 @@ commands:
     usage: /acreative <memory|toggle <system>|status toggle|heads restore_from_dat|heads restore_from_api>
 
 permissions:
-  advancedcreative.ahelp:
+  acreative.ahelp:
     description: Allows using /ahelp
     default: op
-  advancedcreative.itemdb:
+  acreative.itemdb:
     description: Allows using /itemdb
     default: op
-  advancedcreative.decorationbanners:
+  acreative.decorationbanners:
     description: Allows using the entire banner system including /banner, /decorationbanners, /myflags and /banneredit
     default: op
-  advancedcreative.decorationbanners.moderation:
+  acreative.decorationbanners.moderation:
     description: Allows banner moderation actions in /banner and moderation mode in /decorationbanners
     default: op
-  advancedcreative.decorationbanners.storage_bypass:
+  acreative.decorationbanners.storage_bypass:
     description: Allows infinite personal banner storage
     default: op
-  advancedcreative.decorationbanners.post_bypass:
+  acreative.decorationbanners.post_bypass:
     description: Allows infinite published banner limit
     default: op
-  advancedcreative.sit:
+  acreative.sit:
     description: Allows using /sit
     default: op
-  advancedcreative.sithead:
+  acreative.sithead:
     description: Allows to sit on head of other player & using /sithead
     default: op
-  advancedcreative.sithead.other:
+  acreative.sithead.other:
     description: Allows to sit player on another player
     default: op
-  advancedcreative.lay:
+  acreative.lay:
     description: Allows using /lay
     default: op
-  advancedcreative.crawl:
+  acreative.crawl:
     description: Allows using /crawl
     default: op
-  advancedcreative.hide:
+  acreative.hide:
     description: Allows using /hide
     default: op
-  advancedcreative.hide.bypass:
+  acreative.hide.bypass:
     description: Prevents hiding the player
     default: op
-  advancedcreative.sneeze:
+  acreative.sneeze:
     description: Allows using /sneeze
     default: op
-  advancedcreative.glide:
+  acreative.glide:
     description: Allows using /glide
     default: op
-  advancedcreative.gravity:
+  acreative.gravity:
     description: Allows using /gravity
     default: op
-  advancedcreative.resize:
+  acreative.resize:
     description: Allows using /resize
     default: op
-  advancedcreative.strength:
+  acreative.strength:
     description: Allows using /strength
     default: op
-  advancedcreative.health:
+  acreative.health:
     description: Allows using /health
     default: op
-  advancedcreative.freeze:
+  acreative.freeze:
     description: Allows using /freeze
     default: op
-  advancedcreative.freeze.other:
+  acreative.freeze.other:
     description: Allows using /freeze <player>
     default: op
-  advancedcreative.glow:
+  acreative.glow:
     description: Allows using /glow
     default: op
-  advancedcreative.spit:
+  acreative.spit:
     description: Allows using /spit
     default: op
-  advancedcreative.piss:
+  acreative.piss:
     description: Allows using /piss
     default: op
-  advancedcreative.disguise:
+  acreative.disguise:
     description: Allows using /disguise
     default: op
-  advancedcreative.disguise.extended:
+  acreative.disguise.extended:
     description: Allows using /disguise & all types
     default: op
-  advancedcreative.disguise.nick:
+  acreative.disguise.nick:
     description: Allows using /disguise with nickname visibility flags
     default: op
-  advancedcreative.effects:
+  acreative.effects:
     description: Allows using /effects
     default: op
-  advancedcreative.paint:
+  acreative.paint:
     description: Allows using /paint
     default: op
-  advancedcreative.paint.bypass:
+  acreative.paint.bypass:
     description: Bypass plot-paint flag restrictions
     default: op
-  advancedcreative.paint.moderation:
+  acreative.paint.moderation:
     description: Allows using paint moderation commands
     default: op
-  advancedcreative.effects.other:
+  acreative.effects.other:
     description: Allows using /effects & target
     default: op
-  advancedcreative.jar:
+  acreative.jar:
     description: Allows using /jar
     default: op
-  advancedcreative.grab:
+  acreative.grab:
     description: Allows using /grab
     default: op
-  advancedcreative.slap:
+  acreative.slap:
     description: Allows using /slap
     default: op
 
-  advancedcreative.edit:
+  acreative.edit:
     description: Allows using /edit
     default: op
-  advancedcreative.decorationheads:
+  acreative.decorationheads:
     description: Allows using /decorationheads
     default: op
-  advancedcreative.acreative:
+  acreative.acreative:
     description: Allows using /acreative
     default: op
+

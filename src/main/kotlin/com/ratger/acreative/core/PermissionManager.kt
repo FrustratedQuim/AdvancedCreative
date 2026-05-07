@@ -1,4 +1,4 @@
-package com.ratger.acreative.core
+﻿package com.ratger.acreative.core
 
 import com.ratger.acreative.commands.PluginCommandType
 import org.bukkit.entity.Player
@@ -65,31 +65,6 @@ class PermissionManager(private val hooker: FunctionHooker) {
 
     fun defaultRoleKey(): String = roleOrder.firstOrNull() ?: "player"
 
-    fun resolveHighestRole(player: Player): Role? {
-        val ordered = orderedRoles()
-        if (ordered.isEmpty()) {
-            return null
-        }
-
-        var highestRole = ordered.first()
-        ordered.forEach { role ->
-            if (role.rankPermissions.any(player::hasPermission)) {
-                highestRole = role
-            }
-        }
-        return highestRole
-    }
-
-    fun hasAtLeastRole(player: Player, requiredRoleKey: String): Boolean {
-        val requiredIndex = roleOrder.indexOf(requiredRoleKey.lowercase())
-        if (requiredIndex < 0) {
-            return false
-        }
-        val currentRole = resolveHighestRole(player) ?: return false
-        val currentIndex = roleOrder.indexOf(currentRole.key)
-        return currentIndex >= requiredIndex
-    }
-
     fun sendPermissionDenied(player: Player, permissionOrCommand: String) {
         val role = getRequiredRole(permissionOrCommand)
         if (role != null && !role.display.equals(NONE_DISPLAY, ignoreCase = true)) {
@@ -104,13 +79,13 @@ class PermissionManager(private val hooker: FunctionHooker) {
     }
 
     fun getPermissionNodeForCommand(command: String): String {
-        return PluginCommandType.fromId(command)?.permissionNode ?: "advancedcreative.$command"
+        return PluginCommandType.fromId(command)?.permissionNode ?: "acreative.$command"
     }
 
     private fun normalizePermissionKey(permissionOrCommand: String): String {
         val normalized = permissionOrCommand.lowercase()
         return if ('.' in normalized) {
-            if (normalized.startsWith("advancedcreative.")) normalized else "advancedcreative.$normalized"
+            if (normalized.startsWith("acreative.")) normalized else "acreative.$normalized"
         } else {
             getPermissionNodeForCommand(normalized).lowercase()
         }
@@ -126,3 +101,4 @@ class PermissionManager(private val hooker: FunctionHooker) {
         const val NONE_DISPLAY = "none"
     }
 }
+

@@ -1,4 +1,4 @@
-package com.ratger.acreative.commands.freeze
+﻿package com.ratger.acreative.commands.freeze
 
 import com.ratger.acreative.commands.ExecutableCommand
 import com.ratger.acreative.commands.PluginCommandType
@@ -11,7 +11,7 @@ class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
     override fun handle(player: Player, args: Array<out String>) = hooker.freezeManager.prepareToFreezePlayer(player, args.firstOrNull())
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
-        return if (sender.hasPermission("advancedcreative.freeze.other")) {
+        return if (sender.hasPermission("acreative.freeze.other")) {
             if (args.size == 1 || args.size == 2) {
                 Bukkit.getOnlinePlayers()
                     .map { it.name }
@@ -24,3 +24,4 @@ class FreezeCommand(hooker: FunctionHooker) : ExecutableCommand(hooker, PluginCo
         }
     }
 }
+
