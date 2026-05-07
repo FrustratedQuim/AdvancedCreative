@@ -218,6 +218,12 @@ permissions:
   acreative.edit:
     description: Allows using /edit
     default: op
+  acreative.plots.edit:
+    description: Allows using /plot edit and /plot e
+    default: op
+  acreative.plots.usage:
+    description: Allows using /plot usage and /plot us
+    default: op
   acreative.decorationheads:
     description: Allows using /decorationheads
     default: op

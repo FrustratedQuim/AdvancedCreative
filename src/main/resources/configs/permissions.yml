@@ -12,6 +12,8 @@
       - "acreative.strength"
       - "acreative.health"
       - "acreative.effects"
+      - "acreative.plots.edit"
+      - "acreative.plots.usage"
       - "acreative.decorationheads"
       - "acreative.decorationbanners"
   rise:

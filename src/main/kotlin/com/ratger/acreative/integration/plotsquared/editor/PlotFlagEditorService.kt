@@ -169,6 +169,10 @@ class PlotFlagEditorService(
         if (tokens.size < 2) return false
         if (tokens[0].lowercase() !in ROOT_ALIASES) return false
         if (!tokens[1].equals("edit", ignoreCase = true) && !tokens[1].equals("e", ignoreCase = true)) return false
+        if (!player.hasPermission(PLOT_EDIT_PERMISSION)) {
+            hooker.permissionManager.sendPermissionDenied(player, PLOT_EDIT_PERMISSION)
+            return true
+        }
 
         openEditor(player)
         return true
@@ -1436,6 +1440,7 @@ class PlotFlagEditorService(
         private const val CONFIG_ROLE_FLAGS = "plotsquared.edit.role-flags"
         private const val CONFIG_ADMIN_PERMISSION = "plotsquared.edit.plotEditAdminAccess"
         private const val DEFAULT_ADMIN_PERMISSION = "acreative.acreative"
+        private const val PLOT_EDIT_PERMISSION = "acreative.plots.edit"
         private const val APPLY_TIMEOUT_SECONDS = 30
         private const val APPLY_TIMEOUT_TICKS = APPLY_TIMEOUT_SECONDS * 20L
         private const val FLAG_MUTATION_COOLDOWN_TICKS = 2L

@@ -159,7 +159,9 @@ enum class MessageKey {
     HEAD_RESTORE_ALREADY_POPULATED,
     EDIT_NOT_EDITABLE,
     PLOT_EDIT_NOT_ON_PLOT,
-    PLOT_EDIT_NOT_OWNER
+    PLOT_EDIT_NOT_OWNER,
+    PLOT_ERROR_UNKNOWN_PLAYER,
+    PLOT_USAGE_INFO
 }
 
 object MessageCatalog {
@@ -313,6 +315,8 @@ object MessageCatalog {
         MessageKey.HEAD_RESTORE_ALREADY_POPULATED to "<dark_red>▍ <#FF1500>База голов уже заполнена",
         MessageKey.EDIT_NOT_EDITABLE to "<dark_red>▍ <#FF1500>Невозможно редактировать",
         MessageKey.PLOT_EDIT_NOT_ON_PLOT to "<dark_red>▍ <#FF1500>Вы должны быть на участке",
-        MessageKey.PLOT_EDIT_NOT_OWNER to "<dark_red>▍ <#FF1500>Вы не являетесь владельцем участка"
+        MessageKey.PLOT_EDIT_NOT_OWNER to "<dark_red>▍ <#FF1500>Вы не являетесь владельцем участка",
+        MessageKey.PLOT_ERROR_UNKNOWN_PLAYER to "<dark_gray>[<gold>Creative<dark_gray>] <red>Неизвестный игрок",
+        MessageKey.PLOT_USAGE_INFO to "<dark_gray>[<gold>Creative<dark_gray>] <dark_aqua>Количество ваших участков: <gold>%occupied%/%total%"
     )
 }

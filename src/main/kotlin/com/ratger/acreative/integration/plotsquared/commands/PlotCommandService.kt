@@ -1,11 +1,11 @@
 package com.ratger.acreative.integration.plotsquared.commands
 
-import com.plotsquared.bukkit.util.BukkitUtil
 import com.plotsquared.core.PlotSquared
-import com.plotsquared.core.configuration.caption.StaticCaption
+import com.plotsquared.core.configuration.Settings
 import com.plotsquared.core.database.DBFunc
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
+import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -87,6 +87,9 @@ class PlotCommandService(
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val registered = registeredCommands[command.name.lowercase(Locale.ROOT)] ?: return false
         val player = sender as? Player ?: return registered.executor.onCommand(sender, command, label, args)
+        if (handleCustomSubcommand(player, args)) {
+            return true
+        }
         val rewritten = rewriteArgs(player, args) ?: return true
         val handled = registered.executor.onCommand(sender, command, label, rewritten)
         invalidateHomeCount(PlotPlayer.from(player).uuid)
@@ -162,6 +165,46 @@ class PlotCommandService(
         }
     }
 
+    private fun handleCustomSubcommand(player: Player, args: Array<out String>): Boolean {
+        if (args.isEmpty()) {
+            return false
+        }
+
+        val commandIndex = resolveCommandIndex(args)
+        val subcommand = args.getOrNull(commandIndex)?.lowercase(Locale.ROOT) ?: return false
+        return when (subcommand) {
+            in USAGE_COMMANDS -> {
+                if (!player.hasPermission(PLOT_USAGE_PERMISSION)) {
+                    hooker.permissionManager.sendPermissionDenied(player, PLOT_USAGE_PERMISSION)
+                    return true
+                }
+                sendUsageInfo(player)
+                true
+            }
+            else -> false
+        }
+    }
+
+    private fun sendUsageInfo(player: Player) {
+        val plotPlayer = PlotPlayer.from(player)
+        val occupied = if (Settings.Limit.GLOBAL) {
+            plotPlayer.plotCount
+        } else {
+            val worldName = plotPlayer.location.worldName
+            plotPlayer.getPlotCount(worldName)
+        }
+        val allowed = plotPlayer.allowedPlots
+        val totalText = if (allowed >= Settings.Limit.MAX_PLOTS) "∞" else allowed.toString()
+        hooker.messageManager.sendChat(
+            player,
+            MessageKey.PLOT_USAGE_INFO,
+            mapOf(
+                "occupied" to occupied.toString(),
+                "total" to totalText
+            )
+        )
+    }
+
     private fun completeIntercepted(player: Player, args: Array<out String>): List<String>? {
         if (args.isEmpty()) {
             return null
@@ -169,6 +212,9 @@ class PlotCommandService(
 
         val commandIndex = resolveCommandIndex(args)
         val commandName = args.getOrNull(commandIndex)?.lowercase(Locale.ROOT) ?: return null
+        if (args.size == commandIndex + 1) {
+            completeCustomRootCommands(args[commandIndex])?.let { return it }
+        }
 
         return when (commandName) {
             in KNOWN_USER_COMMANDS if args.size == commandIndex + 2 -> {
@@ -200,6 +246,15 @@ class PlotCommandService(
             }
             else -> null
         }
+    }
+
+    private fun completeCustomRootCommands(raw: String): List<String>? {
+        val prefix = raw.trim()
+        val matches = ROOT_CUSTOM_SUBCOMMANDS.asSequence()
+            .filter { it.startsWith(prefix, ignoreCase = true) }
+            .take(MAX_TAB_RESULTS)
+            .toList()
+        return matches.takeIf { it.isNotEmpty() }
     }
 
     private fun rewriteCsvArgument(
@@ -553,7 +608,7 @@ class PlotCommandService(
     }
 
     private fun sendUnknownPlayer(player: Player) {
-        BukkitUtil.adapt(player).sendMessage(UNKNOWN_PLAYER_CAPTION)
+        hooker.messageManager.sendChat(player, MessageKey.PLOT_ERROR_UNKNOWN_PLAYER)
     }
 
     private fun isPlotSquaredEnabled(): Boolean =
@@ -570,8 +625,6 @@ class PlotCommandService(
         private const val OWNER_CACHE_TTL_MILLIS = 60_000L
         private const val MAX_TAB_RESULTS = 100
 
-        private val UNKNOWN_PLAYER_CAPTION = StaticCaption.of("<dark_gray>[<gold>Creative<dark_gray>] <red>Неизвестный игрок")
-
         private val ROOT_ALIASES = setOf("plots", "p", "plot", "ps", "plotsquared", "p2", "2", "plotme")
         private val EVERYONE_TARGET_COMMANDS = setOf("add", "trust", "t")
         private val KNOWN_USER_COMMANDS = EVERYONE_TARGET_COMMANDS + setOf(
@@ -582,7 +635,10 @@ class PlotCommandService(
         private val KICK_COMMANDS = setOf("kick")
         private val REMOVE_COMMANDS = setOf("remove", "r", "untrust", "ut", "undeny", "ud", "unban")
         private val LIST_COMMANDS = setOf("list", "l", "find", "search")
+        private val USAGE_COMMANDS = setOf("usage", "us")
         private val GRANT_PLAYER_SUBCOMMANDS = setOf("add", "check")
         private val OWNER_SUBCOMMANDS = setOf("owner", "setowner", "so", "seto")
+        private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "e", "usage", "us")
+        private const val PLOT_USAGE_PERMISSION = "acreative.plots.usage"
     }
 }

@@ -53,6 +53,12 @@ class AhelpPageService(
             entry("/myflags", "Открыть свои флаги", PluginCommandType.MYFLAGS),
             entry("/bedit", "Открыть редактор флагов", PluginCommandType.BANNEREDIT)
         ),
+        "acreative.plots.edit" to listOf(
+            entry("/p edit", "Открыть настройки участка", PluginCommandType.GLIDE)
+        ),
+        "acreative.plots.usage" to listOf(
+            entry("/p usage", "Узнать остаток участков", PluginCommandType.GLIDE)
+        ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
         ),
