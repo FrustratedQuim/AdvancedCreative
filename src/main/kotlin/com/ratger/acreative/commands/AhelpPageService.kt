@@ -147,7 +147,7 @@ class AhelpPageService(
                 appendLine("<#C7A300> ● <#FFE68A>${escapeMiniMessage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
             }
             appendLine("<#FFD700><st>                                                                                </st>")
-            append("<#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>→ ( ${buildNavigation(currentPageNumber, totalPages)} <#FFD700>)")
+            append("<#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>→ (${buildNavigation(currentPageNumber, totalPages)}<#FFD700>)")
         }.trimEnd()
     }
 
@@ -174,12 +174,15 @@ class AhelpPageService(
     }
 
     private fun buildNavigation(currentPage: Int, totalPages: Int): String {
-        return visiblePageNumbers(currentPage, totalPages).joinToString(" <#FFD700>| ") { item ->
-            when (item) {
-                null -> "<#FFF3E0>..."
-                currentPage -> "<#FFF3E0><u>$item</u></#FFF3E0>"
-                else -> "<#FFF3E0><click:run_command:'/ahelp $item'>$item</click></#FFF3E0>"
-            }
+        return visiblePageNumbers(currentPage, totalPages)
+            .joinToString("<#FFD700>|") { item -> renderNavigationToken(item, currentPage) }
+    }
+
+    private fun renderNavigationToken(page: Int?, currentPage: Int): String {
+        return when (page) {
+            null -> "<#FFF3E0> ... "
+            currentPage -> "<#FFF3E0> <u>$page</u> </#FFF3E0>"
+            else -> "<#FFF3E0><click:run_command:'/ahelp $page'> $page </click></#FFF3E0>"
         }
     }
 
