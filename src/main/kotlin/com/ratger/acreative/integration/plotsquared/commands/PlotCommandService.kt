@@ -100,9 +100,10 @@ class PlotCommandService(
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String>? {
         val registered = registeredCommands[command.name.lowercase(Locale.ROOT)] ?: return null
-        val player = sender as? Player ?: return registered.tabCompleter?.onTabComplete(sender, command, alias, args)
-        completeIntercepted(player, args)?.let { return it }
-        return registered.tabCompleter?.onTabComplete(sender, command, alias, args)
+        val baseCompletions = registered.tabCompleter?.onTabComplete(sender, command, alias, args)
+        val player = sender as? Player ?: return baseCompletions
+        completeIntercepted(player, args, baseCompletions.orEmpty())?.let { return it }
+        return baseCompletions
     }
 
     private fun rewriteArgs(player: Player, args: Array<out String>): Array<String>? {
@@ -291,7 +292,7 @@ class PlotCommandService(
         )
     }
 
-    private fun completeIntercepted(player: Player, args: Array<out String>): List<String>? {
+    private fun completeIntercepted(player: Player, args: Array<out String>, baseCompletions: List<String>): List<String>? {
         if (args.isEmpty()) {
             return null
         }
@@ -299,7 +300,13 @@ class PlotCommandService(
         val commandIndex = resolveCommandIndex(args)
         val commandName = args.getOrNull(commandIndex)?.lowercase(Locale.ROOT) ?: return null
         if (args.size == commandIndex + 1) {
-            completeCustomRootCommands(args[commandIndex])?.let { return it }
+            val merged = mergeRootCompletions(
+                args[commandIndex],
+                baseCompletions
+            )
+            if (merged.isNotEmpty()) {
+                return merged
+            }
         }
 
         return when (commandName) {
@@ -337,13 +344,20 @@ class PlotCommandService(
         }
     }
 
-    private fun completeCustomRootCommands(raw: String): List<String>? {
-        val prefix = raw.trim()
-        val matches = ROOT_CUSTOM_SUBCOMMANDS.asSequence()
-            .filter { it.startsWith(prefix, ignoreCase = true) }
+    private fun mergeRootCompletions(raw: String, baseCompletions: List<String>): List<String> {
+        val normalizedPrefix = raw.trim()
+        val merged = LinkedHashMap<String, String>()
+        baseCompletions
+            .asSequence()
+            .filter { it.startsWith(normalizedPrefix, ignoreCase = true) }
+            .forEach { merged.putIfAbsent(normalizeNameKey(it), it) }
+        ROOT_CUSTOM_SUBCOMMANDS
+            .asSequence()
+            .filter { it.startsWith(normalizedPrefix, ignoreCase = true) }
+            .forEach { merged.putIfAbsent(normalizeNameKey(it), it) }
+        return merged.values
             .take(MAX_TAB_RESULTS)
             .toList()
-        return matches.takeIf { it.isNotEmpty() }
     }
 
     private fun rewriteCsvArgument(
