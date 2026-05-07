@@ -6,7 +6,6 @@ import com.plotsquared.core.configuration.caption.StaticCaption
 import com.plotsquared.core.database.DBFunc
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
-import com.plotsquared.core.util.query.PlotQuery
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
 import org.bukkit.command.Command
@@ -46,6 +45,7 @@ class PlotCommandService(
     private val ownerNamesByLowerName = LinkedHashMap<String, OwnerNameEntry>()
     private val ownerCacheLock = Any()
     private val pendingWarmups = ConcurrentHashMap.newKeySet<UUID>()
+    private val homeBasePlotCountByOwner = ConcurrentHashMap<UUID, Int>()
 
     @Volatile
     private var ownerCacheUpdatedAt = 0L
@@ -88,7 +88,9 @@ class PlotCommandService(
         val registered = registeredCommands[command.name.lowercase(Locale.ROOT)] ?: return false
         val player = sender as? Player ?: return registered.executor.onCommand(sender, command, label, args)
         val rewritten = rewriteArgs(player, args) ?: return true
-        return registered.executor.onCommand(sender, command, label, rewritten)
+        val handled = registered.executor.onCommand(sender, command, label, rewritten)
+        invalidateHomeCount(PlotPlayer.from(player).uuid)
+        return handled
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<out String>): List<String>? {
@@ -175,6 +177,9 @@ class PlotCommandService(
             in VISIT_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], plotOwnerNames())
             }
+            in VISIT_COMMANDS if args.size == commandIndex + 3 -> {
+                completeVisitTargets(args[commandIndex + 1], args[commandIndex + 2])
+            }
             in HOME_COMMANDS if args.size == commandIndex + 2 -> {
                 completeHomePages(player, args[commandIndex + 1])
             }
@@ -260,6 +265,11 @@ class PlotCommandService(
         return ownerNamesByLowerName[normalizeNameKey(input)]?.name
     }
 
+    private fun resolvePlotOwnerUuid(input: String): UUID? {
+        refreshOwnerCacheIfNeeded()
+        return ownerNamesByLowerName[normalizeNameKey(input)]?.uuid
+    }
+
     private fun resolvePlotScopedUserName(
         player: Player,
         args: Array<out String>,
@@ -301,12 +311,34 @@ class PlotCommandService(
             .toList()
     }
 
+    private fun completeVisitTargets(rawOwner: String, rawTarget: String): List<String> {
+        val ownerUuid = resolvePlotOwnerUuid(rawOwner) ?: return emptyList()
+        val pageCount = homeBasePlotCountByOwner.computeIfAbsent(ownerUuid, ::scanHomeBasePlotCount)
+        if (pageCount <= 0) {
+            return emptyList()
+        }
+
+        val prefix = rawTarget.trim()
+        val numeric = (1..pageCount).asSequence().map(Int::toString)
+        val extras = sequenceOf("last")
+
+        return (numeric + extras)
+            .filter { it.startsWith(prefix, ignoreCase = true) }
+            .take(MAX_TAB_RESULTS)
+            .toList()
+    }
+
     private fun countHomeBasePlots(player: Player): Int {
         val ownerId = PlotPlayer.from(player).uuid
-        return PlotQuery.newQuery()
-            .thatPasses { plot -> plot.isOwner(ownerId) }
-            .whereBasePlot()
-            .count()
+        return homeBasePlotCountByOwner.computeIfAbsent(ownerId, ::scanHomeBasePlotCount)
+    }
+
+    fun invalidateOwnerSuggestions() {
+        invalidateOwnerCache()
+    }
+
+    fun invalidateHomeCount(ownerId: UUID) {
+        homeBasePlotCountByOwner.remove(ownerId)
     }
 
     private fun currentPlotPlayerNames(player: Player, args: Array<out String>): List<String> {
@@ -416,6 +448,21 @@ class PlotCommandService(
             warmupNamesAsync(unresolved, invalidateOwners = true)
         }
     }
+
+    private fun invalidateOwnerCache() {
+        synchronized(ownerCacheLock) {
+            ownerCacheUpdatedAt = 0L
+            ownerNamesByLowerName.clear()
+        }
+    }
+
+    private fun scanHomeBasePlotCount(ownerId: UUID): Int =
+        PlotSquared.get().plotAreaManager.allPlotAreas
+            .sumOf { area ->
+                area.plots.count { plot ->
+                    plot.isBasePlot && plot.isOwner(ownerId)
+                }
+            }
 
     private fun warmupNamesAsync(uuids: Set<UUID>, invalidateOwners: Boolean) {
         if (uuids.isEmpty()) {
