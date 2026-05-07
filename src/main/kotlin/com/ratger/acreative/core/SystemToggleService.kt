@@ -46,6 +46,8 @@ class SystemToggleService(
             ManagedSystem.PAINT -> hooker.paintManagerOrNull()?.releaseAll()
             ManagedSystem.DECORATION_BANNERS -> hooker.bannerSubsystemOrNull()?.menuService?.closeAllSessions()
             ManagedSystem.DECORATION_HEADS -> hooker.subsystemOrNull()?.menuService?.closeAllSessions()
+            ManagedSystem.PLOT_EDIT,
+            ManagedSystem.PLOT_MASSCLAIM -> Unit
         }
     }
 

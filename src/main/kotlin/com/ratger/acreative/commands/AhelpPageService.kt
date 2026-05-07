@@ -59,6 +59,9 @@ class AhelpPageService(
         "acreative.plots.usage" to listOf(
             entry("/p usage", "Узнать остаток участков", PluginCommandType.GLIDE)
         ),
+        "acreative.plots.massclaim" to listOf(
+            entry("/p mc <размер>", "Занять большой участок", PluginCommandType.GLIDE)
+        ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
         ),

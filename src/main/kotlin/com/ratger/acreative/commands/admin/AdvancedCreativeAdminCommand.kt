@@ -37,7 +37,7 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
 
     private fun handleStatus(player: Player, args: List<String>) {
         when (args.firstOrNull()?.lowercase()) {
-            null, "toggle" -> hooker.adminManager.showToggleStatus(player)
+            null -> hooker.adminManager.showToggleStatus(player)
             else -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_ARGUMENT)
         }
     }
@@ -63,9 +63,7 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
                     ManagedSystem.entries.map { it.id }
                         .filter { it.startsWith(args[1], ignoreCase = true) }
                 }
-                args[0].equals("status", ignoreCase = true) -> {
-                    listOf("toggle").filter { it.startsWith(args[1], ignoreCase = true) }
-                }
+                args[0].equals("status", ignoreCase = true) -> emptyList()
                 else -> emptyList()
             }
             else -> emptyList()

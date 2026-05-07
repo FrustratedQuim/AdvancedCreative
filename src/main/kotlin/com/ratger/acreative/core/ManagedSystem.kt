@@ -7,7 +7,9 @@ enum class ManagedSystem(
     EDIT("edit", "edit"),
     PAINT("paint", "paint"),
     DECORATION_BANNERS("decorationbanners", "decorationbanners"),
-    DECORATION_HEADS("decorationheads", "decorationheads");
+    DECORATION_HEADS("decorationheads", "decorationheads"),
+    PLOT_EDIT("plot-edit", "/p edit"),
+    PLOT_MASSCLAIM("plot-massclaim", "/p massclaim");
 
     companion object {
         private val byId = entries.associateBy { it.id.lowercase() }

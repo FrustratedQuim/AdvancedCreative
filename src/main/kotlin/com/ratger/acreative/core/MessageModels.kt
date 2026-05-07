@@ -161,7 +161,13 @@ enum class MessageKey {
     PLOT_EDIT_NOT_ON_PLOT,
     PLOT_EDIT_NOT_OWNER,
     PLOT_ERROR_UNKNOWN_PLAYER,
-    PLOT_USAGE_INFO
+    PLOT_USAGE_INFO,
+    PLOT_MASSCLAIM_UNKNOWN_SIZE,
+    PLOT_MASSCLAIM_MAX_SIZE,
+    PLOT_MASSCLAIM_MIN_SIZE,
+    PLOT_MASSCLAIM_NO_SPACE,
+    PLOT_MASSCLAIM_LIMIT,
+    PLOT_MASSCLAIM_SERVER_UNSTABLE
 }
 
 object MessageCatalog {
@@ -317,6 +323,12 @@ object MessageCatalog {
         MessageKey.PLOT_EDIT_NOT_ON_PLOT to "<dark_red>▍ <#FF1500>Вы должны быть на участке",
         MessageKey.PLOT_EDIT_NOT_OWNER to "<dark_red>▍ <#FF1500>Вы не являетесь владельцем участка",
         MessageKey.PLOT_ERROR_UNKNOWN_PLAYER to "<dark_gray>[<gold>Creative<dark_gray>] <red>Неизвестный игрок",
-        MessageKey.PLOT_USAGE_INFO to "<dark_gray>[<gold>Creative<dark_gray>] <dark_aqua>Количество ваших участков: <gold>%occupied%/%total%"
+        MessageKey.PLOT_USAGE_INFO to "<dark_gray>[<gold>Creative<dark_gray>] <dark_aqua>Количество ваших участков: <gold>%occupied%/%total%",
+        MessageKey.PLOT_MASSCLAIM_UNKNOWN_SIZE to "<dark_gray>[<gold>Creative<dark_gray>] <red>Неизвестный размер",
+        MessageKey.PLOT_MASSCLAIM_MAX_SIZE to "<dark_gray>[<gold>Creative<dark_gray>] <red>Максимальный размер <gold>%max%",
+        MessageKey.PLOT_MASSCLAIM_MIN_SIZE to "<dark_gray>[<gold>Creative<dark_gray>] <red>Минимальный размер <gold>1x1",
+        MessageKey.PLOT_MASSCLAIM_NO_SPACE to "<dark_gray>[<gold>Creative<dark_gray>] <red>Недостаточно места",
+        MessageKey.PLOT_MASSCLAIM_LIMIT to "<dark_gray>[<gold>Creative<dark_gray>] <red>Вы не можете занимать более <gold>%num%</gold> участков.",
+        MessageKey.PLOT_MASSCLAIM_SERVER_UNSTABLE to "<dark_gray>[<gold>Creative<dark_gray>] <red>Сервер нестабилен, попробуйте позже"
     )
 }

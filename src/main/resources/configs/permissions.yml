@@ -38,6 +38,7 @@
       - "group.don_shine_perms"
     permissions:
       - "acreative.paint"
+      - "acreative.plots.massclaim"
   spark:
     display: "<#cd56fc><b>ѕᴘᴀʀᴋ</b>"
     rank-permissions:

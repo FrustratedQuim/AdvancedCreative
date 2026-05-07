@@ -19,6 +19,8 @@ systems:
   paint: true
   decorationbanners: true
   decorationheads: true
+  plot-edit: true
+  plot-massclaim: true
 
 blocked-disguises:
   - ARROW

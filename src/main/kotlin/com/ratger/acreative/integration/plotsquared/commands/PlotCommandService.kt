@@ -5,6 +5,7 @@ import com.plotsquared.core.configuration.Settings
 import com.plotsquared.core.database.DBFunc
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
+import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.FunctionHooker
 import org.bukkit.Bukkit
@@ -46,6 +47,7 @@ class PlotCommandService(
     private val ownerCacheLock = Any()
     private val pendingWarmups = ConcurrentHashMap.newKeySet<UUID>()
     private val homeBasePlotCountByOwner = ConcurrentHashMap<UUID, Int>()
+    private val massClaimLocks = ConcurrentHashMap.newKeySet<String>()
 
     @Volatile
     private var ownerCacheUpdatedAt = 0L
@@ -181,9 +183,93 @@ class PlotCommandService(
                 sendUsageInfo(player)
                 true
             }
+            in MASSCLAIM_COMMANDS -> {
+                if (!hooker.systemToggleService.isEnabled(ManagedSystem.PLOT_MASSCLAIM)) {
+                    hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+                    return true
+                }
+                if (!player.hasPermission(PLOT_MASSCLAIM_PERMISSION)) {
+                    hooker.permissionManager.sendPermissionDenied(player, PLOT_MASSCLAIM_PERMISSION)
+                    return true
+                }
+                handleMassClaim(player, args, commandIndex + 1)
+                true
+            }
             else -> false
         }
     }
+
+
+    private fun handleMassClaim(player: Player, args: Array<out String>, sizeArgIndex: Int) {
+        if (!hooker.serverPerformanceService.isStableForTickSensitiveActivation(MIN_MASSCLAIM_ACTIVATION_TPS)) {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_SERVER_UNSTABLE)
+            return
+        }
+        val sizeToken = args.getOrNull(sizeArgIndex) ?: run {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_UNKNOWN_SIZE); return
+        }
+        val parsed = parseMassClaimSize(sizeToken) ?: run {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_UNKNOWN_SIZE); return
+        }
+        val (w,h)=parsed
+        if (w < 1 || h < 1) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_MIN_SIZE); return }
+        if (w > MAX_MASSCLAIM_SIZE || h > MAX_MASSCLAIM_SIZE) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_MAX_SIZE, mapOf("max" to "${MAX_MASSCLAIM_SIZE}x${MAX_MASSCLAIM_SIZE}")); return }
+        val pp = PlotPlayer.from(player)
+        val base = pp.currentPlot ?: run { hooker.messageManager.sendChat(player, MessageKey.PLOT_EDIT_NOT_ON_PLOT); return }
+        val needed = w*h
+        val occupied = if (Settings.Limit.GLOBAL) pp.plotCount else pp.getPlotCount(pp.location.worldName)
+        val allowed = pp.allowedPlots
+        if (allowed < Settings.Limit.MAX_PLOTS && occupied + needed > allowed) {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_LIMIT, mapOf("num" to allowed.toString())); return
+        }
+        val directions = facingDirections(player)
+        val targets = ArrayList<Plot>()
+        for (dy in 0 until h) for (dx in 0 until w) {
+            val xOff = directions[0] * dx + directions[2] * dy
+            val yOff = directions[1] * dx + directions[3] * dy
+            val plot = base.getRelative(xOff, yOff) ?: run { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
+            if (plot.hasOwner() && !plot.isOwner(pp.uuid)) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
+            targets += plot
+        }
+        val lockKey = buildLockKey(targets)
+        if (!massClaimLocks.add(lockKey)) { hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE); return }
+        try {
+            for (plot in targets) {
+                if (!plot.hasOwner()) {
+                    val claimed = plot.claim(pp, false, null, true, false)
+                    if (!claimed) {
+                        hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE)
+                        return
+                    }
+                }
+            }
+            val baseId = "${base.id.x};${base.id.y}"
+            Bukkit.dispatchCommand(player, "plot $baseId merge all")
+        } finally { massClaimLocks.remove(lockKey) }
+    }
+
+    private fun parseMassClaimSize(raw: String): Pair<Int, Int>? {
+        val token = raw.trim().lowercase(Locale.ROOT).replace('х', 'x')
+        val parts = token.split('x')
+        if (parts.size != 2) return null
+        val w = parts[0].toIntOrNull() ?: return null
+        val h = parts[1].toIntOrNull() ?: return null
+        return w to h
+    }
+
+    private fun facingDirections(player: Player): IntArray {
+        val yaw = player.location.yaw
+        return when (((yaw % 360) + 360).let { ((it + 45) / 90).toInt() % 4 }) {
+            // Bukkit yaw: 0=south, 90=west, 180=north, 270=east
+            // return [forwardX, forwardZ, rightX, rightZ]
+            0 -> intArrayOf(0, 1, -1, 0)
+            1 -> intArrayOf(-1, 0, 0, -1)
+            2 -> intArrayOf(0, -1, 1, 0)
+            else -> intArrayOf(1, 0, 0, 1)
+        }
+    }
+
+    private fun buildLockKey(plots: List<Plot>): String = plots.asSequence().map { "${it.area?.id ?: "unknown"}:${it.id.x};${it.id.y}" }.sorted().joinToString("|")
 
     private fun sendUsageInfo(player: Player) {
         val plotPlayer = PlotPlayer.from(player)
@@ -228,6 +314,9 @@ class PlotCommandService(
             }
             in HOME_COMMANDS if args.size == commandIndex + 2 -> {
                 completeHomePages(player, args[commandIndex + 1])
+            }
+            in MASSCLAIM_COMMANDS if args.size == commandIndex + 2 -> {
+                listOf("2x2", "2x3", "5x5").filter { it.startsWith(args[commandIndex + 1], ignoreCase = true) }
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
@@ -638,7 +727,11 @@ class PlotCommandService(
         private val USAGE_COMMANDS = setOf("usage", "us")
         private val GRANT_PLAYER_SUBCOMMANDS = setOf("add", "check")
         private val OWNER_SUBCOMMANDS = setOf("owner", "setowner", "so", "seto")
-        private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "e", "usage", "us")
+        private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "usage", "massclaim")
+        private val MASSCLAIM_COMMANDS = setOf("massclaim", "mc")
         private const val PLOT_USAGE_PERMISSION = "acreative.plots.usage"
+        private const val PLOT_MASSCLAIM_PERMISSION = "acreative.plots.massclaim"
+        private const val MAX_MASSCLAIM_SIZE = 10
+        private const val MIN_MASSCLAIM_ACTIVATION_TPS = 18.0
     }
 }

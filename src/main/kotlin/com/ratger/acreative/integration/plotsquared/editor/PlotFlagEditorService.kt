@@ -7,6 +7,7 @@ import com.plotsquared.core.plot.PlotId
 import com.plotsquared.core.plot.PlotTitle
 import com.plotsquared.core.plot.flag.PlotFlag
 import com.ratger.acreative.core.FunctionHooker
+import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
@@ -169,6 +170,10 @@ class PlotFlagEditorService(
         if (tokens.size < 2) return false
         if (tokens[0].lowercase() !in ROOT_ALIASES) return false
         if (!tokens[1].equals("edit", ignoreCase = true) && !tokens[1].equals("e", ignoreCase = true)) return false
+        if (!hooker.systemToggleService.isEnabled(ManagedSystem.PLOT_EDIT)) {
+            hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
+            return true
+        }
         if (!player.hasPermission(PLOT_EDIT_PERMISSION)) {
             hooker.permissionManager.sendPermissionDenied(player, PLOT_EDIT_PERMISSION)
             return true
