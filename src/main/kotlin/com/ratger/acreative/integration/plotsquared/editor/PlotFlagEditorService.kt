@@ -597,9 +597,9 @@ class PlotFlagEditorService(
                 buttonFactory.actionButton(
                     material = Material.STRUCTURE_VOID,
                     name = if (active) {
-                        "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}"
+                        "<!i><#C7A300>◎ <#FFD700>${entry.definition.title}"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}"
+                        "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}"
                     },
                     lore = lore,
                     itemModifier = {
@@ -638,7 +638,7 @@ class PlotFlagEditorService(
                 val lore = buildList {
                     preview?.let { add(textPreviewLine(it)) }
                     if (!editable) {
-                        add(roleAccessLine(entry, if (active) "\u27A5" else "\u258D"))
+                        add(roleAccessLine(entry, if (active) "➥" else "▍"))
                         add("")
                     } else {
                         if (active) {
@@ -654,9 +654,9 @@ class PlotFlagEditorService(
                 buttonFactory.actionButton(
                     material = Material.STRUCTURE_VOID,
                     name = when {
-                        active -> "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}"
-                        entry.definition.kind == PlotFlagEntryKind.TITLE_PART -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Стандартный"
-                        else -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
+                        active -> "<!i><#C7A300>◎ <#FFD700>${entry.definition.title}"
+                        entry.definition.kind == PlotFlagEntryKind.TITLE_PART -> "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}: <#FF1500>Стандартный"
+                        else -> "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -697,9 +697,9 @@ class PlotFlagEditorService(
                 buttonFactory.actionButton(
                     material = Material.STRUCTURE_VOID,
                     name = if (active) {
-                        "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}: <#00FF40>$value"
+                        "<!i><#C7A300>◎ <#FFD700>${entry.definition.title}: <#00FF40>$value"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
+                        "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -742,9 +742,9 @@ class PlotFlagEditorService(
                 buttonFactory.actionButton(
                     material = Material.STRUCTURE_VOID,
                     name = if (active) {
-                        "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}: <#00FF40>$value"
+                        "<!i><#C7A300>◎ <#FFD700>${entry.definition.title}: <#00FF40>$value"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
+                        "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -789,9 +789,9 @@ class PlotFlagEditorService(
                 buttonFactory.actionButton(
                     material = Material.STRUCTURE_VOID,
                     name = if (active) {
-                        "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}: <#00FF40>${values.size}"
+                        "<!i><#C7A300>◎ <#FFD700>${entry.definition.title}: <#00FF40>${values.size}"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}"
+                        "<!i><#C7A300>⭘ <#FFD700>${entry.definition.title}"
                     },
                     lore = lore,
                     itemModifier = {
@@ -1274,7 +1274,7 @@ class PlotFlagEditorService(
 
     private fun changeHintLine(): String = "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
 
-    private fun roleAccessLine(entry: ResolvedPlotFlagDefinition, marker: String = "\u258D"): String {
+    private fun roleAccessLine(entry: ResolvedPlotFlagDefinition, marker: String = "▍"): String {
         val role = hooker.permissionManager.getRole(entry.requiredRoleKey)
         val roleText = role?.prefix?.takeUnless(String::isBlank)
             ?: role?.let { "<#FFF3E0>${it.display}" }
@@ -1282,7 +1282,7 @@ class PlotFlagEditorService(
         return "<!i><#C7A300>$marker <#FFE68A>Доступно с $roleText"
     }
 
-    private fun textPreviewLine(value: String): String = "<!i><#C7A300>\u258D ${previewLine(value)}"
+    private fun textPreviewLine(value: String): String = "<!i><#C7A300>▍ ${previewLine(value)}"
 
     private fun buildTextApplyHints(): List<String> = listOf(
         "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
@@ -1291,8 +1291,8 @@ class PlotFlagEditorService(
 
     private fun buildTextApplyCommands(inputLabel: String): List<String> = listOf(
         "<!i><#FFD700>После нажатия:",
-        "<!i><#C7A300> \u25CF <#FFF3E0>/apply $inputLabel <#C7A300>- <#FFE68A>задать",
-        "<!i><#C7A300> \u25CF <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
+        "<!i><#C7A300> ● <#FFF3E0>/apply $inputLabel <#C7A300>- <#FFE68A>задать",
+        "<!i><#C7A300> ● <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
     )
 
     private fun buildPresetOptionLines(
@@ -1300,9 +1300,9 @@ class PlotFlagEditorService(
         selectedIndex: Int
     ): List<String> = entry.definition.presetOptions.mapIndexed { index, option ->
         if (index == selectedIndex) {
-            "<!i>  <#00FF40>\u00BB ${option.label}"
+            "<!i>  <#00FF40>» ${option.label}"
         } else {
-            "<!i><b> </b><#C7A300>\u00BB ${option.label}"
+            "<!i><b> </b><#C7A300>» ${option.label}"
         }
     }
 
@@ -1347,7 +1347,7 @@ class PlotFlagEditorService(
         add("<!i><#FFD700>Назначение:")
         wrapDescriptionLines(description).forEachIndexed { index, line ->
             if (index == 0) {
-                add("<!i><#C7A300> \u25CF <#FFE68A>$line ")
+                add("<!i><#C7A300> ● <#FFE68A>$line ")
             } else {
                 add("<!i><#FFE68A>  <b> </b>$line ")
             }
