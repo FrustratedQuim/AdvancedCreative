@@ -93,7 +93,7 @@ class AhelpPageService(
             entry("/dis <существо>", "Превращение в боссов", PluginCommandType.DISGUISE)
         ),
         "acreative.disguise.nick" to listOf(
-            entry("/dis <существо> -withnick", "Скрыть ник в облике", PluginCommandType.DISGUISE)
+            entry("/dis <существо> [-withnick]", "Скрыть ник в облике", PluginCommandType.DISGUISE)
         ),
         "acreative.acreative" to listOf(
             entry("/acreative", "Служебные функции", PluginCommandType.ACREATIVE)
@@ -141,7 +141,7 @@ class AhelpPageService(
             appendLine("<#FFD700><st>                       </st><<#FFE68A><b> Полезные команды </b><#FFD700>><st>                        </st>")
             appendLine("<#EDC800>Доступно для ${roleLabel(currentPage.role)}")
             currentPage.entries.forEach { entry ->
-                appendLine("<#C7A300> ● <#FFE68A>${escapeMiniMessage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
+                appendLine("<#C7A300> ● <#FFE68A>${renderUsage(entry.usage)} <#EDC800>- <#FFF3E0>${escapeMiniMessage(entry.description)}")
             }
             appendLine("<#FFD700><st>                                                                                </st>")
             append("<#FFD700>▍ <#FFE68A>Страница: <#FFF3E0>$currentPageNumber/$totalPages <#FFD700>→ (${buildNavigation(currentPageNumber, totalPages)}<#FFD700>)")
@@ -235,6 +235,25 @@ class AhelpPageService(
             .replace("<", "\\<")
     }
 
+    private fun renderUsage(value: String): String {
+        val result = StringBuilder()
+        var currentIndex = 0
+
+        USAGE_ARGUMENT_PATTERN.findAll(value).forEach { match ->
+            if (match.range.first > currentIndex) {
+                result.append(escapeMiniMessage(value.substring(currentIndex, match.range.first)))
+            }
+            result.append("<$ARGUMENT_COLOR>${escapeMiniMessage(match.value)}</$ARGUMENT_COLOR>")
+            currentIndex = match.range.last + 1
+        }
+
+        if (currentIndex < value.length) {
+            result.append(escapeMiniMessage(value.substring(currentIndex)))
+        }
+
+        return result.toString()
+    }
+
     private fun shouldIncludePermission(player: Player, role: PermissionManager.Role, permission: String): Boolean {
         return if (role.key == MODER_ROLE_KEY) {
             player.hasPermission(permission)
@@ -253,5 +272,7 @@ class AhelpPageService(
         const val MODER_ROLE_KEY = "moder"
         const val LEGACY_PLAYER_PREFIX = "<#FFF3E0>Player"
         const val PLAYER_HELP_PREFIX = "<#8C8C8C><b>ɢᴀᴍᴇʀ</b>"
+        const val ARGUMENT_COLOR = "#C7A300"
+        val USAGE_ARGUMENT_PATTERN = Regex("""<[^>]+>|\[[^]]+]""")
     }
 }

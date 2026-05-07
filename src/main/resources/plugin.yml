@@ -60,7 +60,7 @@ commands:
   disguise:
     description: Turns the player into a mob
     usage: /disguise <type>
-    aliases: [dd]
+    aliases: [dd, dis]
   effects:
     description: Applies an effect to player
     usage: /effects <effect> [level]
