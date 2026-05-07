@@ -21,16 +21,16 @@ class AhelpPageService(
 
     private val helpEntriesByPermission: Map<String, List<HelpEntry>> = mapOf(
         "acreative.itemdb" to listOf(
-            entry("/itemdb", "Показать строковый и числовой ID предмета", PluginCommandType.ITEMDB)
+            entry("/id", "Узнать ID предмета", PluginCommandType.ITEMDB)
         ),
         "acreative.sit" to listOf(
-            entry("/sit", "Сесть", PluginCommandType.SIT)
+            entry("/sit", "Круто сесть", PluginCommandType.SIT)
         ),
         "acreative.lay" to listOf(
-            entry("/lay", "Лечь", PluginCommandType.LAY)
+            entry("/lay", "Клёво прилечь", PluginCommandType.LAY)
         ),
         "acreative.crawl" to listOf(
-            entry("/crawl", "Ползти", PluginCommandType.CRAWL)
+            entry("/crawl", "Очень скрыто ползти", PluginCommandType.CRAWL)
         ),
         "acreative.hide" to listOf(
             entry("/hide <игрок>", "Скрыть игрока для себя", PluginCommandType.HIDE)
@@ -42,16 +42,16 @@ class AhelpPageService(
             entry("/health <значение>", "Изменить максимальное здоровье", PluginCommandType.HEALTH)
         ),
         "acreative.effects" to listOf(
-            entry("/effects <эффект> [уровень]", "Выдать себе постоянный эффект", PluginCommandType.EFFECTS)
+            entry("/effects <эффект> [уровень]", "Выдать эффект", PluginCommandType.EFFECTS)
         ),
         "acreative.decorationheads" to listOf(
-            entry("/decorationheads", "Открыть меню декоративных голов", PluginCommandType.DECORATIONHEADS)
+            entry("/dh", "Открыть меню декоративных голов", PluginCommandType.DECORATIONHEADS)
         ),
         "acreative.decorationbanners" to listOf(
-            entry("/banner", "Открыть меню флагов и публикации", PluginCommandType.BANNER),
-            entry("/decorationbanners [игрок]", "Открыть галерею опубликованных флагов", PluginCommandType.DECORATIONBANNERS),
-            entry("/myflags", "Открыть личное хранилище флагов", PluginCommandType.MYFLAGS),
-            entry("/banneredit", "Открыть редактор флагов", PluginCommandType.BANNEREDIT)
+            entry("/banner", "Открыть менеджер флагов", PluginCommandType.BANNER),
+            entry("/db [игрок]", "Открыть галерею флагов", PluginCommandType.DECORATIONBANNERS),
+            entry("/myflags", "Открыть свои флаги", PluginCommandType.MYFLAGS),
+            entry("/bedit", "Открыть редактор флагов", PluginCommandType.BANNEREDIT)
         ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
@@ -60,7 +60,7 @@ class AhelpPageService(
             entry("/gravity <значение>", "Изменить гравитацию", PluginCommandType.GRAVITY)
         ),
         "acreative.sneeze" to listOf(
-            entry("/sneeze", "Чихнуть", PluginCommandType.SNEEZE)
+            entry("/sneeze", "Чуть-чуть чихнуть", PluginCommandType.SNEEZE)
         ),
         "acreative.edit" to listOf(
             entry("/edit", "Открыть редактор предмета", PluginCommandType.EDIT)
@@ -72,51 +72,48 @@ class AhelpPageService(
             entry("/resize <значение>", "Изменить размер персонажа", PluginCommandType.RESIZE)
         ),
         "acreative.paint" to listOf(
-            entry("/paint [1x1-4x4]", "Открыть режим рисования", PluginCommandType.PAINT)
+            entry("/paint [размер]", "Открыть режим рисования", PluginCommandType.PAINT)
         ),
         "acreative.glow" to listOf(
             entry("/glow", "Переключить свечение", PluginCommandType.GLOW)
         ),
         "acreative.disguise" to listOf(
-            entry("/disguise <существо> [-self|-noself]", "Превратиться в существо", PluginCommandType.DISGUISE)
+            entry("/dis <существо> ", "Превратиться в существо", PluginCommandType.DISGUISE)
         ),
         "acreative.sithead" to listOf(
             entry("/sithead toggle", "Переключить посадку на голову по клику", PluginCommandType.SITHEAD)
         ),
         "acreative.spit" to listOf(
-            entry("/spit", "Плюнуть", PluginCommandType.SPIT)
+            entry("/spit", "Плюнуть, агрессивно", PluginCommandType.SPIT)
         ),
         "acreative.piss" to listOf(
-            entry("/piss", "Пописсать", PluginCommandType.PISS)
-        ),
-        "acreative.disguise.nick" to listOf(
-            entry("/disguise <существо> -withnick", "Скрыть ник в облике", PluginCommandType.DISGUISE)
+            entry("/piss", "Пописсать на негодяев", PluginCommandType.PISS)
         ),
         "acreative.disguise.extended" to listOf(
-            entry("/disguise <существо>", "Использовать расширенный список обликов", PluginCommandType.DISGUISE)
+            entry("/dis <существо>", "Превращение в боссов", PluginCommandType.DISGUISE)
+        ),
+        "acreative.disguise.nick" to listOf(
+            entry("/dis <существо> -withnick", "Скрыть ник в облике", PluginCommandType.DISGUISE)
         ),
         "acreative.acreative" to listOf(
-            entry("/acreative", "Управление системами и служебными функциями", PluginCommandType.ACREATIVE)
+            entry("/acreative", "Служебные функции", PluginCommandType.ACREATIVE)
         ),
         "acreative.sithead.other" to listOf(
-            entry("/sithead <цель> [игрок]", "Посадить игрока на голову другого", PluginCommandType.SITHEAD)
+            entry("/sithead <цель> [игрок]", "Посадить на голову другого", PluginCommandType.SITHEAD)
         ),
         "acreative.freeze.other" to listOf(
             entry("/freeze <игрок>", "Заморозить другого игрока", PluginCommandType.FREEZE)
         ),
         "acreative.effects.other" to listOf(
-            entry("/effects <эффект> [уровень] [игрок]", "Выдать постоянный эффект другому игроку", PluginCommandType.EFFECTS)
+            entry("/effects ... [игрок]", "Выдать эффект другому игроку", PluginCommandType.EFFECTS)
         ),
         "acreative.paint.moderation" to listOf(
-            entry("/paint ban <игрок> [причина]", "Выдать или снять бан на рисование", PluginCommandType.PAINT),
-            entry("/paint banlist", "Открыть список банов рисования", PluginCommandType.PAINT)
+            entry("/paint ban <игрок> [причина]", "Бан/разбан рисования", PluginCommandType.PAINT)
         ),
         "acreative.decorationbanners.moderation" to listOf(
-            entry("/banner ban", "Выдать или снять бан с узора в руке", PluginCommandType.BANNER),
-            entry("/banner banlist", "Открыть список забаненных узоров", PluginCommandType.BANNER),
-            entry("/banner banuser <игрок> [причина]", "Выдать или снять бан с игрока", PluginCommandType.BANNER),
-            entry("/banner banuserlist", "Открыть список забаненных игроков", PluginCommandType.BANNER),
-            entry("/decorationbanners [игрок] [-m]", "Открыть галерею флагов в режиме модерации", PluginCommandType.DECORATIONBANNERS)
+            entry("/banner ban", "Бан/разбан паттерна банера в руке", PluginCommandType.BANNER),
+            entry("/banner banuser <игрок> [причина]", "Бан/разбан игрока", PluginCommandType.BANNER),
+            entry("/db [игрок] [-m]", "Галерея в режиме модерации", PluginCommandType.DECORATIONBANNERS)
         ),
         "acreative.grab" to listOf(
             entry("/grab <игрок> [-force]", "Схватить игрока перед собой", PluginCommandType.GRAB)
