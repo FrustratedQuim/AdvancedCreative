@@ -646,7 +646,7 @@ class PlotFlagEditorService(
                         }
                         addAll(buildTextApplyHints())
                         add("")
-                        addAll(buildTextApplyCommands("<\u0442\u0435\u043A\u0441\u0442>"))
+                        addAll(buildTextApplyCommands("<текст>"))
                         add("")
                     }
                     addAll(buildDescriptionSection(entry.definition.description))
@@ -655,8 +655,8 @@ class PlotFlagEditorService(
                     material = Material.STRUCTURE_VOID,
                     name = when {
                         active -> "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}"
-                        entry.definition.kind == PlotFlagEntryKind.TITLE_PART -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>\u0421\u0442\u0430\u043D\u0434\u0430\u0440\u0442\u043D\u044B\u0439"
-                        else -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>\u041D\u0435 \u0437\u0430\u0434\u0430\u043D\u043E"
+                        entry.definition.kind == PlotFlagEntryKind.TITLE_PART -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Стандартный"
+                        else -> "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -699,7 +699,7 @@ class PlotFlagEditorService(
                     name = if (active) {
                         "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}: <#00FF40>$value"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>\u041D\u0435 \u0437\u0430\u0434\u0430\u043D\u043E"
+                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -732,7 +732,7 @@ class PlotFlagEditorService(
                     if (editable) {
                         add(changeHintLine())
                         add("")
-                        addAll(buildTextApplyCommands("<\u0438\u043D\u0442\u0435\u0440\u0432\u0430\u043B> <\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435>"))
+                        addAll(buildTextApplyCommands("<интервал> <значение>"))
                     } else {
                         add(roleAccessLine(entry))
                     }
@@ -744,7 +744,7 @@ class PlotFlagEditorService(
                     name = if (active) {
                         "<!i><#C7A300>\u25CE <#FFD700>${entry.definition.title}: <#00FF40>$value"
                     } else {
-                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>\u041D\u0435 \u0437\u0430\u0434\u0430\u043D\u043E"
+                        "<!i><#C7A300>\u2B58 <#FFD700>${entry.definition.title}: <#FF1500>Не задано"
                     },
                     lore = lore,
                     itemModifier = {
@@ -1272,27 +1272,27 @@ class PlotFlagEditorService(
         return requirements
     }
 
-    private fun changeHintLine(): String = "<!i><#FFD700>\u041D\u0430\u0436\u043C\u0438\u0442\u0435, <#FFE68A>\u0447\u0442\u043E\u0431\u044B \u0438\u0437\u043C\u0435\u043D\u0438\u0442\u044C"
+    private fun changeHintLine(): String = "<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить"
 
     private fun roleAccessLine(entry: ResolvedPlotFlagDefinition, marker: String = "\u258D"): String {
         val role = hooker.permissionManager.getRole(entry.requiredRoleKey)
         val roleText = role?.prefix?.takeUnless(String::isBlank)
             ?: role?.let { "<#FFF3E0>${it.display}" }
-            ?: "<#FFF3E0>\u043A\u043E\u043D\u0444\u0438\u0433\u0430"
-        return "<!i><#C7A300>$marker <#FFE68A>\u0414\u043E\u0441\u0442\u0443\u043F\u043D\u043E \u0441 $roleText"
+            ?: "<#FFF3E0>конфига"
+        return "<!i><#C7A300>$marker <#FFE68A>Доступно с $roleText"
     }
 
     private fun textPreviewLine(value: String): String = "<!i><#C7A300>\u258D ${previewLine(value)}"
 
     private fun buildTextApplyHints(): List<String> = listOf(
-        "<!i><#FFD700>\u041B\u041A\u041C, <#FFE68A>\u0447\u0442\u043E\u0431\u044B \u0437\u0430\u0434\u0430\u0442\u044C",
-        "<!i><#FFD700>\u041F\u041A\u041C, <#FFE68A>\u0447\u0442\u043E\u0431\u044B \u0441\u0431\u0440\u043E\u0441\u0438\u0442\u044C"
+        "<!i><#FFD700>ЛКМ, <#FFE68A>чтобы задать",
+        "<!i><#FFD700>ПКМ, <#FFE68A>чтобы сбросить"
     )
 
     private fun buildTextApplyCommands(inputLabel: String): List<String> = listOf(
-        "<!i><#FFD700>\u041F\u043E\u0441\u043B\u0435 \u043D\u0430\u0436\u0430\u0442\u0438\u044F:",
-        "<!i><#C7A300> \u25CF <#FFF3E0>/apply $inputLabel <#C7A300>- <#FFE68A>\u0437\u0430\u0434\u0430\u0442\u044C",
-        "<!i><#C7A300> \u25CF <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>\u043E\u0442\u043C\u0435\u043D\u0438\u0442\u044C"
+        "<!i><#FFD700>После нажатия:",
+        "<!i><#C7A300> \u25CF <#FFF3E0>/apply $inputLabel <#C7A300>- <#FFE68A>задать",
+        "<!i><#C7A300> \u25CF <#FFF3E0>/apply cancel <#C7A300>- <#FFE68A>отменить"
     )
 
     private fun buildPresetOptionLines(
@@ -1344,7 +1344,7 @@ class PlotFlagEditorService(
     }
 
     private fun buildDescriptionSection(description: String): List<String> = buildList {
-        add("<!i><#FFD700>\u041D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435:")
+        add("<!i><#FFD700>Назначение:")
         wrapDescriptionLines(description).forEachIndexed { index, line ->
             if (index == 0) {
                 add("<!i><#C7A300> \u25CF <#FFE68A>$line ")
