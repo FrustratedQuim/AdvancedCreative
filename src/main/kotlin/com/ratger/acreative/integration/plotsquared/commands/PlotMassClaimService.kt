@@ -76,7 +76,7 @@ internal class PlotMassClaimService(
         try {
             for (plot in targets) {
                 if (!plot.hasOwner()) {
-                    val claimed = plot.claim(pp, false, null, true, false)
+                    val claimed = plot.setOwner(pp.uuid, pp)
                     if (!claimed) {
                         hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_NO_SPACE)
                         return
