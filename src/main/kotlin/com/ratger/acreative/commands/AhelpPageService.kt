@@ -54,13 +54,13 @@ class AhelpPageService(
             entry("/bedit", "Открыть редактор флагов", PluginCommandType.BANNEREDIT)
         ),
         "acreative.plots.edit" to listOf(
-            entry("/p edit", "Открыть настройки участка", PluginCommandType.GLIDE)
+            entry("/p edit", "Открыть настройки участка", PluginCommandType.PLOT_EDIT)
         ),
         "acreative.plots.usage" to listOf(
-            entry("/p usage", "Узнать остаток участков", PluginCommandType.GLIDE)
+            entry("/p usage", "Узнать остаток участков", PluginCommandType.PLOT_USAGE)
         ),
         "acreative.plots.massclaim" to listOf(
-            entry("/p mc <ширина> <длина>", "Занять большой участок", PluginCommandType.GLIDE)
+            entry("/p mc <ширина> <длина>", "Занять большой участок", PluginCommandType.PLOT_MASSCLAIM)
         ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
@@ -110,6 +110,9 @@ class AhelpPageService(
         "acreative.sithead.other" to listOf(
             entry("/sithead <цель> [игрок]", "Посадить на голову другого", PluginCommandType.SITHEAD)
         ),
+        "acreative.plots.usage.other" to listOf(
+            entry("/p usage <игрок>", "Узнать остаток участков игрока", PluginCommandType.PLOT_USAGE)
+        ),
         "acreative.freeze.other" to listOf(
             entry("/freeze <игрок>", "Заморозить другого игрока", PluginCommandType.FREEZE)
         ),
@@ -132,9 +135,6 @@ class AhelpPageService(
         ),
         "acreative.jar" to listOf(
             entry("/jar <игрок> [-const]", "Выдать банку для поимки игрока", PluginCommandType.JAR)
-        ),
-        "acreative.plots.usage.other" to listOf(
-            entry("/p usage <игрок>", "Узнать остаток участков игрока", PluginCommandType.JAR)
         )
     )
 
