@@ -60,7 +60,7 @@ class AhelpPageService(
             entry("/p usage", "Узнать остаток участков", PluginCommandType.GLIDE)
         ),
         "acreative.plots.massclaim" to listOf(
-            entry("/p mc <длина> <ширина>", "Занять большой участок", PluginCommandType.GLIDE)
+            entry("/p mc <ширина> <длина>", "Занять большой участок", PluginCommandType.GLIDE)
         ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)

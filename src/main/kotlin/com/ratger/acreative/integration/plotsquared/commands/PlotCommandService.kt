@@ -1,6 +1,5 @@
 package com.ratger.acreative.integration.plotsquared.commands
 
-import com.plotsquared.core.configuration.Settings
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
 import com.ratger.acreative.core.ManagedSystem
@@ -37,6 +36,7 @@ class PlotCommandService(
     private val registeredCommands = LinkedHashMap<String, RegisteredRootCommand>()
     private val ownerSuggestions = PlotOwnerSuggestionService()
     private val massClaimService = PlotMassClaimService(hooker)
+    private val usageInfoService = PlotUsageInfoService()
 
     fun install() {
         if (!isPlotSquaredEnabled()) {
@@ -164,7 +164,7 @@ class PlotCommandService(
                     hooker.permissionManager.sendPermissionDenied(player, PLOT_USAGE_PERMISSION)
                     return true
                 }
-                sendUsageInfo(player)
+                sendUsageInfo(player, args.getOrNull(commandIndex + 1))
                 true
             }
             in MASSCLAIM_COMMANDS -> {
@@ -184,24 +184,33 @@ class PlotCommandService(
     }
 
 
-    private fun sendUsageInfo(player: Player) {
-        val plotPlayer = PlotPlayer.from(player)
-        val occupied = if (Settings.Limit.GLOBAL) {
-            plotPlayer.plotCount
-        } else {
-            val worldName = plotPlayer.location.worldName
-            plotPlayer.getPlotCount(worldName)
-        }
-        val allowed = plotPlayer.allowedPlots
+    private fun sendUsageInfo(player: Player, rawTargetName: String?) {
+        val target = resolveUsageTarget(player, rawTargetName)
+        val usage = usageInfoService.snapshot(PlotPlayer.from(target))
+        val messageKey = if (target == player) MessageKey.PLOT_USAGE_INFO else MessageKey.PLOT_USAGE_OTHER_INFO
+        /*
         val totalText = if (allowed >= Settings.Limit.MAX_PLOTS) "∞" else allowed.toString()
         hooker.messageManager.sendChat(
+        */
+        hooker.messageManager.sendChat(
             player,
-            MessageKey.PLOT_USAGE_INFO,
+            messageKey,
             mapOf(
-                "occupied" to occupied.toString(),
-                "total" to totalText
+                "player" to target.name,
+                "occupied" to usage.occupied.toString(),
+                "total" to usage.totalText
             )
         )
+    }
+
+    private fun resolveUsageTarget(player: Player, rawTargetName: String?): Player {
+        val requestedName = rawTargetName?.trim().takeUnless { it.isNullOrEmpty() } ?: return player
+        if (!player.hasPermission(PLOT_USAGE_OTHER_PERMISSION)) {
+            return player
+        }
+        return Bukkit.getOnlinePlayers()
+            .firstOrNull { it.name.equals(requestedName, ignoreCase = true) }
+            ?: player
     }
 
     private fun completeIntercepted(player: Player, args: Array<out String>, baseCompletions: List<String>): List<String>? {
@@ -234,11 +243,18 @@ class PlotCommandService(
             in HOME_COMMANDS if args.size == commandIndex + 2 -> {
                 completeHomePages(player, args[commandIndex + 1])
             }
+            in USAGE_COMMANDS if args.size == commandIndex + 2 && player.hasPermission(PLOT_USAGE_OTHER_PERMISSION) -> {
+                completeCsv(args[commandIndex + 1], onlinePlayerNames())
+            }
             in MASSCLAIM_COMMANDS if args.size == commandIndex + 2 -> {
-                listOf("1", "2", "3", "4", "5").filter { it.startsWith(args[commandIndex + 1], ignoreCase = true) }
+                (1..PlotMassClaimService.MAX_MASSCLAIM_SIZE)
+                    .map(Int::toString)
+                    .filter { it.startsWith(args[commandIndex + 1], ignoreCase = true) }
             }
             in MASSCLAIM_COMMANDS if args.size == commandIndex + 3 -> {
-                listOf("1", "2", "3", "4", "5").filter { it.startsWith(args[commandIndex + 2], ignoreCase = true) }
+                (1..PlotMassClaimService.MAX_MASSCLAIM_SIZE)
+                    .map(Int::toString)
+                    .filter { it.startsWith(args[commandIndex + 2], ignoreCase = true) }
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
@@ -462,6 +478,7 @@ class PlotCommandService(
         private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "usage", "massclaim")
         private val MASSCLAIM_COMMANDS = setOf("massclaim", "mc")
         private const val PLOT_USAGE_PERMISSION = "acreative.plots.usage"
+        private const val PLOT_USAGE_OTHER_PERMISSION = "acreative.plots.usage.other"
         private const val PLOT_MASSCLAIM_PERMISSION = "acreative.plots.massclaim"
     }
 }
