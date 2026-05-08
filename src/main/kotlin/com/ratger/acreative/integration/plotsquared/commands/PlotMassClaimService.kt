@@ -83,8 +83,7 @@ internal class PlotMassClaimService(
                     }
                 }
             }
-            val baseId = "${base.id.x};${base.id.y}"
-            Bukkit.dispatchCommand(player, "plot $baseId merge all")
+            Bukkit.dispatchCommand(player, "plot merge all")
         } finally {
             massClaimLocks.remove(lockKey)
         }
