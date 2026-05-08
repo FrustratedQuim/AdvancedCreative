@@ -1,6 +1,6 @@
 ﻿package com.ratger.acreative.integration.plotsquared.editor
 
-import com.plotsquared.core.player.PlotPlayer
+import com.plotsquared.core.location.Location as PlotLocation
 import com.plotsquared.core.plot.Plot
 import com.plotsquared.core.plot.PlotArea
 import com.plotsquared.core.plot.PlotId
@@ -192,8 +192,7 @@ class PlotFlagEditorService(
         cancelApplySilently(player)
         sessions.remove(player.uniqueId)
 
-        val plotPlayer = PlotPlayer.from(player)
-        val plot = plotPlayer.currentPlot
+        val plot = resolvePlotAtPlayerLocation(player)
         if (plot == null) {
             hooker.messageManager.sendChat(player, MessageKey.PLOT_EDIT_NOT_ON_PLOT)
             return
@@ -215,6 +214,12 @@ class PlotFlagEditorService(
         )
         sessions[player.uniqueId] = session
         openMainMenu(player, session, 0, PlotFlagFilter.ALL)
+    }
+
+    private fun resolvePlotAtPlayerLocation(player: Player): Plot? {
+        val worldName = player.world.name
+        val location = player.location
+        return Plot.getPlot(PlotLocation.at(worldName, location.blockX, location.blockY, location.blockZ))
     }
 
     private fun openMainMenu(player: Player, session: PlotEditorSession, requestedPage: Int, filter: PlotFlagFilter) {
