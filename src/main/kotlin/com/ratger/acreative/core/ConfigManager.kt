@@ -136,11 +136,21 @@ class ConfigManager(private val hooker: FunctionHooker) {
             val defaultValue = defaults.get(key)
             val defaultSection = defaults.getConfigurationSection(key)
             val targetSection = target.getConfigurationSection(key)
+            val targetValue = target.get(key)
 
             when {
                 defaultSection != null -> {
                     val nextTarget = targetSection ?: target.createSection(key)
                     mergeMissingValues(nextTarget, defaultSection)
+                }
+                defaultValue is List<*> && targetValue is List<*> -> {
+                    val mergedList = targetValue.toMutableList()
+                    defaultValue.forEach { item ->
+                        if (!mergedList.contains(item)) {
+                            mergedList += item
+                        }
+                    }
+                    target.set(key, mergedList)
                 }
                 !target.contains(key) || target.get(key) == null -> {
                     target.set(key, defaultValue)
