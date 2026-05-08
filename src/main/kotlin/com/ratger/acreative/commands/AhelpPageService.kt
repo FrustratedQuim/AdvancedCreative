@@ -132,6 +132,9 @@ class AhelpPageService(
         ),
         "acreative.jar" to listOf(
             entry("/jar <игрок> [-const]", "Выдать банку для поимки игрока", PluginCommandType.JAR)
+        ),
+        "acreative.plots.usage.other" to listOf(
+            entry("/p usage <игрок>", "Узнать остаток участков игрока", PluginCommandType.JAR)
         )
     )
 
