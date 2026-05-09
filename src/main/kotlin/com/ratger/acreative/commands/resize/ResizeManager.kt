@@ -51,6 +51,8 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
     fun applyEffectFromCommand(player: Player, arg: String?) {
+        resetFreezeBeforeResize(player)
+
         if (arg == null) {
             if (trackedPlayers.containsKey(player)) {
                 removeEffectSmooth(player)
@@ -92,6 +94,11 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
 
     override fun onAfterEffectRemoved(player: Player) {
         hooker.playerStateManager.refreshPlayerPose(player)
+    }
+
+    private fun resetFreezeBeforeResize(player: Player) {
+        if (!hooker.freezeManager.frozenPlayers.containsKey(player)) return
+        hooker.freezeManager.unfreezePlayer(player)
     }
 
     private fun resetAttributes(player: Player) {

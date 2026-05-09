@@ -45,9 +45,6 @@ class PacketHandler(private val hooker: FunctionHooker) {
     private fun handleAnimationPacket(player: Player) {
         val paintManager = hooker.paintManagerOrNull()
         if (paintManager?.isPainting(player) == true) {
-            hooker.actionLogger.info(
-                "Received animation packet from ${hooker.actionLogger.playerRef(player)} while painting"
-            )
             if (consumeSuppressedPaintAnimation(player)) {
                 return
             }
@@ -123,9 +120,6 @@ class PacketHandler(private val hooker: FunctionHooker) {
         when (packet.action) {
             DiggingAction.DROP_ITEM -> {
                 event.isCancelled = true
-                hooker.actionLogger.info(
-                    "Received drop item packet from ${hooker.actionLogger.playerRef(player)} while painting"
-                )
                 paintManager.suppressDirectUseAfterDrop(player)
                 pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
                     hooker.tickScheduler.cancel(taskId)
@@ -137,9 +131,6 @@ class PacketHandler(private val hooker: FunctionHooker) {
             }
             DiggingAction.DROP_ITEM_STACK -> {
                 event.isCancelled = true
-                hooker.actionLogger.info(
-                    "Received drop stack packet from ${hooker.actionLogger.playerRef(player)} while painting"
-                )
                 paintManager.suppressDirectUseAfterDrop(player)
                 pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
                     hooker.tickScheduler.cancel(taskId)

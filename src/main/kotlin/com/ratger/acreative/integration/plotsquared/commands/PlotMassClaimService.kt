@@ -70,6 +70,11 @@ internal class PlotMassClaimService(
     }
 
     private fun parseSize(player: Player, widthToken: String?, heightToken: String?): PlotMassClaimSize? {
+        if (widthToken.isNullOrBlank() && heightToken.isNullOrBlank()) {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_MASSCLAIM_USAGE)
+            return null
+        }
+
         val width = widthToken?.trim()?.toIntOrNull()
         val height = heightToken?.trim()?.toIntOrNull()
         if (width == null || height == null) {

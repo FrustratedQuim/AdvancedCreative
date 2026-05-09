@@ -685,9 +685,6 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     fun stopPainting(player: Player) {
         val session = sessions.remove(player.uniqueId) ?: return
-        hooker.actionLogger.info(
-            "Stopping paint session for ${hooker.actionLogger.playerRef(player)} cells=${session.canvasCells.size} viewers=${session.viewers.size}"
-        )
         if (session.appliedZoom != 1) {
             applyCanvasZoom(player, session, 1)
         }
@@ -946,9 +943,6 @@ class PaintManager(private val hooker: FunctionHooker) {
         val frameDirection = resolveDirection(player)
         val anchorLocation = resolveFrameLocation(player, frameDirection)
         val points = size.initialPoints()
-        hooker.actionLogger.info(
-            "Starting paint session for ${hooker.actionLogger.playerRef(player)} size=${size.normalized()} points=${points.size} anchor=${hooker.actionLogger.locationRef(anchorLocation)}"
-        )
         val frameLocations = points.associateWith { point ->
             resolveCellLocation(anchorLocation, size.basePoint, point, frameDirection)
         }
@@ -1018,9 +1012,6 @@ class PaintManager(private val hooker: FunctionHooker) {
         mapSnapshots.values.forEach { snapshot ->
             scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
         }
-        hooker.actionLogger.info(
-            "Paint session started for ${hooker.actionLogger.playerRef(player)} cells=${canvasCells.size} viewers=${visibleViewers.size}"
-        )
         return true
     }
 
@@ -1106,9 +1097,6 @@ class PaintManager(private val hooker: FunctionHooker) {
             return false
         }
 
-        hooker.actionLogger.info(
-            "Spawned paint canvas visuals at ${hooker.actionLogger.locationRef(location)}"
-        )
         return true
     }
 
@@ -2990,9 +2978,6 @@ class PaintManager(private val hooker: FunctionHooker) {
         location: Location,
         canAdd: Boolean
     ): PaintResizePreview {
-        hooker.actionLogger.info(
-            "Creating paint resize preview for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} canAdd=$canAdd"
-        )
         val frame = WrapperEntity(EntityTypes.GLOW_ITEM_FRAME)
         frame.addViewer(player.uniqueId)
         val meta = frame.entityMeta as ItemFrameMeta
@@ -3027,9 +3012,6 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun removeResizePreview(player: Player, session: PaintSession) {
         val preview = session.resizePreview ?: return
-        hooker.actionLogger.info(
-            "Removing paint resize preview for ${hooker.actionLogger.playerRef(player)}"
-        )
         sendResizeTeamRemove(player, preview.teamName)
         preview.frame.remove()
         session.resizePreview = null
