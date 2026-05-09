@@ -40,11 +40,16 @@ class ItemEditSessionManager {
 
     fun sessionsSnapshot(): List<ItemEditSession> = sessions.values.toList()
 
-    private fun contentHash(item: ItemStack): String? {
+    fun contentHash(item: ItemStack): String? {
         if (item.type.isAir || item.amount <= 0) return null
         val normalized = item.clone().apply { amount = 1 }
         val bytes = normalized.serializeAsBytes()
         val digest = MessageDigest.getInstance("SHA-256").digest(bytes)
         return digest.joinToString(separator = "") { "%02x".format(it) }
     }
+
+    fun hasMeaningfulChanges(session: ItemEditSession): Boolean {
+        return contentHash(session.editableItem) != session.initialContentHash
+    }
+
 }

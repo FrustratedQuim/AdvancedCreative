@@ -239,6 +239,11 @@ class MenuService(
         }
         sessionManager.addCloseListener { player, session ->
             personalItemsService.onEditSessionClosed(player.uniqueId, session.editableItem, session.initialContentHash)
+            if (sessionManager.hasMeaningfulChanges(session)) {
+                hooker.actionLogger.info {
+                    "Item editor session committed by ${hooker.actionLogger.playerRef(player)}"
+                }
+            }
         }
     }
 

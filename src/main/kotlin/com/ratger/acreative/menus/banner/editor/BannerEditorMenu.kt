@@ -313,6 +313,9 @@ class BannerEditorMenu(
         }
 
         BannerPatternSupport.addPattern(editableBanner, selectedColor, selectedPattern)
+        support.logInfo {
+            "Banner pattern added via /bedit by ${player.name} (${player.uniqueId}) pattern=${selectedPattern.key.key} color=${selectedColor.name}"
+        }
         support.transition(session) { open(player, session) }
     }
 

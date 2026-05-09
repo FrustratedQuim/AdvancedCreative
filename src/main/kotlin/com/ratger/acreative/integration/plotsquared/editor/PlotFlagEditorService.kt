@@ -1204,7 +1204,13 @@ class PlotFlagEditorService(
         if (!acquireMutationCooldown(cooldownKey)) {
             return false
         }
-        return action(plot)
+        val changed = action(plot)
+        if (changed) {
+            hooker.actionLogger.info {
+                "Plot edit flag updated by ${hooker.actionLogger.playerRef(player)} group=$groupKey plot=${session.plotReference.id}"
+            }
+        }
+        return changed
     }
 
     private fun acquireMutationCooldown(key: String): Boolean {

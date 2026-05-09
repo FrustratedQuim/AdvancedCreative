@@ -71,7 +71,6 @@ class PlotCommandService(
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val registered = registeredCommands[command.name.lowercase(Locale.ROOT)] ?: return false
-        hooker.actionLogger.auditInfo("Command ${hooker.actionLogger.commandRef(label, args)} by ${sender.name}")
         val player = sender as? Player ?: return registered.executor.onCommand(sender, command, label, args)
         if (handleCustomSubcommand(player, args)) {
             return true

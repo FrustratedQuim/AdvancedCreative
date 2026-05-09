@@ -36,7 +36,7 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
-class CommandManager(private val hooker: FunctionHooker) : CommandExecutor, TabCompleter {
+class CommandManager(hooker: FunctionHooker) : CommandExecutor, TabCompleter {
 
     val cooldownService = CommandCooldownService(hooker.configManager)
 
@@ -77,7 +77,6 @@ class CommandManager(private val hooker: FunctionHooker) : CommandExecutor, TabC
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val type = PluginCommandType.fromId(command.name) ?: return false
         val handler = handlers[type] ?: return false
-        hooker.actionLogger.auditInfo("Command ${hooker.actionLogger.commandRef(label, args)} by ${sender.name}")
         return handler.execute(sender, args)
     }
 

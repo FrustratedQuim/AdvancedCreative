@@ -670,6 +670,9 @@ class BannerMenuService(
                             "limit" to permissionLimitResolver.formatLimit(result.value.limit)
                         )
                     )
+                    hooker.actionLogger.info {
+                        "Banner post published by ${hooker.actionLogger.playerRef(player)} category=${draft.category.key} active=${result.value.activeCount}"
+                    }
                     openPublicGalleryForCategory(player, draft.category)
                 }
             }

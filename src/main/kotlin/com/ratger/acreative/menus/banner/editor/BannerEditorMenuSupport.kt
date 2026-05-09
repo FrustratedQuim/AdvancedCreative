@@ -65,6 +65,10 @@ class BannerEditorMenuSupport(
         action()
     }
 
+    fun logInfo(message: () -> String) {
+        hooker.actionLogger.info(message)
+    }
+
     fun finishSession(player: Player, session: BannerEditorSession, action: () -> Unit) {
         session.isInternalTransition = true
         val closedSession = sessionManager.closeSession(player)

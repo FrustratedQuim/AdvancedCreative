@@ -70,7 +70,12 @@ class ItemEditorApplyStateManager(
 
         val handler = handlersByKind[request.kind] ?: return
         when (handler.apply(player, session, args)) {
-            ApplyExecutionResult.Success -> cancelWaiting(player, reopenMenu = true)
+            ApplyExecutionResult.Success -> {
+                hooker.actionLogger.info {
+                    "Item editor apply succeeded for ${hooker.actionLogger.playerRef(player)} kind=${request.kind.name.lowercase()} args=${args.joinToString(" ")}"
+                }
+                cancelWaiting(player, reopenMenu = true)
+            }
             ApplyExecutionResult.InvalidValue -> hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
             ApplyExecutionResult.UnknownValue -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
             ApplyExecutionResult.AwaitingAsync -> Unit
