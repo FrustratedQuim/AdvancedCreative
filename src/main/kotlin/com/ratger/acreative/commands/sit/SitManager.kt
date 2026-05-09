@@ -40,6 +40,10 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun sitPlayer(player: Player) {
+        if (hooker.utils.isSitting(player)) {
+            unsitPlayer(player)
+            return
+        }
         if (!canSit(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_SIT_IN_AIR)
             return

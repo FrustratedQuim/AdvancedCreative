@@ -36,47 +36,48 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 
-class CommandManager(functionHooker: FunctionHooker) : CommandExecutor, TabCompleter {
+class CommandManager(private val hooker: FunctionHooker) : CommandExecutor, TabCompleter {
 
-    val cooldownService = CommandCooldownService(functionHooker.configManager)
+    val cooldownService = CommandCooldownService(hooker.configManager)
 
     private val handlers: Map<PluginCommandType, ExecutableCommand> = listOf(
-        AhelpCommand(functionHooker),
-        SitCommand(functionHooker),
-        LayCommand(functionHooker),
-        CrawlCommand(functionHooker),
-        HideCommand(functionHooker),
-        SneezeCommand(functionHooker),
-        GlideCommand(functionHooker),
-        GravityCommand(functionHooker),
-        ResizeCommand(functionHooker),
-        StrengthCommand(functionHooker),
-        HealthCommand(functionHooker),
-        FreezeCommand(functionHooker),
-        GlowCommand(functionHooker),
-        SpitCommand(functionHooker),
-        PissCommand(functionHooker),
-        DisguiseCommand(functionHooker),
-        EffectsCommand(functionHooker),
-        PaintCommand(functionHooker),
-        JarCommand(functionHooker),
-        GrabCommand(functionHooker),
-        SlapCommand(functionHooker),
-        SitheadCommand(functionHooker),
-        ItemdbCommand(functionHooker),
-        BannerCommand(functionHooker),
-        DecorationBannersCommand(functionHooker),
-        MyFlagsCommand(functionHooker),
-        DecorationHeadsCommand(functionHooker),
-        BannerEditCommand(functionHooker),
-        EditCommand(functionHooker),
-        ApplyCommand(functionHooker),
-        AdvancedCreativeAdminCommand(functionHooker)
+        AhelpCommand(hooker),
+        SitCommand(hooker),
+        LayCommand(hooker),
+        CrawlCommand(hooker),
+        HideCommand(hooker),
+        SneezeCommand(hooker),
+        GlideCommand(hooker),
+        GravityCommand(hooker),
+        ResizeCommand(hooker),
+        StrengthCommand(hooker),
+        HealthCommand(hooker),
+        FreezeCommand(hooker),
+        GlowCommand(hooker),
+        SpitCommand(hooker),
+        PissCommand(hooker),
+        DisguiseCommand(hooker),
+        EffectsCommand(hooker),
+        PaintCommand(hooker),
+        JarCommand(hooker),
+        GrabCommand(hooker),
+        SlapCommand(hooker),
+        SitheadCommand(hooker),
+        ItemdbCommand(hooker),
+        BannerCommand(hooker),
+        DecorationBannersCommand(hooker),
+        MyFlagsCommand(hooker),
+        DecorationHeadsCommand(hooker),
+        BannerEditCommand(hooker),
+        EditCommand(hooker),
+        ApplyCommand(hooker),
+        AdvancedCreativeAdminCommand(hooker)
     ).associateBy { it.type }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         val type = PluginCommandType.fromId(command.name) ?: return false
         val handler = handlers[type] ?: return false
+        hooker.actionLogger.auditInfo("Command ${hooker.actionLogger.commandRef(label, args)} by ${sender.name}")
         return handler.execute(sender, args)
     }
 

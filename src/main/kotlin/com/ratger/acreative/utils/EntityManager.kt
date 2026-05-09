@@ -12,7 +12,6 @@ import com.github.retrooper.packetevents.protocol.player.UserProfile
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEntityEquipment
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerInfoUpdate
 import com.ratger.acreative.core.FunctionHooker
-import io.github.retrooper.packetevents.util.SpigotConversionUtil
 import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
@@ -126,7 +125,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.HELMET,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }
@@ -134,7 +133,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.CHEST_PLATE,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }
@@ -142,7 +141,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.LEGGINGS,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }
@@ -150,7 +149,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.BOOTS,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }
@@ -158,7 +157,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.MAIN_HAND,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }
@@ -166,7 +165,7 @@ class EntityManager(
             equipment.add(
                 Equipment(
                     EquipmentSlot.OFF_HAND,
-                    SpigotConversionUtil.fromBukkitItemStack(it)
+                    PacketItemConversionSupport.toPacket(it)
                 )
             )
         }

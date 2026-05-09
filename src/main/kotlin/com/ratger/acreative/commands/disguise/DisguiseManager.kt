@@ -11,7 +11,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerEn
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import io.github.retrooper.packetevents.util.SpigotConversionUtil
+import com.ratger.acreative.utils.PacketItemConversionSupport
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.JoinConfiguration
@@ -243,12 +243,12 @@ class DisguiseManager(private val hooker: FunctionHooker) {
         val inventory = player.inventory
         val mainHand = inventory.itemInMainHand
         if (mainHand.type != Material.AIR) {
-            val packetItem = SpigotConversionUtil.fromBukkitItemStack(mainHand)
+            val packetItem = PacketItemConversionSupport.toPacket(mainHand)
             equipmentList.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))
         }
         val offHand = inventory.itemInOffHand
         if (offHand.type != Material.AIR) {
-            val packetItem = SpigotConversionUtil.fromBukkitItemStack(offHand)
+            val packetItem = PacketItemConversionSupport.toPacket(offHand)
             equipmentList.add(PacketEquipment(PacketEquipmentSlot.OFF_HAND, packetItem))
         }
         inventory.armorContents.forEachIndexed { index, item ->
@@ -260,7 +260,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
                     3 -> PacketEquipmentSlot.HELMET
                     else -> return@forEachIndexed
                 }
-                val packetItem = SpigotConversionUtil.fromBukkitItemStack(item)
+                val packetItem = PacketItemConversionSupport.toPacket(item)
                 equipmentList.add(PacketEquipment(slot, packetItem))
             }
         }
@@ -414,7 +414,7 @@ class DisguiseManager(private val hooker: FunctionHooker) {
     fun updateMainHandEquipment(player: Player) {
         val data = disguisedPlayers[player] ?: return
         val bukkitItem: ItemStack = hooker.playerStateManager.getCurrentSavedMainHandItem(player) ?: ItemStack(Material.AIR)
-        val packetItem = SpigotConversionUtil.fromBukkitItemStack(bukkitItem)
+        val packetItem = PacketItemConversionSupport.toPacket(bukkitItem)
 
         val newEquipment = data.equipment.filter { it.slot != PacketEquipmentSlot.MAIN_HAND }.toMutableList()
         newEquipment.add(PacketEquipment(PacketEquipmentSlot.MAIN_HAND, packetItem))

@@ -1,7 +1,9 @@
-﻿package com.ratger.acreative.utils
+package com.ratger.acreative.utils
 
 import com.ratger.acreative.commands.sit.SitStyle
 import com.ratger.acreative.core.FunctionHooker
+import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent
+import com.destroystokyo.paper.event.player.PlayerStopSpectatingEntityEvent
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.GameMode
 import org.bukkit.Material
@@ -43,6 +45,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.plotFlagEditorService.handleRuntimeReset(player)
+        hooker.plotAccessGuardService.clearPlayerSpectating(player)
         hooker.commandManager.cooldownService.clearPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
@@ -65,6 +68,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.grabManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.jarManager.cleanupSessionsForPlayer(player.uniqueId)
         hooker.plotFlagEditorService.handleRuntimeReset(player)
+        hooker.plotAccessGuardService.clearPlayerSpectating(player)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkPissStop(player)
@@ -347,6 +351,16 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
         hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
         hooker.layManager.onViewerJoin(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    fun onPlayerStartSpectatingEntity(event: PlayerStartSpectatingEntityEvent) {
+        hooker.plotAccessGuardService.onPlayerStartSpectatingEntity(event)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerStopSpectatingEntity(event: PlayerStopSpectatingEntityEvent) {
+        hooker.plotAccessGuardService.onPlayerStopSpectatingEntity(event)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)

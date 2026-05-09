@@ -13,7 +13,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
-import io.github.retrooper.packetevents.util.SpigotConversionUtil
+import com.ratger.acreative.utils.PacketItemConversionSupport
 import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
@@ -71,6 +71,10 @@ class LayManager(private val hooker: FunctionHooker) {
     }
 
     fun layPlayer(player: Player) {
+        if (hooker.utils.isLaying(player)) {
+            unlayPlayer(player)
+            return
+        }
         if (hooker.utils.isPissing(player)) {
             hooker.pissManager.stopPiss(player)
         }
@@ -390,7 +394,7 @@ class LayManager(private val hooker: FunctionHooker) {
     fun updateMainHandEquipment(player: Player) {
         layingMap[player]?.let { data ->
             val currentItem = hooker.playerStateManager.getCurrentSavedMainHandItem(player)?.clone() ?: ItemStack(Material.AIR)
-            val packetItem = SpigotConversionUtil.fromBukkitItemStack(currentItem)
+            val packetItem = PacketItemConversionSupport.toPacket(currentItem)
             val newEquipment = data.equipment.filter { it.slot != EquipmentSlot.MAIN_HAND }.toMutableList()
             newEquipment.add(Equipment(EquipmentSlot.MAIN_HAND, packetItem))
             hooker.entityManager.updatePlayerNPCEquipment(data.npc, newEquipment, player)

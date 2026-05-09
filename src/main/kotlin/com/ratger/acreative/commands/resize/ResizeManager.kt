@@ -70,6 +70,12 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             return
         }
 
+        val currentValue = trackedPlayers[player]
+        if (currentValue != null && currentValue == value) {
+            removeEffectSmooth(player)
+            return
+        }
+
         playerStateType.let { hooker.playerStateManager.activateState(player, it) }
         applyAttribute(player, value)
         trackedPlayers[player] = value

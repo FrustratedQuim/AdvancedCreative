@@ -37,6 +37,12 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
             return
         }
 
+        val currentValue = trackedPlayers[player]
+        if (currentValue != null && currentValue == value) {
+            removeEffect(player)
+            return
+        }
+
         applyAttribute(player, value)
         trackedPlayers[player] = value
         playerStateType?.let { hooker.playerStateManager.activateState(player, it) }

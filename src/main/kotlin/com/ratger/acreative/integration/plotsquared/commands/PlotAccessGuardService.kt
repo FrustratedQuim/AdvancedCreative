@@ -1,6 +1,8 @@
 package com.ratger.acreative.integration.plotsquared.commands
 
 import com.google.common.eventbus.Subscribe
+import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent
+import com.destroystokyo.paper.event.player.PlayerStopSpectatingEntityEvent
 import com.plotsquared.bukkit.util.BukkitUtil
 import com.plotsquared.core.PlotAPI
 import com.plotsquared.core.events.PlayerEnterPlotEvent
@@ -30,6 +32,8 @@ class PlotAccessGuardService(
 
     private val enabled = hooker.plugin.server.pluginManager.getPlugin(PLOT_SQUARED_PLUGIN_NAME)?.isEnabled == true
     private val installed = AtomicBoolean(false)
+    private val spectatorTargets = mutableMapOf<UUID, UUID>()
+    private val spectatorViewers = mutableMapOf<UUID, MutableSet<UUID>>()
 
     fun install() {
         if (!enabled || !installed.compareAndSet(false, true)) {
@@ -59,7 +63,7 @@ class PlotAccessGuardService(
         }
 
         val riderUuid = plotUuid(rider)
-        val carrierPlot = runCatching { PlotPlayer.from(carrier).currentPlot }.getOrNull() ?: return true
+        val carrierPlot = effectivePlot(carrier) ?: return true
         return !carrierPlot.isDenied(riderUuid)
     }
 
@@ -78,6 +82,70 @@ class PlotAccessGuardService(
             .toList()
     }
 
+    fun clearPlayerSpectating(player: Player) {
+        if (!enabled || !installed.get()) {
+            removeSpectatorLink(player.uniqueId)
+            return
+        }
+
+        removeSpectatorLink(player.uniqueId)?.let { targetId ->
+            hooker.actionLogger.auditInfo {
+                val targetRef = Bukkit.getPlayer(targetId)?.let { hooker.actionLogger.playerRef(it) } ?: targetId.toString()
+                "Spectator detached viewer=${hooker.actionLogger.playerRef(player)} target=$targetRef reason=player-reset"
+            }
+        }
+
+        releaseSpectatorsForTarget(player.uniqueId)
+
+        if (player.isOnline && player.gameMode == GameMode.SPECTATOR) {
+            player.spectatorTarget = null
+        }
+    }
+
+    fun onPlayerStartSpectatingEntity(event: PlayerStartSpectatingEntityEvent) {
+        if (!installed.get() || !enabled) {
+            return
+        }
+
+        val viewer = event.player
+        val target = event.newSpectatorTarget as? Player
+        if (target == null) {
+            removeSpectatorLink(viewer.uniqueId)
+            return
+        }
+
+        if (!canRideHeadAtCarrierPlot(viewer, target)) {
+            hooker.actionLogger.auditWarning {
+                "Spectator start blocked viewer=${hooker.actionLogger.playerRef(viewer)} target=${hooker.actionLogger.playerRef(target)}"
+            }
+            event.isCancelled = true
+            return
+        }
+
+        registerSpectatorLink(viewer.uniqueId, target.uniqueId)
+        hooker.actionLogger.auditInfo {
+            "Spectator start viewer=${hooker.actionLogger.playerRef(viewer)} target=${hooker.actionLogger.playerRef(target)}"
+        }
+    }
+
+    fun onPlayerStopSpectatingEntity(event: PlayerStopSpectatingEntityEvent) {
+        if (!installed.get() || !enabled) {
+            return
+        }
+
+        val viewer = event.player
+        val target = event.spectatorTarget as? Player
+        val removedTargetId = removeSpectatorLink(viewer.uniqueId)
+        if (removedTargetId != null) {
+            hooker.actionLogger.auditInfo {
+                val targetRef = target?.let { hooker.actionLogger.playerRef(it) }
+                    ?: Bukkit.getPlayer(removedTargetId)?.let { hooker.actionLogger.playerRef(it) }
+                    ?: removedTargetId.toString()
+                "Spectator stop viewer=${hooker.actionLogger.playerRef(viewer)} target=$targetRef"
+            }
+        }
+    }
+
     @Subscribe
     @Suppress("unused")
     fun onPlayerEnterPlot(event: PlayerEnterPlotEvent) {
@@ -88,8 +156,9 @@ class PlotAccessGuardService(
         val player = event.plotPlayer.platformPlayer as? Player
             ?: Bukkit.getPlayer(event.plotPlayer.uuid)
             ?: return
+        releaseDeniedSpectatorsAttachedToCarrier(player, event.plot)
         releaseDeniedHeadPassengers(player, event.plot)
-        enforceDeniedTarget(event.plot, player, "enter-event")
+        enforceDeniedTarget(event.plot, player)
     }
 
     @Subscribe
@@ -104,7 +173,7 @@ class PlotAccessGuardService(
                 if (!installed.get()) {
                     return@Runnable
                 }
-                enforceDeniedTarget(event.plot, target, "deny-event")
+                enforceDeniedTarget(event.plot, target)
             }, POST_COMMAND_CHECK_DELAY_TICKS)
         }
     }
@@ -133,22 +202,17 @@ class PlotAccessGuardService(
     }
 
     private fun enforceDeniedTargets(check: PostCommandCheck) {
-        val executor = Bukkit.getPlayer(check.executorId)
         val targets = check.targetNames.mapNotNull(::findOnlinePlayer)
         if (targets.isEmpty()) {
             return
         }
 
         targets.forEach { target ->
-            if (enforceDeniedTarget(check.plot, target, check.commandName)) {
-                hooker.actionLogger.info {
-                    "Plot access guard kicked denied player=${hooker.actionLogger.playerRef(target)} plot=${check.plot} command=${check.commandName} executor=${executor?.let { hooker.actionLogger.playerRef(it) } ?: check.executorId}"
-                }
-            }
+            enforceDeniedTarget(check.plot, target)
         }
     }
 
-    private fun enforceDeniedTarget(plot: Plot, target: Player, reason: String): Boolean {
+    private fun enforceDeniedTarget(plot: Plot, target: Player): Boolean {
         if (!target.isOnline) {
             return false
         }
@@ -162,12 +226,13 @@ class PlotAccessGuardService(
             target.gameMode = GameMode.CREATIVE
         }
 
-        releaseHeadPassengerChain(target, reason)
+        releaseDeniedSpectatorsAttachedToCarrier(target, plot)
+        releaseHeadPassengerChain(target)
 
         if (hooker.sitManager.isSitting(target)) {
             hooker.sitManager.unsitPlayer(target)
         }
-        kickFromPlot(plot, target, reason)
+        kickFromPlot(plot, target)
         return true
     }
 
@@ -181,15 +246,11 @@ class PlotAccessGuardService(
             plot.isDenied(plotUuid(passenger)) &&
                 hooker.sitManager.getSitSession(passenger)?.style == SitStyle.HEAD
         } ?: return
-
-        hooker.actionLogger.info {
-            "Plot enter released denied head passenger carrier=${hooker.actionLogger.playerRef(carrier)} passenger=${hooker.actionLogger.playerRef(deniedPassenger)} plot=$plot"
-        }
         hooker.sitManager.unsitPlayer(deniedPassenger)
     }
 
 
-    private fun releaseHeadPassengerChain(carrier: Player, reason: String) {
+    private fun releaseHeadPassengerChain(carrier: Player) {
         val chain = headPassengerChain(carrier)
         if (chain.isEmpty()) {
             return
@@ -198,9 +259,6 @@ class PlotAccessGuardService(
         chain.filter { passenger ->
             hooker.sitManager.getSitSession(passenger)?.style == SitStyle.HEAD
         }.forEach { passenger ->
-            hooker.actionLogger.info {
-                "Plot access guard unsit head passenger carrier=${hooker.actionLogger.playerRef(carrier)} passenger=${hooker.actionLogger.playerRef(passenger)} reason=$reason"
-            }
             hooker.sitManager.unsitPlayer(passenger)
         }
     }
@@ -219,7 +277,7 @@ class PlotAccessGuardService(
         return result
     }
 
-    private fun kickFromPlot(plot: Plot, target: Player, reason: String) {
+    private fun kickFromPlot(plot: Plot, target: Player) {
         plot.getSide { plotLocation ->
             Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
                 if (!target.isOnline) {
@@ -232,9 +290,6 @@ class PlotAccessGuardService(
                     target.world.spawnLocation
                 }
                 target.teleport(kickLocation)
-                hooker.actionLogger.info {
-                    "Plot access guard teleported denied player=${hooker.actionLogger.playerRef(target)} reason=$reason to=${hooker.actionLogger.locationRef(kickLocation)}"
-                }
             })
         }
     }
@@ -243,8 +298,7 @@ class PlotAccessGuardService(
         if (plot.playersInPlot.any { it.uuid == plotUuid }) {
             return true
         }
-        val currentPlot = runCatching { PlotPlayer.from(target).currentPlot }.getOrNull() ?: return false
-        return currentPlot == plot
+        return effectivePlot(target) == plot
     }
 
     private fun plotUuid(player: Player): UUID =
@@ -259,7 +313,7 @@ class PlotAccessGuardService(
             return runCatching { Plot.getPlotFromString(plotPlayer, args[0], false) }.getOrNull()
                 ?: plotPlayer.currentPlot
         }
-        return plotPlayer.currentPlot
+        return effectivePlot(player) ?: plotPlayer.currentPlot
     }
 
     private fun resolveCommandIndex(args: Array<out String>): Int {
@@ -275,6 +329,90 @@ class PlotAccessGuardService(
             return false
         }
         return trimmed.count { it == ';' } >= 1
+    }
+
+    private fun releaseDeniedSpectatorsAttachedToCarrier(carrier: Player, plot: Plot) {
+        val viewerIds = spectatorViewers[carrier.uniqueId]?.toList().orEmpty()
+        if (viewerIds.isEmpty()) {
+            return
+        }
+
+        viewerIds.forEach { viewerId ->
+            val viewer = Bukkit.getPlayer(viewerId) ?: run {
+                removeSpectatorLink(viewerId)
+                return@forEach
+            }
+
+            val viewerUuid = plotUuid(viewer)
+            if (!plot.isDenied(viewerUuid) || !isInsidePlot(plot, viewer, viewerUuid)) {
+                return@forEach
+            }
+            stopSpectatingViewer(viewer)
+        }
+    }
+
+    private fun releaseSpectatorsForTarget(targetId: UUID) {
+        val viewerIds = spectatorViewers[targetId]?.toList().orEmpty()
+        if (viewerIds.isEmpty()) {
+            return
+        }
+
+        viewerIds.forEach { viewerId ->
+            val viewer = Bukkit.getPlayer(viewerId)
+            if (viewer != null) {
+                stopSpectatingViewer(viewer)
+            } else {
+                removeSpectatorLink(viewerId)
+            }
+        }
+    }
+
+    private fun stopSpectatingViewer(viewer: Player) {
+        removeSpectatorLink(viewer.uniqueId) ?: return
+        if (viewer.isOnline && viewer.gameMode == GameMode.SPECTATOR) {
+            viewer.spectatorTarget = null
+        }
+    }
+
+    private fun registerSpectatorLink(viewerId: UUID, targetId: UUID) {
+        val currentTargetId = spectatorTargets[viewerId]
+        if (currentTargetId == targetId) {
+            return
+        }
+
+        removeSpectatorLink(viewerId)
+        spectatorTargets[viewerId] = targetId
+        spectatorViewers.computeIfAbsent(targetId) { mutableSetOf() }.add(viewerId)
+    }
+
+    private fun removeSpectatorLink(viewerId: UUID): UUID? {
+        val targetId = spectatorTargets.remove(viewerId) ?: return null
+        spectatorViewers[targetId]?.let { viewers ->
+            viewers.remove(viewerId)
+            if (viewers.isEmpty()) {
+                spectatorViewers.remove(targetId)
+            }
+        }
+        return targetId
+    }
+
+    private fun spectatorTarget(player: Player): Player? {
+        val targetId = spectatorTargets[player.uniqueId] ?: return null
+        return Bukkit.getPlayer(targetId)
+    }
+
+    private fun effectivePlot(player: Player, visited: MutableSet<UUID> = mutableSetOf()): Plot? {
+        if (!visited.add(player.uniqueId)) {
+            return runCatching { PlotPlayer.from(player).currentPlot }.getOrNull()
+        }
+
+        val spectatedTarget = spectatorTarget(player)
+        if (spectatedTarget != null) {
+            return effectivePlot(spectatedTarget, visited)
+                ?: runCatching { PlotPlayer.from(player).currentPlot }.getOrNull()
+        }
+
+        return runCatching { PlotPlayer.from(player).currentPlot }.getOrNull()
     }
 
     private companion object {

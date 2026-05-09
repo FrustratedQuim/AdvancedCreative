@@ -23,6 +23,14 @@ class ActionLogger(
         hooker.plugin.logger.info("$prefix ${message()}")
     }
 
+    fun auditInfo(message: String) {
+        hooker.plugin.logger.info("$prefix $message")
+    }
+
+    fun auditInfo(message: () -> String) {
+        hooker.plugin.logger.info("$prefix ${message()}")
+    }
+
     fun warning(message: String) {
         if (!isEnabled()) return
         hooker.plugin.logger.warning("$prefix $message")
@@ -30,6 +38,14 @@ class ActionLogger(
 
     fun warning(message: () -> String) {
         if (!isEnabled()) return
+        hooker.plugin.logger.warning("$prefix ${message()}")
+    }
+
+    fun auditWarning(message: String) {
+        hooker.plugin.logger.warning("$prefix $message")
+    }
+
+    fun auditWarning(message: () -> String) {
         hooker.plugin.logger.warning("$prefix ${message()}")
     }
 
@@ -62,6 +78,11 @@ class ActionLogger(
     }
 
     fun viewerCountRef(count: Int): String = "viewers=$count"
+
+    fun commandRef(label: String, args: Array<out String>): String {
+        val commandArgs = if (args.isEmpty()) "" else " ${args.joinToString(" ")}"
+        return "/$label$commandArgs"
+    }
 
     private fun markThrottle(key: String, intervalMs: Long): Boolean {
         if (intervalMs <= 0L) return true

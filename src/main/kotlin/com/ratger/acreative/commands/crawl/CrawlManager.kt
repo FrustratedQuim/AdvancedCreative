@@ -36,15 +36,15 @@ class CrawlManager(private val hooker: FunctionHooker) {
     }
 
     fun crawlPlayer(player: Player) {
+        if (isCrawling(player)) {
+            uncrawlPlayer(player)
+            return
+        }
         if (!canCrawl(player)) {
             hooker.messageManager.sendChat(player, MessageKey.ERROR_CRAWL_IN_AIR)
             return
         }
         hooker.playerStateManager.activateState(player, PlayerStateType.CRAWLING)
-        if (crawlingPlayers.containsKey(player)) {
-            hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
-            return
-        }
         val session = CrawlSession(player)
         crawlingPlayers[player] = session
         hooker.actionLogger.info(

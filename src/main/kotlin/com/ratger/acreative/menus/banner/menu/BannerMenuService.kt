@@ -297,9 +297,23 @@ class BannerMenuService(
     }
 
     fun togglePatternBan(player: Player) {
+        hooker.actionLogger.auditInfo {
+            "Banner pattern-ban requested by ${hooker.actionLogger.playerRef(player)}"
+        }
         executor.submit {
             val result = moderationService.togglePattern(player)
             runSync {
+                when (result) {
+                    BannerModerationService.PatternToggleResult.INVALID -> hooker.actionLogger.auditWarning {
+                        "Banner pattern-ban failed by ${hooker.actionLogger.playerRef(player)} reason=hand-required"
+                    }
+                    BannerModerationService.PatternToggleResult.BANNED -> hooker.actionLogger.auditInfo {
+                        "Banner pattern-ban completed by ${hooker.actionLogger.playerRef(player)} result=banned"
+                    }
+                    BannerModerationService.PatternToggleResult.UNBANNED -> hooker.actionLogger.auditInfo {
+                        "Banner pattern-ban completed by ${hooker.actionLogger.playerRef(player)} result=unbanned"
+                    }
+                }
                 if (!player.isOnline) {
                     return@runSync
                 }
@@ -319,19 +333,32 @@ class BannerMenuService(
             return
         }
 
+        hooker.actionLogger.auditInfo {
+            "Banner user-ban requested by ${hooker.actionLogger.playerRef(player)} target=${targetUser.name} reason=${reason?.takeIf { it.isNotBlank() } ?: "none"}"
+        }
+
         moderationService.toggleUserBan(targetUser, reason)
             .whenComplete { result, error ->
                 runSync {
-                    if (!player.isOnline) {
-                        return@runSync
-                    }
                     if (error != null || result == null) {
+                        hooker.actionLogger.auditWarning {
+                            "Banner user-ban failed by ${hooker.actionLogger.playerRef(player)} target=${targetUser.name} error=${error?.javaClass?.simpleName ?: "null"}"
+                        }
+                        if (!player.isOnline) {
+                            return@runSync
+                        }
                         hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_PLAYER)
                         return@runSync
                     }
 
                     when (result) {
                         BannerModerationService.UserToggleResult.Unbanned -> {
+                            hooker.actionLogger.auditInfo {
+                                "Banner user-ban completed by ${hooker.actionLogger.playerRef(player)} target=${targetUser.name} result=unbanned"
+                            }
+                            if (!player.isOnline) {
+                                return@runSync
+                            }
                             hooker.messageManager.sendChat(
                                 player,
                                 MessageKey.USER_UNBANNED,
@@ -339,6 +366,12 @@ class BannerMenuService(
                             )
                         }
                         is BannerModerationService.UserToggleResult.Banned -> {
+                            hooker.actionLogger.auditInfo {
+                                "Banner user-ban completed by ${hooker.actionLogger.playerRef(player)} target=${result.entry.playerName} result=banned"
+                            }
+                            if (!player.isOnline) {
+                                return@runSync
+                            }
                             hooker.messageManager.sendChat(
                                 player,
                                 MessageKey.USER_BANNED,
