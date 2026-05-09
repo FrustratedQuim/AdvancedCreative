@@ -18,7 +18,7 @@ class SystemToggleService(
 
     fun reload() {
         ManagedSystem.entries.forEach { system ->
-            states[system] = hooker.configManager.config.getBoolean(path(system), true)
+            states[system] = hooker.configManager.config.getBoolean(path(system), defaultEnabled(system))
         }
     }
 
@@ -47,11 +47,14 @@ class SystemToggleService(
             ManagedSystem.DECORATION_BANNERS -> hooker.bannerSubsystemOrNull()?.menuService?.closeAllSessions()
             ManagedSystem.DECORATION_HEADS -> hooker.subsystemOrNull()?.menuService?.closeAllSessions()
             ManagedSystem.PLOT_EDIT,
-            ManagedSystem.PLOT_MASSCLAIM -> Unit
+            ManagedSystem.PLOT_MASSCLAIM,
+            ManagedSystem.LOGGER -> Unit
         }
     }
 
     private fun path(system: ManagedSystem): String = "$CONFIG_ROOT.${system.id}"
+
+    private fun defaultEnabled(system: ManagedSystem): Boolean = system != ManagedSystem.LOGGER
 
     private companion object {
         const val CONFIG_ROOT = "systems"

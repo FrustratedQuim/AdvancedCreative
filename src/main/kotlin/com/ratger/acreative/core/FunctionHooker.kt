@@ -28,6 +28,7 @@ import com.ratger.acreative.commands.spit.SpitManager
 import com.ratger.acreative.commands.strength.StrengthManager
 import com.ratger.acreative.integration.plotsquared.editor.PlotFlagEditorService
 import com.ratger.acreative.integration.plotsquared.commands.PlotCacheSyncService
+import com.ratger.acreative.integration.plotsquared.commands.PlotAccessGuardService
 import com.ratger.acreative.integration.plotsquared.commands.PlotCommandService
 import com.ratger.acreative.menus.decorationheads.service.Subsystem
 import com.ratger.acreative.menus.banner.service.Subsystem as BannerSubsystem
@@ -48,6 +49,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     lateinit var serverPerformanceService: ServerPerformanceService
         private set
     lateinit var systemToggleService: SystemToggleService
+        private set
+    lateinit var actionLogger: ActionLogger
         private set
     lateinit var commandManager: CommandManager
         private set
@@ -117,6 +120,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var plotCacheSyncService: PlotCacheSyncService
         private set
+    lateinit var plotAccessGuardService: PlotAccessGuardService
+        private set
     lateinit var subsystem: Subsystem
         private set
     lateinit var bannerSubsystem: BannerSubsystem
@@ -145,13 +150,15 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     fun menuServiceOrNull(): MenuService? = if (this::menuService.isInitialized) menuService else null
     fun subsystemOrNull(): Subsystem? = if (this::subsystem.isInitialized) subsystem else null
     fun bannerSubsystemOrNull(): BannerSubsystem? = if (this::bannerSubsystem.isInitialized) bannerSubsystem else null
+    fun plotAccessGuardServiceOrNull(): PlotAccessGuardService? = if (this::plotAccessGuardService.isInitialized) plotAccessGuardService else null
 
     fun init() {
         configManager = ConfigManager(this)
         configManager.initConfigs()
         systemToggleService = SystemToggleService(this)
+        actionLogger = ActionLogger(this)
 
-        tickScheduler = TickScheduler(plugin)
+        tickScheduler = TickScheduler(this)
         tickScheduler.start()
 
         utils = Utils(this)
@@ -188,10 +195,12 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         itemdbManager = ItemdbManager(this)
         menuService = MenuService(this)
         plotFlagEditorService = PlotFlagEditorService(this)
+        plotAccessGuardService = PlotAccessGuardService(this)
         plotCommandService = PlotCommandService(this)
         plotCommandService.install()
         plotCacheSyncService = PlotCacheSyncService(this, plotCommandService)
         plotCacheSyncService.install()
+        plotAccessGuardService.install()
         adminManager = AdminManager(this)
         subsystem = Subsystem(this, com.ratger.acreative.menus.edit.meta.MiniMessageParser(), menuService.buttonFactory())
         subsystem.init()
@@ -274,6 +283,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         }
         if (this::plotCommandService.isInitialized) {
             plotCommandService.uninstall()
+        }
+        if (this::plotAccessGuardService.isInitialized) {
+            plotAccessGuardService.uninstall()
         }
         if (this::plotCacheSyncService.isInitialized) {
             plotCacheSyncService.uninstall()

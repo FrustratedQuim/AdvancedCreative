@@ -78,6 +78,7 @@ class PlotCommandService(
         val rewritten = rewriteArgs(player, args) ?: return true
         val handled = registered.executor.onCommand(sender, command, label, rewritten)
         invalidateHomeCount(PlotPlayer.from(player).uuid)
+        hooker.plotAccessGuardService.schedulePostCommandAccessCheck(player, rewritten)
         return handled
     }
 
@@ -114,8 +115,9 @@ class PlotCommandService(
             in KICK_COMMANDS if args.size > commandIndex + 1 -> {
                 rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
-                        plot.playersInPlot
+                        (plot.playersInPlot
                             .mapNotNull { it.name.takeIf(String::isNotBlank) }
+                            + hooker.plotAccessGuardService.deniedOnlinePlayerNamesInside(plot))
                     }
                 }
             }
@@ -385,7 +387,9 @@ class PlotCommandService(
 
     private fun currentPlotPlayerNames(player: Player, args: Array<out String>): List<String> {
         val plot = resolveTargetPlot(player, args) ?: return emptyList()
-        return plot.playersInPlot.mapNotNull { it.name.takeIf(String::isNotBlank) }.distinctBy(::normalizeNameKey)
+        return (plot.playersInPlot.mapNotNull { it.name.takeIf(String::isNotBlank) } +
+            hooker.plotAccessGuardService.deniedOnlinePlayerNamesInside(plot))
+            .distinctBy(::normalizeNameKey)
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
     }
 

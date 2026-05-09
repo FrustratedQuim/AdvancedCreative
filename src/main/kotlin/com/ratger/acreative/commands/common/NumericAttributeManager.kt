@@ -41,6 +41,10 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
         trackedPlayers[player] = value
         playerStateType?.let { hooker.playerStateManager.activateState(player, it) }
 
+        hooker.actionLogger.info(
+            "${javaClass.simpleName} set for ${hooker.actionLogger.playerRef(player)} -> ${formatValue(value)}"
+        )
+
         hooker.messageManager.sendChat(
             player,
             successSetMessageKey,
@@ -55,6 +59,9 @@ abstract class NumericAttributeManager(protected val hooker: FunctionHooker) {
         trackedPlayers.remove(player)
         playerStateType?.let { hooker.playerStateManager.deactivateState(player, it) }
         onAfterEffectRemoved(player)
+        hooker.actionLogger.info(
+            "${javaClass.simpleName} removed for ${hooker.actionLogger.playerRef(player)}"
+        )
         hooker.messageManager.sendChat(player, successResetMessageKey)
     }
 

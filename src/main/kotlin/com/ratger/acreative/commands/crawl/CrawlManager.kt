@@ -47,6 +47,9 @@ class CrawlManager(private val hooker: FunctionHooker) {
         }
         val session = CrawlSession(player)
         crawlingPlayers[player] = session
+        hooker.actionLogger.info(
+            "Starting crawl for ${hooker.actionLogger.playerRef(player)} activeCrawlers=${crawlingPlayers.size}"
+        )
         updateSession(session)
 
         hooker.messageManager.sendChat(player, MessageKey.INFO_CRAWL_ON)
@@ -58,6 +61,9 @@ class CrawlManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.CRAWLING)
             return
         }
+        hooker.actionLogger.info(
+            "Stopping crawl for ${hooker.actionLogger.playerRef(player)}"
+        )
         crawlingPlayers.remove(player)?.let { session ->
             barrierPresenter.clear(session)
             shulkerPresenter.clear(session)
@@ -213,6 +219,9 @@ class CrawlManager(private val hooker: FunctionHooker) {
 
             val entity = session.shulkerEntity
             if (entity == null || !entity.isSpawned) {
+                hooker.actionLogger.info(
+                    "Spawning crawl shulker for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(spawnLocation)}"
+                )
                 val shulker = WrapperEntity(EntityTypes.SHULKER)
                 shulker.addViewer(player.uniqueId)
                 shulker.entityMeta.isInvisible = true
@@ -226,6 +235,11 @@ class CrawlManager(private val hooker: FunctionHooker) {
         }
 
         override fun clear(session: CrawlSession) {
+            if (session.shulkerEntity != null) {
+                hooker.actionLogger.info(
+                    "Removing crawl shulker for ${hooker.actionLogger.playerRef(session.player)}"
+                )
+            }
             session.shulkerEntity?.let { entity ->
                 if (entity.isSpawned) entity.remove()
             }

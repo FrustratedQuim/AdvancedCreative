@@ -132,6 +132,10 @@ class LayManager(private val hooker: FunctionHooker) {
 
         if (isNpcLocationOccupied(player, npcLocation)) return
 
+        hooker.actionLogger.info(
+            "Starting lay for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} bedLocation=${hooker.actionLogger.locationRef(bedLocation)}"
+        )
+
         val (entity, equipment, teamName) = hooker.entityManager.createPlayerNPC(player, npcLocation, pose.npcYaw, hooker.utils.isGlowing(player))
 
         val armorStandLocation = location.clone().add(0.0, 0.3, 0.0)
@@ -167,6 +171,9 @@ class LayManager(private val hooker: FunctionHooker) {
         }
 
         layingMap.remove(player)?.let { data ->
+            hooker.actionLogger.info(
+                "Stopping lay for ${hooker.actionLogger.playerRef(player)} viewers=${Bukkit.getOnlinePlayers().count { !hooker.utils.isHiddenFromPlayer(it, player) }}"
+            )
             val scoreboard = Scoreboard()
             val team = PlayerTeam(scoreboard, data.teamName)
             val removePacket = ClientboundSetPlayerTeamPacket.createRemovePacket(team)
@@ -332,6 +339,10 @@ class LayManager(private val hooker: FunctionHooker) {
         layingMap.forEach { (owner, data) ->
             if (!owner.isOnline || owner.world != viewer.world) return@forEach
             if (hooker.utils.isHiddenFromPlayer(viewer, owner)) return@forEach
+
+            hooker.actionLogger.info(
+                "Restoring lay viewer owner=${hooker.actionLogger.playerRef(owner)} viewer=${hooker.actionLogger.playerRef(viewer)}"
+            )
 
             val profileName = "NPC_${data.npc.uuid.toString().substring(0, 8)}"
             val textures = collectOwnerTextures(owner)

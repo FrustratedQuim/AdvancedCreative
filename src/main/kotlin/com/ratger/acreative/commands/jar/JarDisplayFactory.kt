@@ -25,6 +25,9 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
     fun createDisplayParts(targetUuid: UUID, visualOrigin: Location): JarDisplayGroup {
         val target = Bukkit.getPlayer(targetUuid)
         val world = requireNotNull(visualOrigin.world) { "Jar visual origin must have world" }
+        hooker.actionLogger.info(
+            "Creating jar display group target=$targetUuid at ${hooker.actionLogger.locationRef(visualOrigin)}"
+        )
 
         val rootAnchor = world.spawnEntity(visualOrigin, EntityType.BLOCK_DISPLAY) as BlockDisplay
         rootAnchor.block = Material.AIR.createBlockData()
@@ -69,6 +72,10 @@ internal class JarDisplayFactory(private val hooker: FunctionHooker) {
 
             display
         }.toMutableList()
+
+        hooker.actionLogger.info(
+            "Jar display group created target=$targetUuid parts=${parts.size}"
+        )
 
         return JarDisplayGroup(rootAnchor = rootAnchor, parts = parts)
     }

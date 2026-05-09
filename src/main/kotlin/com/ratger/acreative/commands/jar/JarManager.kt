@@ -258,6 +258,9 @@ class JarManager(private val hooker: FunctionHooker) {
         if (target.gameMode == GameMode.SPECTATOR) {
             target.gameMode = GameMode.CREATIVE
         }
+        hooker.actionLogger.info(
+            "Starting jar session owner=${hooker.actionLogger.playerRef(owner)} target=${hooker.actionLogger.playerRef(target)} const=$constFlag support=${hooker.actionLogger.locationRef(supportBlockLocation)} visual=${hooker.actionLogger.locationRef(visualOrigin)}"
+        )
         hooker.playerStateManager.activateState(target, PlayerStateType.JARRED)
 
         val savedState = capturePlayerState(target)
@@ -332,6 +335,9 @@ class JarManager(private val hooker: FunctionHooker) {
             return
         }
 
+        hooker.actionLogger.info(
+            "Releasing jar session target=$targetUuid cause=${cause.name} waitForScaleRestore=$waitForScaleRestore"
+        )
         hooker.tickScheduler.cancel(session.taskId)
         session.displayEntities.forEach { it.remove() }
         session.rootAnchorEntity.remove()

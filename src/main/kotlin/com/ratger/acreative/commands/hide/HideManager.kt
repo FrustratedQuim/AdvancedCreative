@@ -127,11 +127,17 @@ class HideManager(private val hooker: FunctionHooker) {
         val hiddenSet = hiddenPlayers.computeIfAbsent(hiderId) { mutableSetOf() }
 
         if (hiddenSet.contains(targetId)) {
+            hooker.actionLogger.info(
+                "Hide toggle detected, unhide requested for hider=${hooker.actionLogger.playerRef(hider)} target=${hooker.actionLogger.playerRef(target)}"
+            )
             unhidePlayer(hider, target)
             return
         }
 
         hiddenSet.add(targetId)
+        hooker.actionLogger.info(
+            "Hiding target=${hooker.actionLogger.playerRef(target)} from hider=${hooker.actionLogger.playerRef(hider)} currentRelations=${cacheSnapshot().hiddenRelations}"
+        )
         hooker.playerStateManager.activateState(hider, PlayerStateType.HIDING_SOMEONE)
         hooker.playerStateManager.activateState(target, PlayerStateType.HIDDEN_BY_SOMEONE)
         hooker.tickScheduler.runLater(1L) {
@@ -189,6 +195,9 @@ class HideManager(private val hooker: FunctionHooker) {
     }
 
     fun reapplyHide(hider: Player, target: Player) {
+        hooker.actionLogger.info(
+            "Reapplying hide relation hider=${hooker.actionLogger.playerRef(hider)} target=${hooker.actionLogger.playerRef(target)}"
+        )
         hider.hidePlayer(hooker.plugin, target)
         hideFreezeBlocks(hider, target)
         hidePuddleDisplays(hider, target)
@@ -207,6 +216,9 @@ class HideManager(private val hooker: FunctionHooker) {
         if (entity is Projectile) {
             val owner = (entity.shooter as? Player)?.uniqueId
             if (owner != null && hiddenPlayers[hider.uniqueId]?.contains(owner) == true) {
+                hooker.actionLogger.info(
+                    "Hiding projectile entity=${entity.type.name} id=${entity.uniqueId} for hider=${hooker.actionLogger.playerRef(hider)} owner=$owner"
+                )
                 hider.hideEntity(hooker.plugin, entity)
             }
         }
@@ -214,6 +226,9 @@ class HideManager(private val hooker: FunctionHooker) {
 
     fun hideDroppedItem(hider: Player, itemEntity: Entity, owner: Player) {
         if (hiddenPlayers[hider.uniqueId]?.contains(owner.uniqueId) == true) {
+            hooker.actionLogger.info(
+                "Hiding dropped item entity=${itemEntity.type.name} id=${itemEntity.uniqueId} for hider=${hooker.actionLogger.playerRef(hider)} owner=${hooker.actionLogger.playerRef(owner)}"
+            )
             hider.hideEntity(hooker.plugin, itemEntity)
         }
     }
@@ -258,6 +273,9 @@ class HideManager(private val hooker: FunctionHooker) {
         val hiddenSet = hiddenPlayers[hiderId] ?: return
 
         if (hider.isOnline && target.isOnline) {
+            hooker.actionLogger.info(
+                "Unhiding target=${hooker.actionLogger.playerRef(target)} for hider=${hooker.actionLogger.playerRef(hider)}"
+            )
             hiddenSet.remove(targetId)
             hider.showPlayer(hooker.plugin, target)
             showFreezeBlocks(hider, target)
@@ -302,6 +320,9 @@ class HideManager(private val hooker: FunctionHooker) {
 
     fun reapplyAllHides(player: Player) {
         val playerId = player.uniqueId
+        hooker.actionLogger.info(
+            "Reapplying all hides for ${hooker.actionLogger.playerRef(player)}"
+        )
 
         // Повторно скрываем скрытых игроков
         val hiddenSet = hiddenPlayers[playerId] ?: emptySet()

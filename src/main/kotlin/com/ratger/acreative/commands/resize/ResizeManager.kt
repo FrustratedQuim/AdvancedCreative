@@ -73,6 +73,9 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         playerStateType.let { hooker.playerStateManager.activateState(player, it) }
         applyAttribute(player, value)
         trackedPlayers[player] = value
+        hooker.actionLogger.info(
+            "Resize command applied for ${hooker.actionLogger.playerRef(player)} -> ${formatValue(value)}"
+        )
 
         hooker.messageManager.sendChat(
             player,
@@ -92,6 +95,9 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     private fun removeEffectSmooth(player: Player) {
         if (!trackedPlayers.containsKey(player)) return
 
+        hooker.actionLogger.info(
+            "Resize command reset requested for ${hooker.actionLogger.playerRef(player)}"
+        )
         startSmoothResize(player, DEFAULT_SCALE_VALUE)
         trackedPlayers.remove(player)
         hooker.playerStateManager.deactivateState(player, playerStateType)
@@ -100,6 +106,9 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
     }
 
     fun smoothTransitionScale(player: Player, targetValue: Double, onComplete: (() -> Unit)? = null) {
+        hooker.actionLogger.info(
+            "Resize smooth transition for ${hooker.actionLogger.playerRef(player)} -> $targetValue"
+        )
         startSmoothResize(player, targetValue, onComplete)
     }
 
@@ -138,6 +147,10 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             onComplete?.invoke()
             return
         }
+
+        hooker.actionLogger.info(
+            "Starting resize transition for ${hooker.actionLogger.playerRef(player)} from $startValue to $targetValue"
+        )
 
         val stepDelta = (targetValue - startValue) / TRANSITION_STEPS
         var currentStep = 0

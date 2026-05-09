@@ -45,6 +45,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
     private fun handleAnimationPacket(player: Player) {
         val paintManager = hooker.paintManagerOrNull()
         if (paintManager?.isPainting(player) == true) {
+            hooker.actionLogger.info(
+                "Received animation packet from ${hooker.actionLogger.playerRef(player)} while painting"
+            )
             if (consumeSuppressedPaintAnimation(player)) {
                 return
             }
@@ -90,6 +93,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
         if (packet.action != WrapperPlayClientInteractEntity.InteractAction.ATTACK) return
 
         val target = Bukkit.getOnlinePlayers().firstOrNull { it.entityId == packet.entityId } ?: return
+        hooker.actionLogger.info(
+            "Received interact attack packet from ${hooker.actionLogger.playerRef(player)} against ${hooker.actionLogger.playerRef(target)}"
+        )
 
         hooker.tickScheduler.runNow {
             // Stage 1 (dependent): grab attack has priority and can "consume" the chain.
@@ -117,6 +123,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
         when (packet.action) {
             DiggingAction.DROP_ITEM -> {
                 event.isCancelled = true
+                hooker.actionLogger.info(
+                    "Received drop item packet from ${hooker.actionLogger.playerRef(player)} while painting"
+                )
                 paintManager.suppressDirectUseAfterDrop(player)
                 pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
                     hooker.tickScheduler.cancel(taskId)
@@ -128,6 +137,9 @@ class PacketHandler(private val hooker: FunctionHooker) {
             }
             DiggingAction.DROP_ITEM_STACK -> {
                 event.isCancelled = true
+                hooker.actionLogger.info(
+                    "Received drop stack packet from ${hooker.actionLogger.playerRef(player)} while painting"
+                )
                 paintManager.suppressDirectUseAfterDrop(player)
                 pendingPaintAnimationTasks.remove(player.uniqueId)?.let { taskId ->
                     hooker.tickScheduler.cancel(taskId)

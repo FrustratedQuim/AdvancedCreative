@@ -82,6 +82,9 @@ class GrabManager(private val hooker: FunctionHooker) {
     fun releaseSession(holderId: UUID) {
         val session = sessionByHolder.remove(holderId) ?: return
         holderByTarget.remove(session.targetId)
+        hooker.actionLogger.info(
+            "Releasing grab session holder=${session.holderId} target=${session.targetId}"
+        )
         hooker.tickScheduler.cancel(session.taskId)
 
         val holder = Bukkit.getPlayer(session.holderId)
@@ -187,6 +190,10 @@ class GrabManager(private val hooker: FunctionHooker) {
         if (target.gameMode == GameMode.SPECTATOR) {
             target.gameMode = GameMode.CREATIVE
         }
+
+        hooker.actionLogger.info(
+            "Starting grab session holder=${hooker.actionLogger.playerRef(holder)} target=${hooker.actionLogger.playerRef(target)} forcePull=$forcePull"
+        )
 
         hooker.playerStateManager.activateState(holder, PlayerStateType.GRABBING)
         hooker.playerStateManager.activateState(target, PlayerStateType.GRABBED)

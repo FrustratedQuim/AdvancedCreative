@@ -60,6 +60,9 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
         val blocks = blockFactory.createFor(player)
         if (hooker.utils.isGlowing(player)) blocks.forEach { it.entityMeta.isGlowing = true }
+        hooker.actionLogger.info(
+            "Freezing ${hooker.actionLogger.playerRef(player)} with ${blocks.size} block display(s)"
+        )
 
         hideBlocksFromHiddenViewers(player, blocks)
         val taskId = scheduleFreezeTicks(player)
@@ -69,6 +72,9 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun unfreezePlayer(player: Player) {
         val session = sessions.removeSession(player)
+        hooker.actionLogger.info(
+            "Unfreezing ${hooker.actionLogger.playerRef(player)} blocks=${session?.blocks?.size ?: 0}"
+        )
         session?.blocks?.forEach {
             it.entityMeta.isGlowing = false
             it.remove()
@@ -93,12 +99,18 @@ class FreezeManager(private val hooker: FunctionHooker) {
 
     fun hideFreezeBlocksForViewer(viewer: Player, target: Player) {
         val blocks = sessions.getSession(target)?.blocks ?: return
+        hooker.actionLogger.info(
+            "Hiding freeze blocks for viewer=${hooker.actionLogger.playerRef(viewer)} target=${hooker.actionLogger.playerRef(target)} blocks=${blocks.size}"
+        )
         blocks.forEach { it.removeViewer(viewer.uniqueId) }
         sessions.trackHiddenBlocks(viewer.uniqueId, target.uniqueId, blocks)
     }
 
     fun showFreezeBlocksForViewer(viewer: Player, target: Player) {
         val blocks = sessions.getSession(target)?.blocks ?: return
+        hooker.actionLogger.info(
+            "Showing freeze blocks for viewer=${hooker.actionLogger.playerRef(viewer)} target=${hooker.actionLogger.playerRef(target)} blocks=${blocks.size}"
+        )
         blocks.forEach { block ->
             if (block.isSpawned) block.addViewer(viewer.uniqueId)
         }

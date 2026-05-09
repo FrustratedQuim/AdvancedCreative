@@ -666,6 +666,9 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     fun stopPainting(player: Player) {
         val session = sessions.remove(player.uniqueId) ?: return
+        hooker.actionLogger.info(
+            "Stopping paint session for ${hooker.actionLogger.playerRef(player)} cells=${session.canvasCells.size} viewers=${session.viewers.size}"
+        )
         if (session.appliedZoom != 1) {
             applyCanvasZoom(player, session, 1)
         }
@@ -777,6 +780,9 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun syncRenderedCanvas(player: Player, session: PaintSession, targetZoom: Int): Boolean {
         val plans = buildRenderedCellPlans(session, targetZoom)
+        hooker.actionLogger.info(
+            "Syncing rendered paint canvas for ${hooker.actionLogger.playerRef(player)} zoom=$targetZoom plannedCells=${plans.size}"
+        )
         if (!canOccupyRenderedPlans(player, session, plans)) {
             return false
         }
@@ -924,6 +930,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         val frameDirection = resolveDirection(player)
         val anchorLocation = resolveFrameLocation(player, frameDirection)
         val points = size.initialPoints()
+        hooker.actionLogger.info(
+            "Starting paint session for ${hooker.actionLogger.playerRef(player)} size=${size.normalized()} points=${points.size} anchor=${hooker.actionLogger.locationRef(anchorLocation)}"
+        )
         val frameLocations = points.associateWith { point ->
             resolveCellLocation(anchorLocation, size.basePoint, point, frameDirection)
         }
@@ -993,6 +1002,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         mapSnapshots.values.forEach { snapshot ->
             scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
         }
+        hooker.actionLogger.info(
+            "Paint session started for ${hooker.actionLogger.playerRef(player)} cells=${canvasCells.size} viewers=${visibleViewers.size}"
+        )
         return true
     }
 
@@ -1078,6 +1090,9 @@ class PaintManager(private val hooker: FunctionHooker) {
             return false
         }
 
+        hooker.actionLogger.info(
+            "Spawned paint canvas visuals at ${hooker.actionLogger.locationRef(location)}"
+        )
         return true
     }
 
@@ -2959,6 +2974,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         location: Location,
         canAdd: Boolean
     ): PaintResizePreview {
+        hooker.actionLogger.info(
+            "Creating paint resize preview for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} canAdd=$canAdd"
+        )
         val frame = WrapperEntity(EntityTypes.GLOW_ITEM_FRAME)
         frame.addViewer(player.uniqueId)
         val meta = frame.entityMeta as ItemFrameMeta
@@ -2993,6 +3011,9 @@ class PaintManager(private val hooker: FunctionHooker) {
 
     private fun removeResizePreview(player: Player, session: PaintSession) {
         val preview = session.resizePreview ?: return
+        hooker.actionLogger.info(
+            "Removing paint resize preview for ${hooker.actionLogger.playerRef(player)}"
+        )
         sendResizeTeamRemove(player, preview.teamName)
         preview.frame.remove()
         session.resizePreview = null
@@ -3004,6 +3025,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         team.color = if (canAdd) RESIZE_PREVIEW_CAN_ADD_COLOR else RESIZE_PREVIEW_CANNOT_ADD_COLOR
         team.players.add(entry)
         val packet = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true)
+        hooker.actionLogger.info(
+            "Sending paint resize team add for ${hooker.actionLogger.playerRef(player)} team=$teamName canAdd=$canAdd"
+        )
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
@@ -3011,6 +3035,9 @@ class PaintManager(private val hooker: FunctionHooker) {
         val scoreboard = Scoreboard()
         val team = PlayerTeam(scoreboard, teamName)
         val packet = ClientboundSetPlayerTeamPacket.createRemovePacket(team)
+        hooker.actionLogger.info(
+            "Sending paint resize team remove for ${hooker.actionLogger.playerRef(player)} team=$teamName"
+        )
         (player as CraftPlayer).handle.connection.send(packet)
     }
 
@@ -3052,6 +3079,11 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun sendFullMapData(player: Player, snapshot: MapDataExtractor.Snapshot) {
+        if (hooker.actionLogger.isEnabled()) {
+            hooker.actionLogger.infoThrottled("paint-full-map:${player.uniqueId}:${snapshot.mapId}", MAP_PACKET_LOG_INTERVAL_MS) {
+                "Sending full map data to ${hooker.actionLogger.playerRef(player)} map=${snapshot.mapId}"
+            }
+        }
         val packet = WrapperPlayServerMapData(
             snapshot.mapId,
             snapshot.scale,
@@ -3068,6 +3100,11 @@ class PaintManager(private val hooker: FunctionHooker) {
     }
 
     private fun sendMapPatchData(player: Player, patch: MapDataExtractor.Patch) {
+        if (hooker.actionLogger.isEnabled()) {
+            hooker.actionLogger.infoThrottled("paint-map-patch:${player.uniqueId}:${patch.mapId}", MAP_PACKET_LOG_INTERVAL_MS) {
+                "Sending map patch to ${hooker.actionLogger.playerRef(player)} map=${patch.mapId} patch=${patch.width}x${patch.height}"
+            }
+        }
         val packet = WrapperPlayServerMapData(
             patch.mapId,
             patch.scale,
@@ -3171,6 +3208,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         private const val MAX_HISTORY_BYTES = 32L * 1024L * 1024L
         private const val GLOBAL_CANVAS_HASH_BASE = 100_000
         private const val PAINT_BYPASS_PERMISSION = "acreative.paint.bypass"
+        private const val MAP_PACKET_LOG_INTERVAL_MS = 1_000L
         private const val MIN_PAINT_ACTIVATION_TPS = 18.0
         private const val FILL_INVALID_LABEL = 0
         private const val FILL_UNLABELED = -1

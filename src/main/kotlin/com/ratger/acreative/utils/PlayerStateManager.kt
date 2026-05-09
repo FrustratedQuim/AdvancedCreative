@@ -124,6 +124,10 @@ class PlayerStateManager(
 
         if (!player.isOnline) return
 
+        hooker.actionLogger.info(
+            "Refreshing pose for ${hooker.actionLogger.playerRef(player)} across ${Bukkit.getOnlinePlayers().size} viewer(s)"
+        )
+
         hooker.tickScheduler.runLater(1L) {
             // If the plugin has been disabled or player went offline meanwhile, do nothing
             if (!hooker.plugin.isEnabled || !player.isOnline) return@runLater

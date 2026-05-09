@@ -33,6 +33,16 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
             if (enabled) MessageKey.SYSTEM_TOGGLE_ENABLED else MessageKey.SYSTEM_TOGGLE_DISABLED,
             mapOf("system" to system.displayName)
         )
+
+        if (system == ManagedSystem.LOGGER) {
+            hooker.plugin.logger.info(
+                "[ACreative/logger] Logger ${if (enabled) "enabled" else "disabled"} by ${player.name}"
+            )
+        } else {
+            hooker.actionLogger.info(
+                "System toggle changed by ${player.name}: ${system.id} -> ${if (enabled) "enabled" else "disabled"}"
+            )
+        }
     }
 
     private fun handleStatus(player: Player, args: List<String>) {

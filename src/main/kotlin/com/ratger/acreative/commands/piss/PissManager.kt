@@ -58,6 +58,9 @@ class PissManager(private val hooker: FunctionHooker) {
             return
         }
         hooker.playerStateManager.activateState(player, PlayerStateType.PISSING)
+        hooker.actionLogger.info(
+            "Starting piss stream for ${hooker.actionLogger.playerRef(player)}"
+        )
 
         var tickCounter = 0
         var streamTaskId = 0
@@ -115,6 +118,11 @@ class PissManager(private val hooker: FunctionHooker) {
         }
 
         if (spawnPositions.isEmpty()) return
+        if (hooker.actionLogger.isEnabled()) {
+            hooker.actionLogger.infoThrottled("piss-stream:${player.uniqueId}", STREAM_LOG_INTERVAL_MS) {
+                "Piss stream active for ${hooker.actionLogger.playerRef(player)} points=${spawnPositions.size} start=${hooker.actionLogger.locationRef(startLocation)}"
+            }
+        }
 
         val api = PacketEvents.getAPI()
         val blockState = WrappedBlockState.getDefaultState(
@@ -180,6 +188,9 @@ class PissManager(private val hooker: FunctionHooker) {
             existing.score++
             if (existing.score >= 5) {
                 if (existing.display == null) {
+                    hooker.actionLogger.info {
+                        "Creating puddle display for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(spawnLocation)}"
+                    }
                     val initialSize = 0.5f
                     val randX = (Random.nextInt(-10, 11) * 0.05)
                     val randZ = (Random.nextInt(-10, 11) * 0.05)
@@ -232,6 +243,11 @@ class PissManager(private val hooker: FunctionHooker) {
 
                     scheduleDecay(point)
                 } else {
+                    if (hooker.actionLogger.isEnabled()) {
+                        hooker.actionLogger.infoThrottled("piss-puddle:${player.uniqueId}:${spawnLocation.blockX}:${spawnLocation.blockY}:${spawnLocation.blockZ}", PUDDLE_LOG_INTERVAL_MS) {
+                            "Growing puddle display for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(spawnLocation)} score=${existing.score}"
+                        }
+                    }
                     val maxSize = 2.0f
                     val sizeXZ = (0.5f + (existing.score - 5) * 0.25f).coerceAtMost(maxSize)
                     val translationX = -sizeXZ / 2 + existing.offsetX.toFloat()
@@ -261,6 +277,9 @@ class PissManager(private val hooker: FunctionHooker) {
             val current = blockMeta.scale
             if (current.x <= 0.25f || current.z <= 0.25f) {
                 if (display.isSpawned) {
+                    hooker.actionLogger.info {
+                        "Removing puddle display at ${hooker.actionLogger.locationRef(point.location)}"
+                    }
                     display.remove()
                     scorePoints.remove(point)
                     for (entry in hiddenPuddleDisplays.entries) {
@@ -293,7 +312,15 @@ class PissManager(private val hooker: FunctionHooker) {
     }
 
     fun stopPiss(player: Player) {
+        hooker.actionLogger.info(
+            "Stopping piss stream for ${hooker.actionLogger.playerRef(player)}"
+        )
         pissingPlayers.remove(player)?.let(hooker.tickScheduler::cancel)
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PISSING)
+    }
+
+    private companion object {
+        const val STREAM_LOG_INTERVAL_MS = 1_000L
+        const val PUDDLE_LOG_INTERVAL_MS = 2_000L
     }
 }

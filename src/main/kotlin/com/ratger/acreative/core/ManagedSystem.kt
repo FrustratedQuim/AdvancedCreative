@@ -4,6 +4,7 @@ enum class ManagedSystem(
     val id: String,
     val displayName: String
 ) {
+    LOGGER("logger", "logger"),
     EDIT("edit", "edit"),
     PAINT("paint", "paint"),
     DECORATION_BANNERS("decorationbanners", "decorationbanners"),

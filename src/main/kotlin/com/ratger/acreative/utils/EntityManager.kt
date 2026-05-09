@@ -38,6 +38,9 @@ class EntityManager(
     }
 
     fun createArmorStand(location: Location, yaw: Float): ArmorStand {
+        hooker.actionLogger.info(
+            "Spawning armor stand at ${hooker.actionLogger.locationRef(location)} yaw=${yaw.toString()}"
+        )
         return location.world.spawn(location, ArmorStand::class.java) { stand ->
             stand.setGravity(false)
             stand.setBasePlate(false)
@@ -55,6 +58,9 @@ class EntityManager(
     }
 
     fun createPlayerNPC(player: Player, location: Location, yaw: Float, isGlowing: Boolean): Triple<WrapperEntity, List<Equipment>, String> {
+        hooker.actionLogger.info(
+            "Creating player NPC for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} yaw=${yaw.toString()} glowing=$isGlowing"
+        )
 
         val npcUUID = UUID.randomUUID()
         val entity = WrapperEntity(npcUUID, EntityTypes.PLAYER)
@@ -98,6 +104,7 @@ class EntityManager(
         team.collisionRule = Team.CollisionRule.NEVER
         team.players.add(profileName)
         val createPacket = ClientboundSetPlayerTeamPacket.createAddOrModifyPacket(team, true)
+        val visibleViewers = Bukkit.getOnlinePlayers().count { !hooker.utils.isHiddenFromPlayer(it, player) }
         Bukkit.getOnlinePlayers().forEach { viewer ->
             if (!hooker.utils.isHiddenFromPlayer(viewer, player)) {
                 (viewer as CraftPlayer).handle.connection.send(createPacket)
@@ -180,6 +187,9 @@ class EntityManager(
         }
 
         entity.spawn(PacketLocation(location.x, location.y, location.z, yaw, 0f))
+        hooker.actionLogger.info(
+            "Player NPC spawned for ${hooker.actionLogger.playerRef(player)} with ${equipment.size} equipment item(s) for $visibleViewers viewer(s)"
+        )
 
         return Triple(entity, equipment, teamName)
     }
@@ -189,6 +199,9 @@ class EntityManager(
         val viewers = Bukkit.getOnlinePlayers().filter { viewer ->
             !hooker.utils.isHiddenFromPlayer(viewer, player)
         }
+        hooker.actionLogger.info(
+            "Updating player NPC equipment for ${hooker.actionLogger.playerRef(player)} -> ${equipment.size} item(s) for ${viewers.size} viewer(s)"
+        )
         viewers.forEach { viewer ->
             PacketEvents.getAPI().playerManager.sendPacket(viewer, equipPacket)
         }

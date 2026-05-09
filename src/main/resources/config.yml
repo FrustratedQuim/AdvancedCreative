@@ -15,6 +15,7 @@ cooldowns: # В миллисекундах
   hideState:  1800000 # 30 минут
 
 systems:
+  logger: false
   edit: true
   paint: true
   decorationbanners: true

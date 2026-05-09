@@ -1,11 +1,11 @@
 package com.ratger.acreative.core
 
-import com.ratger.acreative.AdvancedCreative
 import org.bukkit.Bukkit
 
 class TickScheduler(
-    private val plugin: AdvancedCreative
+    private val hooker: FunctionHooker
 ) {
+    private val plugin = hooker.plugin
 
     private data class ScheduledTask(
         val id: Int,
@@ -20,6 +20,11 @@ class TickScheduler(
     private var currentTick: Long = 0L
     private var nextTaskId: Int = 1
     private var lastTickAtMs: Long = 0L
+
+    private companion object {
+        const val SLOW_TASK_THRESHOLD_MS = 10L
+        const val SLOW_TICK_THRESHOLD_MS = 25L
+    }
 
     fun start() {
         ensureTickerRunning(forceHealthCheck = false)
@@ -73,6 +78,8 @@ class TickScheduler(
     }
 
     private fun tick() {
+        val traceSlowTasks = hooker.actionLogger.isEnabled()
+        val tickStartNs = if (traceSlowTasks) System.nanoTime() else 0L
         val dueTasks = synchronized(lock) {
             currentTick++
             lastTickAtMs = System.currentTimeMillis()
@@ -83,11 +90,20 @@ class TickScheduler(
 
         for (taskId in dueTasks) {
             val task = synchronized(lock) { tasks[taskId] } ?: continue
+            val taskStartNs = if (traceSlowTasks) System.nanoTime() else 0L
             try {
                 task.action.invoke()
             } catch (t: Throwable) {
                 plugin.logger.severe("TickScheduler task #${task.id} failed: ${t.message}")
                 t.printStackTrace()
+            }
+            if (traceSlowTasks) {
+                val taskDurationMs = (System.nanoTime() - taskStartNs) / 1_000_000
+                if (taskDurationMs >= SLOW_TASK_THRESHOLD_MS) {
+                    hooker.actionLogger.warning(
+                        "TickScheduler task #${task.id} took ${taskDurationMs}ms"
+                    )
+                }
             }
 
             synchronized(lock) {
@@ -97,6 +113,15 @@ class TickScheduler(
                 } else {
                     activeTask.nextRunTick = currentTick + activeTask.periodTicks
                 }
+            }
+        }
+
+        if (traceSlowTasks) {
+            val tickDurationMs = (System.nanoTime() - tickStartNs) / 1_000_000
+            if (tickDurationMs >= SLOW_TICK_THRESHOLD_MS) {
+                hooker.actionLogger.warning(
+                    "TickScheduler processed ${dueTasks.size} task(s) in ${tickDurationMs}ms"
+                )
             }
         }
     }

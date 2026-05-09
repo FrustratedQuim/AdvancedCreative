@@ -50,16 +50,28 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun sitPlayerAt(player: Player, location: Location, yaw: Float, style: SitStyle = SitStyle.BASIC, block: Block? = null) {
+        hooker.actionLogger.info(
+            "Starting sit for ${hooker.actionLogger.playerRef(player)} style=$style location=${hooker.actionLogger.locationRef(location)} yaw=$yaw block=${block?.type?.name ?: "none"}"
+        )
         hooker.playerStateManager.activateState(player, PlayerStateType.SITTING)
         val targetLocation = location.clone().apply { this.yaw = yaw }
         val armorStand = hooker.entityManager.createArmorStand(targetLocation, yaw)
         hooker.messageManager.startRepeatingActionBar(player, MessageKey.ACTION_POSE_UNSET)
         sessionRegistry.set(player, SitSession(armorStand.uniqueId, block, style))
         armorStand.addPassenger(player)
+        hooker.actionLogger.info(
+            "Sit session created for ${hooker.actionLogger.playerRef(player)} armorStand=${armorStand.uniqueId} style=$style"
+        )
         hooker.tickScheduler.runLater(ARMORSTAND_REATTACH_DELAY_TICKS) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
+                hooker.actionLogger.warning(
+                    "Sit passenger reattach triggered for ${hooker.actionLogger.playerRef(player)} armorStand=${armorStand.uniqueId} style=$style"
+                )
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
+                hooker.actionLogger.warning(
+                    "Sit session dropped before reattach for ${hooker.actionLogger.playerRef(player)} armorStand=${armorStand.uniqueId} style=$style"
+                )
                 armorStand.remove()
                 sessionRegistry.remove(player)
             }
@@ -69,9 +81,17 @@ class SitManager(private val hooker: FunctionHooker) {
     fun sitOnHead(player: Player, target: Player?, sender: Player? = null) {
         if (!canInteractNow(player.uniqueId)) return
         markInteraction(player.uniqueId)
+        hooker.actionLogger.info(
+            "Sit-on-head requested by ${hooker.actionLogger.playerRef(player)} target=${target?.let { hooker.actionLogger.playerRef(it) } ?: "null"} sender=${sender?.let { hooker.actionLogger.playerRef(it) } ?: "self"}"
+        )
 
         var finalTarget = target ?: return
-        if (hasTargetStateConflict(player, finalTarget)) return
+        if (hasTargetStateConflict(player, finalTarget)) {
+            hooker.actionLogger.warning(
+                "Sit-on-head blocked by target state conflict for ${hooker.actionLogger.playerRef(player)} target=${hooker.actionLogger.playerRef(finalTarget)}"
+            )
+            return
+        }
         var currentTarget: Player? = target
         val checkedPlayers = mutableSetOf<Player>()
         val maxDepth = 10
@@ -79,7 +99,12 @@ class SitManager(private val hooker: FunctionHooker) {
         while (currentTarget != null && depth < maxDepth) {
             if (currentTarget in checkedPlayers) return
             checkedPlayers.add(currentTarget)
-            if (hasTargetStateConflict(player, currentTarget)) return
+            if (hasTargetStateConflict(player, currentTarget)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head traversal stopped by target state conflict for ${hooker.actionLogger.playerRef(player)} current=${hooker.actionLogger.playerRef(currentTarget)}"
+                )
+                return
+            }
             if (currentTarget == player) return
             finalTarget = currentTarget
             currentTarget = getHeadPassenger(currentTarget)
@@ -87,6 +112,9 @@ class SitManager(private val hooker: FunctionHooker) {
         }
 
         if (hooker.utils.isHiddenFromPlayer(finalTarget, player)) {
+            hooker.actionLogger.warning(
+                "Sit-on-head blocked because final target is hidden from actor player=${hooker.actionLogger.playerRef(player)} target=${hooker.actionLogger.playerRef(finalTarget)}"
+            )
             hooker.messageManager.sendChat(player, MessageKey.SITHEAD_HIDDEN_SELF)
             return
         }
@@ -98,9 +126,17 @@ class SitManager(private val hooker: FunctionHooker) {
             if (baseTarget == null) break
             if (baseTarget in baseCheckedPlayers) return
             baseCheckedPlayers.add(baseTarget)
-            if (hasTargetStateConflict(player, baseTarget)) return
+            if (hasTargetStateConflict(player, baseTarget)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head base chain stopped by target state conflict for ${hooker.actionLogger.playerRef(player)} base=${hooker.actionLogger.playerRef(baseTarget)}"
+                )
+                return
+            }
             if (baseTarget == player) return
             if (hooker.utils.isHiddenFromPlayer(baseTarget, player)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head blocked because actor is hidden from base player=${hooker.actionLogger.playerRef(player)} base=${hooker.actionLogger.playerRef(baseTarget)}"
+                )
                 hooker.messageManager.sendChat(sender ?: player, MessageKey.SITHEAD_HIDDEN_BY_ONE)
                 return
             }
@@ -136,6 +172,9 @@ class SitManager(private val hooker: FunctionHooker) {
             if (baseTarget in checkedPlayers) return
             checkedPlayers.add(baseTarget)
             if (hooker.utils.isHiddenFromPlayer(player, baseTarget)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head blocked because actor hides one of the chain players actor=${hooker.actionLogger.playerRef(player)} hiddenTarget=${hooker.actionLogger.playerRef(baseTarget)}"
+                )
                 hooker.messageManager.sendChat(player, MessageKey.SITHEAD_YOU_HIDE_ONE)
                 return
             }
@@ -154,6 +193,9 @@ class SitManager(private val hooker: FunctionHooker) {
             pitch = 0f
         }
         val armorStand = hooker.entityManager.createArmorStand(location, finalTarget.location.yaw)
+        hooker.actionLogger.info(
+            "Sit-on-head resolved for ${hooker.actionLogger.playerRef(player)} finalTarget=${hooker.actionLogger.playerRef(finalTarget)} armorStand=${armorStand.uniqueId}"
+        )
 
         sessionRegistry.set(player, SitSession(armorStand.uniqueId, null, SitStyle.HEAD))
         armorStand.addPassenger(player)
@@ -164,10 +206,16 @@ class SitManager(private val hooker: FunctionHooker) {
             if (!armorStand.passengers.contains(player) && hooker.utils.isSitting(player)) {
                 armorStand.addPassenger(player)
             } else if (!armorStand.passengers.contains(player)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head reattach failed and session will be removed for ${hooker.actionLogger.playerRef(player)} armorStand=${armorStand.uniqueId}"
+                )
                 armorStand.remove()
                 sessionRegistry.remove(player)
             }
             if (!finalTarget.passengers.contains(armorStand)) {
+                hooker.actionLogger.warning(
+                    "Sit-on-head anchor passenger reattached for ${hooker.actionLogger.playerRef(player)} finalTarget=${hooker.actionLogger.playerRef(finalTarget)} armorStand=${armorStand.uniqueId}"
+                )
                 finalTarget.addPassenger(armorStand)
             }
         }
@@ -208,9 +256,15 @@ class SitManager(private val hooker: FunctionHooker) {
         }
         val stackTrace = Thread.currentThread().stackTrace
         val caller = stackTrace.getOrNull(2)?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
+        hooker.actionLogger.info(
+            "Unsit requested for ${hooker.actionLogger.playerRef(player)} style=${sitData.style} saveHeadPassenger=$saveHeadPassenger caller=$caller"
+        )
 
         val armorStand = player.world.getEntity(sitData.armorStandId)
         if (armorStand == null) {
+            hooker.actionLogger.warning(
+                "Unsit fallback removed missing armorStand for ${hooker.actionLogger.playerRef(player)} armorStandId=${sitData.armorStandId}"
+            )
             sessionRegistry.remove(player)
             hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
             return
@@ -234,6 +288,9 @@ class SitManager(private val hooker: FunctionHooker) {
         armorStand.removePassenger(player)
         armorStand.remove()
         player.teleport(location)
+        hooker.actionLogger.info(
+            "Unsit completed for ${hooker.actionLogger.playerRef(player)} style=${sitData.style} teleportTarget=${hooker.actionLogger.locationRef(location)}"
+        )
         sessionRegistry.remove(player)
 
         if (!caller.contains("HideManager.hidePlayer") && !caller.contains("SitManager.sitOnHead")) {
@@ -286,13 +343,21 @@ class SitManager(private val hooker: FunctionHooker) {
     }
 
     fun handleBlockBreak(block: Block) {
-        sessionRegistry.byBlock(block)
+        val affectedPlayers = sessionRegistry.byBlock(block)
             .keys
             .toList()
-            .forEach { unsitPlayer(it) }
+        if (affectedPlayers.isNotEmpty()) {
+            hooker.actionLogger.warning(
+                "Block break unsits ${affectedPlayers.size} sitting player(s) at block=${block.type.name} location=${hooker.actionLogger.locationRef(block.location)}"
+            )
+        }
+        affectedPlayers.forEach { unsitPlayer(it) }
     }
 
     fun handleBlocksMoved(blocks: List<Block>, direction: BlockFace) {
+        hooker.actionLogger.info(
+            "Moving sits with block update blocks=${blocks.size} direction=$direction"
+        )
         val movedPlayers = mutableSetOf<UUID>()
         blocks.forEach { block ->
             moveSittingPlayersWithBlock(block, direction, movedPlayers)
@@ -314,12 +379,16 @@ class SitManager(private val hooker: FunctionHooker) {
                     current = armorStand.location,
                     target = targetLocation
                 )
+                val previousLocation = armorStand.location.clone()
 
                 if (armorStand.passengers.contains(player)) {
                     armorStand.removePassenger(player)
                 }
                 armorStand.teleport(correctedTargetLocation)
                 armorStand.addPassenger(player)
+                hooker.actionLogger.info(
+                    "Shifted sitting player ${hooker.actionLogger.playerRef(player)} style=${sitData.style} from=${hooker.actionLogger.locationRef(previousLocation)} to=${hooker.actionLogger.locationRef(correctedTargetLocation)} dueToBlockMove=$direction"
+                )
                 sitData.block = destinationBlock
             }
     }
@@ -457,6 +526,11 @@ class SitManager(private val hooker: FunctionHooker) {
                 if (entity == null || !entity.isValid) {
                     playersToUnsit.add(player)
                 }
+            }
+            if (playersToUnsit.isNotEmpty()) {
+                hooker.actionLogger.warning(
+                    "Armor stand checker will unsit ${playersToUnsit.size} player(s): ${playersToUnsit.joinToString { hooker.actionLogger.playerRef(it) }}"
+                )
             }
             playersToUnsit.forEach { unsitPlayer(it) }
         }

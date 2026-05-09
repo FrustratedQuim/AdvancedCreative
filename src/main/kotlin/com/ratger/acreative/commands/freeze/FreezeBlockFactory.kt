@@ -24,6 +24,9 @@ internal class FreezeBlockFactory(private val hooker: FunctionHooker) {
     fun createFor(player: Player): MutableList<WrapperEntity> {
         val location = player.location
         val blocks = mutableListOf<WrapperEntity>()
+        hooker.actionLogger.info(
+            "Creating freeze block visuals for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)}"
+        )
 
         for (viewer in location.world?.players?.filter { it.isOnline } ?: emptyList()) {
             if (viewer != player && hooker.utils.isHiddenFromPlayer(viewer, player)) continue
@@ -87,6 +90,10 @@ internal class FreezeBlockFactory(private val hooker: FunctionHooker) {
             entity.spawn(packetLoc)
             blocks.add(entity)
         }
+
+        hooker.actionLogger.info(
+            "Freeze block visuals created for ${hooker.actionLogger.playerRef(player)} blockCount=${blocks.size}"
+        )
 
         return blocks
     }
