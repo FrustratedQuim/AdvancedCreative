@@ -99,7 +99,7 @@ class MenuService(
         parser = parser,
         componentsService = ComponentsService(),
         tickScheduler = hooker.tickScheduler,
-        afterSuccessfulAction = { event -> logItemEditorChangeIfNeeded(event.player, "menu_button") }
+        afterSuccessfulAction = { event, context -> logItemEditorChangeIfNeeded(event.player, context.toLogSource()) }
     )
     private val signInputService = SignInputService(hooker.plugin)
     private val headMutationSupport = HeadTextureMutationSupport()

@@ -33,16 +33,44 @@ class MenuButtonFactory(
     private val parser: MiniMessageParser,
     private val componentsService: ComponentsService,
     private val tickScheduler: TickScheduler,
-    private val afterSuccessfulAction: (ClickEvent) -> Unit = {}
+    private val afterSuccessfulAction: (ClickEvent, ButtonActionContext) -> Unit = { _, _ -> }
 ) {
+    data class ButtonActionContext(
+        val role: String,
+        val label: String,
+        val material: Material,
+        val rawSlot: Int,
+        val clickType: ClickType
+    ) {
+        fun toLogSource(): String = buildString {
+            append("menu_button")
+            append(" role=").append(role)
+            append(" button=").append(label)
+            append(" material=").append(material.key.asString())
+            append(" slot=").append(rawSlot)
+            append(" click=").append(clickType.name.lowercase())
+        }
+    }
+
     private fun protectedButton(
         item: ItemStack,
+        role: String = "custom",
+        label: String? = null,
         action: (ClickEvent) -> Unit
     ): Button {
         lateinit var restoreButton: Button
         val wrappedAction: (ClickEvent) -> Unit = { event ->
             runCatching { action(event) }
-                .onSuccess { runCatching { afterSuccessfulAction(event) } }
+                .onSuccess {
+                    val context = ButtonActionContext(
+                        role = role,
+                        label = sanitizeLogValue(label ?: item.type.key.asString()),
+                        material = item.type,
+                        rawSlot = event.rawSlot,
+                        clickType = event.type
+                    )
+                    runCatching { afterSuccessfulAction(event, context) }
+                }
                 .onFailure {
                     val slot = event.rawSlot
                     if (slot < 0) return@onFailure
@@ -60,6 +88,21 @@ class MenuButtonFactory(
         restoreButton = Button.simple(item).action(wrappedAction).build()
         return restoreButton
     }
+
+    private fun sanitizeLogValue(input: String): String =
+        stripMiniMessage(input)
+            .replace('§', ' ')
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .ifBlank { "unknown" }
+            .replace(' ', '_')
+            .lowercase()
+            .filter { it.isLetterOrDigit() || it == '_' || it == '-' || it == ':' || it == '/' }
+            .take(80)
+            .ifBlank { "unknown" }
+
+    private fun stripMiniMessage(input: String): String =
+        input.replace(Regex("<[^>]*>"), "")
 
     data class ListButtonOption<T>(
         val value: T,
@@ -122,7 +165,9 @@ class MenuButtonFactory(
         ItemBuilder(Material.RED_STAINED_GLASS_PANE)
             .name(parser.parse("<!i><#FF1500>$text"))
             .build(),
-        action
+        role = "navigation",
+        label = text,
+        action = action
     )
 
     fun forwardButton(
@@ -132,7 +177,9 @@ class MenuButtonFactory(
         ItemBuilder(Material.LIME_STAINED_GLASS_PANE)
             .name(parser.parse("<!i><#00FF40>$text"))
             .build(),
-        action
+        role = "navigation",
+        label = text,
+        action = action
     )
 
     fun decorationHeadsBackButton(action: () -> Unit): Button = backButton("◀ Назад") { action() }
@@ -247,7 +294,7 @@ class MenuButtonFactory(
             .build()
 
         MapItemSupport.setColor(item, MapPreviewColorPalette.colorFor(entry.mapColorKey))
-        return protectedButton(item, action)
+        return protectedButton(item, role = "saved_page", label = "saved_page_${entry.sourcePage}", action = action)
     }
 
     fun decorationHeadsSavedPageNoteButton(note: String?, onApply: (ClickEvent) -> Unit, onReset: (ClickEvent) -> Unit): Button {
@@ -344,7 +391,7 @@ class MenuButtonFactory(
             skull.playerProfile = profile
             item.itemMeta = skull
         }
-        protectedButton(item) { action(it) }
+        protectedButton(item, role = "result", label = entry.name) { action(it) }
     }
 
     fun decorationHeadsGrayFiller(): Button = grayFillerButton()
@@ -365,6 +412,7 @@ class MenuButtonFactory(
         name: String,
         lore: List<String>,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        role: String = "action",
         action: ((ClickEvent) -> Unit)? = null
     ): Button {
         val builder = ItemBuilder(material)
@@ -373,7 +421,7 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return protectedButton(builder.build(), action ?: {})
+        return protectedButton(builder.build(), role = role, label = name, action = action ?: {})
     }
 
     fun statefulSummaryButton(
@@ -437,6 +485,7 @@ class MenuButtonFactory(
             itemModifier?.invoke(this)
             this
         },
+        role = "apply_reset",
         action = { event ->
             when {
                 event.isLeft || event.isShiftLeft -> onApply(event)
@@ -569,7 +618,7 @@ class MenuButtonFactory(
             it.setEnchantmentGlintOverride(true)
             item.itemMeta = it
         }
-        return protectedButton(item, action)
+        return protectedButton(item, role = "texture_source", label = activeName, action = action)
     }
 
     fun <T> listButton(
@@ -595,7 +644,7 @@ class MenuButtonFactory(
             builder.itemModifier(selected)
         }
 
-        return protectedButton(builder.build()) handler@{ event ->
+        return protectedButton(builder.build(), role = "list", label = titleBuilder(selected, safeSelectedIndex)) handler@{ event ->
                 val newIndex = when {
                     event.isLeft || event.isShiftLeft -> (safeSelectedIndex + 1) % options.size
                     event.isRight || event.isShiftRight -> (safeSelectedIndex - 1 + options.size) % options.size
@@ -624,7 +673,7 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return protectedButton(builder.build()) handler@{ event ->
+        return protectedButton(builder.build(), role = "focused_toggle_list", label = title) handler@{ event ->
             val interaction = when {
                 event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
                 event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
@@ -768,9 +817,9 @@ class MenuButtonFactory(
         return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
     }
 
-    fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone()) { }
+    fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone(), role = "preview", label = "editable_preview") { }
 
-    fun itemAsIsButton(item: ItemStack, action: (ClickEvent) -> Unit): Button = protectedButton(item.clone(), action)
+    fun itemAsIsButton(item: ItemStack, action: (ClickEvent) -> Unit): Button = protectedButton(item.clone(), role = "item", label = "item_as_is", action = action)
 
     fun headTextureValueInputSlotButton(
         valueBook: ItemStack?,
@@ -809,7 +858,7 @@ class MenuButtonFactory(
                 .name(parser.parse(placeholderName))
                 .build()
 
-        return protectedButton(buttonItem, action)
+        return protectedButton(buttonItem, role = "item_input", label = placeholderName, action = action)
     }
 
     fun specialParameterButton(
@@ -872,7 +921,7 @@ class MenuButtonFactory(
                 .name(parser.parse("<!i><#FFD700>Особый параметр"))
                 .build()
         }
-        return protectedButton(buttonItem, action)
+        return protectedButton(buttonItem, role = "special_parameter", label = "special_parameter", action = action)
     }
 
     private fun buildFrameInvisibilityButtonItem(editedItem: ItemStack): ItemStack {
