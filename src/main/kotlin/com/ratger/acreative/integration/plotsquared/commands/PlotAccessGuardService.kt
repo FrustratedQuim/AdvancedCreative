@@ -52,6 +52,17 @@ class PlotAccessGuardService(
         }, POST_COMMAND_CHECK_DELAY_TICKS)
     }
 
+
+    fun canRideHeadAtCarrierPlot(rider: Player, carrier: Player): Boolean {
+        if (!enabled) {
+            return true
+        }
+
+        val riderUuid = plotUuid(rider)
+        val carrierPlot = runCatching { PlotPlayer.from(carrier).currentPlot }.getOrNull() ?: return true
+        return !carrierPlot.isDenied(riderUuid)
+    }
+
     fun deniedOnlinePlayerNamesInside(plot: Plot): List<String> {
         if (!enabled) {
             return emptyList()
@@ -78,6 +89,7 @@ class PlotAccessGuardService(
             ?: Bukkit.getPlayer(event.plotPlayer.uuid)
             ?: return
         releaseDeniedHeadPassengers(player, event.plot)
+        enforceDeniedTarget(event.plot, player, "enter-event")
     }
 
     @Subscribe
@@ -149,6 +161,9 @@ class PlotAccessGuardService(
         if (target.gameMode != GameMode.CREATIVE) {
             target.gameMode = GameMode.CREATIVE
         }
+
+        releaseHeadPassengerChain(target, reason)
+
         if (hooker.sitManager.isSitting(target)) {
             hooker.sitManager.unsitPlayer(target)
         }
@@ -171,6 +186,23 @@ class PlotAccessGuardService(
             "Plot enter released denied head passenger carrier=${hooker.actionLogger.playerRef(carrier)} passenger=${hooker.actionLogger.playerRef(deniedPassenger)} plot=$plot"
         }
         hooker.sitManager.unsitPlayer(deniedPassenger)
+    }
+
+
+    private fun releaseHeadPassengerChain(carrier: Player, reason: String) {
+        val chain = headPassengerChain(carrier)
+        if (chain.isEmpty()) {
+            return
+        }
+
+        chain.filter { passenger ->
+            hooker.sitManager.getSitSession(passenger)?.style == SitStyle.HEAD
+        }.forEach { passenger ->
+            hooker.actionLogger.info {
+                "Plot access guard unsit head passenger carrier=${hooker.actionLogger.playerRef(carrier)} passenger=${hooker.actionLogger.playerRef(passenger)} reason=$reason"
+            }
+            hooker.sitManager.unsitPlayer(passenger)
+        }
     }
 
     private fun headPassengerChain(carrier: Player): List<Player> {
