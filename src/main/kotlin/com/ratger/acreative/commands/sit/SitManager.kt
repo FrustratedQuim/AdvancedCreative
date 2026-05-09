@@ -30,6 +30,7 @@ class SitManager(private val hooker: FunctionHooker) {
     private val sessionRegistry = SitSessionRegistry()
     private val sitheadConflictPolicy = SitheadConflictPolicy(hooker)
     private val lastInteract: MutableMap<UUID, Long> = mutableMapOf()
+    private val unsittingPlayers: MutableSet<UUID> = mutableSetOf()
 
     fun canSit(player: Player): Boolean {
         val blockBelow = player.location.clone().add(0.0, -1.0, 0.0).block
@@ -258,40 +259,58 @@ class SitManager(private val hooker: FunctionHooker) {
             hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
             return
         }
-        val stackTrace = Thread.currentThread().stackTrace
-        val caller = stackTrace.getOrNull(2)?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
-        hooker.actionLogger.info(
-            "Unsit requested for ${hooker.actionLogger.playerRef(player)} style=${sitData.style} saveHeadPassenger=$saveHeadPassenger caller=$caller"
-        )
+        if (!unsittingPlayers.add(player.uniqueId)) return
 
-        val armorStand = player.world.getEntity(sitData.armorStandId)
-        if (armorStand == null) {
-            hooker.actionLogger.warning(
-                "Unsit fallback removed missing armorStand for ${hooker.actionLogger.playerRef(player)} armorStandId=${sitData.armorStandId}"
+        try {
+            val stackTrace = Thread.currentThread().stackTrace
+            val caller = stackTrace.getOrNull(2)?.let { "${it.className}.${it.methodName}:${it.lineNumber}" } ?: "unknown"
+            hooker.actionLogger.info(
+                "Unsit requested for ${hooker.actionLogger.playerRef(player)} style=${sitData.style} saveHeadPassenger=$saveHeadPassenger caller=$caller"
             )
-            sessionRegistry.remove(player)
-            hooker.playerStateManager.deactivateState(player, PlayerStateType.SITTING)
-            return
-        }
 
-        val location = player.location.clone()
-        if (sitData.style == SitStyle.HEAD) {
-            location.y = location.y - 0.2
-            if (armorStand.vehicle != null) {
-                location.y = armorStand.vehicle?.location?.y ?: location.y
+            val armorStand = player.world.getEntity(sitData.armorStandId)
+            if (armorStand == null) {
+                hooker.actionLogger.warning(
+                    "Unsit cleaned session with missing armorStand for ${hooker.actionLogger.playerRef(player)} armorStandId=${sitData.armorStandId}"
+                )
+                completeUnsitCleanup(player, sitData, player.location.clone(), caller, teleportPlayer = false)
+                return
             }
-            val basePlayer = armorStand.vehicle as? Player
-            basePlayer?.removePassenger(armorStand)
+
+            val location = player.location.clone()
+            if (sitData.style == SitStyle.HEAD) {
+                location.y = location.y - 0.2
+                if (armorStand.vehicle != null) {
+                    location.y = armorStand.vehicle?.location?.y ?: location.y
+                }
+                val basePlayer = armorStand.vehicle as? Player
+                basePlayer?.removePassenger(armorStand)
+            }
+
+            if (!saveHeadPassenger) {
+                val headPassenger = getHeadPassenger(player)
+                if (headPassenger != null) unsitPlayer(headPassenger)
+            }
+
+            armorStand.removePassenger(player)
+            armorStand.remove()
+            completeUnsitCleanup(player, sitData, location, caller, teleportPlayer = true)
+        } finally {
+            unsittingPlayers.remove(player.uniqueId)
+        }
+    }
+
+    private fun completeUnsitCleanup(
+        player: Player,
+        sitData: SitSession,
+        location: Location,
+        caller: String,
+        teleportPlayer: Boolean
+    ) {
+        if (teleportPlayer) {
+            player.teleport(location)
         }
 
-        if (!saveHeadPassenger) {
-            val headPassenger = getHeadPassenger(player)
-            if (headPassenger != null) unsitPlayer(headPassenger)
-        }
-
-        armorStand.removePassenger(player)
-        armorStand.remove()
-        player.teleport(location)
         hooker.actionLogger.info(
             "Unsit completed for ${hooker.actionLogger.playerRef(player)} style=${sitData.style} teleportTarget=${hooker.actionLogger.locationRef(location)}"
         )
