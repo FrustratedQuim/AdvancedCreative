@@ -18,8 +18,8 @@ import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffectType
 
 class ItemEditMenu(
-    hooker: FunctionHooker,
-    sessionManager: ItemEditSessionManager,
+    private val hooker: FunctionHooker,
+    private val sessionManager: ItemEditSessionManager,
     buttonFactory: MenuButtonFactory,
     private val parser: MiniMessageParser,
     private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
@@ -414,10 +414,20 @@ class ItemEditMenu(
     }
 
     private fun openPageSafely(player: Player, openAction: () -> Unit) {
+        logItemChangeIfNeeded(player, "menu_open_before")
         runCatching { openAction() }
+            .onSuccess { logItemChangeIfNeeded(player, "menu_open_after") }
             .onFailure {
                 player.closeInventory()
                 player.sendMessage(parser.parse("<!i><dark_red>▍ <#FF1500>Предмет повреждён"))
             }
+    }
+
+    private fun logItemChangeIfNeeded(player: Player, source: String) {
+        val session = sessionManager.getSession(player) ?: return
+        if (!sessionManager.markCurrentContentLoggedIfChanged(session)) return
+        hooker.actionLogger.info {
+            "Item editor item changed by ${hooker.actionLogger.playerRef(player)} source=$source"
+        }
     }
 }

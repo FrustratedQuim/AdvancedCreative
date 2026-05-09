@@ -14,6 +14,7 @@ data class ItemEditSession(
     val originalMainHandSlot: Int,
     var editableItem: ItemStack,
     val initialContentHash: String? = null,
+    var lastLoggedContentHash: String? = initialContentHash,
     var isInternalTransition: Boolean = false,
     var hiddenInfoFocusIndex: Int = 0,
     var vanillaDiscJukeboxComponentInjected: Boolean = false,

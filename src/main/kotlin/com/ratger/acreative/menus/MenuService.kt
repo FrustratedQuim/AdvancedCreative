@@ -95,7 +95,12 @@ class MenuService(
     private val vanillaNameLocalizationService = VanillaNameLocalizationService(vanillaTranslationResolver)
     private val textStyleService = ItemTextStyleService(vanillaNameLocalizationService)
     private val sessionManager = ItemEditSessionManager()
-    private val buttonFactory = MenuButtonFactory(parser, ComponentsService(), hooker.tickScheduler)
+    private val buttonFactory = MenuButtonFactory(
+        parser = parser,
+        componentsService = ComponentsService(),
+        tickScheduler = hooker.tickScheduler,
+        afterSuccessfulAction = { event -> logItemEditorChangeIfNeeded(event.player, "menu_button") }
+    )
     private val signInputService = SignInputService(hooker.plugin)
     private val headMutationSupport = HeadTextureMutationSupport()
     private val headLookupService = LicensedProfileLookupService()
@@ -239,11 +244,19 @@ class MenuService(
         }
         sessionManager.addCloseListener { player, session ->
             personalItemsService.onEditSessionClosed(player.uniqueId, session.editableItem, session.initialContentHash)
-            if (sessionManager.hasMeaningfulChanges(session)) {
-                hooker.actionLogger.info {
-                    "Item editor session committed by ${hooker.actionLogger.playerRef(player)}"
-                }
-            }
+            logItemEditorChangeIfNeeded(player, session, "session_close")
+        }
+    }
+
+    private fun logItemEditorChangeIfNeeded(player: Player, source: String) {
+        val session = sessionManager.getSession(player) ?: return
+        logItemEditorChangeIfNeeded(player, session, source)
+    }
+
+    private fun logItemEditorChangeIfNeeded(player: Player, session: ItemEditSession, source: String) {
+        if (!sessionManager.markCurrentContentLoggedIfChanged(session)) return
+        hooker.actionLogger.info {
+            "Item editor item changed by ${hooker.actionLogger.playerRef(player)} source=$source"
         }
     }
 

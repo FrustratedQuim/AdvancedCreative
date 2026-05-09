@@ -71,6 +71,7 @@ class ItemEditorApplyStateManager(
         val handler = handlersByKind[request.kind] ?: return
         when (handler.apply(player, session, args)) {
             ApplyExecutionResult.Success -> {
+                sessionManager.markCurrentContentLoggedIfChanged(session)
                 hooker.actionLogger.info {
                     "Item editor apply succeeded for ${hooker.actionLogger.playerRef(player)} kind=${request.kind.name.lowercase()} args=${args.joinToString(" ")}"
                 }

@@ -48,8 +48,11 @@ class ItemEditSessionManager {
         return digest.joinToString(separator = "") { "%02x".format(it) }
     }
 
-    fun hasMeaningfulChanges(session: ItemEditSession): Boolean {
-        return contentHash(session.editableItem) != session.initialContentHash
+    fun markCurrentContentLoggedIfChanged(session: ItemEditSession): Boolean {
+        val currentContentHash = contentHash(session.editableItem)
+        if (currentContentHash == session.lastLoggedContentHash) return false
+        session.lastLoggedContentHash = currentContentHash
+        return true
     }
 
 }

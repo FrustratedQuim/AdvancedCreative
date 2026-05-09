@@ -32,7 +32,8 @@ import ru.violence.coreapi.bukkit.api.util.ItemBuilder
 class MenuButtonFactory(
     private val parser: MiniMessageParser,
     private val componentsService: ComponentsService,
-    private val tickScheduler: TickScheduler
+    private val tickScheduler: TickScheduler,
+    private val afterSuccessfulAction: (ClickEvent) -> Unit = {}
 ) {
     private fun protectedButton(
         item: ItemStack,
@@ -41,6 +42,7 @@ class MenuButtonFactory(
         lateinit var restoreButton: Button
         val wrappedAction: (ClickEvent) -> Unit = { event ->
             runCatching { action(event) }
+                .onSuccess { runCatching { afterSuccessfulAction(event) } }
                 .onFailure {
                     val slot = event.rawSlot
                     if (slot < 0) return@onFailure
