@@ -234,7 +234,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         plugin.server.pluginManager.registerEvents(EventHandler(this), plugin)
 
         sitManager.startArmorStandChecker()
-        crawlManager.startBarrierUpdater()
+        crawlManager.startCrawlUpdater()
         layManager.startArmorStandChecker()
         packetHandler.register()
     }
