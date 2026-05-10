@@ -38,10 +38,14 @@ class AttributeApplyHandler : EditorApplyHandler {
     )
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
-        if (args.size !in 2..4) return ApplyExecutionResult.InvalidValue
+        if (args.size !in 1..4) return ApplyExecutionResult.InvalidValue
 
         val attribute = attributeTokenMap[args[0].lowercase()] ?: return ApplyExecutionResult.InvalidValue
-        val parsedAmount = args[1].toBigDecimalOrNull() ?: return ApplyExecutionResult.InvalidValue
+        val parsedAmount = if (args.size >= 2) {
+            args[1].toBigDecimalOrNull() ?: return ApplyExecutionResult.InvalidValue
+        } else {
+            BigDecimal.ONE
+        }
 
         val slotSpec = if (args.size >= 3) slotTokens[args[2].lowercase()] ?: return ApplyExecutionResult.InvalidValue else SlotGroupSpec.ANY
         val operation = if (args.size >= 4) operationTokens[args[3].lowercase()] ?: return ApplyExecutionResult.InvalidValue else AttributeModifier.Operation.ADD_NUMBER

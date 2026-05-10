@@ -2,6 +2,7 @@ package com.ratger.acreative.commands.glow
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
+import org.bukkit.Sound
 import org.bukkit.entity.Player
 
 class GlowManager(private val hooker: FunctionHooker) {
@@ -29,6 +30,7 @@ class GlowManager(private val hooker: FunctionHooker) {
 
         hooker.freezeManager.updateIceGlowing(player, isGlowing = true)
         hooker.messageManager.sendChat(player, MessageKey.INFO_GLOW_ON)
+        player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_CHIME, 1f, 1f)
     }
 
     fun removeGlow(player: Player) {
@@ -43,6 +45,7 @@ class GlowManager(private val hooker: FunctionHooker) {
         player.isGlowing = false
         hooker.freezeManager.updateIceGlowing(player, isGlowing = false)
         hooker.messageManager.sendChat(player, MessageKey.INFO_GLOW_OFF)
+        player.playSound(player.location, Sound.BLOCK_NOTE_BLOCK_CHIME, 1f, 1f)
     }
 
     fun refreshGlow(player: Player) {

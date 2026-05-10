@@ -854,7 +854,12 @@ class MenuButtonFactory(
         return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
     }
 
-    fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone(), role = "preview", label = "editable_preview") { }
+    fun editablePreviewButton(item: ItemStack): Button = protectedButton(
+        item.clone(),
+        role = "preview",
+        label = "editable_preview",
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
+    ) { }
 
     fun itemAsIsButton(
         item: ItemStack,

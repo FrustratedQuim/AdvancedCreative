@@ -4,6 +4,7 @@ import com.ratger.acreative.commands.common.NumericAttributeManager
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
+import org.bukkit.Sound
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import kotlin.math.abs
@@ -90,6 +91,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
             successSetMessageKey,
             variables = mapOf("value" to formatValue(value))
         )
+        player.playSound(player.location, Sound.BLOCK_BEEHIVE_WORK, 1f, 1f)
     }
 
     override fun onAfterEffectRemoved(player: Player) {
@@ -116,6 +118,7 @@ class ResizeManager(hooker: FunctionHooker) : NumericAttributeManager(hooker) {
         hooker.playerStateManager.deactivateState(player, playerStateType)
         onAfterEffectRemoved(player)
         hooker.messageManager.sendChat(player, successResetMessageKey)
+        player.playSound(player.location, Sound.BLOCK_BEEHIVE_WORK, 1f, 1f)
     }
 
     fun smoothTransitionScale(player: Player, targetValue: Double, onComplete: (() -> Unit)? = null) {
