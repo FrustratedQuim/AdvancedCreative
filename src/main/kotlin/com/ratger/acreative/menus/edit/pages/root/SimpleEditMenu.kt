@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.root
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
@@ -63,6 +64,7 @@ class SimpleEditMenu(
 
     private fun buildThrowableButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
         material = Material.SNOWBALL,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>☄ <#FFD700>Сделать предмет кидающимся",
         lore = actionLore(throwableConfigured(session)),
         itemModifier = {
@@ -103,12 +105,14 @@ class SimpleEditMenu(
             converted.amount = previousAmount.coerceIn(1, targetMaxStack)
             session.editableItem = converted
             session.simpleThrowableApplied = true
+            MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )
 
     private fun buildEdibleButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
         material = Material.APPLE,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>🍖 <#FFD700>Сделать предмет съедобным",
         lore = actionLore(edibleConfigured(session)),
         itemModifier = {
@@ -125,12 +129,14 @@ class SimpleEditMenu(
             FoodComponentSupport.setSaturation(session.editableItem, 6f)
             FoodComponentSupport.setNutrition(session.editableItem, 5)
             session.simpleEdibleApplied = true
+            MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )
 
     private fun buildHeadEquippableButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
         material = Material.IRON_HELMET,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>🔔 <#FFD700>Позволить надевать на голову",
         lore = actionLore(headEquippableConfigured(session)),
         itemModifier = {
@@ -144,6 +150,7 @@ class SimpleEditMenu(
             if (session.simpleHeadEquippableApplied) return@actionButton
             EquippableSupport.setSlot(session.editableItem, EquipmentSlot.HEAD)
             session.simpleHeadEquippableApplied = true
+            MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )

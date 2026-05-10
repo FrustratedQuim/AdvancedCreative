@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.root
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.personal.PersonalItemsService
@@ -73,6 +74,7 @@ class MyItemsEditMenu(
             26,
             buttonFactory.actionButton(
                 material = Material.FIRE_CHARGE,
+                soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
                 name = "<!i><#FFD700>ℹ Важно!",
                 lore = listOf(
                     "",
@@ -92,7 +94,7 @@ class MyItemsEditMenu(
 
         sortedWorkingSlots.forEachIndexed { index, slot ->
             val item = entries.getOrNull(index) ?: return@forEachIndexed
-            menu.setButton(slot, buttonFactory.itemAsIsButton(item) { event ->
+            menu.setButton(slot, buttonFactory.itemAsIsButton(item, MenuSoundSupport.ButtonSoundProfile.NONE) { event ->
                 personalItemsService.giveFromMenu(player, item, event)
             })
         }

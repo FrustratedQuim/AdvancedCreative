@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.paint
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
@@ -29,7 +30,14 @@ class PaintMenuController(
     private val parser: MiniMessageParser,
     private val callbacks: PaintMenuCallbacks
 ) {
-    private val buttonFactory = MenuButtonFactory(parser, ComponentsService(), hooker.tickScheduler)
+    private val buttonFactory = MenuButtonFactory(
+        parser,
+        ComponentsService(),
+        hooker.tickScheduler,
+        afterSuccessfulAction = { event, context ->
+            MenuSoundSupport.playForButtonAction(event.player, event, context.soundProfile)
+        }
+    )
     private val signInputService = SignInputService(hooker.plugin)
     private val menuTransitions = mutableSetOf<UUID>()
 
@@ -280,6 +288,7 @@ class PaintMenuController(
         fillThreeRowBase(menu)
         menu.setButton(11, buttonFactory.actionButton(
             material = Material.WATER_BUCKET,
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
             name = "<!i><#C7A300>🌧 <#FFD700>Очистить мальберт",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить")
         ) {
@@ -294,11 +303,15 @@ class PaintMenuController(
             callbacks.beginResizeMode(player, session)
             closeCurrentPaintMenu(player, session)
         })
-        menu.setButton(15, zoomButton(session) { newZoom ->
-            session.selectedZoom = newZoom
-            openEaselMenu(player, session)
-        })
+        setEaselZoomButton(menu, session)
         markMenuOpen(player, session, PaintMenuKind.EASEL, menu)
+    }
+
+    private fun setEaselZoomButton(menu: Menu, session: PaintSession) {
+        menu.setButton(15, zoomButton(session) { event, newZoom ->
+            session.selectedZoom = newZoom
+            setEaselZoomButton(event.menu, session)
+        })
     }
 
     private fun handleShadeMixInteraction(
@@ -536,13 +549,14 @@ class PaintMenuController(
         action = { action() }
     )
 
-    private fun zoomButton(session: PaintSession, action: (Int) -> Unit) = run {
+    private fun zoomButton(session: PaintSession, action: (ClickEvent, Int) -> Unit) = run {
         val maxSide = session.maxLogicalSide()
         val allowed = session.allowedZoomLevels()
         val selectedZoom = session.selectedZoom
         if (maxSide >= 3) {
             buttonFactory.actionButton(
                 material = Material.SPYGLASS,
+                soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
                 name = "<!i><#C7A300>⭐ <#FFD700>Приближение",
                 lore = listOf("<!i><#C7A300>▍ <#FFE68A>Недоступно для текущего размера"),
                 itemModifier = {
@@ -575,6 +589,7 @@ class PaintMenuController(
             buttonFactory.actionButton(
                 material = Material.SPYGLASS,
                 name = "<!i><#C7A300>⭐ <#FFD700>Приближение",
+                soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST,
                 lore = lore,
                 itemModifier = {
                     if (selectedZoom > 1 || selectedZoom != session.appliedZoom) {
@@ -589,7 +604,7 @@ class PaintMenuController(
                         event.isRight || event.isShiftRight -> (currentIndex - 1 + allowed.size) % allowed.size
                         else -> return@actionButton
                     }
-                    action(allowed[newIndex])
+                    action(event, allowed[newIndex])
                 }
             )
         }

@@ -16,6 +16,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.banner.service.BannerPlayerLookupService
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import com.ratger.acreative.moderation.userban.UserBanEntry
 import com.ratger.acreative.moderation.userban.UserBanMenuRenderer
@@ -460,6 +461,7 @@ class PaintManager(private val hooker: FunctionHooker) {
             runSync {
                 if (!player.isOnline) return@runSync
                 if (removed) {
+                    MenuSoundSupport.success(player)
                     hooker.messageManager.sendChat(
                         player,
                         MessageKey.USER_UNBANNED,
@@ -702,6 +704,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         session.inventorySnapshot.restore(player)
         artworkService.giveResult(player, session)
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PAINTING)
+        MenuSoundSupport.paintComplete(player)
     }
 
     fun releaseAll() {
@@ -2901,6 +2904,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                     menuController.openEaselMenu(player, session)
                     return
                 }
+                MenuSoundSupport.itemFramePlace(player)
                 clearStrokeState(session)
                 clearHistory(session)
                 session.resizeMode = false
@@ -2914,6 +2918,7 @@ class PaintManager(private val hooker: FunctionHooker) {
                     return
                 }
                 removeCanvasCell(session, target.point)
+                MenuSoundSupport.itemFrameBreak(player)
                 clearStrokeState(session)
                 clearHistory(session)
                 session.resizeMode = false
@@ -3049,6 +3054,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         val patches = rerenderLogicalCells(session, session.logicalCells.keys)
         if (changed) {
             markCanvasChanged(session)
+            MenuSoundSupport.itemFrameRemoveItem(player)
         }
         patches.forEach { patch ->
             sendMapPatchDataToViewers(session, patch)

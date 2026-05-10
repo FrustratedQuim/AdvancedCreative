@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.personal
 
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -210,6 +211,7 @@ class PersonalItemsService(
     }
 
     private fun dropItem(player: Player, item: ItemStack) {
+        MenuSoundSupport.dropPop(player)
         val drop = player.world.dropItem(player.location.clone().add(0.0, 1.0, 0.0), item)
         drop.velocity = player.eyeLocation.direction.normalize().multiply(0.3).add(org.bukkit.util.Vector(0.0, 0.1, 0.0))
     }

@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.enchantments
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.enchant.EnchantmentIconResolver
@@ -72,6 +73,7 @@ class EnchantmentParametersPage(
                 support.transition(session) { openTypePage(player, session, 0) }
                 return@enchantmentConfirmCreateButton
             }
+            MenuSoundSupport.success(player)
             flowService.reset(session)
             support.transition(session) { openParent(player, session) }
         })

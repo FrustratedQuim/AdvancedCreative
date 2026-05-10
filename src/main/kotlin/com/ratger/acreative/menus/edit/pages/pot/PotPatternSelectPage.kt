@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit.pages.pot
 
 import com.ratger.acreative.menus.edit.trim.TrimPotSupport
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.Material
@@ -47,6 +48,7 @@ class PotPatternSelectPage(
                         if (!TrimPotSupport.toggleSideSherd(session.editableItem, part.side, sherd.material)) {
                             return@buildPotterySherdButton
                         }
+                        MenuSoundSupport.success(player)
                         support.transition(session) {
                             openBack(player, session)
                         }
@@ -82,10 +84,12 @@ class PotPatternSelectPage(
                 if (!TrimPotSupport.applySide(session.editableItem, part.side, null)) {
                     return@actionButton
                 }
+                MenuSoundSupport.success(player)
                 support.transition(session) {
                     openBack(player, session)
                 }
-            }
+            },
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
         ))
 
         menu.open(player)
@@ -114,6 +118,7 @@ class PotPatternSelectPage(
             }
             this
         },
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 }

@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit.pages.tooling
 
 import com.ratger.acreative.menus.edit.remainder.UseRemainderSupport
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
@@ -93,6 +94,7 @@ class UseRemainderEditPage(
     private fun buildInfoButton() = buttonFactory.actionButton(
         material = Material.OAK_HANGING_SIGN,
         name = "<!i><#C7A300>ℹ <#FFD700>Что это такое?",
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         lore = listOf(
             "",
             "<!i><#C7A300> ◆ <#FFE68A>Вложенный в <#FFF3E0>нужный слот<#FFE68A> предмет ",

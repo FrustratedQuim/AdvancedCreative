@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.edit.pages.trim
 import com.ratger.acreative.menus.edit.trim.ArmorTrimCatalog
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.Material
@@ -41,6 +42,7 @@ class ArmorTrimMaterialSelectPage(
                     if (!ArmorTrimSupport.toggleMaterial(session.editableItem, descriptor.material)) {
                         return@buildMaterialOptionButton
                     }
+                    MenuSoundSupport.success(player)
                     support.transition(session) {
                         openBack(player, session)
                     }
@@ -76,6 +78,7 @@ class ArmorTrimMaterialSelectPage(
             }
             this
         },
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 }

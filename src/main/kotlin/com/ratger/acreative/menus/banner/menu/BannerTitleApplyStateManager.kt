@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.banner.menu
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
 import com.ratger.acreative.menus.banner.model.BannerPostDraft
@@ -46,6 +47,7 @@ class BannerTitleApplyStateManager(
         val request = requests[player.uniqueId] ?: return false
         if (args.isEmpty()) {
             messageManager.sendChat(player, MessageKey.EDIT_APPLY_USAGE_TEXT)
+            MenuSoundSupport.error(player)
             return true
         }
 
@@ -57,6 +59,7 @@ class BannerTitleApplyStateManager(
 
         val title = BannerPostDraft.normalizeTitle(args.joinToString(" "))
         clear(player, request)
+        MenuSoundSupport.success(player)
         onApply(player, title)
         return true
     }

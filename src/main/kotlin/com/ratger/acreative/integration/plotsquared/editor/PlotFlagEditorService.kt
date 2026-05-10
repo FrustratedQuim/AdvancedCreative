@@ -11,6 +11,7 @@ import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
@@ -130,6 +131,7 @@ class PlotFlagEditorService(
                 val request = applyRequests[player.uniqueId] ?: return false
                 if (args.isEmpty()) {
                     hooker.messageManager.sendChat(player, request.usageMessageKey)
+                    MenuSoundSupport.error(player)
                     return true
                 }
                 if (args[0].equals("cancel", ignoreCase = true)) {
@@ -613,7 +615,8 @@ class PlotFlagEditorService(
                             glint(true)
                         }
                         this
-                    }
+                    },
+                    soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST
                 ) { clickEvent ->
                     if (!editable) return@actionButton
                     val newIndex = when {
@@ -867,8 +870,10 @@ class PlotFlagEditorService(
                     applyTextFlag(livePlot, entry, rawInput)
                 }
                 if (changed) {
+                    MenuSoundSupport.success(applyPlayer)
                     reopenAfterMutation(applyPlayer, session)
                 } else {
+                    MenuSoundSupport.error(applyPlayer)
                     reopenCurrentSession(applyPlayer.uniqueId)
                 }
             }
@@ -888,8 +893,10 @@ class PlotFlagEditorService(
                 }
                 if (!changed) {
                     hooker.messageManager.sendChat(applyPlayer, MessageKey.EDIT_APPLY_INVALID_VALUE)
+                    MenuSoundSupport.error(applyPlayer)
                 }
                 if (changed) {
+                    MenuSoundSupport.success(applyPlayer)
                     reopenAfterMutation(applyPlayer, session)
                 } else {
                     reopenCurrentSession(applyPlayer.uniqueId)
@@ -941,6 +948,9 @@ class PlotFlagEditorService(
                 }
                 if (!changed) {
                     hooker.messageManager.sendChat(applyPlayer, MessageKey.EDIT_APPLY_INVALID_VALUE)
+                    MenuSoundSupport.error(applyPlayer)
+                } else {
+                    MenuSoundSupport.success(applyPlayer)
                 }
                 openCollectionMenu(applyPlayer, session, entry, collectionPage, returnMainPage, returnFilter)
             }
@@ -965,8 +975,10 @@ class PlotFlagEditorService(
                 }
             }
             if (changed) {
+                MenuSoundSupport.success(player)
                 reopenAfterMutation(player, session)
             } else {
+                MenuSoundSupport.error(player)
                 reopenCurrentSession(player.uniqueId)
             }
         }

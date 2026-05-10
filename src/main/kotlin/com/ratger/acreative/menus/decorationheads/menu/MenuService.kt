@@ -4,6 +4,7 @@ import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.core.MessageManager
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
@@ -56,13 +57,24 @@ class MenuService(
         signInputService = signInputService,
         onSubmit = { player, query ->
             val base = sessionManager.getOrCreate(player.uniqueId)
-            val next = if (query.isNullOrBlank()) {
-                base.copy(mode = DecorationHeadMenuMode.CATEGORY, searchQuery = null, page = 1)
+            if (query.isNullOrBlank()) {
+                val next = base.copy(mode = DecorationHeadMenuMode.CATEGORY, searchQuery = null, page = 1)
+                sessionManager.update(player.uniqueId, next)
+                open(player)
             } else {
-                base.copy(mode = DecorationHeadMenuMode.SEARCH, searchQuery = query, page = 1)
+                val next = base.copy(mode = DecorationHeadMenuMode.SEARCH, searchQuery = query, page = 1)
+                sessionManager.update(player.uniqueId, next)
+                executor.submit {
+                    val hasResults = catalogService.page(next).entries.isNotEmpty()
+                    Bukkit.getScheduler().runTask(plugin, Runnable {
+                        if (!player.isOnline) return@Runnable
+                        if (hasResults) {
+                            MenuSoundSupport.success(player)
+                        }
+                        open(player)
+                    })
+                }
             }
-            sessionManager.update(player.uniqueId, next)
-            open(player)
         },
         onLeave = { player -> open(player) }
     )
@@ -182,6 +194,9 @@ class MenuService(
                     },
                     onSearch = { event ->
                         if (MenuUiSupport.isDropClick(event)) {
+                            if (state.searchQuery.isNullOrBlank()) {
+                                return@renderCategoryMenu
+                            }
                             val nextState = state.copy(mode = DecorationHeadMenuMode.CATEGORY, searchQuery = null, page = 1)
                             sessionManager.update(player.uniqueId, nextState)
                             open(player)
@@ -374,6 +389,7 @@ class MenuService(
                 if (!player.isOnline) return@Runnable
                 when (result) {
                     SavedPagesService.ToggleResult.LIMIT_REACHED -> {
+                        MenuSoundSupport.error(player)
                         temporaryOverrideSupport.replaceSlotTemporarily(
                             menu = menu,
                             slot = 51,
@@ -383,6 +399,7 @@ class MenuService(
                         )
                     }
                     else -> {
+                        MenuSoundSupport.success(player)
                         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isSaved) { event -> toggleSaveCurrentPage(player, state, event.menu) })
                     }
                 }
@@ -397,6 +414,7 @@ class MenuService(
         slot: Int,
         restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
     ) {
+        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::error)
         temporaryOverrideSupport.replaceSlotTemporarily(
             menu = menu,
             slot = slot,

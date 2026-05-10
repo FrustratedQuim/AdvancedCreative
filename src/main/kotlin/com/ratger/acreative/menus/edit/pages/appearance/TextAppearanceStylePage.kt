@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit.pages.appearance
 
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
@@ -142,6 +143,7 @@ class TextAppearanceStylePage(
     private fun buildTextStyleInfoButton(): Button = buttonFactory.actionButton(
         material = Material.OAK_HANGING_SIGN,
         name = "<!i><#C7A300>ℹ <#FFD700>Стили и Цвета",
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         lore = listOf(
             "",
             "<!i><white> \\<white>             <gray>\\<b><white><b>Pepich</b><gray>\\</b>",

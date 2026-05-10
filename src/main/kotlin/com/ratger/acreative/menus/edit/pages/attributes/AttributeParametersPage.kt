@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.attributes
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.attributes.AttributeIconResolver
@@ -117,6 +118,7 @@ class AttributeParametersPage(
                 support.transition(session) { openTypePage(player, session, 0) }
                 return@attributeConfirmCreateButton
             }
+            MenuSoundSupport.success(player)
             flowService.reset(session)
             support.transition(session) { openParent(player, session) }
         })

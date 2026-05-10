@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.banner.editor
 import com.ratger.acreative.menus.banner.BannerButtonFactory
 import com.ratger.acreative.menus.banner.service.BannerCatalog
 import com.ratger.acreative.menus.banner.service.BannerPatternSupport
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -234,6 +235,7 @@ class BannerEditorMenu(
         menu.setButton(49, buttonFactory.pickerConfirmButton {
             if (session.selectedPatternType == null) {
                 showTemporaryWarning(
+                    player = player,
                     menu = menu,
                     slot = 49,
                     title = "<!i><#FF1500>⚠ Выберите тип",
@@ -243,6 +245,7 @@ class BannerEditorMenu(
             }
             if (session.selectedColor == null) {
                 showTemporaryWarning(
+                    player = player,
                     menu = menu,
                     slot = 49,
                     title = "<!i><#FF1500>⚠ Выберите цвет",
@@ -261,6 +264,7 @@ class BannerEditorMenu(
 
         if (editableBanner == null) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 49,
                 title = "<!i><#FF1500>⚠ Вложите флаг",
@@ -271,6 +275,7 @@ class BannerEditorMenu(
 
         if (selectedPattern == null) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 49,
                 title = "<!i><#FF1500>⚠ Выберите тип",
@@ -281,6 +286,7 @@ class BannerEditorMenu(
 
         if (selectedColor == null) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 49,
                 title = "<!i><#FF1500>⚠ Выберите цвет",
@@ -304,6 +310,7 @@ class BannerEditorMenu(
 
         if (BannerPatternSupport.patternCount(editableBanner) >= BannerPatternSupport.EDITOR_VISIBLE_PATTERN_LIMIT) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 49,
                 title = "<!i><#FF1500>⚠ Превышен лимит",
@@ -313,6 +320,7 @@ class BannerEditorMenu(
         }
 
         BannerPatternSupport.addPattern(editableBanner, selectedColor, selectedPattern)
+        MenuSoundSupport.success(player)
         support.logInfo {
             "Banner pattern added via /bedit by ${player.name} (${player.uniqueId}) pattern=${selectedPattern.key.key} color=${selectedColor.name}"
         }
@@ -427,6 +435,7 @@ class BannerEditorMenu(
         session.editingPatternActualIndex = null
         if (session.editableBanner == null) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 39,
                 title = "<!i><#FF1500>⚠ Вложите флаг",
@@ -436,6 +445,7 @@ class BannerEditorMenu(
         }
         if (BannerPatternSupport.patternCount(session.editableBanner) >= BannerPatternSupport.EDITOR_VISIBLE_PATTERN_LIMIT) {
             showTemporaryWarning(
+                player = player,
                 menu = menu,
                 slot = 39,
                 title = "<!i><#FF1500>⚠ Превышен лимит",
@@ -477,11 +487,13 @@ class BannerEditorMenu(
     }
 
     private fun showTemporaryWarning(
+        player: Player,
         menu: Menu,
         slot: Int,
         title: String,
         restore: () -> Button
     ) {
+        MenuSoundSupport.error(player)
         support.replaceSlotTemporarily(
             menu = menu,
             slot = slot,

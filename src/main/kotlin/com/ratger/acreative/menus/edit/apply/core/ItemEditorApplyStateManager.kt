@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit.apply.core
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.ItemEditSessionManager
 import org.bukkit.Bukkit
@@ -54,6 +55,7 @@ class ItemEditorApplyStateManager(
 
         if (args.isEmpty()) {
             hooker.messageManager.sendChat(player, usageMessageFor(request.kind))
+            MenuSoundSupport.error(player)
             return
         }
 
@@ -75,10 +77,19 @@ class ItemEditorApplyStateManager(
                 hooker.actionLogger.info {
                     "Item editor apply succeeded for ${hooker.actionLogger.playerRef(player)} kind=${request.kind.name.lowercase()} args=${args.joinToString(" ")}"
                 }
+                if (request.kind != EditorApplyKind.HEAD_LICENSED_NAME) {
+                    MenuSoundSupport.success(player)
+                }
                 cancelWaiting(player, reopenMenu = true)
             }
-            ApplyExecutionResult.InvalidValue -> hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
-            ApplyExecutionResult.UnknownValue -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+            ApplyExecutionResult.InvalidValue -> {
+                hooker.messageManager.sendChat(player, MessageKey.EDIT_APPLY_INVALID_VALUE)
+                MenuSoundSupport.error(player)
+            }
+            ApplyExecutionResult.UnknownValue -> {
+                hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+                MenuSoundSupport.error(player)
+            }
             ApplyExecutionResult.AwaitingAsync -> Unit
         }
     }

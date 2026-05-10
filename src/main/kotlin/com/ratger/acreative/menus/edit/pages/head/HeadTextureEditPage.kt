@@ -5,6 +5,7 @@ import com.ratger.acreative.menus.edit.head.HeadTextureSnapshot
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
 import com.ratger.acreative.menus.edit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
@@ -92,10 +93,12 @@ class HeadTextureEditPage(
         material = Material.ENDER_EYE,
         name = "<!i><#00FF40>₪ Получить value",
         lore = emptyList(),
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = {
             val value = mutationSupport.texturesValue(session.editableItem)
             if (value.isNullOrBlank()) {
                 showTemporaryBarrierWarn(
+                    viewer = player,
                     menu = menu,
                     slot = 33,
                     title = "<!i><#FF1500>⚠ У этой головы нет текстуры",
@@ -107,6 +110,7 @@ class HeadTextureEditPage(
             val emptySlot = findFirstEmptyInventorySlot(player.inventory)
             if (emptySlot == null) {
                 showTemporaryBarrierWarn(
+                    viewer = player,
                     menu = menu,
                     slot = 33,
                     title = "<!i><#FF1500>⚠ Освободите инвентарь",
@@ -116,6 +120,7 @@ class HeadTextureEditPage(
             }
 
             player.inventory.setItem(emptySlot, textureValueBookSupport.createValueBook(value))
+            MenuSoundSupport.success(player)
         }
     )
 
@@ -163,6 +168,7 @@ class HeadTextureEditPage(
                 session.headTextureSource = HeadTextureSource.TEXTURE_VALUE
                 session.headTextureValueInputBook = extracted.storedItem
                 refreshDynamicButtons(event.player, session, event.menu)
+                MenuSoundSupport.success(event.player)
                 true
             }
         }
@@ -267,14 +273,16 @@ class HeadTextureEditPage(
         return session.headTextureValueInputBook?.clone()
     }
 
-    private fun showTemporaryBarrierWarn(menu: Menu, slot: Int, title: String, restore: () -> Button) {
+    private fun showTemporaryBarrierWarn(viewer: Player, menu: Menu, slot: Int, title: String, restore: () -> Button) {
+        MenuSoundSupport.error(viewer)
         support.replaceSlotTemporarily(
             menu = menu,
             slot = slot,
             temporaryButton = buttonFactory.actionButton(
                 material = Material.BARRIER,
                 name = title,
-                lore = emptyList()
+                lore = emptyList(),
+                soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
             ),
             restoreAfterTicks = 30L,
             restoreButton = restore

@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus
 
 import com.google.common.collect.LinkedHashMultimap
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.decorationheads.model.Entry
@@ -40,7 +41,8 @@ class MenuButtonFactory(
         val label: String,
         val material: Material,
         val rawSlot: Int,
-        val clickType: ClickType
+        val clickType: ClickType,
+        val soundProfile: MenuSoundSupport.ButtonSoundProfile
     ) {
         fun toLogSource(): String = buildString {
             append("menu_button")
@@ -56,6 +58,7 @@ class MenuButtonFactory(
         item: ItemStack,
         role: String = "custom",
         label: String? = null,
+        soundProfile: MenuSoundSupport.ButtonSoundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK,
         action: (ClickEvent) -> Unit
     ): Button {
         lateinit var restoreButton: Button
@@ -67,7 +70,8 @@ class MenuButtonFactory(
                         label = sanitizeLogValue(label ?: item.type.key.asString()),
                         material = item.type,
                         rawSlot = event.rawSlot,
-                        clickType = event.type
+                        clickType = event.type,
+                        soundProfile = soundProfile
                     )
                     runCatching { afterSuccessfulAction(event, context) }
                 }
@@ -223,6 +227,7 @@ class MenuButtonFactory(
             if (!query.isNullOrBlank()) glint(true)
             this
         },
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK_WITH_DROP_POP,
         action = action
     )
 
@@ -251,6 +256,7 @@ class MenuButtonFactory(
 
     fun decorationHeadsReminderButton(): Button = actionButton(
         material = Material.FIRE_CHARGE,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#FFD700>ℹ Важно!",
         lore = listOf(
             "",
@@ -294,7 +300,13 @@ class MenuButtonFactory(
             .build()
 
         MapItemSupport.setColor(item, MapPreviewColorPalette.colorFor(entry.mapColorKey))
-        return protectedButton(item, role = "saved_page", label = "saved_page_${entry.sourcePage}", action = action)
+        return protectedButton(
+            item,
+            role = "saved_page",
+            label = "saved_page_${entry.sourcePage}",
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK_WITH_DROP_POP,
+            action = action
+        )
     }
 
     fun decorationHeadsSavedPageNoteButton(note: String?, onApply: (ClickEvent) -> Unit, onReset: (ClickEvent) -> Unit): Button {
@@ -391,7 +403,12 @@ class MenuButtonFactory(
             skull.playerProfile = profile
             item.itemMeta = skull
         }
-        protectedButton(item, role = "result", label = entry.name) { action(it) }
+        protectedButton(
+            item,
+            role = "result",
+            label = entry.name,
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
+        ) { action(it) }
     }
 
     fun decorationHeadsGrayFiller(): Button = grayFillerButton()
@@ -413,6 +430,7 @@ class MenuButtonFactory(
         lore: List<String>,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
         role: String = "action",
+        soundProfile: MenuSoundSupport.ButtonSoundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK,
         action: ((ClickEvent) -> Unit)? = null
     ): Button {
         val builder = ItemBuilder(material)
@@ -421,7 +439,13 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return protectedButton(builder.build(), role = role, label = name, action = action ?: {})
+        return protectedButton(
+            builder.build(),
+            role = role,
+            label = name,
+            soundProfile = soundProfile,
+            action = action ?: {}
+        )
     }
 
     fun statefulSummaryButton(
@@ -561,6 +585,7 @@ class MenuButtonFactory(
                 }
                 this
             },
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK_WITH_DROP_POP,
             action = { event ->
                 val interaction = when {
                     event.isLeft || event.isShiftLeft -> AdvancedLoreInteraction.NEXT_FOCUS
@@ -644,7 +669,12 @@ class MenuButtonFactory(
             builder.itemModifier(selected)
         }
 
-        return protectedButton(builder.build(), role = "list", label = titleBuilder(selected, safeSelectedIndex)) handler@{ event ->
+        return protectedButton(
+            builder.build(),
+            role = "list",
+            label = titleBuilder(selected, safeSelectedIndex),
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST
+        ) handler@{ event ->
                 val newIndex = when {
                     event.isLeft || event.isShiftLeft -> (safeSelectedIndex + 1) % options.size
                     event.isRight || event.isShiftRight -> (safeSelectedIndex - 1 + options.size) % options.size
@@ -673,7 +703,12 @@ class MenuButtonFactory(
         if (itemModifier != null) {
             builder.itemModifier()
         }
-        return protectedButton(builder.build(), role = "focused_toggle_list", label = title) handler@{ event ->
+        return protectedButton(
+            builder.build(),
+            role = "focused_toggle_list",
+            label = title,
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST_WITH_DROP_POP
+        ) handler@{ event ->
             val interaction = when {
                 event.isLeft || event.isShiftLeft -> FocusedToggleListInteraction.NEXT_FOCUS
                 event.isRight || event.isShiftRight -> FocusedToggleListInteraction.TOGGLE_FOCUSED
@@ -717,6 +752,7 @@ class MenuButtonFactory(
             material = material,
             name = if (active) activeTitle else inactiveTitle,
             lore = lore,
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST_WITH_DROP_POP,
             itemModifier = {
                 if (active) glint(true)
                 this
@@ -760,6 +796,7 @@ class MenuButtonFactory(
             material = material,
             name = if (active) activeTitle else inactiveTitle,
             lore = lore,
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.LIST,
             itemModifier = {
                 if (active) glint(true)
                 this
@@ -819,13 +856,18 @@ class MenuButtonFactory(
 
     fun editablePreviewButton(item: ItemStack): Button = protectedButton(item.clone(), role = "preview", label = "editable_preview") { }
 
-    fun itemAsIsButton(item: ItemStack, action: (ClickEvent) -> Unit): Button = protectedButton(item.clone(), role = "item", label = "item_as_is", action = action)
+    fun itemAsIsButton(
+        item: ItemStack,
+        soundProfile: MenuSoundSupport.ButtonSoundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK,
+        action: (ClickEvent) -> Unit
+    ): Button = protectedButton(item.clone(), role = "item", label = "item_as_is", soundProfile = soundProfile, action = action)
 
     fun headTextureValueInputSlotButton(
         valueBook: ItemStack?,
         action: (ClickEvent) -> Unit
     ): Button = itemInputSlotButton(
         storedItem = valueBook,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         placeholderName = "<!i><#FFD700>→ <#FFE68A>Слот для value <#FFD700>←",
         action = action
     )
@@ -851,6 +893,7 @@ class MenuButtonFactory(
     private fun itemInputSlotButton(
         storedItem: ItemStack?,
         placeholderName: String,
+        soundProfile: MenuSoundSupport.ButtonSoundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK,
         action: (ClickEvent) -> Unit
     ): Button {
         val buttonItem = storedItem?.clone()
@@ -858,7 +901,7 @@ class MenuButtonFactory(
                 .name(parser.parse(placeholderName))
                 .build()
 
-        return protectedButton(buttonItem, role = "item_input", label = placeholderName, action = action)
+        return protectedButton(buttonItem, role = "item_input", label = placeholderName, soundProfile = soundProfile, action = action)
     }
 
     fun specialParameterButton(
@@ -1236,6 +1279,7 @@ class MenuButtonFactory(
         material = Material.LIME_DYE,
         name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 
@@ -1243,6 +1287,7 @@ class MenuButtonFactory(
         material = Material.LIME_DYE,
         name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 
@@ -1265,6 +1310,7 @@ class MenuButtonFactory(
         material = Material.LIME_DYE,
         name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 

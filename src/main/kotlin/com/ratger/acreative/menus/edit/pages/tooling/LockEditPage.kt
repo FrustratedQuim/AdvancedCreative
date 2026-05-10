@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.edit.pages.tooling
 
 import com.ratger.acreative.menus.edit.container.LockItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
@@ -97,6 +98,7 @@ class LockEditPage(
     private fun buildInfoButton() = buttonFactory.actionButton(
         material = Material.OAK_HANGING_SIGN,
         name = "<!i><#C7A300>ℹ <#FFD700>Что это такое?",
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         lore = listOf(
             "",
             "<!i><#C7A300> ◆ <#FFE68A>Шалкер можно будет открыть лишь",

@@ -64,6 +64,7 @@ import com.ratger.acreative.menus.edit.apply.effects.UseCooldownSecondsApplyHand
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.personal.PersonalItemsRepository
 import com.ratger.acreative.menus.edit.personal.PersonalItemsService
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.paint.PaintToolMarker
 import org.bukkit.Bukkit
@@ -99,7 +100,10 @@ class MenuService(
         parser = parser,
         componentsService = ComponentsService(),
         tickScheduler = hooker.tickScheduler,
-        afterSuccessfulAction = { event, context -> logItemEditorChangeIfNeeded(event.player, context.toLogSource()) }
+        afterSuccessfulAction = { event, context ->
+            MenuSoundSupport.playForButtonAction(event.player, event, context.soundProfile)
+            logItemEditorChangeIfNeeded(event.player, context.toLogSource())
+        }
     )
     private val signInputService = SignInputService(hooker.plugin)
     private val headMutationSupport = HeadTextureMutationSupport()

@@ -6,6 +6,7 @@ import com.ratger.acreative.menus.banner.model.BannedUserEntry
 import com.ratger.acreative.menus.banner.model.BannerColorDescriptor
 import com.ratger.acreative.menus.banner.model.BannerPatternDescriptor
 import com.ratger.acreative.menus.banner.model.PublishedBannerEntry
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.banner.service.BannerPatternSupport
 import com.ratger.acreative.menus.banner.service.BannerTextSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -91,6 +92,7 @@ class BannerButtonFactory(
 
     fun postConfirmButton(action: (ClickEvent) -> Unit): Button = shared.actionButton(
         material = Material.LIME_DYE,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
         action = action
@@ -98,6 +100,7 @@ class BannerButtonFactory(
 
     fun temporaryBarrierButton(title: String): Button = shared.actionButton(
         material = Material.BARRIER,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = title,
         lore = emptyList()
     )
@@ -151,11 +154,13 @@ class BannerButtonFactory(
             }
             this
         },
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         action = action
     )
 
     fun postInfoButton(): Button = shared.actionButton(
         material = Material.BOOK,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>ℹ <#FFD700>Хотите выложить свой флаг?",
         lore = listOf("<!i><#FFD700>▍ <#FFE68A>Используйте <#FFF3E0>/banner post"),
         action = {}
@@ -163,6 +168,7 @@ class BannerButtonFactory(
 
     fun limitInfoButton(current: Int, limit: String): Button = shared.actionButton(
         material = Material.BOOK,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>ℹ <#FFD700>Лимит <#C7A300>[<#FFF3E0>$current/$limit<#C7A300>]",
         lore = emptyList(),
         action = {}
@@ -170,6 +176,7 @@ class BannerButtonFactory(
 
     fun storageInfoButton(action: () -> Unit): Button = shared.actionButton(
         material = Material.FIRE_CHARGE,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#FFD700>ℹ Что это такое?",
         lore = listOf(
             "",
@@ -185,6 +192,7 @@ class BannerButtonFactory(
 
     fun storageEditInfoButton(action: () -> Unit): Button = shared.actionButton(
         material = Material.EMERALD,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#FFD700>ℹ Что это такое?",
         lore = listOf(
             "",
@@ -223,6 +231,7 @@ class BannerButtonFactory(
 
     fun storageLimitButton(current: Int, limitText: String): Button = shared.actionButton(
         material = Material.BOOK,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#C7A300>ℹ <#FFD700>Лимит <#C7A300>[<#FFF3E0>$current/$limitText<#C7A300>]",
         lore = emptyList(),
         action = {}
@@ -237,7 +246,8 @@ class BannerButtonFactory(
             if (forceSingleAmount) {
                 amount = 1
             }
-        }
+        },
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
     ) { action(it) }
 
     fun publishedBannerButton(
@@ -267,7 +277,10 @@ class BannerButtonFactory(
                 add("<!i><#FFD700>ПКМ, <#FFE68A>чтобы удалить")
             }
         }
-        return shared.itemAsIsButton(decorateBanner(entry.bannerItem, title, lore)) { action(it) }
+        return shared.itemAsIsButton(
+            decorateBanner(entry.bannerItem, title, lore),
+            soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
+        ) { action(it) }
     }
 
     fun createGivenPublishedBannerItem(entry: PublishedBannerEntry): ItemStack {
@@ -346,7 +359,7 @@ class BannerButtonFactory(
             meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP)
             item.itemMeta = meta
         }
-        return shared.itemAsIsButton(item) { action(it) }
+        return shared.itemAsIsButton(item, MenuSoundSupport.ButtonSoundProfile.CLICK_WITH_DROP_POP) { action(it) }
     }
 
     fun baseBannerChoiceButton(color: BannerColorDescriptor, action: (ClickEvent) -> Unit): Button {
@@ -395,6 +408,7 @@ class BannerButtonFactory(
 
     fun pickerConfirmButton(action: () -> Unit): Button = shared.actionButton(
         material = Material.LIME_DYE,
+        soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
         name = "<!i><#00FF40>✔ Подтвердить",
         lore = emptyList(),
         action = { action() }

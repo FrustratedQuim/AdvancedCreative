@@ -15,6 +15,7 @@ import com.ratger.acreative.menus.banner.storage.BannerStorageService
 import com.ratger.acreative.menus.banner.storage.BannerStorageSession
 import com.ratger.acreative.menus.banner.storage.BannerStorageSessionManager
 import com.ratger.acreative.menus.banner.service.*
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
@@ -535,12 +536,17 @@ class BannerMenuService(
                     onSearch = { event ->
                         val currentState = sessionManager.publicState(player.uniqueId)
                         if (MenuUiSupport.isDropClick(event)) {
+                            if (currentState.searchQuery.isNullOrBlank()) {
+                                return@renderPublicGallery
+                            }
+                            MenuSoundSupport.dropPop(player)
                             val nextState = currentState.copy(page = 1, searchQuery = null)
                             sessionManager.updatePublicState(player.uniqueId, nextState)
                             openPublicGallery(player, nextState)
                             return@renderPublicGallery
                         }
 
+                        MenuSoundSupport.click(player)
                         player.closeInventory()
                         searchInputService.open(player)
                     },
@@ -644,6 +650,7 @@ class BannerMenuService(
                     if (!player.isOnline) {
                         return@runSync
                     }
+                    MenuSoundSupport.error(player)
                     showTemporaryPostWarning(
                         menu = menu,
                         title = when (result.reason) {
@@ -662,6 +669,7 @@ class BannerMenuService(
                     if (!player.isOnline) {
                         return@runSync
                     }
+                    MenuSoundSupport.success(player)
                     hooker.messageManager.sendChat(
                         player,
                         MessageKey.BANNER_POST_SUCCESS,
@@ -738,6 +746,7 @@ class BannerMenuService(
                 if (!player.isOnline) {
                     return@runSync
                 }
+                MenuSoundSupport.success(player)
                 hooker.messageManager.sendChat(player, MessageKey.BANNER_PATTERN_UNBANNED)
                 openBannedPatterns(player, currentPage, currentMenu)
             }
@@ -751,6 +760,7 @@ class BannerMenuService(
                 if (!player.isOnline) {
                     return@runSync
                 }
+                MenuSoundSupport.success(player)
                 hooker.messageManager.sendChat(
                     player,
                     MessageKey.USER_UNBANNED,
@@ -813,6 +823,7 @@ class BannerMenuService(
         slot: Int,
         restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
     ) {
+        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::error)
         temporaryOverrideSupport.replaceSlotTemporarily(
             menu = menu,
             slot = slot,

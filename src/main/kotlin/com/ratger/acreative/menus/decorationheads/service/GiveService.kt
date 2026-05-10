@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.core.AccountLinkRequirementService
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -78,6 +79,7 @@ class GiveService(
     }
 
     private fun dropItem(player: Player, item: ItemStack) {
+        MenuSoundSupport.dropPop(player)
         val drop = player.world.dropItem(player.location.clone().add(0.0, 1.0, 0.0), item)
         drop.velocity = player.eyeLocation.direction.normalize().multiply(0.3).add(org.bukkit.util.Vector(0.0, 0.1, 0.0))
     }

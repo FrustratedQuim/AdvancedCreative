@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.pages.effects
 
 import com.ratger.acreative.menus.MenuButtonFactory
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
@@ -125,6 +126,7 @@ class VisualEffectParametersPage(
                 support.transition(session) { openTypePage(player, session, 0) }
                 return@visualEffectConfirmButton
             }
+            MenuSoundSupport.success(player)
             flowService.reset(session)
             support.transition(session) { openParent(player, session) }
         })

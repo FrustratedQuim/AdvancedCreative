@@ -3,6 +3,7 @@ package com.ratger.acreative.menus.edit.apply.head
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.head.HeadProfileService
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
@@ -42,12 +43,19 @@ class HeadLicensedNameApplyHandler(
                     return@Runnable
                 }
 
+                var applied = false
                 if (error == null && payload != null) {
                     val applyResult = mutationSupport.applyFromLicensedPayload(onlineSession.editableItem, payload)
                     if (applyResult is HeadTextureMutationSupport.MutationResult.Success) {
                         onlineSession.headTextureSource = HeadTextureSource.LICENSED_NAME
                         onlineSession.headTextureVirtualValue = mutationSupport.texturesValue(onlineSession.editableItem)?.takeUnless { it.isBlank() }
+                        applied = true
                     }
+                }
+                if (applied) {
+                    MenuSoundSupport.success(onlinePlayer)
+                } else {
+                    MenuSoundSupport.error(onlinePlayer)
                 }
                 onlineSession.headTextureLoadingToken = null
                 reopenHeadTexturePage(onlinePlayer)

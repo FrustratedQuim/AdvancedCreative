@@ -2,6 +2,7 @@ package com.ratger.acreative.commands.paint.agreement
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.ManagedSystem
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.commands.paint.model.PaintCanvasSize
@@ -90,6 +91,7 @@ class PaintRuleConfirmationService(
         menu.setButton(CONFIRM_SLOT, confirmButton(request) { handleConfirmationClick(player, it.menu) })
         menu.setButton(CANCEL_SLOT, cancelButton { scheduleMenuClose(player) })
         menu.open(player)
+        MenuSoundSupport.error(player)
     }
 
     private fun handleConfirmationClick(player: Player, menu: Menu) {
@@ -101,12 +103,14 @@ class PaintRuleConfirmationService(
         if (request.remainingConfirmations > 1) {
             request.remainingConfirmations -= 1
             menu.setButton(CONFIRM_SLOT, confirmButton(request) { handleConfirmationClick(player, it.menu) })
+            MenuSoundSupport.click(player)
             return
         }
 
         pendingRequests.remove(player.uniqueId)
         confirmationCache[player.uniqueId] = true
         repository.saveConfirmed(player.uniqueId)
+        MenuSoundSupport.success(player)
 
         val requestedSize = request.requestedSize
         hooker.tickScheduler.runLater(1L) {
@@ -142,6 +146,7 @@ class PaintRuleConfirmationService(
             .name(parser.parse("<!i><gray>Отмена"))
             .build()
     ).action {
+        MenuSoundSupport.click(it.player)
         action()
     }.build()
 
@@ -151,7 +156,7 @@ class PaintRuleConfirmationService(
                 .name(parser.parse("<!i><#FF2B2B>⚠ Соглашение с правилами"))
                 .lore(confirmLore(request.remainingConfirmations).map(parser::parse))
                 .build()
-        ).action(action).build()
+        ).action { action(it) }.build()
     }
 
     private fun confirmLore(remainingConfirmations: Int): List<String> = listOf(

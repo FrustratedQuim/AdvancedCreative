@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.banner.service
 
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -57,6 +58,7 @@ class BannerGiveService {
             return
         }
 
+        MenuSoundSupport.dropPop(player)
         val drop = player.world.dropItem(player.location.clone().add(0.0, 1.0, 0.0), item)
         drop.velocity = player.eyeLocation.direction.normalize().multiply(0.3).add(Vector(0.0, 0.1, 0.0))
     }
