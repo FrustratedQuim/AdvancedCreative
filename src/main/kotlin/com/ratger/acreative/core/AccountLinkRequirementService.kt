@@ -1,5 +1,6 @@
 package com.ratger.acreative.core
 
+import com.ratger.acreative.menus.common.MenuSoundSupport
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.lang.reflect.Method
@@ -28,6 +29,7 @@ class AccountLinkRequirementService(
 
     fun sendLinkRequiredMessage(player: Player) {
         hooker.messageManager.sendChat(player, MessageKey.ACCOUNT_LINK_REQUIRED)
+        MenuSoundSupport.error(player)
     }
 
     private fun resolveUser(player: Player): Any? {

@@ -3,9 +3,17 @@ package com.ratger.acreative.menus.common
 import org.bukkit.Sound
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.random.Random
 
 object MenuSoundSupport {
+    private enum class PendingButtonSoundOverride {
+        ERROR
+    }
+
+    private val pendingButtonSoundOverrides = ConcurrentHashMap<UUID, PendingButtonSoundOverride>()
+
     enum class ButtonSoundProfile {
         NONE,
         CLICK,
@@ -19,6 +27,14 @@ object MenuSoundSupport {
         event: ClickEvent,
         soundProfile: ButtonSoundProfile
     ) {
+        when (pendingButtonSoundOverrides.remove(player.uniqueId)) {
+            PendingButtonSoundOverride.ERROR -> {
+                error(player)
+                return
+            }
+            null -> Unit
+        }
+
         when (soundProfile) {
             ButtonSoundProfile.NONE -> Unit
             ButtonSoundProfile.CLICK -> click(player)
@@ -26,6 +42,10 @@ object MenuSoundSupport {
             ButtonSoundProfile.CLICK_WITH_DROP_POP -> if (isDropClick(event)) dropPop(player) else click(player)
             ButtonSoundProfile.LIST_WITH_DROP_POP -> if (isDropClick(event)) dropPop(player) else listStep(player, isForwardStep(event))
         }
+    }
+
+    fun overrideNextButtonActionWithError(player: Player) {
+        pendingButtonSoundOverrides[player.uniqueId] = PendingButtonSoundOverride.ERROR
     }
 
     fun click(player: Player) {

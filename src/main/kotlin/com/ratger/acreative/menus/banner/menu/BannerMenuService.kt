@@ -823,7 +823,7 @@ class BannerMenuService(
         slot: Int,
         restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
     ) {
-        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::error)
+        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::overrideNextButtonActionWithError)
         temporaryOverrideSupport.replaceSlotTemporarily(
             menu = menu,
             slot = slot,

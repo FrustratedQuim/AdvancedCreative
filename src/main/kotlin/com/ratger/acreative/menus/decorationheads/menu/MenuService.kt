@@ -414,11 +414,16 @@ class MenuService(
         slot: Int,
         restoreButton: () -> ru.violence.coreapi.bukkit.api.menu.button.Button
     ) {
-        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::error)
+        (menu.inventory.viewers.firstOrNull() as? Player)?.let(MenuSoundSupport::overrideNextButtonActionWithError)
         temporaryOverrideSupport.replaceSlotTemporarily(
             menu = menu,
             slot = slot,
-            temporaryButton = buttonFactory.actionButton(Material.BARRIER, "<!i><#FF1500>⚠ Привяжите ваш аккаунт", emptyList()),
+            temporaryButton = buttonFactory.actionButton(
+                material = Material.BARRIER,
+                name = "<!i><#FF1500>⚠ Привяжите ваш аккаунт",
+                lore = emptyList(),
+                soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE
+            ),
             restoreAfterTicks = 30L,
             restoreButton = restoreButton
         )
