@@ -65,7 +65,7 @@ class BannerEditorMenu(
 
     private fun refreshEditorButtons(player: Player, session: BannerEditorSession, menu: Menu) {
         if (session.openedFromMainMenu) {
-            menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton {
+            menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton {
                 support.finishSession(player, session) { openMainMenu(player) }
             })
         }
@@ -130,7 +130,7 @@ class BannerEditorMenu(
         )
 
         support.fillBase(menu, EDITOR_MENU_SIZE, EDITOR_BLACK_SLOTS)
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton { support.transition(session) { open(player, session) } })
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton { support.transition(session) { open(player, session) } })
         BASE_PICKER_SLOTS.forEach { menu.setButton(it, buttonFactory.airButton()) }
         BannerCatalog.colors.forEachIndexed { index, color ->
             val slot = BASE_PICKER_SLOTS.getOrNull(index) ?: return@forEachIndexed
@@ -203,7 +203,7 @@ class BannerEditorMenu(
                 support.transition(session) { open(player, session) }
             }
         }
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton(onBack))
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton(onBack))
         menu.setButton(27, buttonFactory.backButton(onBack))
 
         if (page < totalPages - 1) {
@@ -211,7 +211,7 @@ class BannerEditorMenu(
                 session.pickerPage = page + 1
                 support.transition(session) { openPatternPicker(player, session) }
             }
-            menu.setButton(PagedSelectionLayout.forwardSlot, buttonFactory.forwardButton(onForward))
+            menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton(onForward))
             menu.setButton(35, buttonFactory.forwardButton(onForward))
         }
 

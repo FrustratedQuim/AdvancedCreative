@@ -27,7 +27,7 @@ class ArmorTrimMaterialSelectPage(
         )
 
         support.fillBase(menu, 45, PagedSelectionLayout.blackSlots)
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
 
         val currentMaterial = ArmorTrimSupport.currentMaterial(session.editableItem)

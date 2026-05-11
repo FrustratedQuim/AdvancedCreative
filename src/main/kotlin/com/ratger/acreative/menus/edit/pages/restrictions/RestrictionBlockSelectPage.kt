@@ -37,7 +37,7 @@ class RestrictionBlockSelectPage(
             title = "${mode.blockSelectTitlePrefix} [${pageIndex + 1}/$totalPages]",
             menuSize = 45,
             rows = MenuRows.FIVE,
-            interactiveTopSlots = setOf(PagedSelectionLayout.backSlot, PagedSelectionLayout.forwardSlot, 40) + PagedSelectionLayout.workSlots,
+            interactiveTopSlots = setOf(PagedSelectionLayout.BACK_SLOT, PagedSelectionLayout.FORWARD_SLOT, 40) + PagedSelectionLayout.workSlots,
             session = session
         )
 
@@ -46,14 +46,14 @@ class RestrictionBlockSelectPage(
         PagedSelectionLayout.blackSlots.forEach { menu.setButton(it, black) }
         PagedSelectionLayout.graySlots.forEach { menu.setButton(it, gray) }
 
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton("◀ Назад") {
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
                 if (pageIndex > 0) open(player, session, mode, pageIndex - 1, openParent, multiSelect, onSelected)
                 else openParent(player, session)
             }
         })
 
-        menu.setButton(PagedSelectionLayout.forwardSlot, buttonFactory.forwardButton("Вперёд ▶") {
+        menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton("Вперёд ▶") {
             support.transition(session) {
                 val nextPage = if (pageIndex + 1 < totalPages) pageIndex + 1 else 0
                 open(player, session, mode, nextPage, openParent, multiSelect, onSelected)

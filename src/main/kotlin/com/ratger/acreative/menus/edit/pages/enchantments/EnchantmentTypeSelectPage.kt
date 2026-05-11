@@ -37,7 +37,7 @@ class EnchantmentTypeSelectPage(
             title = "<!i>▍ Зачарования → Тип [${pageIndex + 1}/$totalPages]",
             menuSize = 45,
             rows = MenuRows.FIVE,
-            interactiveTopSlots = setOf(PagedSelectionLayout.backSlot, PagedSelectionLayout.forwardSlot) + PagedSelectionLayout.workSlots,
+            interactiveTopSlots = setOf(PagedSelectionLayout.BACK_SLOT, PagedSelectionLayout.FORWARD_SLOT) + PagedSelectionLayout.workSlots,
             session = session
         )
 
@@ -48,14 +48,14 @@ class EnchantmentTypeSelectPage(
 
         val selected = flowService.resolveSelected(session)
 
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton("◀ Назад") {
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
                 if (pageIndex > 0) open(player, session, pageIndex - 1, openParent, openParams)
                 else openParent(player, session)
             }
         })
 
-        menu.setButton(PagedSelectionLayout.forwardSlot, buttonFactory.forwardButton("Вперёд ▶") {
+        menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton("Вперёд ▶") {
             support.transition(session) {
                 if (pageIndex + 1 < totalPages) {
                     open(player, session, pageIndex + 1, openParent, openParams)

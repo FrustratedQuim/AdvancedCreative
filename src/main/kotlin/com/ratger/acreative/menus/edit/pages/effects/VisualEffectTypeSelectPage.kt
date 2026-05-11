@@ -64,7 +64,7 @@ class VisualEffectTypeSelectPage(
             title = "<!i>▍ Эффект → Тип [${pageIndex + 1}/$totalPages]",
             menuSize = 45,
             rows = MenuRows.FIVE,
-            interactiveTopSlots = setOf(PagedSelectionLayout.backSlot, PagedSelectionLayout.forwardSlot) + PagedSelectionLayout.workSlots,
+            interactiveTopSlots = setOf(PagedSelectionLayout.BACK_SLOT, PagedSelectionLayout.FORWARD_SLOT) + PagedSelectionLayout.workSlots,
             session = session
         )
 
@@ -75,7 +75,7 @@ class VisualEffectTypeSelectPage(
         val selectedType = flowService.resolveType(session.visualEffectDraft.effectTypeKey)
         val selectedTypesSet = if (multiSelect) selectedTypesProvider(session) else emptySet()
 
-        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton("◀ Назад") {
+        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton("◀ Назад") {
             support.transition(session) {
                 if (pageIndex > 0) open(player, session, contextKey, pageIndex - 1, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected)
                 else openParent(player, session)
@@ -84,7 +84,7 @@ class VisualEffectTypeSelectPage(
 
         val hideForwardOnLastTypeOnlyPage = onTypeSelected != null && pageIndex + 1 >= totalPages
         if (!hideForwardOnLastTypeOnlyPage) {
-            menu.setButton(PagedSelectionLayout.forwardSlot, buttonFactory.forwardButton("Вперёд ▶") {
+            menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton("Вперёд ▶") {
                 support.transition(session) {
                     if (pageIndex + 1 < totalPages) {
                         open(player, session, contextKey, pageIndex + 1, openParent, openParams, multiSelect, selectedTypesProvider, onTypeSelected)

@@ -12,6 +12,6 @@ object PagedSelectionLayout {
         28, 29, 30, 31, 32, 33, 34
     )
 
-    const val backSlot: Int = 18
-    const val forwardSlot: Int = 26
+    const val BACK_SLOT: Int = 18
+    const val FORWARD_SLOT: Int = 26
 }
