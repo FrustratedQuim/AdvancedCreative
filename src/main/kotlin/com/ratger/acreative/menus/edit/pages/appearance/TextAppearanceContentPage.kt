@@ -6,6 +6,8 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.common.MenuUiSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.Menu
@@ -33,10 +35,12 @@ class TextAppearanceContentPage(
 
         support.fillBase(menu, menuSize, support.advancedBlackSlots)
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
-        menu.setButton(18, buttonFactory.backButton("◀ Назад") { support.transition(session) { openBack(player, session) } })
-        menu.setButton(27, buttonFactory.backButton("◀ Назад") { support.transition(session) { openBack(player, session) } })
-        menu.setButton(26, buttonFactory.forwardButton("Продвинутый режим ▶") { support.transition(session) { openPageTwo(player, session, openBack) } })
-        menu.setButton(35, buttonFactory.forwardButton("Продвинутый режим ▶") { support.transition(session) { openPageTwo(player, session, openBack) } })
+        MenuUiSupport.setButtonFactory(menu, PagedSelectionLayout.mirroredBackSlots) {
+            buttonFactory.backButton("◀ Назад") { support.transition(session) { openBack(player, session) } }
+        }
+        MenuUiSupport.setButtonFactory(menu, PagedSelectionLayout.mirroredForwardSlots) {
+            buttonFactory.forwardButton("Продвинутый режим ▶") { support.transition(session) { openPageTwo(player, session, openBack) } }
+        }
 
         refreshButtons(menu, player, session, openBack)
         menu.open(player)

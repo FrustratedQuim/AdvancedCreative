@@ -4,6 +4,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.edit.experimental.ComponentsService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -377,10 +378,10 @@ class PaintMenuController(
         }
 
         if (safePage > 0) {
-            menu.setButton(18, buttonFactory.backButton { openColorPickerPage(player, session, returnTo, safePage - 1, onSelect) })
+            menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton { openColorPickerPage(player, session, returnTo, safePage - 1, onSelect) })
         }
         if (safePage + 1 < totalPages) {
-            menu.setButton(26, buttonFactory.forwardButton { openColorPickerPage(player, session, returnTo, safePage + 1, onSelect) })
+            menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton { openColorPickerPage(player, session, returnTo, safePage + 1, onSelect) })
         }
 
         session.activeColorMenuReturnTo = returnTo

@@ -10,6 +10,7 @@ import com.ratger.acreative.menus.banner.model.MyBannersState
 import com.ratger.acreative.menus.banner.model.PublishedBannerEntry
 import com.ratger.acreative.menus.banner.service.BannerTextSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.Menu
@@ -312,8 +313,7 @@ class BannerMenuRenderer(
     }
 
     private fun fillFooter(menu: Menu) {
-        menu.setButton(45, buttonFactory.blackFiller())
-        menu.setButton(53, buttonFactory.blackFiller())
+        MenuUiSupport.setButtonFactory(menu, PagedSelectionLayout.footerCornerSlots) { buttonFactory.blackFiller() }
         for (slot in 46..52) {
             menu.setButton(slot, buttonFactory.grayFiller())
         }

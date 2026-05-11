@@ -45,6 +45,9 @@ object MenuUiSupport {
         }
         .build()
 
+    fun setButtonFactory(menu: Menu, slots: Iterable<Int>, factory: () -> Button) {
+        slots.forEach { menu.setButton(it, factory()) }
+    }
     fun fillByMask(
         menu: Menu,
         menuSize: Int,

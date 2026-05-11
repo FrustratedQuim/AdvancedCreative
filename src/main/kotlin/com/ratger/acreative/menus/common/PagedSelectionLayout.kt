@@ -14,4 +14,8 @@ object PagedSelectionLayout {
 
     const val BACK_SLOT: Int = 18
     const val FORWARD_SLOT: Int = 26
+
+    val mirroredBackSlots: Set<Int> = setOf(BACK_SLOT, 27)
+    val mirroredForwardSlots: Set<Int> = setOf(FORWARD_SLOT, 35)
+    val footerCornerSlots: Set<Int> = setOf(45, 53)
 }

@@ -203,16 +203,14 @@ class BannerEditorMenu(
                 support.transition(session) { open(player, session) }
             }
         }
-        menu.setButton(PagedSelectionLayout.BACK_SLOT, buttonFactory.backButton(onBack))
-        menu.setButton(27, buttonFactory.backButton(onBack))
+        MenuUiSupport.setButtonFactory(menu, PagedSelectionLayout.mirroredBackSlots) { buttonFactory.backButton(onBack) }
 
         if (page < totalPages - 1) {
             val onForward = {
                 session.pickerPage = page + 1
                 support.transition(session) { openPatternPicker(player, session) }
             }
-            menu.setButton(PagedSelectionLayout.FORWARD_SLOT, buttonFactory.forwardButton(onForward))
-            menu.setButton(35, buttonFactory.forwardButton(onForward))
+            MenuUiSupport.setButtonFactory(menu, PagedSelectionLayout.mirroredForwardSlots) { buttonFactory.forwardButton(onForward) }
         }
 
         PICKER_PATTERN_SLOTS.forEach { menu.setButton(it, buttonFactory.airButton()) }
