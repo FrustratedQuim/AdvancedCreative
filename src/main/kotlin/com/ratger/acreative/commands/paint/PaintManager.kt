@@ -16,6 +16,7 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.banner.service.BannerPlayerLookupService
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import com.ratger.acreative.moderation.userban.UserBanEntry
@@ -3150,9 +3151,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         return isWorkTool(player.inventory.itemInMainHand) || isWorkTool(player.inventory.itemInOffHand)
     }
 
-    private fun isDropClick(click: ClickType): Boolean {
-        return click == ClickType.DROP || click == ClickType.CONTROL_DROP
-    }
+    private fun isDropClick(click: ClickType): Boolean = MenuUiSupport.isDropClick(click)
 
     private fun floorDiv(value: Int, divisor: Int): Int = Math.floorDiv(value, divisor)
 
@@ -3208,4 +3207,3 @@ class PaintManager(private val hooker: FunctionHooker) {
         private val BACKGROUND_COLOR_ID: Byte = MapDataExtractor.DEFAULT_CANVAS_COLOR_ID
     }
 }
-

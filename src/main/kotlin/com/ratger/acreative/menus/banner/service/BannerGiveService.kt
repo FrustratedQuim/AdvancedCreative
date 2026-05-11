@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.banner.service
 
 import com.ratger.acreative.menus.common.MenuSoundSupport
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -49,9 +50,7 @@ class BannerGiveService {
         }
     }
 
-    private fun isDropClick(event: ClickEvent): Boolean {
-        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
-    }
+    private fun isDropClick(event: ClickEvent): Boolean = MenuUiSupport.isDropClick(event)
 
     private fun dropItem(player: Player, item: ItemStack) {
         if (item.type == Material.AIR || item.amount <= 0) {

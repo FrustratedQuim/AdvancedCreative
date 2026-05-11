@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.decorationheads.service
 
 import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.menus.common.MenuSoundSupport
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -74,9 +75,7 @@ class GiveService(
     }
 
 
-    private fun isDropClick(event: ClickEvent): Boolean {
-        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
-    }
+    private fun isDropClick(event: ClickEvent): Boolean = MenuUiSupport.isDropClick(event)
 
     private fun dropItem(player: Player, item: ItemStack) {
         MenuSoundSupport.dropPop(player)

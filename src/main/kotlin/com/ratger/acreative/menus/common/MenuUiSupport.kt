@@ -9,8 +9,12 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 import ru.violence.coreapi.bukkit.api.menu.event.CloseEvent
 
 object MenuUiSupport {
+    fun isDropClick(clickType: ClickType): Boolean {
+        return clickType == ClickType.DROP || clickType == ClickType.CONTROL_DROP
+    }
+
     fun isDropClick(event: ClickEvent): Boolean {
-        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
+        return isDropClick(event.type)
     }
 
     fun buildMenu(

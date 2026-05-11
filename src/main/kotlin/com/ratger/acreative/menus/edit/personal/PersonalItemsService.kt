@@ -1,6 +1,7 @@
 package com.ratger.acreative.menus.edit.personal
 
 import com.ratger.acreative.menus.common.MenuSoundSupport
+import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.entity.Player
 import org.bukkit.event.inventory.ClickType
@@ -206,9 +207,7 @@ class PersonalItemsService(
 
     private fun nowEpochSeconds(): Long = Instant.now().epochSecond
 
-    private fun isDropClick(event: ClickEvent): Boolean {
-        return event.type == ClickType.DROP || event.type == ClickType.CONTROL_DROP
-    }
+    private fun isDropClick(event: ClickEvent): Boolean = MenuUiSupport.isDropClick(event)
 
     private fun dropItem(player: Player, item: ItemStack) {
         MenuSoundSupport.dropPop(player)

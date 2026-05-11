@@ -22,6 +22,10 @@ class MenuRenderer(
     private val buttonFactory: MenuButtonFactory,
     private val categoryRegistry: CategoryRegistry
 ) {
+    private val footerBackSlot = PagedSelectionLayout.FOOTER_START_SLOT + 3
+    private val footerForwardSlot = PagedSelectionLayout.FOOTER_START_SLOT + 5
+    private val footerCenterSlot = PagedSelectionLayout.FOOTER_START_SLOT + 4
+
     fun renderCategoryMenu(
         player: Player,
         state: DecorationHeadMenuState,
@@ -44,16 +48,16 @@ class MenuRenderer(
         val categoryName = categoryRegistry.byKey(state.categoryKey)?.displayName ?: state.categoryKey
         val menu = baseMenu(
             "▍ Головы → $categoryName [${pageResult.page}/${pageResult.totalPages}]",
-            setOf(46, 47, 48, 49, 50, 51, 52) + contentSlots(pageResult.entries.size)
+            PagedSelectionLayout.footerControlSlots.toSet() + contentSlots(pageResult.entries.size)
         )
 
-        fillBase(menu, black = setOf(45, 53), gray = setOf(46, 47, 48, 50, 51, 52))
-        if (pageResult.page > 1) menu.setButton(48, buttonFactory.decorationHeadsBackButton { onBack() })
-        if (pageResult.page < pageResult.totalPages) menu.setButton(50, buttonFactory.decorationHeadsForwardButton { onForward() })
+        fillBase(menu, black = PagedSelectionLayout.footerCornerSlots, gray = PagedSelectionLayout.footerControlSlots.toSet() - footerCenterSlot)
+        if (pageResult.page > 1) menu.setButton(footerBackSlot, buttonFactory.decorationHeadsBackButton { onBack() })
+        if (pageResult.page < pageResult.totalPages) menu.setButton(footerForwardSlot, buttonFactory.decorationHeadsForwardButton { onForward() })
 
         menu.setButton(46, buttonFactory.decorationHeadsMyHeadsButton(myCount) { event -> onMyHeads(event) })
         menu.setButton(47, buttonFactory.decorationHeadsMyPagesButton(myPagesCount) { event -> onMyPages(event) })
-        menu.setButton(49, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
+        menu.setButton(footerCenterSlot, buttonFactory.decorationHeadsCategoryButton(categoryOptions, selectedCategoryIndex) { nextIndex -> onSwitchCategory(nextIndex) })
         menu.setButton(51, buttonFactory.decorationHeadsSavePageButton(isCurrentPageSaved) { onToggleSavePage(it) })
         menu.setButton(52, buttonFactory.decorationHeadsSearchButton(state.searchQuery) { onSearch(it) })
 
