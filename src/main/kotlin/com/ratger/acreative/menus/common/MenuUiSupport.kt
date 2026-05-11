@@ -48,6 +48,10 @@ object MenuUiSupport {
     fun setButtonFactory(menu: Menu, slots: Iterable<Int>, factory: () -> Button) {
         slots.forEach { menu.setButton(it, factory()) }
     }
+
+    fun setButtons(menu: Menu, slots: IntRange, factory: () -> Button) {
+        slots.forEach { menu.setButton(it, factory()) }
+    }
     fun fillByMask(
         menu: Menu,
         menuSize: Int,
@@ -58,6 +62,26 @@ object MenuUiSupport {
         for (slot in 0 until menuSize) {
             menu.setButton(slot, if (slot in primarySlots) primaryButton else secondaryButton)
         }
+    }
+
+    fun configureMenuBehavior(
+        menu: Menu,
+        rows: MenuRows,
+        interactiveTopSlots: Set<Int>,
+        allowPlayerInventoryClicks: Boolean,
+        blockShiftClickFromPlayerInventory: Boolean
+    ) {
+        val menuTopRange = 0 until rows.size
+        menu.setClickListener { event ->
+            allowClick(
+                event = event,
+                menuTopRange = menuTopRange,
+                interactiveTopSlots = interactiveTopSlots,
+                allowPlayerInventoryClicks = allowPlayerInventoryClicks,
+                blockShiftClickFromPlayerInventory = blockShiftClickFromPlayerInventory
+            )
+        }
+        menu.setDragListener { event -> event.rawSlots.none { it in menuTopRange } }
     }
 
     private fun allowClick(

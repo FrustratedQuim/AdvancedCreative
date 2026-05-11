@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.decorationheads.menu
 
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuUiSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import com.ratger.acreative.menus.decorationheads.category.CategoryMode
 import com.ratger.acreative.menus.decorationheads.category.CategoryRegistry
 import com.ratger.acreative.menus.decorationheads.model.DecorationHeadMenuMode
@@ -172,14 +173,12 @@ class MenuRenderer(
     )
 
     private fun fillBase(menu: Menu, black: Set<Int>, gray: Set<Int>) {
-        val blackButton = buttonFactory.decorationHeadsBlackFiller()
-        val grayButton = buttonFactory.decorationHeadsGrayFiller()
-        black.forEach { slot -> menu.setButton(slot, blackButton) }
-        gray.forEach { slot -> menu.setButton(slot, grayButton) }
+        MenuUiSupport.setButtonFactory(menu, black) { buttonFactory.decorationHeadsBlackFiller() }
+        MenuUiSupport.setButtonFactory(menu, gray) { buttonFactory.decorationHeadsGrayFiller() }
     }
 
     private fun contentSlots(entryCount: Int): Set<Int> {
-        val safeCount = entryCount.coerceIn(0, 45)
+        val safeCount = entryCount.coerceIn(0, PagedSelectionLayout.CONTENT_SIZE)
         return (0 until safeCount).toSet()
     }
 
