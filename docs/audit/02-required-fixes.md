@@ -456,3 +456,595 @@
 
 **Рекомендуемая правка:**
 Свести лимиты в `ValidationConstraints`/domain specs, переиспользовать в UI подсказках и apply handlers для полной консистентности между «что можно ввести» и «что реально валидируется».
+
+
+---
+
+## R. Apply registry / edit session / domain parsers
+
+### 39) Декларативная регистрация apply-обработчиков
+**Наблюдение:**
+`ApplyHandlerRegistry` решает задачу централизации, но при добавлении новых `EditorApplyKind` всё ещё высок риск ручного расхождения между enum и фактом регистрации.
+
+**Рекомендуемая правка:**
+Ввести декларативную схему регистрации (provider/descriptor), где обработчик объявляет поддерживаемый `kind`, а реестр валидирует полноту покрытия на старте (debug/assert mode).
+
+### 40) Унификация `ApplyExecutionResult` и сообщений для UI
+**Наблюдение:**
+Разные ветки apply могут возвращать близкие по смыслу ошибки в немного разном текстовом формате, что осложняет единый UX и локализацию.
+
+**Рекомендуемая правка:**
+Добавить слой кодов/типов ошибок (`ApplyErrorCode`) и map в человекочитаемые сообщения в одном месте.
+Это упростит поддержку локализации и выровняет ответы между handler-ами.
+
+### 41) Лёгкая декомпозиция `EditSessionService` по сценариям
+**Наблюдение:**
+В `EditSessionService` в одном месте концентрируются операции создания сессии, применения изменений и служебная синхронизация состояния предпросмотра.
+
+**Рекомендуемая правка:**
+Без избыточного дробления выделить 2 внутренних компонента:
+- `EditSessionLifecycle` (open/close/reset),
+- `EditApplyCoordinator` (apply + validation orchestration).
+
+Публичный фасад можно оставить прежним.
+
+### 42) Общие parser-helpers для head/potion ввода
+**Наблюдение:**
+`HeadInputParser` и `PotionInputParser` содержат однотипные шаги: trim/normalize, alias resolve, формирование типовых ошибок.
+
+**Рекомендуемая правка:**
+Вынести базовые операции в небольшой `ParserInputSupport` (или extension helpers), а доменные парсеры оставить ответственными только за специфические правила.
+
+### 43) Единый формат ошибок парсинга для tab/apply потоков
+**Наблюдение:**
+Сейчас сообщения об ошибках парсинга и подсказках могут формироваться разными кусками кода, что создаёт риск несоответствия между tab-complete и финальным apply.
+
+**Рекомендуемая правка:**
+Зафиксировать `ParseIssue` модель (code + context), которую можно использовать и в suggestions, и в apply-response, чтобы пользователь видел консистентную обратную связь на всех шагах.
+
+
+---
+
+## S. Personal items / heads / permission guards
+
+### 44) Унификация сценариев save/load в personal items
+**Наблюдение:**
+`PersonalItemsService` и repository-вызовы обычно проходят похожий путь: загрузка профиля, проверка лимита, проверка слота, сохранение/обновление.
+
+**Рекомендуемая правка:**
+Вынести reusable pipeline/helper для типовых операций (`withPersonalItemsProfile { ... }`), чтобы сократить копипаст и расхождения бизнес-правил.
+
+### 45) Декларативные ограничения на слоты и лимиты
+**Наблюдение:**
+Лимиты personal items и правила по слотам часто задаются рядом с операционной логикой.
+
+**Рекомендуемая правка:**
+Свести ограничения в `PersonalItemsConstraints` (или domain spec), чтобы UI, validation и persistence использовали один источник правил.
+
+### 46) Общий filter/pagination engine для каталогов
+**Наблюдение:**
+`HeadsMenuService`/`HeadsCatalogService` используют шаблонный цикл: normalize query -> filter -> sort -> paginate -> render.
+
+**Рекомендуемая правка:**
+Выделить лёгкий `CatalogQueryEngine` с настраиваемыми стратегиями фильтра/сортировки.
+Это снизит дублирование и упростит добавление новых каталогов (heads/banner/другие коллекции).
+
+### 47) Кэш предобработанных ключей поиска
+**Наблюдение:**
+В каталогах и поиске голов могут повторно вызываться lowercasing/trim/normalization для одинаковых записей.
+
+**Рекомендуемая правка:**
+Добавить precomputed search-key cache (или memoized поле в DTO), чтобы уменьшить стоимость массовой фильтрации при частых вводах в поиске.
+
+### 48) Единый guard-фасад для menu ACL
+**Наблюдение:**
+`PermissionService` и `MenuAccessGuard` концептуально решают одну задачу, но в UI-ветках возможны локальные ad-hoc проверки.
+
+**Рекомендуемая правка:**
+Зафиксировать единый `MenuPermissionGuardFacade`:
+- `require(permission)`
+- `requireAny(...)`
+- `denyWithMessage(...)`
+
+чтобы все меню использовали единообразный контракт доступа и отказов.
+
+### 49) Стандартизация deny-сообщений и audit-контекста
+**Наблюдение:**
+Сообщения о запрете доступа могут формироваться в нескольких местах и с разной детализацией.
+
+**Рекомендуемая правка:**
+Ввести централизованный deny-message builder + audit context (permission, source menu, action), чтобы улучшить и UX, и диагностику инцидентов прав доступа.
+
+
+---
+
+## T. Cooldown / task lifecycle / teleport safety
+
+### 50) Единая policy-модель для cooldown
+**Наблюдение:**
+`CooldownService` и локальные rate-limit проверки в командах могут использовать близкую, но не полностью идентичную семантику ключей и единиц времени.
+
+**Рекомендуемая правка:**
+Ввести `CooldownPolicy` (scope, duration, message strategy) и централизованный executor проверки, чтобы команды описывали только декларацию политики без ручного дублирования.
+
+### 51) Нормализация форматирования remaining-time
+**Наблюдение:**
+Сообщения «подождите N секунд» нередко формируются локально в разных ветках команд.
+
+**Рекомендуемая правка:**
+Свести это в общий formatter (`CooldownMessageFormatter`) с единым UX-стилем, plural rules и округлением времени.
+
+### 52) Дедупликация cancel-пайплайна задач
+**Наблюдение:**
+При наличии `TaskLifecycleRegistry` и `ShutdownCoordinator` часть менеджеров может всё равно вручную держать похожие `cancelAll` блоки.
+
+**Рекомендуемая правка:**
+Ввести стандартный `ManagedTaskHandle` контракт (register/cancel/isActive), чтобы runtime-задачи управлялись единообразно и не расходились по cleanup-политике.
+
+### 53) Shutdown-фазы и порядок остановки
+**Наблюдение:**
+В системах с активными сессиями (hide/disguise/effects/freeze) важен предсказуемый порядок деинициализации, иначе возможны остаточные состояния.
+
+**Рекомендуемая правка:**
+Зафиксировать фазовую модель shutdown (`pre-stop`, `stop-active-sessions`, `cancel-tasks`, `final-release`) и подключить подсистемы через явный lifecycle интерфейс.
+
+### 54) Общий precheck для safe teleport/positioning
+**Наблюдение:**
+`TeleportSafetyService` и командные positioning-хелперы используют похожие предварительные проверки (online/world/loaded chunk/state conflicts).
+
+**Рекомендуемая правка:**
+Выделить reusable `PositioningPrecheck` слой, чтобы команды переиспользовали один и тот же набор правил и не расходились в edge-cases.
+
+### 55) Переиспользуемая fallback-стратегия safe location
+**Наблюдение:**
+Алгоритм fallback-поиска безопасной точки может дублироваться между сценариями телепортации и release-позиционирования.
+
+**Рекомендуемая правка:**
+Сформировать `SafeLocationStrategy` (primary -> nearby scan -> last-safe -> deny), который можно использовать в разных подсистемах, сохраняя консистентный результат и причины отказа.
+
+
+---
+
+## U. Config reload / i18n / diagnostics
+
+### 56) Двухфазный reload-конвейер конфигов
+**Наблюдение:**
+`ConfigService` и `RuntimeReloadService` обычно затрагивают много зависимых подсистем, и при последовательном «частичном» обновлении возможны кратковременные рассинхронизации.
+
+**Рекомендуемая правка:**
+Ввести двухфазный pipeline:
+1. `prepare` (валидация + построение нового snapshot),
+2. `commit` (атомарная подмена ссылок/настроек).
+
+При ошибке на phase-1 runtime остаётся на предыдущем стабильном snapshot.
+
+### 57) Реестр reload-обработчиков вместо точечных вызовов
+**Наблюдение:**
+Перезагрузка зависимых подсистем может выполняться точечно/вручную, что усложняет расширение при росте числа компонентов.
+
+**Рекомендуемая правка:**
+Сформировать `ReloadParticipantRegistry` (priority + callback + timeout policy), чтобы порядок и охват reload были декларативными и проверяемыми.
+
+### 58) Централизация message-key и параметров шаблонов
+**Наблюдение:**
+При локализации часть ключей/плейсхолдеров может использоваться ad-hoc в разных слоях (command/menu/service).
+
+**Рекомендуемая правка:**
+Добавить typed message descriptors (`MessageKey<TArgs>`) и единый resolver-контракт, чтобы исключить ошибки в именах плейсхолдеров и улучшить рефакторинг i18n.
+
+### 59) Единая политика fallback/отсутствующих переводов
+**Наблюдение:**
+Fallback на default locale и поведение при отсутствующих ключах важно держать предсказуемым для UX и поддержки.
+
+**Рекомендуемая правка:**
+Зафиксировать `LocalizationFallbackPolicy` (default locale, mark-missing, audit logging rate-limit) и применять её в одном месте рендера сообщений.
+
+### 60) Декомпозиция диагностики: сбор vs представление
+**Наблюдение:**
+`DiagnosticsCommand` часто вынужден агрегировать разнотипные данные и одновременно форматировать UI-вывод.
+
+**Рекомендуемая правка:**
+Разделить на:
+- `HealthSnapshotCollectors` (данные),
+- `DiagnosticsPresenter` (формат вывода),
+
+чтобы упрощать расширение отчётов без дублирования форматирования.
+
+### 61) Базовый contract для runtime-метрик high-churn систем
+**Наблюдение:**
+Для систем с ежедневными рестартами и онлайном 70–100 критично иметь единый формат метрик (sessions/tasks/cache hit/miss/cooldown pressure).
+
+**Рекомендуемая правка:**
+Ввести `RuntimeMetricSnapshot` контракт и обязательный минимум полей для всех подсистем, подключаемых к диагностике.
+Это повысит сопоставимость и ускорит расследование деградаций.
+
+
+---
+
+## V. Macros / command routing / undo-redo
+
+### 62) Унификация domain-модели пресетов и макросов
+**Наблюдение:**
+`MacroService`/`MacroRepository` и preset-потоки в редакторе решают близкие задачи (именованные пользовательские шаблоны действий), но могут эволюционировать независимо.
+
+**Рекомендуемая правка:**
+Выделить общий контракт (`NamedActionPreset`) и shared validation policy (name length, symbols, uniqueness), чтобы не дублировать бизнес-правила в двух подсистемах.
+
+### 63) Единый pipeline валидации create/apply/delete для макросов
+**Наблюдение:**
+Операции над макросами обычно повторяют один и тот же набор шагов: lookup, access-check, constraints-check, mutate, persist, notify.
+
+**Рекомендуемая правка:**
+Собрать reusable orchestration helper (`MacroOperationPipeline`) с явными extension-точками, сохранив thin facade в `MacroService`.
+
+### 64) Декларативные alias-политики и детектор конфликтов
+**Наблюдение:**
+`CommandAliasRegistry` при росте числа команд нуждается в автоматической проверке коллизий/теней (alias shadowing).
+
+**Рекомендуемая правка:**
+Добавить startup-валидацию alias map + отчёт о конфликтах (`AliasConflictReport`) и policy разрешения (strict fail / warning mode).
+
+### 65) Согласование route-resolution и tab-complete
+**Наблюдение:**
+`SubcommandRouter` и tab-complete нередко поддерживаются раздельно, что может приводить к рассинхрону пользовательского UX.
+
+**Рекомендуемая правка:**
+Использовать единый source of truth (`SubcommandDescriptor`) для route match и suggestions, чтобы поведение автодополнения строго соответствовало фактическому роутингу.
+
+### 66) Политика размера/TTL стека undo-redo
+**Наблюдение:**
+`ActionHistoryService` требует явного баланса между глубиной истории и memory pressure на онлайн 70–100.
+
+**Рекомендуемая правка:**
+Вынести ограничения в `HistoryRetentionPolicy` (max entries, ttl, per-user caps) и подключить их к диагностике runtime snapshot.
+
+### 67) Безопасный откат в multi-step сценариях
+**Наблюдение:**
+`UndoRedoCoordinator` в сложных изменениях (несколько связанных мутаций) нуждается в гарантии целостности rollback.
+
+**Рекомендуемая правка:**
+Ввести `CompositeUndoTransaction` с фазами prepare/apply/rollback и явным journal событий, чтобы исключать частично применённые откаты.
+
+
+---
+
+## W. Caching / memory pressure / error handling
+
+### 68) Декларативные cache-профили по доменам
+**Наблюдение:**
+`ReferenceCacheService` может обслуживать разные наборы данных с разной стоимостью построения и разной чувствительностью к stale-значениям.
+
+**Рекомендуемая правка:**
+Ввести `CacheProfile` (ttl, warmup, invalidation triggers, max size) для каждого домена, чтобы политика кэша была явной и настраиваемой.
+
+### 69) Централизованный invalidation bus
+**Наблюдение:**
+При росте числа кэшей ручные вызовы invalidation могут стать источником пропусков и рассинхронизаций.
+
+**Рекомендуемая правка:**
+Добавить `CacheInvalidationBus` (event -> subscribers), связав его с reload/config-change событиями для предсказуемого обновления всех зависимых кэшей.
+
+### 70) Метрики качества кэша для диагностики
+**Наблюдение:**
+Без метрик hit/miss/eviction сложно оценивать реальную пользу и побочные эффекты кэширования под живой нагрузкой.
+
+**Рекомендуемая правка:**
+Экспортировать `CacheHealthSnapshot` (hit rate, miss burst, stale reloads, rebuild time p95) в diagnostics-команду.
+
+### 71) Политика использования object pools
+**Наблюдение:**
+`ObjectPoolService` полезен только для горячих short-lived объектов; без явных критериев есть риск premature optimization и усложнения кода.
+
+**Рекомендуемая правка:**
+Зафиксировать `PoolingEligibilityPolicy` (allocation rate threshold, object size, contention risk) и применять pooling только к сценариям, проходящим порог.
+
+### 72) Связка allocation tracker с runtime snapshot
+**Наблюдение:**
+`AllocationTracker` даёт ценность, когда его данные сопоставимы с активными подсистемами (sessions/tasks/effects/hide/...)
+
+**Рекомендуемая правка:**
+Добавить correlation fields (subsystem, action, player scope) и вывод в `RuntimeMetricSnapshot`, чтобы быстрее находить источники memory spikes.
+
+### 73) Единый error taxonomy для command/menu слоёв
+**Наблюдение:**
+`GlobalExceptionHandler` и локальные catch-блоки могут возвращать неодинаковые сообщения/коды ошибок для схожих сценариев.
+
+**Рекомендуемая правка:**
+Ввести `AppErrorCode` taxonomy + `UserFacingErrorMapper` как единую точку рендера пользовательских ошибок и policy для логирования stacktrace.
+
+### 74) Guard-обёртка вместо дублирования try/catch в handlers
+**Наблюдение:**
+В command/menu handlers повторяется шаблон: try -> log -> send fail message -> cleanup.
+
+**Рекомендуемая правка:**
+Сделать reusable `SafeHandlerExecutor` (withContext/withUserFeedback/withCleanup), чтобы снизить boilerplate и выровнять fail-safety поведение.
+
+
+---
+
+## X. Event bridge / world policies / anti-spam
+
+### 75) Единый event-dispatch фасад
+**Наблюдение:**
+`EventBridgeService` и локальные listeners могут дублировать однотипные precheck и guard-шаги до делегирования в доменные менеджеры.
+
+**Рекомендуемая правка:**
+Ввести `EventDispatchFacade` с общим пайплайном: precheck -> context build -> guard -> delegate -> audit.
+Это снизит копипаст и уменьшит риск расхождения поведения между обработчиками событий.
+
+### 76) Контракт идемпотентности для event side-effects
+**Наблюдение:**
+При пересечении нескольких слушателей на одно событие возможны повторные side-effects (двойной stop/release/notify).
+
+**Рекомендуемая правка:**
+Зафиксировать `EventEffectIdempotencyPolicy` (effect key + dedupe window) и использовать её в критичных event-сценариях.
+
+### 77) Централизация world/region policy checks
+**Наблюдение:**
+`WorldRestrictionService` и `RegionPolicyResolver` логически едины, но проверки могут вызываться ad-hoc в разных командах.
+
+**Рекомендуемая правка:**
+Создать `AccessPolicyEvaluator` (player + action + location -> decision + reason), чтобы унифицировать проверки и сообщения отказа.
+
+### 78) Кэш решения policy с коротким TTL
+**Наблюдение:**
+В частых действиях повторные region-checks могут создавать лишнюю нагрузку, особенно при активном интерактиве.
+
+**Рекомендуемая правка:**
+Добавить short-lived decision cache (`PolicyDecisionCache`) с TTL и invalidation на world/region change события.
+
+### 79) Общая модель anti-spam сигналов
+**Наблюдение:**
+`InteractionBurstGuard`, `SpamMitigationService`, cooldown и throttling механики могут формировать несогласованные сигналы блокировок.
+
+**Рекомендуемая правка:**
+Ввести `RateLimitSignal` модель (source, severity, retryAfter, context), чтобы все системы ограничений работали согласованно.
+
+### 80) Интеграция anti-spam с диагностикой и админ-инструментами
+**Наблюдение:**
+Без сводных метрик сложно понять, где реальные злоупотребления, а где слишком строгие лимиты.
+
+**Рекомендуемая правка:**
+Экспортировать `SpamControlSnapshot` (top triggers, blocked actions, false-positive hints) в diagnostics/admin-команды для оперативной калибровки лимитов.
+
+
+---
+
+## Y. State transactions / async persistence / config compatibility
+
+### 81) Унифицированный контракт state-транзакций
+**Наблюдение:**
+`PlayerStateTransactionService` и manager-level transition логика могут повторять однотипные шаги prepare/apply/rollback/notify.
+
+**Рекомендуемая правка:**
+Ввести `StateTransaction<TContext>` контракт с явными фазами и единым обработчиком ошибок, чтобы исключить частично завершённые state-change операции.
+
+### 82) Общий rollback-реестр для stateful операций
+**Наблюдение:**
+Release/undo/state-transition подсистемы имеют похожие rollback-потребности, но реализуют их локально.
+
+**Рекомендуемая правка:**
+Добавить `RollbackActionRegistry` с приоритетами и идемпотентными action-ключами для безопасного отката в межсервисных сценариях.
+
+### 83) Стандартизация async->main thread handoff
+**Наблюдение:**
+`AsyncRepositoryExecutor` и локальные callback-пути могут по-разному обрабатывать отмену, таймауты и проверку online-состояния перед применением результата.
+
+**Рекомендуемая правка:**
+Сформировать `AsyncHandoffPolicy` (timeout, cancelOnOffline, staleResultGuard) и общий executor, чтобы одинаково обрабатывать все repository use-cases.
+
+### 84) Контекстные correlation-id для async persistence
+**Наблюдение:**
+Диагностика race-condition сценариев усложняется без связки async задачи с игроком/операцией/источником команды.
+
+**Рекомендуемая правка:**
+Добавить `PersistenceCorrelationContext` (requestId, playerId, action, startedAt) в логи и diagnostics snapshot.
+
+### 85) Декларативная карта миграции config-ключей
+**Наблюдение:**
+`LegacyKeyMapper` в точечных if/when ветках со временем становится трудно поддерживать и проверять на полноту.
+
+**Рекомендуемая правка:**
+Перевести mapping в декларативный `ConfigMigrationSpec` (from -> to, transform, deprecation phase), выполняемый единым `ConfigMigrationService`.
+
+### 86) Политика deprecation lifecycle для legacy-ключей
+**Наблюдение:**
+Без формальной политики сложно управлять тем, когда legacy-ключ только предупреждает, а когда блокирует запуск/режим.
+
+**Рекомендуемая правка:**
+Зафиксировать `ConfigDeprecationPolicy` (warn -> soft-fail -> hard-fail по версиям) и выводить понятные upgrade-hints в админ-логи.
+
+
+---
+
+## Z. Public API / quality gates / ownership docs
+
+### 87) Политика стабильности публичного API
+**Наблюдение:**
+`AdvancedCreativeApi` может эволюционировать вместе с внутренними рефакторами, что создаёт риск непредсказуемых breaking changes для внешних интеграций.
+
+**Рекомендуемая правка:**
+Ввести `ApiStabilityPolicy` (stable/experimental/internal), версионирование контрактов и changelog по API-уровню.
+
+### 88) Антикоррупционный слой между API и внутренними моделями
+**Наблюдение:**
+Утечка внутренних DTO/enum через публичный API повышает связанность и усложняет внутренние изменения.
+
+**Рекомендуемая правка:**
+Сформировать `ApiMappingLayer` (public contracts <-> internal models), чтобы внутренние рефакторинги не ломали внешних потребителей.
+
+### 89) Единый реестр compatibility-заметок
+**Наблюдение:**
+Изменения поведения в разных подсистемах сложно отслеживать без централизованных compatibility-notes.
+
+**Рекомендуемая правка:**
+Добавить `compatibility-notes.md` с рубрикацией по версиям и доменам (commands/menus/api/runtime), включая migration hints.
+
+### 90) Нормализация quality-gates чеклистов
+**Наблюдение:**
+`testing-contract-checklist` и `release-readiness-checklist` могут содержать пересекающиеся пункты и разный стиль acceptance-критериев.
+
+**Рекомендуемая правка:**
+Ввести общий шаблон `QualityGateItem` (scope, preconditions, expected, rollback signal, observability) и синхронизировать оба чеклиста.
+
+### 91) Трассируемость: рекомендация -> чеклист -> релиз
+**Наблюдение:**
+Рекомендации аудита не всегда явно связаны с release-check пунктами, из-за чего часть задач теряется.
+
+**Рекомендуемая правка:**
+Добавить матрицу трассируемости (`audit item` -> `quality gate` -> `release verification`) для приоритезации внедрения.
+
+### 92) Формализация owner-зон и эскалации ответственности
+**Наблюдение:**
+Документация owner-зон полезна, но без формальной escalation-схемы межсервисные инциденты могут «зависать» между командами/модулями.
+
+**Рекомендуемая правка:**
+Ввести `OwnershipEscalationPolicy` (primary owner, fallback owner, SLA реакции, канал эскалации) для core сценариев с высоким влиянием.
+
+
+---
+
+## AA. UI reuse / feature flags / admin audit trail
+
+### 93) Каталог переиспользуемых UI-компонентов
+**Наблюдение:**
+`UiComponentFactory` и меню-рендеры могут по-разному оформлять одинаковые действия (back/confirm/cancel/page/filter), что создаёт UX-расхождения.
+
+**Рекомендуемая правка:**
+Сформировать `UiPatternCatalog` (component spec + semantics + accessibility hints) и использовать его как единый источник для всех меню.
+
+### 94) Декларативные slot-layout шаблоны
+**Наблюдение:**
+`SlotLayoutCatalog` полезен, но часть меню может всё ещё иметь локальные «магические» расстановки.
+
+**Рекомендуемая правка:**
+Расширить layout-каталог шаблонами (`paged-grid`, `confirm-dialog`, `moderation-panel`) и валидатором коллизий слотов при рендере.
+
+### 95) Контракт UI-консистентности для общих действий
+**Наблюдение:**
+Одинаковые действия в разных меню иногда различаются по тексту/иконке/цвету, что повышает когнитивную нагрузку.
+
+**Рекомендуемая правка:**
+Ввести `CommonActionUiContract` (label/icon/color/tooltip rules) и применять его ко всем кнопкам общего назначения.
+
+### 96) Многоуровневые feature-flags с fallback policy
+**Наблюдение:**
+`FeatureFlagService` и rollout логика нуждаются в едином порядке разрешения (global -> role -> world -> user override).
+
+**Рекомендуемая правка:**
+Зафиксировать `FeatureResolutionPolicy` с явным precedence, default behavior и fail-safe режимом при ошибках конфигурации.
+
+### 97) Наблюдаемость флагов: кто/когда/почему переключил
+**Наблюдение:**
+Без trace данных по feature-toggle сложно анализировать регрессии после runtime-переключений.
+
+**Рекомендуемая правка:**
+Добавить `FeatureToggleAuditEvent` (actor, scope, old/new value, reason, timestamp) и вывод в diagnostics/admin audit trail.
+
+### 98) Нормализация формата admin audit trail
+**Наблюдение:**
+`AdminAuditTrailService` полезен, но без стандартизованного формата событий сложнее автоматизировать экспорт и корреляцию инцидентов.
+
+**Рекомендуемая правка:**
+Ввести `AdminAuditEvent` schema (action, actor, target, context, outcome, correlationId) и обязательные поля для high-impact операций.
+
+### 99) Политика retention/экспорта и контроль доступа к аудит-данным
+**Наблюдение:**
+`AuditExportService` требует формальной политики хранения, маскирования чувствительных полей и прав доступа к выгрузке.
+
+**Рекомендуемая правка:**
+Зафиксировать `AuditDataGovernancePolicy` (retention windows, redaction rules, export permissions, access logs) для соответствия operational и privacy требованиям.
+
+
+---
+
+## AB. External bridges / input safety / server modes
+
+### 100) Единый адаптерный контракт для внешних провайдеров
+**Наблюдение:**
+`PermissionsBridge` и `RegionProviderBridge` решают схожую задачу нормализации внешних API, но могут развиваться разными паттернами.
+
+**Рекомендуемая правка:**
+Ввести общий `ExternalProviderAdapter<TRequest, TResponse>` контракт (capabilities, availability, normalizeError), чтобы унифицировать интеграции и fallback.
+
+### 101) Capability-matrix для провайдеров
+**Наблюдение:**
+Разные внешние плагины поддерживают неодинаковые функции; без явной capability-модели растёт риск скрытых деградаций.
+
+**Рекомендуемая правка:**
+Добавить `ProviderCapabilityMatrix` и проверку на старте/reload с отчётом по недостающим возможностям и планом graceful fallback.
+
+### 102) Централизованный реестр input-policy правил
+**Наблюдение:**
+`InputSanitizer` и локальные проверочные блоки в командах/меню могут дублировать валидацию символов, длины и запрещённых шаблонов.
+
+**Рекомендуемая правка:**
+Свести правила в `InputPolicyRegistry` (policy per field/use-case) и применять через единый `sanitize+validate` pipeline.
+
+### 103) Стандартизованный формат ошибок input-валидации
+**Наблюдение:**
+Пользовательские ошибки ввода могут формироваться в разных форматах, что осложняет UX и локализацию.
+
+**Рекомендуемая правка:**
+Ввести `InputValidationIssue` (code, field, hint, severity) и единый mapper в user-facing сообщение.
+
+### 104) Policy-матрица доступности команд по server-mode
+**Наблюдение:**
+`ServerModeService` и `CommandAvailabilityPolicy` нуждаются в явной матрице «режим -> разрешённые действия», иначе легко получить ad-hoc исключения.
+
+**Рекомендуемая правка:**
+Зафиксировать `ModeAvailabilityMatrix` с поддержкой role overrides и reason-codes для админ-диагностики.
+
+### 105) Интеграция mode/cooldown/permission в единый decision engine
+**Наблюдение:**
+Доступность команды сейчас может определяться несколькими слоями независимо (mode, permission, world, cooldown), что усложняет объяснимость отказов.
+
+**Рекомендуемая правка:**
+Сформировать `CommandAccessDecisionEngine`, который возвращает агрегированное решение + причину + retry hints, переиспользуемые в командах и меню.
+
+
+---
+
+## AC. Background queue / notification dedup / release switching
+
+### 106) Политика приоритезации и fairness для background queue
+**Наблюдение:**
+`BackgroundWorkQueue` при смешении user-facing и maintenance задач требует явной fairness-модели, иначе низкоприоритетные задачи могут голодать.
+
+**Рекомендуемая правка:**
+Ввести `QueueSchedulingPolicy` (priority class, quota, starvation prevention, burst limits) и публиковать queue health метрики.
+
+### 107) Единая retry/dead-letter стратегия
+**Наблюдение:**
+Сбойные фоновые операции могут ретраиться ad-hoc, создавая непредсказуемые паттерны нагрузки.
+
+**Рекомендуемая правка:**
+Сформировать `RetryPolicyRegistry` + `DeadLetterStore` (max attempts, backoff, terminal reason), чтобы стандартизировать восстановление после ошибок.
+
+### 108) Дедуп и агрегация пользовательских уведомлений
+**Наблюдение:**
+`PlayerNotificationService` и локальные send-message вызовы могут выдавать повторяющиеся однотипные сообщения в коротком интервале.
+
+**Рекомендуемая правка:**
+Использовать `NotificationDedupCache` с policy по ключам (player+reason+channel), TTL и агрегированным counter для «повторено N раз».
+
+### 109) Контракт приоритетов каналов уведомлений
+**Наблюдение:**
+Chat/actionbar/title уведомления иногда конкурируют между собой, что ухудшает читаемость UX-сигналов.
+
+**Рекомендуемая правка:**
+Ввести `NotificationChannelPolicy` (severity -> preferred channel, fallback channel, suppression rules).
+
+### 110) Preflight-гейт для release-switch
+**Наблюдение:**
+`ReleaseSwitchService` в сценариях runtime-переключений нуждается в едином preflight-наборе проверок, чтобы предотвратить частичную активацию конфигурации.
+
+**Рекомендуемая правка:**
+Добавить `ReleasePreflightChecklist` (dependencies ready, cache warm, policies loaded, rollback ready) как обязательный этап перед commit switch.
+
+### 111) Атомарность переключения и rollback orchestration
+**Наблюдение:**
+Частичное применение release-настроек между подсистемами повышает риск несогласованных состояний.
+
+**Рекомендуемая правка:**
+Применять `ReleaseSwitchTransaction` (prepare -> commit -> verify -> rollback) с журналом шагов и correlation-id для диагностики.
