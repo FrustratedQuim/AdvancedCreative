@@ -688,3 +688,580 @@
 - Безопасность процедуры runtime-переключений (feature sets, constraints, flags) перед релизом.
 - Контроль preflight-checks и rollback триггеров при нештатных результатах.
 - Риски частичной активации настроек между подсистемами.
+
+## Итерация 23 (продолжение)
+
+### 56) Сервис кулдаунов команд
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/CommandCooldownService.kt`
+
+#### Что покрыто обзором
+- Структура runtime-кеша кулдаунов (`UUID -> commandType -> expiresAt`) и текущая стратегия очистки истёкших записей.
+- Точки вызова `pruneExpired()` и потенциальное влияние полного prune на hot-path при высоком онлайне.
+- Баланс между простотой реализации и предсказуемостью latency для часто вызываемых команд.
+
+### 57) Реестр sit-сессий
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/sit/SitSessionRegistry.kt`
+
+#### Что покрыто обзором
+- Хранение сессий по ключу `Player` и API выборок (`byBlock`, `entries`, `players`).
+- Риски долгоживущих ссылок на `Player` в runtime-реестре при ежедневных перезагрузках и обороте игроков.
+- Переиспользуемость паттернов из других registry-подсистем (UUID-keyed cache + helper-accessors).
+
+### 58) Sit/head orchestration и policy конфликтов
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/sit/SitManager.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/sit/SitheadConflictPolicy.kt`
+
+#### Что покрыто обзором
+- Поток `sitOnHead`: chain traversal, проверки скрытия/конфликтов, reattach-обработка и защитные глубины обхода.
+- Выделение конфликтных правил в policy-слой (`SitheadConflictPolicy`) и его текущая расширяемость.
+- Повторяющиеся блоки обхода цепочек игроков и потенциал аккуратной унификации без изменения игровой логики.
+
+## Итерация 24 (продолжение)
+
+### 59) Оркестрация команды sithead
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/sit/SitheadManager.kt`
+
+#### Что покрыто обзором
+- User-flow `prepareToSithead`: права, режим toggle, разрешение таргетов и guard-проверки перед делегированием в `SitManager`.
+- Повторяющиеся обходы head-цепочек и visibility-проверок относительно аналогичной логики в `SitManager.sitOnHead`.
+- Разделение ответственности между pre-validation на уровне команды и runtime-attach на уровне pose-менеджера.
+
+### 60) Диагностика runtime-памяти по подсистемам
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/admin/MemoryUsageReporter.kt`
+
+#### Что покрыто обзором
+- Компоновка memory-report по доменным блокам (flags/heads/effects/hide/disguise/freeze/jar/cooldowns и т.д.).
+- Эвристики оценки памяти и риски расхождения формул между похожими runtime-структурами.
+- Использование snapshot API подсистем и потенциал унификации контракта диагностики.
+
+### 61) Runtime reset/cleanup в игровых событиях + banner take cooldown
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/utils/EventHandler.kt`
+- `src/main/kotlin/com/ratger/acreative/menus/banner/service/BannerTakeCooldownService.kt`
+
+#### Что покрыто обзором
+- Централизация cleanup-цепочек на `quit/death/teleport` и пересечение с pose/state менеджерами.
+- Приоритетность блокировок во взаимодействиях (`grab/jar/paint/freeze/pose`) и стабильность пользовательского UX.
+- Реализация banner take cooldown с глобальным prune и её сходство с паттерном `CommandCooldownService`.
+
+## Итерация 25 (продолжение)
+
+### 62) Общий command execution gateway + cooldown UX
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/ExecutableCommand.kt`
+
+#### Что покрыто обзором
+- Единый pipeline выполнения команды: permission -> system enabled -> cooldown -> handle -> set cooldown.
+- Последствия post-handle установки кулдауна (поведение при ранних выходах/ошибках внутри `handle`).
+- Потенциал расширения в сторону результат-ориентированного контракта выполнения без дублирования по командам.
+
+### 63) Локальные cooldown-паттерны вне общего сервиса
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/slap/SlapManager.kt`
+- `src/main/kotlin/com/ratger/acreative/integration/plotsquared/editor/PlotFlagEditorService.kt`
+
+#### Что покрыто обзором
+- Отдельные in-memory cooldown механики (`cooldownPlayers`, `mutationCooldowns`) и их жизненный цикл через scheduler.
+- Различие гранулярности ключей (per-target, per-player+plot+group) и последствия для антиспама/anti-double-action.
+- Перекрытие паттернов с `CommandCooldownService` и `BannerTakeCooldownService`.
+
+### 64) Модерация баннеров как фасад над user-ban доменом
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/banner/service/BannerModerationService.kt`
+
+#### Что покрыто обзором
+- Переиспользование `UserBanService` через composition в banner-модерации и разделение pattern/user-ban сценариев.
+- Toggle-семантика и side-effect удалений из публикаций для запрещённых паттернов.
+- Точки унификации moderation contract между доменами banner/paint и admin-инструментами.
+
+## Итерация 26 (продолжение)
+
+### 65) Эмиссия рта как общая геометрическая зависимость
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/common/MouthEmissionCalculator.kt`
+
+#### Что покрыто обзором
+- Общая формула вычисления origin/direction/scale для mouth-based эффектов с учётом laying/pitch/scale.
+- Точки повторного использования между `spit`/`sneeze` и потенциал расширения для будущих команд-эмиттеров.
+- Границы ответственности calculator vs менеджеров эффектов (геометрия отдельно от VFX/SFX/network-политик).
+
+### 66) Команды spit/sneeze и политика видимости для viewers
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/spit/SpitManager.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/sneeze/SneezeManager.kt`
+
+#### Что покрыто обзором
+- Использование `MouthEmissionCalculator` как shared dependency и различие side-effects (entity spawn vs particles only).
+- Visibility checks (`isHiddenFromPlayer`) и согласованность поведения для звука/частиц/сущностей.
+- Потенциал унификации viewer-selection и broadcast-политик для косметических эффектов.
+
+### 67) Подсистема `piss`: stream/puddle lifecycle и runtime-структуры
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/piss/PissManager.kt`
+
+#### Что покрыто обзором
+- Lifecycle потока (`runRepeating`, stop-условия), collision handling и создание/рост puddle display сущностей.
+- Использование runtime-коллекций (`scorePoints`, `pissingPlayers`, `hiddenPuddleDisplays`) и их потенциал для регламентированной очистки.
+- Нагрузочные риски в частых спавнах display-entity и повторных viewer-операциях при активном онлайне.
+
+## Итерация 27 (продолжение)
+
+### 68) Gravity как NumericAttribute-реализация
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/gravity/GravityManager.kt`
+
+#### Что покрыто обзором
+- Наследование от `NumericAttributeManager` и использование `AttributeModifierSupport` для `Attribute.GRAVITY`.
+- Нормализация пользовательского ввода и преобразование «публичного значения» в internal modifier.
+- Потенциал централизации mapping-кривых/ограничений между несколькими numeric-менеджерами.
+
+### 69) Glide runtime-состояние и boost scheduler
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/glide/GlideManager.kt`
+
+#### Что покрыто обзором
+- Lifecycle gliding-сессий, сохранение/восстановление flight-state и поддержка boost-параметра.
+- Периодическая задача ускорения и cleanup-поведение при выходе игроков из сессии.
+- Риски хранения runtime-структур по ключам `Player` в long-lived сценариях.
+
+### 70) Crawl подсистема: presenters + периодический апдейтер
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/crawl/CrawlManager.kt`
+
+#### Что покрыто обзором
+- Разделение ответственности на `CrawlPosePresenter` и `ShulkerPresenter` внутри manager-класса.
+- Периодическая синхронизация crawl-состояния (`startCrawlUpdater`) и правила авто-выхода из режима.
+- Управление shulker-entity lifecycle и observability через action-логи.
+
+## Итерация 28 (продолжение)
+
+### 71) Ahelp: динамическая сборка страниц команд
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/AhelpPageService.kt`
+
+#### Что покрыто обзором
+- Формирование help-страниц на основе ролей/пермишенов и фильтрации disabled-систем.
+- Встроенный mapping `permission -> help entries` и пагинация/navigation-token логика.
+- Потенциал перехода на декларативный реестр команд, чтобы избежать ручной синхронизации help-описаний.
+
+### 72) Itemdb и resolution numeric id
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/itemdb/ItemdbManager.kt`
+
+#### Что покрыто обзором
+- Минимальный flow вывода item info из предмета в руке.
+- Завязка на `ConfigManager.getNumericId` и сценарии fallback при отсутствующих alias/маппингах.
+- Точки интеграции с локализацией/форматированием material display-имён.
+
+### 73) Admin reporters/restore flows
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/admin/ToggleStatusReporter.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/admin/HeadCatalogRestoreAdminService.kt`
+
+#### Что покрыто обзором
+- Рендер статусов тумблеров систем и UX-формат вывода для админ-диагностики.
+- Повторяемый `when(result)` паттерн обработки restore-результатов (from DAT / from API).
+- Баланс между простотой обработчиков и потенциалом общего result-to-message маппера.
+
+## Итерация 29 (продолжение)
+
+### 74) Низкоуровневый слой карты: extract/patch/fill
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/paint/map/MapDataExtractor.kt`
+
+#### Что покрыто обзором
+- Lifecycle операций чтения/записи map data (`extract`, `fill`, `replaceColors`, patch-операции).
+- Стратегия формирования patch-областей и работа с индексами/границами 128x128.
+- Повторяемость получения `mapView/world/data` и потенциал локального template/helper для NMS-операций.
+
+### 75) Соответствие цветов для map-palette
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/paint/map/MapColorMatcher.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/paint/palette/PaintPalette.kt`
+
+#### Что покрыто обзором
+- Алгоритм nearest-color сопоставления и cache-поведение в `MapColorMatcher`.
+- Статический каталог `PaintPalette` (entries/byKey) и связка `MapColor` -> item/hex/display.
+- Точки расширяемости для внешней конфигурации палитры и диагностики color-match качества.
+
+### 76) Выдача артефакта рисунка (map/shulker packaging)
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/paint/artwork/PaintArtworkService.kt`
+
+#### Что покрыто обзором
+- Оркестрация выдачи результата: одиночная карта vs shulker-pack для multi-cell canvas.
+- Slot-layout логика в shulker и перенос предметов через inventory transfer с fallback drop.
+- Пересечение с hide-политикой для dropped item и потенциальная унификация artifact-packing форматов.
+
+## Итерация 30 (продолжение)
+
+### 77) Paint rules confirmation flow
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/paint/agreement/PaintRuleConfirmationService.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/paint/agreement/PaintRuleConfirmationRepository.kt`
+
+#### Что покрыто обзором
+- Многошаговое подтверждение правил (N-click confirm), pending-request lifecycle и click cooldown защита.
+- Runtime-кэш подтверждения + синхронизация с repository-персистом.
+- Поведение release/reset при отключении системы и закрытии меню.
+
+### 78) Paint user state persistence (rules + ban storage)
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/paint/persistence/PaintUserStateRepository.kt`
+
+#### Что покрыто обзором
+- Совмещение контрактов `PaintRuleConfirmationRepository` и `UserBanStorage` в одной persistence-реализации.
+- SQL upsert/update сценарии для confirm/ban/unban и пагинации moderation-списков.
+- Потенциальная связность между доменами rule-confirmation и moderation-ban в одном классе.
+
+### 79) Edit target resolution
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/edit/EditTargetResolver.kt`
+
+#### Что покрыто обзором
+- Формирование `ItemContext` + `ItemSnapshot` из предмета в руке.
+- Эвристические классификаторы типов предметов (armor/potion/head/shulker).
+- Потенциал переиспользования snapshot-логики в menu/apply/validation потоках.
+
+## Итерация 31 (продолжение)
+
+### 80) UseCooldown support API (data components)
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/usecooldown/UseCooldownSupport.kt`
+
+#### Что покрыто обзором
+- Контракт чтения/записи `USE_COOLDOWN` data component (seconds/group/clear/clearGroup).
+- Поведение helper-методов отображения (`displaySeconds`, `displayGroup`) и fallback-семантика.
+- Переиспользуемость support-слоя в apply handlers и edit-page UI.
+
+### 81) Apply handlers для use-cooldown
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/apply/effects/UseCooldownSecondsApplyHandler.kt`
+- `src/main/kotlin/com/ratger/acreative/menus/edit/apply/effects/UseCooldownGroupApplyHandler.kt`
+
+#### Что покрыто обзором
+- Parsing/validation flow для `/apply` (seconds/group), включая `rand`-ветку и key normalization.
+- Формирование `ItemAction.SetUseCooldown` + `ValidationService` перед фактическим применением.
+- Повторяемые шаги обработки относительно других apply-handler паттернов.
+
+### 82) UseCooldown edit page UX
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/pages/tooling/UseCooldownEditPage.kt`
+
+#### Что покрыто обзором
+- Структура экрана и кнопок apply/reset для seconds/group.
+- Локальный lifecycle refresh/open/transition после apply/reset.
+- Потенциал унификации с другими editor pages (однотипные apply-reset блоки и lore-шаблоны).
+
+## Итерация 32 (продолжение)
+
+### 83) Центральная валидация edit-действий
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/validation/ValidationService.kt`
+
+#### Что покрыто обзором
+- Единая точка доменных ограничений для множества `ItemAction` веток.
+- Правила валидации для consumable/use-cooldown/equippable/container/potion/head/trim/pot и др.
+- Риск роста монолитности `when(action)` при дальнейшем расширении редактора.
+
+### 84) ComponentsService как исполнитель data-component мутаций
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/experimental/ComponentsService.kt`
+
+#### Что покрыто обзором
+- Применение `ItemAction` к `ItemStack` через DataComponent API с возвратом `ItemResult`.
+- Повторяемые builder-паттерны (consumable/food/tool/use cooldown) и ветки ошибок с user-facing текстом.
+- Границы ответственности между validation-слоем, execution-слоем и UI-ошибками.
+
+### 85) API-модель edit-домена
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/api/ItemModels.kt`
+
+#### Что покрыто обзором
+- Объём и структура `ItemAction` sealed-интерфейса как доменного контракта редактора.
+- Связка `ItemAction` + `ItemContext` + `ItemSnapshot` + `ItemResult`.
+- Потенциал модульной декомпозиции action-модели по функциональным подсистемам.
+
+## Итерация 33 (продолжение)
+
+### 86) Контейнерные предметы в edit-домене
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/container/ContainerSupport.kt`
+
+#### Что покрыто обзором
+- Матрица поддерживаемых container-типов и их capacity.
+- Stable read/apply через `BlockStateMeta` для разных block-state контейнеров.
+- Повторяемые normalize/copy/apply паттерны и требования к безопасной работе с offhand snapshot.
+
+### 87) Equippable support и прототипные значения
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/equippable/EquippableSupport.kt`
+
+#### Что покрыто обзором
+- Разделение explicit/prototype/effective snapshot и baseline fallback логика.
+- Мутации полей equippable с последующей нормализацией до baseline.
+- Потенциальные точки для упрощения mutator-пайплайна и проверки ordinary-полей.
+
+### 88) UseRemainder support
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/edit/remainder/UseRemainderSupport.kt`
+
+#### Что покрыто обзором
+- Базовые операции get/set/clear/setOrClear для `USE_REMAINDER` компонента.
+- Единая проверка пустых ItemStack и clone-стратегия при сохранении.
+- Переиспользование паттерна как общего utility для component-based edit операций.
+
+## Итерация 34 (продолжение)
+
+### 89) Набор парсеров edit-команд
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/edit/EditParsers.kt`
+
+#### Что покрыто обзором
+- Парсинг color/effect/sound/material/attribute/bool/slot-group и соответствующие suggestions.
+- Паттерны нормализации `minecraft:` namespace и fallback-поиск в Bukkit Registry.
+- Потенциал унификации parser/error-result контрактов между apply/menus/validation.
+
+### 90) Apply command gateway
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/edit/ApplyCommand.kt`
+
+#### Что покрыто обзором
+- Тонкая маршрутизация в `menuService.handleApply` и отдельный tab-complete pipeline.
+- Намеренное отключение cooldown на уровне `ExecutableCommand` для apply-flow.
+- Точки для улучшения наблюдаемости (reason-codes при отказах apply).
+
+### 91) Edit command вход в item editor
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/edit/EditCommand.kt`
+
+#### Что покрыто обзором
+- Проверка account-link requirement перед открытием редактора.
+- Роль команды как минимального orchestration-фасада над menuService.
+- Потенциал общего precondition-chain контракта для команд с внешними требованиями.
+
+## Итерация 35 (продолжение)
+
+### 92) Banner command routing
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/banner/BannerCommand.kt`
+
+#### Что покрыто обзором
+- Роутинг сабкоманд (`post`, `ban*`, `banuser*`) и permission-gated moderation ветки.
+- Проверки существования пользователя и обработка reason-параметра для user-ban flow.
+- Потенциал выделения subcommand handlers для снижения ветвления в command-классе.
+
+### 93) Public gallery command (`/db`) и moderation флаг
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/banner/DecorationBannersCommand.kt`
+
+#### Что покрыто обзором
+- Обработка `-m` режима и авторского фильтра с гибкой таб-комплит логикой.
+- Слияние suggestions из persistence-источника и online players.
+- Согласованность UX-поведения при разных позициях `-m` аргумента.
+
+### 94) Тонкие entry-команды banner domain
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/banner/MyFlagsCommand.kt`
+- `src/main/kotlin/com/ratger/acreative/commands/banner/BannerEditCommand.kt`
+
+#### Что покрыто обзором
+- Роль thin-command фасадов над `bannerMenuService`.
+- Стабильность минимального orchestration без бизнес-логики внутри команд.
+- Потенциал декларативной регистрации подобных «одношаговых» команд через общий helper.
+
+## Итерация 36 (продолжение)
+
+### 95) Тонкий entry-command для decoration heads
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/decorationheads/DecorationHeadsCommand.kt`
+
+#### Что покрыто обзором
+- Минимальный command-фасад, делегирующий открытие меню в `decorationHeadsMenuService`.
+- Соответствие паттерну «одно действие — одна команда-обёртка».
+- Возможности декларативного переиспользования thin-command шаблона.
+
+### 96) Admin root command orchestration
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/admin/AdvancedCreativeAdminCommand.kt`
+
+#### Что покрыто обзором
+- Роутинг admin сабкоманд (`memory`, `toggle`, `status`, `heads`) и ветвление tab-complete.
+- Взаимодействие с `AdminManager` и `SystemToggleService` + специализированный logging-path для `LOGGER` системы.
+- Потенциал вынесения сабкоманд в отдельные обработчики/реестр.
+
+### 97) Продолжение анализа admin memory-reporting
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/admin/MemoryUsageReporter.kt`
+
+#### Что покрыто обзором
+- Структура отчёта как aggregate из snapshot-источников и эвристических коэффициентов.
+- Зависимость от моментных snapshot-методов подсистем и важность консистентного sampling.
+- Точки для стандартизации формата вывода и единых performance diagnostics.
+
+## Итерация 37 (продолжение)
+
+### 98) Конфигурационный агрегатор и миграция секций
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/core/ConfigManager.kt`
+
+#### Что покрыто обзором
+- Модель managed config files, миграция legacy секций и объединение конфигов в merged snapshot.
+- Синхронизация runtime-кеша (`stringToNumericIds`) с изменениями конфигурации.
+- Риски связности между migration/merge/runtime cache и потенциал выделения специализированных компонентов.
+
+### 99) Permission role model
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/core/PermissionManager.kt`
+
+#### Что покрыто обзором
+- Построение role-каталога из конфига (display/prefix/rank permissions/permissions).
+- Нормализация permission ключей и резолв роли для команды/permission-node.
+- UX-ветки permission denied и зависимость от консистентности role-конфига.
+
+### 100) Каталог командного метадата
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/commands/PluginCommandType.kt`
+
+#### Что покрыто обзором
+- Централизация id/cooldownKey/permissionNode/managedSystem для команд.
+- Специальные случаи (`apply` без permissionNode, alias-like `ahelp` cooldown key).
+- Потенциал расширения метадаты для registry-driven command/policy систем.
+
+## Итерация 38 (продолжение)
+
+### 101) Cache primitives для decoration heads
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/cache/LruCache.kt`
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/cache/SearchIndex.kt`
+
+#### Что покрыто обзором
+- Простой synchronized LRU-cache и его использование для query/page/pageSize ключей.
+- Паттерн snapshot/sizing/clear для диагностики и reset-сценариев.
+- Потенциал обобщения cache-утилит между доменами (search, notify dedup, cooldown index).
+
+### 102) Нормализация поисковых запросов
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/support/SearchQueryNormalizer.kt`
+
+#### Что покрыто обзором
+- Минимальная normalize-политика (`trim+lowercase+notBlank`) как precondition для поиска.
+- Влияние нормализации на hit-rate кэша и повторяемость UX результатов.
+- Точки расширения (locale-aware normalization, transliteration, punctuation policy).
+
+### 103) RecentService lifecycle
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/service/RecentService.kt`
+
+#### Что покрыто обзором
+- Асинхронный update/flush lifecycle (executor, dirty set, deferred promotions).
+- Персист/кэш консистентность и eviction-флоу при выходе игрока.
+- Пограничные сценарии вокруг фоновых задач, flush-порядка и конкурентного доступа.
+
+## Итерация 39 (продолжение)
+
+### 104) Категоризация decoration heads
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/category/CategoryResolver.kt`
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/category/CategoryRegistry.kt`
+
+#### Что покрыто обзором
+- Резолв категорий UI->API ID с предупреждениями по нерешаемым группам.
+- Загрузка категорий из конфига и fallback-поведение mode/display/apiNames.
+- Потенциал централизованной валидации категорий перед запуском UI-флоу.
+
+### 105) Рендеринг меню decoration heads
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/menu/MenuRenderer.kt`
+
+#### Что покрыто обзором
+- Шаблоны рендера для category/recent/saved-pages/editor экранов.
+- Повторяемые паттерны base/fill/content slots и wiring большого числа callbacks.
+- Точки для выделения template-компонентов без изменения пользовательского UX.
+
+## Итерация 40 (продолжение)
+
+### 106) Sign input bridge для decoration heads
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/support/SignInputService.kt`
+
+#### Что покрыто обзором
+- Обвязка `Input.sign()` с unified callback-потоком (`onSubmit`/`onLeave`).
+- Логика извлечения «первой осмысленной строки» с отсечением template-значений.
+- Потенциал переиспользования input-policy между sign-based сценариями в других меню.
+
+### 107) Временный override кнопок меню
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/support/TemporaryMenuButtonOverrideSupport.kt`
+
+#### Что покрыто обзором
+- Шаблон replace-and-restore для кнопок с tick-based откатом.
+- Точки риска при повторных override одного слота до истечения таймера.
+- Возможности унификации с другими transient UI feedback паттернами.
+
+### 108) Палитра цвета map-preview
+
+#### Обозрённые файлы
+- `src/main/kotlin/com/ratger/acreative/menus/decorationheads/support/MapPreviewColorPalette.kt`
+
+#### Что покрыто обзором
+- Каталог color options (key/label/legacy tag/hex/color) и циклическая навигация next/previous.
+- Нормализация ключей и fallback к ordinary режиму.
+- Точки расширения для конфигурируемых палитр и совместимости с legacy форматами цвета.
