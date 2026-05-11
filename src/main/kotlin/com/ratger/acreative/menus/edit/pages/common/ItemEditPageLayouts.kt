@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.common
 
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
 object ItemEditPageLayouts {
@@ -8,7 +9,7 @@ object ItemEditPageLayouts {
     val pagedList = PagedListLayout(
         menuSize = 45,
         rows = MenuRows.FIVE,
-        blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44),
+        blackSlots = PagedSelectionLayout.blackSlots,
         graySlots = setOf(
             1, 2, 3, 4, 5, 6, 7,
             10, 16,

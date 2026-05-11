@@ -4,6 +4,7 @@ import com.ratger.acreative.menus.banner.BannerButtonFactory
 import com.ratger.acreative.menus.banner.service.BannerCatalog
 import com.ratger.acreative.menus.banner.service.BannerPatternSupport
 import com.ratger.acreative.menus.common.MenuSoundSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import com.ratger.acreative.menus.common.MenuUiSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -27,9 +28,9 @@ class BannerEditorMenu(
     private companion object {
         const val EDITOR_MENU_SIZE = 45
         const val PICKER_MENU_SIZE = 54
-        val EDITOR_BLACK_SLOTS = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44)
-        val EDITOR_PATTERN_SLOTS = listOf(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
-        val BASE_PICKER_SLOTS = listOf(10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34)
+        val EDITOR_BLACK_SLOTS = PagedSelectionLayout.blackSlots
+        val EDITOR_PATTERN_SLOTS = PagedSelectionLayout.workSlots
+        val BASE_PICKER_SLOTS = PagedSelectionLayout.workSlots
         val PICKER_BLACK_SLOTS = setOf(0, 1, 3, 5, 7, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 46, 52, 53)
         val PICKER_PATTERN_SLOTS = listOf(19, 20, 21, 22, 23, 24, 25)
         val PICKER_COLOR_SLOTS = listOf(28, 29, 30, 31, 32, 33, 34)
@@ -64,7 +65,7 @@ class BannerEditorMenu(
 
     private fun refreshEditorButtons(player: Player, session: BannerEditorSession, menu: Menu) {
         if (session.openedFromMainMenu) {
-            menu.setButton(18, buttonFactory.backButton {
+            menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton {
                 support.finishSession(player, session) { openMainMenu(player) }
             })
         }
@@ -129,7 +130,7 @@ class BannerEditorMenu(
         )
 
         support.fillBase(menu, EDITOR_MENU_SIZE, EDITOR_BLACK_SLOTS)
-        menu.setButton(18, buttonFactory.backButton { support.transition(session) { open(player, session) } })
+        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton { support.transition(session) { open(player, session) } })
         BASE_PICKER_SLOTS.forEach { menu.setButton(it, buttonFactory.airButton()) }
         BannerCatalog.colors.forEachIndexed { index, color ->
             val slot = BASE_PICKER_SLOTS.getOrNull(index) ?: return@forEachIndexed
@@ -202,7 +203,7 @@ class BannerEditorMenu(
                 support.transition(session) { open(player, session) }
             }
         }
-        menu.setButton(18, buttonFactory.backButton(onBack))
+        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton(onBack))
         menu.setButton(27, buttonFactory.backButton(onBack))
 
         if (page < totalPages - 1) {
@@ -210,7 +211,7 @@ class BannerEditorMenu(
                 session.pickerPage = page + 1
                 support.transition(session) { openPatternPicker(player, session) }
             }
-            menu.setButton(26, buttonFactory.forwardButton(onForward))
+            menu.setButton(PagedSelectionLayout.forwardSlot, buttonFactory.forwardButton(onForward))
             menu.setButton(35, buttonFactory.forwardButton(onForward))
         }
 

@@ -4,6 +4,7 @@ import com.ratger.acreative.menus.edit.trim.ArmorTrimCatalog
 import com.ratger.acreative.menus.edit.trim.ArmorTrimSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuSoundSupport
+import com.ratger.acreative.menus.common.PagedSelectionLayout
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.Material
@@ -15,7 +16,6 @@ class ArmorTrimPatternSelectPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory
 ) {
-    private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44)
 
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
         val menu = support.buildMenu(
@@ -26,8 +26,8 @@ class ArmorTrimPatternSelectPage(
             session = session
         )
 
-        support.fillBase(menu, 45, blackSlots)
-        menu.setButton(18, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
+        support.fillBase(menu, 45, PagedSelectionLayout.blackSlots)
+        menu.setButton(PagedSelectionLayout.backSlot, buttonFactory.backButton { support.transition(session) { openBack(player, session) } })
         menu.setButton(13, buttonFactory.editablePreviewButton(session.editableItem))
 
         val currentPattern = ArmorTrimSupport.currentPattern(session.editableItem)
