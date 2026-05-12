@@ -393,7 +393,7 @@ class BannerMenuService(
             editorSessionManager.clear(player.uniqueId)
             syncEditedBannerBack(player, session)
         }
-        flushStorageSession(player, remove = true)
+         flushStorageSession(player)
         sessionManager.clear(player.uniqueId)
     }
 
@@ -414,7 +414,7 @@ class BannerMenuService(
             editorSessionManager.clear(player.uniqueId)
             syncEditedBannerBack(player, session)
         }
-        flushStorageSession(player, remove = true)
+         flushStorageSession(player)
         sessionManager.clearTransient(player.uniqueId)
     }
 
@@ -973,7 +973,7 @@ class BannerMenuService(
                     return@onClose
                 }
                 deactivateStorageEditMode(trackedSession, menu, config.pageSize)
-                flushStorageSession(closePlayer, remove = true)
+                flushStorageSession(closePlayer)
             },
             editClickListener = editListener,
             editDragListener = editDragListener,
@@ -1013,12 +1013,8 @@ class BannerMenuService(
         menu.setButton(52, buttonFactory.storageLimitButton(limitSnapshot.current, limitSnapshot.limitText))
     }
 
-    private fun flushStorageSession(player: Player, remove: Boolean) {
-        val session = if (remove) {
-            storageSessionManager.remove(player.uniqueId)
-        } else {
-            storageSessionManager.get(player.uniqueId)
-        } ?: return
+    private fun flushStorageSession(player: Player) {
+        val session = storageSessionManager.remove(player.uniqueId) ?: return
         storageService.saveLayout(player, session.layout)
     }
 
