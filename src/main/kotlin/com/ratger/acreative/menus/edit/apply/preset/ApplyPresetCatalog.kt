@@ -75,14 +75,8 @@ object ApplyPresetCatalog {
         EditorApplyActionKind.DEATH_PROTECTION_SOUND,
         EditorApplyActionKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD,
         EditorApplyActionKind.DEATH_PROTECTION_APPLY_EFFECT_ADD,
-        EditorApplyActionKind.FOOD_NUTRITION, // handled above
-        EditorApplyActionKind.FOOD_SATURATION, // handled above
-        EditorApplyActionKind.CONSUMABLE_CONSUME_SECONDS, // handled above
         EditorApplyActionKind.CONSUMABLE_SOUND,
         EditorApplyActionKind.CONSUMABLE_REMOVE_EFFECT_ADD,
-        EditorApplyActionKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER, // handled above
-        EditorApplyActionKind.CONSUMABLE_APPLY_EFFECT_ADD,
-        EditorApplyActionKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER, // handled above
-        EditorApplyActionKind.DEATH_PROTECTION_APPLY_EFFECT_ADD -> emptyList()
+        EditorApplyActionKind.CONSUMABLE_APPLY_EFFECT_ADD -> emptyList()
     }
 }
