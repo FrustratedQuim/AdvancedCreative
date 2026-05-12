@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.apply.map
 
+import com.ratger.acreative.menus.edit.apply.preset.ApplyPresetCatalog
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
@@ -14,8 +15,6 @@ class MapIdApplyHandler(
 ) : EditorApplyHandler {
     override val kind: EditorApplyActionKind = EditorApplyActionKind.MAP_ID
     override val inputSpec = ApplyInputSpecs.AMOUNT
-
-    private val presets = listOf("1", "5", "10")
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (!validationService.isMapEditable(session.editableItem)) return ApplyExecutionResult.InvalidValue
@@ -32,6 +31,6 @@ class MapIdApplyHandler(
     override fun suggestions(args: Array<out String>): List<String> {
         if (args.size != 1) return emptyList()
         val prefix = args[0]
-        return presets.filter { it.startsWith(prefix, ignoreCase = true) }
+        return ApplyPresetCatalog.getPresets(kind).filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }

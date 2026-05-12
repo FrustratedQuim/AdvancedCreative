@@ -1,26 +1,28 @@
-package com.ratger.acreative.menus.edit.apply.deathprotection
+package com.ratger.acreative.menus.edit.apply.effects.consumable
 
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.apply.ApplyInputSpecs
-import com.ratger.acreative.menus.edit.effects.DeathProtectionMenuSupport
+import com.ratger.acreative.menus.edit.effects.ConsumableComponentSupport
+import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
-class DeathProtectionRemoveEffectAddApplyHandler(
+class RemoveEffectAddApplyHandler(
     private val parser: EditParsers
 ) : EditorApplyHandler {
-    override val kind: EditorApplyActionKind = EditorApplyActionKind.DEATH_PROTECTION_REMOVE_EFFECT_ADD
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.CONSUMABLE_REMOVE_EFFECT_ADD
     override val inputSpec = ApplyInputSpecs.EFFECT
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
         val effectType = parser.effectFromToken(args[0]) ?: return ApplyExecutionResult.UnknownValue
 
-        DeathProtectionMenuSupport.addRemovedEffect(session.editableItem, effectType)
+        EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
+        ConsumableComponentSupport.addRemovedEffect(session.editableItem, effectType)
         return ApplyExecutionResult.Success
     }
 

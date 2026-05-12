@@ -17,7 +17,7 @@ import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
-class DeathProtectionApplyEffectAddApplyHandler(
+class ApplyEffectAddApplyHandler(
     private val parser: EditParsers,
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver

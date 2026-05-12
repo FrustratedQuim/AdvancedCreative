@@ -1,4 +1,4 @@
-package com.ratger.acreative.menus.edit.apply.effects
+package com.ratger.acreative.menus.edit.apply.effects.consumable
 
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.commands.edit.EditTargetResolver
@@ -18,7 +18,7 @@ import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
-class ConsumableApplyEffectAddApplyHandler(
+class ApplyEffectAddApplyHandler(
     private val parser: EditParsers,
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver

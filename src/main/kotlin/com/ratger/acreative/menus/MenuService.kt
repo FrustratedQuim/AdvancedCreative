@@ -27,45 +27,46 @@ import com.ratger.acreative.menus.apply.DefaultApplyPromptPresenter
 import com.ratger.acreative.menus.edit.apply.attributes.AttributeApplyHandler
 import com.ratger.acreative.menus.edit.apply.tool.DamageApplyHandler
 import com.ratger.acreative.menus.edit.apply.tool.DamagePerBlockApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.ConsumableApplyEffectAddApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.ConsumableConsumeSecondsApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.ConsumableRandomTeleportDiameterApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.ConsumableRemoveEffectAddApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.ConsumableSoundApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.FoodNutritionApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.FoodSaturationApplyHandler
-import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionApplyEffectAddApplyHandler
-import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionRandomTeleportDiameterApplyHandler
-import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionRemoveEffectAddApplyHandler
-import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionSoundApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
-import com.ratger.acreative.menus.edit.apply.enchant.EnchantmentApplyHandler
-import com.ratger.acreative.menus.edit.apply.head.EquipSoundApplyHandler
-import com.ratger.acreative.menus.edit.apply.head.HeadLicensedNameApplyHandler
-import com.ratger.acreative.menus.edit.apply.head.HeadOnlineNameApplyHandler
-import com.ratger.acreative.menus.edit.apply.head.HeadTextureValueApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.ItemEditorApplyDispatcher
-import com.ratger.acreative.menus.edit.apply.meta.ItemIdApplyHandler
-import com.ratger.acreative.menus.edit.apply.meta.ItemModelApplyHandler
-import com.ratger.acreative.menus.edit.apply.meta.MaxDurabilityApplyHandler
-import com.ratger.acreative.menus.edit.apply.map.MapIdApplyHandler
-import com.ratger.acreative.menus.edit.apply.map.MapColorApplyHandler
-import com.ratger.acreative.menus.edit.apply.tool.MiningSpeedApplyHandler
-import com.ratger.acreative.menus.edit.apply.text.NameTextApplyHandler
-import com.ratger.acreative.menus.edit.apply.text.NameRawMiniMessageApplyHandler
-import com.ratger.acreative.menus.edit.apply.text.LoreTextApplyHandler
-import com.ratger.acreative.menus.edit.apply.text.LoreRawMiniMessageLineApplyHandler
-import com.ratger.acreative.menus.edit.apply.potion.PotionColorApplyHandler
-import com.ratger.acreative.menus.edit.apply.potion.PotionEffectAddApplyHandler
-import com.ratger.acreative.menus.edit.apply.restrictions.RestrictionBlockApplyHandler
-import com.ratger.acreative.menus.edit.apply.meta.StackSizeApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.UseCooldownGroupApplyHandler
-import com.ratger.acreative.menus.edit.apply.effects.UseCooldownSecondsApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.consumable.ApplyEffectAddApplyHandler as ConsumableApplyEffectAddApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.consumable.ConsumeSecondsApplyHandler as ConsumableConsumeSecondsApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.consumable.RandomTeleportDiameterApplyHandler as ConsumableRandomTeleportDiameterApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.consumable.RemoveEffectAddApplyHandler as ConsumableRemoveEffectAddApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.consumable.SoundApplyHandler as ConsumableSoundApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.food.NutritionApplyHandler as FoodNutritionApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.food.SaturationApplyHandler as FoodSaturationApplyHandler
+import com.ratger.acreative.menus.edit.apply.deathprotection.ApplyEffectAddApplyHandler as DeathProtectionApplyEffectAddApplyHandler
+import com.ratger.acreative.menus.edit.apply.deathprotection.RandomTeleportDiameterApplyHandler as DeathProtectionRandomTeleportDiameterApplyHandler
+import com.ratger.acreative.menus.edit.apply.deathprotection.RemoveEffectAddApplyHandler as DeathProtectionRemoveEffectAddApplyHandler
+import com.ratger.acreative.menus.edit.apply.deathprotection.SoundApplyHandler as DeathProtectionSoundApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.cooldown.GroupApplyHandler as UseCooldownGroupApplyHandler
+import com.ratger.acreative.menus.edit.apply.effects.cooldown.SecondsApplyHandler as UseCooldownSecondsApplyHandler
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectFlowService
 import com.ratger.acreative.menus.edit.personal.PersonalItemsRepository
 import com.ratger.acreative.menus.edit.personal.PersonalItemsService
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
+import com.ratger.acreative.menus.edit.apply.core.ItemEditorApplyDispatcher
+import com.ratger.acreative.menus.edit.apply.enchant.EnchantmentApplyHandler
+import com.ratger.acreative.menus.edit.apply.head.EquipSoundApplyHandler
+import com.ratger.acreative.menus.edit.apply.head.HeadLicensedNameApplyHandler
+import com.ratger.acreative.menus.edit.apply.head.HeadOnlineNameApplyHandler
+import com.ratger.acreative.menus.edit.apply.head.HeadTextureValueApplyHandler
+import com.ratger.acreative.menus.edit.apply.map.MapColorApplyHandler
+import com.ratger.acreative.menus.edit.apply.map.MapIdApplyHandler
+import com.ratger.acreative.menus.edit.apply.meta.ItemIdApplyHandler
+import com.ratger.acreative.menus.edit.apply.meta.ItemModelApplyHandler
+import com.ratger.acreative.menus.edit.apply.meta.MaxDurabilityApplyHandler
+import com.ratger.acreative.menus.edit.apply.meta.StackSizeApplyHandler
+import com.ratger.acreative.menus.edit.apply.potion.PotionColorApplyHandler
+import com.ratger.acreative.menus.edit.apply.potion.PotionEffectAddApplyHandler
+import com.ratger.acreative.menus.edit.apply.restrictions.RestrictionBlockApplyHandler
+import com.ratger.acreative.menus.edit.apply.text.LoreRawMiniMessageLineApplyHandler
+import com.ratger.acreative.menus.edit.apply.text.LoreTextApplyHandler
+import com.ratger.acreative.menus.edit.apply.text.NameRawMiniMessageApplyHandler
+import com.ratger.acreative.menus.edit.apply.text.NameTextApplyHandler
+import com.ratger.acreative.menus.edit.apply.tool.MiningSpeedApplyHandler
 import com.ratger.acreative.menus.paint.PaintToolMarker
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -119,12 +120,14 @@ class MenuService(
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
     private val attributeApplyHandler = AttributeApplyHandler()
-    private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyActionKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
+    private val canPlaceOnApplyHandler =
+        RestrictionBlockApplyHandler(EditorApplyActionKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
     private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyActionKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
     private val potionColorApplyHandler = PotionColorApplyHandler(validationService, editTargetResolver)
     private val mapColorApplyHandler = MapColorApplyHandler(validationService)
     private val mapIdApplyHandler = MapIdApplyHandler(validationService)
-    private val potionEffectAddApplyHandler = PotionEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
+    private val potionEffectAddApplyHandler =
+        PotionEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
     private val deathProtectionSoundApplyHandler = DeathProtectionSoundApplyHandler(editParsers, validationService, editTargetResolver)
     private val deathProtectionRemoveEffectAddApplyHandler = DeathProtectionRemoveEffectAddApplyHandler(editParsers)
     private val deathProtectionRandomTeleportApplyHandler = DeathProtectionRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
@@ -176,60 +179,61 @@ class MenuService(
             flushIntervalTicks,
             flushIntervalTicks
         )
+        val handlers: List<EditorApplyHandler> = listOf(
+            itemIdApplyHandler,
+            NameTextApplyHandler(textStyleService),
+            LoreTextApplyHandler(textStyleService),
+            NameRawMiniMessageApplyHandler(textStyleService),
+            LoreRawMiniMessageLineApplyHandler(textStyleService),
+            AmountApplyHandler(),
+            ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
+            stackSizeApplyHandler,
+            attributeApplyHandler,
+            EquipSoundApplyHandler(editParsers),
+            EnchantmentApplyHandler(),
+            MaxDurabilityApplyHandler(validationService, editTargetResolver),
+            DamageApplyHandler(validationService, editTargetResolver),
+            MiningSpeedApplyHandler(validationService, editTargetResolver),
+            DamagePerBlockApplyHandler(validationService, editTargetResolver),
+            UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
+            UseCooldownGroupApplyHandler(validationService, editTargetResolver),
+            canPlaceOnApplyHandler,
+            canBreakApplyHandler,
+            HeadOnlineNameApplyHandler(headMutationSupport),
+            HeadTextureValueApplyHandler(headMutationSupport),
+            potionColorApplyHandler,
+            mapColorApplyHandler,
+            mapIdApplyHandler,
+            potionEffectAddApplyHandler,
+            deathProtectionSoundApplyHandler,
+            deathProtectionRemoveEffectAddApplyHandler,
+            deathProtectionRandomTeleportApplyHandler,
+            deathProtectionApplyEffectAddApplyHandler,
+            foodNutritionApplyHandler,
+            foodSaturationApplyHandler,
+            consumableConsumeSecondsApplyHandler,
+            consumableSoundApplyHandler,
+            consumableRemoveEffectAddApplyHandler,
+            consumableRandomTeleportApplyHandler,
+            consumableApplyEffectAddApplyHandler,
+            HeadLicensedNameApplyHandler(
+                plugin = hooker.plugin,
+                sessionManager = sessionManager,
+                headProfileService = headProfileService,
+                mutationSupport = headMutationSupport,
+                reopenHeadTexturePage = { waitingPlayer ->
+                    val activeSession = sessionManager.getSession(waitingPlayer)
+                    if (activeSession != null) {
+                        itemEditMenu.openHeadTexturePage(waitingPlayer, activeSession)
+                    }
+                }
+            )
+        )
         applyDispatcher = ItemEditorApplyDispatcher(
             hooker = hooker,
             sessionManager = sessionManager,
             promptPresenter = DefaultApplyPromptPresenter(hooker.messageManager),
-            handlers = listOf(
-                itemIdApplyHandler,
-                NameTextApplyHandler(textStyleService),
-                LoreTextApplyHandler(textStyleService),
-                NameRawMiniMessageApplyHandler(textStyleService),
-                LoreRawMiniMessageLineApplyHandler(textStyleService),
-                AmountApplyHandler(),
-                ItemModelApplyHandler(editParsers, itemIdApplyHandler::suggestions),
-                stackSizeApplyHandler,
-                attributeApplyHandler,
-                EquipSoundApplyHandler(editParsers),
-                EnchantmentApplyHandler(),
-                MaxDurabilityApplyHandler(validationService, editTargetResolver),
-                DamageApplyHandler(validationService, editTargetResolver),
-                MiningSpeedApplyHandler(validationService, editTargetResolver),
-                DamagePerBlockApplyHandler(validationService, editTargetResolver),
-                UseCooldownSecondsApplyHandler(validationService, editTargetResolver),
-                UseCooldownGroupApplyHandler(validationService, editTargetResolver),
-                canPlaceOnApplyHandler,
-                canBreakApplyHandler,
-                HeadOnlineNameApplyHandler(headMutationSupport),
-                HeadTextureValueApplyHandler(headMutationSupport),
-                potionColorApplyHandler,
-                mapColorApplyHandler,
-                mapIdApplyHandler,
-                potionEffectAddApplyHandler,
-                deathProtectionSoundApplyHandler,
-                deathProtectionRemoveEffectAddApplyHandler,
-                deathProtectionRandomTeleportApplyHandler,
-                deathProtectionApplyEffectAddApplyHandler,
-                foodNutritionApplyHandler,
-                foodSaturationApplyHandler,
-                consumableConsumeSecondsApplyHandler,
-                consumableSoundApplyHandler,
-                consumableRemoveEffectAddApplyHandler,
-                consumableRandomTeleportApplyHandler,
-                consumableApplyEffectAddApplyHandler,
-                HeadLicensedNameApplyHandler(
-                    plugin = hooker.plugin,
-                    sessionManager = sessionManager,
-                    headProfileService = headProfileService,
-                    mutationSupport = headMutationSupport,
-                    reopenHeadTexturePage = { waitingPlayer ->
-                        val activeSession = sessionManager.getSession(waitingPlayer)
-                        if (activeSession != null) {
-                            itemEditMenu.openHeadTexturePage(waitingPlayer, activeSession)
-                        }
-                    }
-                )
-            )
+            handlers = handlers
         )
 
         itemEditorApplyTarget = object : ApplyCommandTarget {

@@ -19,7 +19,6 @@ class DamageApplyHandler(
 ) : OneArgumentEditorApplyHandler<Int>() {
     override val kind: EditorApplyActionKind = EditorApplyActionKind.DAMAGE
     override val inputSpec = ApplyInputSpecs.AMOUNT
-    override val presets: List<String> = listOf("0", "15", "250", "15%", "50%", "max")
 
     override fun parseValue(rawValue: String, session: ItemEditSession): Int? {
         return ToolDamageSupport.parseDamageLikeValue(rawValue, session.editableItem)?.takeIf { it >= 0 }

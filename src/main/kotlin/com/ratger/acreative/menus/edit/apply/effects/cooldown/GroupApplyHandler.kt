@@ -1,10 +1,10 @@
-package com.ratger.acreative.menus.edit.apply.effects
+package com.ratger.acreative.menus.edit.apply.effects.cooldown
 
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.usecooldown.UseCooldownSupport
@@ -15,7 +15,7 @@ import kotlin.random.Random
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 
-class UseCooldownGroupApplyHandler(
+class GroupApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {

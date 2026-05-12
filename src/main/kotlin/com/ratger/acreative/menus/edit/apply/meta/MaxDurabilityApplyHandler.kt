@@ -18,7 +18,6 @@ class MaxDurabilityApplyHandler(
 ) : OneArgumentEditorApplyHandler<Int>() {
     override val kind: EditorApplyActionKind = EditorApplyActionKind.MAX_DURABILITY
     override val inputSpec = ApplyInputSpecs.AMOUNT
-    override val presets: List<String> = listOf("5", "25", "150", "500", "10000")
 
     override fun parseValue(rawValue: String, session: ItemEditSession): Int? {
         return rawValue.toIntOrNull()?.takeIf { it > 0 }

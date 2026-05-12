@@ -19,7 +19,6 @@ class MiningSpeedApplyHandler(
 ) : OneArgumentEditorApplyHandler<Float>() {
     override val kind: EditorApplyActionKind = EditorApplyActionKind.MINING_SPEED
     override val inputSpec = ApplyInputSpecs.AMOUNT
-    override val presets: List<String> = listOf("0", "0.5", "5", "10", "50")
 
     override fun parseValue(rawValue: String, session: ItemEditSession): Float? = rawValue.toFloatOrNull()
 

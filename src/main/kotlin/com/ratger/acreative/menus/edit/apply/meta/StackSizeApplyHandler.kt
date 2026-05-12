@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.apply.meta
 
+import com.ratger.acreative.menus.edit.apply.preset.ApplyPresetCatalog
 import com.ratger.acreative.commands.edit.EditTargetResolver
 import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
@@ -18,8 +19,6 @@ class StackSizeApplyHandler(
 ) : EditorApplyHandler {
     override val kind: EditorApplyActionKind = EditorApplyActionKind.STACK_SIZE
     override val inputSpec = ApplyInputSpecs.AMOUNT
-
-    private val presets = listOf("1", "8", "16", "32", "64", "max")
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
@@ -44,6 +43,6 @@ class StackSizeApplyHandler(
     override fun suggestions(args: Array<out String>): List<String> {
         if (args.size != 1) return emptyList()
         val prefix = args[0]
-        return presets.filter { it.startsWith(prefix, ignoreCase = true) }
+        return ApplyPresetCatalog.getPresets(kind).filter { it.startsWith(prefix, ignoreCase = true) }
     }
 }
