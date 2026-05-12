@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.head
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -12,7 +13,8 @@ import org.bukkit.entity.Player
 class HeadTextureValueApplyHandler(
     private val mutationSupport: HeadTextureMutationSupport
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.HEAD_TEXTURE_VALUE
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.HEAD_TEXTURE_VALUE
+    override val inputSpec = ApplyInputSpecs.VALUE
     private val mini = MiniMessage.miniMessage()
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {

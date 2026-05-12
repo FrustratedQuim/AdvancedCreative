@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import org.bukkit.entity.Player
 import org.bukkit.Material
 import ru.violence.coreapi.bukkit.api.menu.Menu
@@ -16,7 +16,7 @@ class TextAppearanceStylePage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val textStyleService: ItemTextStyleService,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openPageOne: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 12, 14)
@@ -56,7 +56,7 @@ class TextAppearanceStylePage(
             preview = namePreview(session),
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.NAME_RAW_MINIMESSAGE) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.NAME_RAW_MINIMESSAGE) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -87,7 +87,7 @@ class TextAppearanceStylePage(
 
                 MenuButtonFactory.AdvancedLoreInteraction.APPLY_FOCUSED -> {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.LORE_RAW_MINIMESSAGE_LINE) { reopenPlayer, reopenSession ->
+                        requestApplyInput(player, session, EditorApplyActionKind.LORE_RAW_MINIMESSAGE_LINE) { reopenPlayer, reopenSession ->
                             open(reopenPlayer, reopenSession, openBack)
                         }
                     }

@@ -3,7 +3,8 @@ package com.ratger.acreative.menus.edit.apply.effects
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.effects.ConsumableComponentSupport
 import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
@@ -13,7 +14,8 @@ import org.bukkit.entity.Player
 class ConsumableRemoveEffectAddApplyHandler(
     private val parser: EditParsers
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.CONSUMABLE_REMOVE_EFFECT_ADD
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.CONSUMABLE_REMOVE_EFFECT_ADD
+    override val inputSpec = ApplyInputSpecs.EFFECT
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue

@@ -5,7 +5,8 @@ import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.usecooldown.UseCooldownSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -18,7 +19,8 @@ class UseCooldownGroupApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.USE_COOLDOWN_GROUP
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.USE_COOLDOWN_GROUP
+    override val inputSpec = ApplyInputSpecs.USE_COOLDOWN_GROUP
 
     private val randomCharset = "abcdefghijklmnopqrstuvwxyz0123456789"
 

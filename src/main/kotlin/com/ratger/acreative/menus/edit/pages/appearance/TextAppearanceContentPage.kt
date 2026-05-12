@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.text.TextStylePalette
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.common.PagedSelectionLayout
 import org.bukkit.Material
@@ -18,7 +18,7 @@ class TextAppearanceContentPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val textStyleService: ItemTextStyleService,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openPageTwo: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
@@ -119,7 +119,7 @@ class TextAppearanceContentPage(
             inactiveLore = usageLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.NAME_TEXT) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.NAME_TEXT) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -159,7 +159,7 @@ class TextAppearanceContentPage(
             inactiveLore = usageLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.LORE_TEXT) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.LORE_TEXT) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }

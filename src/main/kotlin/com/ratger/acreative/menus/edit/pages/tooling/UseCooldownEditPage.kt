@@ -4,7 +4,7 @@ import com.ratger.acreative.menus.edit.usecooldown.UseCooldownSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -16,7 +16,7 @@ class UseCooldownEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         val menu = support.buildMenu(
@@ -67,7 +67,7 @@ class UseCooldownEditPage(
             inactiveLore = inactiveLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.USE_COOLDOWN_SECONDS) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.USE_COOLDOWN_SECONDS) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }
@@ -105,7 +105,7 @@ class UseCooldownEditPage(
             inactiveLore = commonLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.USE_COOLDOWN_GROUP) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.USE_COOLDOWN_GROUP) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }

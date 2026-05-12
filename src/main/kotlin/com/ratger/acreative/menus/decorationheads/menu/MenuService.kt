@@ -2,6 +2,7 @@ package com.ratger.acreative.menus.decorationheads.menu
 
 import com.ratger.acreative.core.AccountLinkRequirementService
 import com.ratger.acreative.core.MessageManager
+import com.ratger.acreative.core.TickScheduler
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.apply.ApplyCommandTarget
 import com.ratger.acreative.menus.common.MenuSoundSupport
@@ -17,7 +18,7 @@ import com.ratger.acreative.menus.decorationheads.service.RecentService
 import com.ratger.acreative.menus.decorationheads.service.SavedPagesService
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
-import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
+import com.ratger.acreative.menus.apply.ApplyPromptPresenter
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -40,7 +41,8 @@ class MenuService(
     private val executor: ExecutorService,
     private val temporaryOverrideSupport: TemporaryMenuButtonOverrideSupport,
     private val messageManager: MessageManager,
-    private val promptService: ApplyPromptService,
+    private val promptPresenter: ApplyPromptPresenter,
+    tickScheduler: TickScheduler,
     private val accountLinkRequirementService: AccountLinkRequirementService
 ) {
     private data class CategoryOption(val key: String, val displayName: String)
@@ -79,10 +81,10 @@ class MenuService(
         onLeave = { player -> open(player) }
     )
 
-    private val noteApplyStateManager = SavedPageNoteApplyStateManager(
-        plugin = plugin,
+    private val noteApplyTarget = SavedPageNoteApplyTarget(
+        tickScheduler = tickScheduler,
         messageManager = messageManager,
-        promptService = promptService,
+        promptPresenter = promptPresenter,
         onApply = { player, pageId, note ->
             executor.submit {
                 savedPagesService.updateNote(player.uniqueId, pageId, note)
@@ -98,7 +100,7 @@ class MenuService(
         }
     )
 
-    fun applyTarget(): ApplyCommandTarget = noteApplyStateManager
+    fun applyTarget(): ApplyCommandTarget = noteApplyTarget
 
     fun open(player: Player) {
         val state = sessionManager.getOrCreate(player.uniqueId)
@@ -331,7 +333,7 @@ class MenuService(
                     entry = entry,
                     onBack = { openSavedPages(player, originState, selectedFilterKey) },
                     onEditNote = {
-                        noteApplyStateManager.begin(player, pageId)
+                        noteApplyTarget.begin(player, pageId)
                         player.closeInventory()
                     },
                     onResetNote = {
@@ -455,7 +457,7 @@ class MenuService(
 
     fun closeAllSessions() {
         sessionManager.playerIdsSnapshot().mapNotNull { Bukkit.getPlayer(it) }.forEach { player ->
-            noteApplyStateManager.cancel(player)
+            noteApplyTarget.cancel(player)
             clearPlayer(player.uniqueId)
             player.closeInventory()
         }

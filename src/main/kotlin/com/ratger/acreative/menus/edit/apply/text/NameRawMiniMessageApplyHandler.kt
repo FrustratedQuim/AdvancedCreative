@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.text
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
@@ -10,7 +11,8 @@ import org.bukkit.entity.Player
 class NameRawMiniMessageApplyHandler(
     private val textStyleService: ItemTextStyleService
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.NAME_RAW_MINIMESSAGE
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.NAME_RAW_MINIMESSAGE
+    override val inputSpec = ApplyInputSpecs.TEXT
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         val raw = args.joinToString(" ").trim()

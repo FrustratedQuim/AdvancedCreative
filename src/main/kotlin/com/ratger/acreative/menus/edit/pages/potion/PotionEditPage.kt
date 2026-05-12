@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -14,7 +14,7 @@ import ru.violence.coreapi.bukkit.api.menu.MenuRows
 class PotionEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openEffectsPage: (Player, ItemEditSession) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession, openBack: (Player, ItemEditSession) -> Unit) {
@@ -53,7 +53,7 @@ class PotionEditPage(
             inactiveLore = inactiveColorLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.POTION_COLOR) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.POTION_COLOR) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }

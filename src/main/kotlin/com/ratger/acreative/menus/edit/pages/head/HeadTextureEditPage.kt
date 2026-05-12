@@ -8,7 +8,7 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.utils.PlayerInventoryTransferSupport
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -25,7 +25,7 @@ class HeadTextureEditPage(
     private val mutationSupport: HeadTextureMutationSupport,
     private val textureValueBookSupport: HeadTextureValueBookSupport,
     private val openBack: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         session.headTextureSectionActive = true
@@ -313,7 +313,7 @@ class HeadTextureEditPage(
                     clearAndRefresh(player, session, menu)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.HEAD_ONLINE_NAME, this::open)
+                        requestApplyInput(player, session, EditorApplyActionKind.HEAD_ONLINE_NAME, this::open)
                     }
                 }
             }
@@ -328,7 +328,7 @@ class HeadTextureEditPage(
                     clearAndRefresh(player, session, menu)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.HEAD_ONLINE_NAME, this::open)
+                        requestApplyInput(player, session, EditorApplyActionKind.HEAD_ONLINE_NAME, this::open)
                     }
                 }
             }
@@ -345,7 +345,7 @@ class HeadTextureEditPage(
                     clearAndRefresh(player, session, menu)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.HEAD_LICENSED_NAME, this::open)
+                        requestApplyInput(player, session, EditorApplyActionKind.HEAD_LICENSED_NAME, this::open)
                     }
                 }
             }
@@ -360,7 +360,7 @@ class HeadTextureEditPage(
                     clearAndRefresh(player, session, menu)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.HEAD_LICENSED_NAME, this::open)
+                        requestApplyInput(player, session, EditorApplyActionKind.HEAD_LICENSED_NAME, this::open)
                     }
                 }
             }

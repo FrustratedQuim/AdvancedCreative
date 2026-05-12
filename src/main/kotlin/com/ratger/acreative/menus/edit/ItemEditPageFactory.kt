@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.edit
 
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureValueBookSupport
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
@@ -131,7 +131,7 @@ internal data class ItemEditNavigationHandlers(
 internal class ItemEditPageFactory(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val requestSignInput: (Player, Array<String>, (Player, String?) -> Unit, (Player) -> Unit) -> Unit,
     private val headMutationSupport: HeadTextureMutationSupport,
     private val textStyleService: ItemTextStyleService,

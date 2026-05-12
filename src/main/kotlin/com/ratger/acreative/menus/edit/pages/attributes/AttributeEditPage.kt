@@ -7,7 +7,7 @@ import com.ratger.acreative.menus.edit.attributes.SlotGroupAdapter
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.attribute.Attribute
@@ -19,7 +19,7 @@ class AttributeEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openTypeSelectPage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -45,7 +45,7 @@ class AttributeEditPage(
                 name = "<!i><#00FF40>₪ Добавить атрибут <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
-                    requestApplyInput(addPlayer, addSession, EditorApplyKind.ATTRIBUTE) { reopenPlayer, reopenSession ->
+                    requestApplyInput(addPlayer, addSession, EditorApplyActionKind.ATTRIBUTE) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex)
                     }
                 }

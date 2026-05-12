@@ -5,7 +5,8 @@ import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
 import kotlin.math.absoluteValue
@@ -15,7 +16,8 @@ class StackSizeApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.STACK_SIZE
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.STACK_SIZE
+    override val inputSpec = ApplyInputSpecs.AMOUNT
 
     private val presets = listOf("1", "8", "16", "32", "64", "max")
 

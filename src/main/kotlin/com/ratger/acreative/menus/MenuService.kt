@@ -23,7 +23,7 @@ import com.ratger.acreative.menus.edit.ItemEditMenu
 import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.ItemEditSessionManager
 import com.ratger.acreative.menus.edit.apply.meta.AmountApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
+import com.ratger.acreative.menus.apply.DefaultApplyPromptPresenter
 import com.ratger.acreative.menus.edit.apply.attributes.AttributeApplyHandler
 import com.ratger.acreative.menus.edit.apply.tool.DamageApplyHandler
 import com.ratger.acreative.menus.edit.apply.tool.DamagePerBlockApplyHandler
@@ -38,13 +38,13 @@ import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionAppl
 import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionRandomTeleportDiameterApplyHandler
 import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionRemoveEffectAddApplyHandler
 import com.ratger.acreative.menus.edit.apply.deathprotection.DeathProtectionSoundApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.apply.enchant.EnchantmentApplyHandler
 import com.ratger.acreative.menus.edit.apply.head.EquipSoundApplyHandler
 import com.ratger.acreative.menus.edit.apply.head.HeadLicensedNameApplyHandler
 import com.ratger.acreative.menus.edit.apply.head.HeadOnlineNameApplyHandler
 import com.ratger.acreative.menus.edit.apply.head.HeadTextureValueApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.ItemEditorApplyStateManager
+import com.ratger.acreative.menus.edit.apply.core.ItemEditorApplyDispatcher
 import com.ratger.acreative.menus.edit.apply.meta.ItemIdApplyHandler
 import com.ratger.acreative.menus.edit.apply.meta.ItemModelApplyHandler
 import com.ratger.acreative.menus.edit.apply.meta.MaxDurabilityApplyHandler
@@ -119,8 +119,8 @@ class MenuService(
     private val itemIdApplyHandler = ItemIdApplyHandler(editParsers)
     private val stackSizeApplyHandler = StackSizeApplyHandler(validationService, editTargetResolver)
     private val attributeApplyHandler = AttributeApplyHandler()
-    private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
-    private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
+    private val canPlaceOnApplyHandler = RestrictionBlockApplyHandler(EditorApplyActionKind.CAN_PLACE_ON, RestrictionMode.CAN_PLACE_ON, editParsers)
+    private val canBreakApplyHandler = RestrictionBlockApplyHandler(EditorApplyActionKind.CAN_BREAK, RestrictionMode.CAN_BREAK, editParsers)
     private val potionColorApplyHandler = PotionColorApplyHandler(validationService, editTargetResolver)
     private val mapColorApplyHandler = MapColorApplyHandler(validationService)
     private val mapIdApplyHandler = MapIdApplyHandler(validationService)
@@ -136,7 +136,7 @@ class MenuService(
     private val consumableRemoveEffectAddApplyHandler = ConsumableRemoveEffectAddApplyHandler(editParsers)
     private val consumableRandomTeleportApplyHandler = ConsumableRandomTeleportDiameterApplyHandler(validationService, editTargetResolver)
     private val consumableApplyEffectAddApplyHandler = ConsumableApplyEffectAddApplyHandler(editParsers, validationService, editTargetResolver)
-    private var applyStateManager: ItemEditorApplyStateManager
+    private var applyDispatcher: ItemEditorApplyDispatcher
     private var itemEditorApplyTarget: ApplyCommandTarget
     private val applyCoordinator = ApplyCommandCoordinator()
 
@@ -146,7 +146,7 @@ class MenuService(
         buttonFactory = buttonFactory,
         parser = parser,
         requestApplyInput = { player, _, kind, reopen ->
-            applyStateManager.beginWaiting(player, kind, reopen)
+            applyDispatcher.beginWaiting(player, kind, reopen)
             player.closeInventory()
         },
         headMutationSupport = headMutationSupport,
@@ -176,10 +176,10 @@ class MenuService(
             flushIntervalTicks,
             flushIntervalTicks
         )
-        applyStateManager = ItemEditorApplyStateManager(
+        applyDispatcher = ItemEditorApplyDispatcher(
             hooker = hooker,
             sessionManager = sessionManager,
-            promptService = ApplyPromptService(hooker.messageManager),
+            promptPresenter = DefaultApplyPromptPresenter(hooker.messageManager),
             handlers = listOf(
                 itemIdApplyHandler,
                 NameTextApplyHandler(textStyleService),
@@ -233,18 +233,18 @@ class MenuService(
         )
 
         itemEditorApplyTarget = object : ApplyCommandTarget {
-            override fun isWaiting(player: Player): Boolean = applyStateManager.isWaiting(player)
+            override fun isWaiting(player: Player): Boolean = applyDispatcher.isWaiting(player)
             override fun handle(player: Player, args: Array<out String>): Boolean {
-                applyStateManager.handleApplyCommand(player, args)
+                applyDispatcher.handleApplyCommand(player, args)
                 return true
             }
-            override fun tabComplete(player: Player, args: Array<out String>): List<String> = applyStateManager.tabComplete(player, args)
-            override fun cancel(player: Player) = applyStateManager.cancelWaiting(player, reopenMenu = false)
+            override fun tabComplete(player: Player, args: Array<out String>): List<String> = applyDispatcher.tabComplete(player, args)
+            override fun cancel(player: Player) = applyDispatcher.cancelWaiting(player, reopenMenu = false)
         }
         applyCoordinator.registerTarget(itemEditorApplyTarget)
 
         sessionManager.addCloseListener { player, _ ->
-            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            applyDispatcher.cancelWaiting(player, reopenMenu = false)
         }
         sessionManager.addCloseListener { player, session ->
             personalItemsService.onEditSessionClosed(player.uniqueId, session.editableItem, session.initialContentHash)
@@ -265,7 +265,7 @@ class MenuService(
     }
 
     fun isInItemEditSession(player: Player): Boolean = sessionManager.isInSession(player)
-    fun canPickupDuringItemSession(player: Player): Boolean = applyStateManager.canPickupInCurrentState(player)
+    fun canPickupDuringItemSession(player: Player): Boolean = applyDispatcher.canPickupInCurrentState(player)
 
     fun openItemEditor(player: Player) {
         if (!player.hasPermission(EDIT_PERMISSION)) {
@@ -276,7 +276,7 @@ class MenuService(
         hooker.bannerMenuService.clearApplyRecoveryContext(player)
         val existingSession = sessionManager.getSession(player)
         if (existingSession != null) {
-            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            applyDispatcher.cancelWaiting(player, reopenMenu = false)
             itemEditMenu.openLastCategoryOrDefault(player, existingSession)
             return
         }
@@ -311,7 +311,7 @@ class MenuService(
 
         val activeTarget = applyCoordinator.activeTarget(player)
         if (activeTarget === itemEditorApplyTarget && !hooker.systemToggleService.isEnabled(ManagedSystem.EDIT)) {
-            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            applyDispatcher.cancelWaiting(player, reopenMenu = false)
             hooker.messageManager.sendChat(player, MessageKey.SYSTEM_DISABLED)
             return
         }
@@ -331,7 +331,7 @@ class MenuService(
     fun closeAllItemEditorSessions() {
         itemEditSessionsSnapshot().forEach { session ->
             val player = Bukkit.getPlayer(session.playerId) ?: return@forEach
-            applyStateManager.cancelWaiting(player, reopenMenu = false)
+            applyDispatcher.cancelWaiting(player, reopenMenu = false)
             player.closeInventory()
             val closedSession = sessionManager.closeSession(player)
             if (closedSession != null) {

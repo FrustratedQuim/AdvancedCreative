@@ -6,7 +6,8 @@ import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.effects.ConsumableComponentSupport
 import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
@@ -17,7 +18,8 @@ class ConsumableRandomTeleportDiameterApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER
+    override val inputSpec = ApplyInputSpecs.AMOUNT
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue

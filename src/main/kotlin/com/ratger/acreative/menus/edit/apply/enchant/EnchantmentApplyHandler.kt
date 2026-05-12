@@ -2,13 +2,15 @@ package com.ratger.acreative.menus.edit.apply.enchant
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.enchant.EnchantmentSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class EnchantmentApplyHandler : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.ENCHANTMENT
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.ENCHANTMENT
+    override val inputSpec = ApplyInputSpecs.ENCHANTMENT
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.isEmpty() || args.size > 2) return ApplyExecutionResult.InvalidValue

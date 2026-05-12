@@ -1,29 +1,30 @@
 package com.ratger.acreative.menus.edit.apply.meta
 
 import com.ratger.acreative.commands.edit.EditTargetResolver
+import com.ratger.acreative.menus.edit.ItemEditSession
 import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.edit.apply.core.OneArgumentEditorApplyHandler
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.validation.ValidationService
-import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 import org.bukkit.inventory.meta.Damageable
 
 class MaxDurabilityApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
-) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.MAX_DURABILITY
+) : OneArgumentEditorApplyHandler<Int>() {
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.MAX_DURABILITY
+    override val inputSpec = ApplyInputSpecs.AMOUNT
+    override val presets: List<String> = listOf("5", "25", "150", "500", "10000")
 
-    private val presets = listOf("5", "25", "150", "500", "10000")
+    override fun parseValue(rawValue: String, session: ItemEditSession): Int? {
+        return rawValue.toIntOrNull()?.takeIf { it > 0 }
+    }
 
-    override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
-        if (args.size != 1) return ApplyExecutionResult.InvalidValue
-        val value = args[0].toIntOrNull() ?: return ApplyExecutionResult.InvalidValue
-        if (value <= 0) return ApplyExecutionResult.InvalidValue
-
+    override fun applyValue(player: Player, session: ItemEditSession, value: Int): ApplyExecutionResult {
         val action = ItemAction.SetMaxDamage(value)
         val context = ItemContext(session.editableItem, targetResolver.snapshot(session.editableItem))
         if (!validationService.validate(action, context, player)) {
@@ -34,10 +35,5 @@ class MaxDurabilityApplyHandler(
         meta.setMaxDamage(value)
         session.editableItem.itemMeta = meta
         return ApplyExecutionResult.Success
-    }
-
-    override fun suggestions(args: Array<out String>): List<String> {
-        if (args.size != 1) return emptyList()
-        return presets.filter { it.startsWith(args[0], ignoreCase = true) }
     }
 }

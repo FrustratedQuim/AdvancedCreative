@@ -2,13 +2,15 @@ package com.ratger.acreative.menus.edit.apply.meta
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.ItemEditSession
 import kotlin.math.absoluteValue
 import org.bukkit.entity.Player
 
 class AmountApplyHandler : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.AMOUNT
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.AMOUNT
+    override val inputSpec = ApplyInputSpecs.AMOUNT
 
     private val presets = listOf("1", "8", "16", "32", "64")
 

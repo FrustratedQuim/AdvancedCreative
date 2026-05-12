@@ -5,7 +5,8 @@ package com.ratger.acreative.menus.edit.apply.head
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.equippable.EquippableSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.Registry
@@ -15,7 +16,8 @@ import org.bukkit.inventory.EquipmentSlot
 class EquipSoundApplyHandler(
     private val parser: EditParsers
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.EQUIP_SOUND
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.EQUIP_SOUND
+    override val inputSpec = ApplyInputSpecs.SOUND
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue

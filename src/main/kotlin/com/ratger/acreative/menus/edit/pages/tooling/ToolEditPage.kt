@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.tool.ToolDamageSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.ItemEditPageLayouts
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -18,7 +18,7 @@ class ToolEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     fun open(player: Player, session: ItemEditSession) {
         val menu = support.buildMenu(
@@ -65,7 +65,7 @@ class ToolEditPage(
             inactiveLore = commonLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.MAX_DURABILITY) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.MAX_DURABILITY) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }
@@ -99,7 +99,7 @@ class ToolEditPage(
             inactiveLore = commonLore,
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.DAMAGE) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.DAMAGE) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }
@@ -134,7 +134,7 @@ class ToolEditPage(
             itemModifier = buttonFactory.hideAttributes(),
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.MINING_SPEED) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.MINING_SPEED) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }
@@ -171,7 +171,7 @@ class ToolEditPage(
             itemModifier = buttonFactory.hideAttributes(),
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.DAMAGE_PER_BLOCK) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.DAMAGE_PER_BLOCK) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }

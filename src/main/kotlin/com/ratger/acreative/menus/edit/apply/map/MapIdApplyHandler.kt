@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.map
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -11,7 +12,8 @@ import org.bukkit.entity.Player
 class MapIdApplyHandler(
     private val validationService: ValidationService
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.MAP_ID
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.MAP_ID
+    override val inputSpec = ApplyInputSpecs.AMOUNT
 
     private val presets = listOf("1", "5", "10")
 

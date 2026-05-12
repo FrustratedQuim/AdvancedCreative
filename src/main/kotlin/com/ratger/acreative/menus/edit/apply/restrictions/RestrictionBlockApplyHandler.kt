@@ -3,17 +3,19 @@ package com.ratger.acreative.menus.edit.apply.restrictions
 import com.ratger.acreative.commands.edit.EditParsers
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.restrictions.ItemRestrictionSupport
 import com.ratger.acreative.menus.edit.restrictions.RestrictionMode
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
 class RestrictionBlockApplyHandler(
-    override val kind: EditorApplyKind,
+    override val kind: EditorApplyActionKind,
     private val mode: RestrictionMode,
     private val parser: EditParsers
 ) : EditorApplyHandler {
+    override val inputSpec = ApplyInputSpecs.ID
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
 

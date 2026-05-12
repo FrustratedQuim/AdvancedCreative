@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.restrictions.RestrictionMode
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -14,7 +14,7 @@ class RestrictionsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openRestrictionsRoot: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openBlockSelectPage: (Player, ItemEditSession, RestrictionMode, Int, (Player, ItemEditSession) -> Unit, Boolean) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -74,8 +74,8 @@ class RestrictionsListPage(
         )
     }
 
-    private fun applyKind(mode: RestrictionMode): EditorApplyKind = when (mode) {
-        RestrictionMode.CAN_PLACE_ON -> EditorApplyKind.CAN_PLACE_ON
-        RestrictionMode.CAN_BREAK -> EditorApplyKind.CAN_BREAK
+    private fun applyKind(mode: RestrictionMode): EditorApplyActionKind = when (mode) {
+        RestrictionMode.CAN_PLACE_ON -> EditorApplyActionKind.CAN_PLACE_ON
+        RestrictionMode.CAN_BREAK -> EditorApplyActionKind.CAN_BREAK
     }
 }

@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
@@ -17,7 +17,7 @@ import kotlin.math.round
 class FoodApplyEffectsListPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openFoodRoot: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
@@ -44,7 +44,7 @@ class FoodApplyEffectsListPage(
                 name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
-                    requestApplyInput(addPlayer, addSession, EditorApplyKind.CONSUMABLE_APPLY_EFFECT_ADD) { reopenPlayer, reopenSession ->
+                    requestApplyInput(addPlayer, addSession, EditorApplyActionKind.CONSUMABLE_APPLY_EFFECT_ADD) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack, pageIndex)
                     }
                 }

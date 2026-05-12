@@ -9,7 +9,7 @@ import com.ratger.acreative.menus.banner.editor.BannerEditorSessionManager
 import com.ratger.acreative.menus.banner.menu.BannerMenuRenderer
 import com.ratger.acreative.menus.banner.menu.BannerMenuService
 import com.ratger.acreative.menus.banner.menu.BannerSessionManager
-import com.ratger.acreative.menus.banner.menu.BannerTitleApplyStateManager
+import com.ratger.acreative.menus.banner.menu.BannerTitleApplyTarget
 import com.ratger.acreative.menus.banner.storage.BannerStorageConfigResolver
 import com.ratger.acreative.menus.banner.storage.BannerStorageItemNormalizer
 import com.ratger.acreative.menus.banner.storage.BannerStorageMenuController
@@ -22,7 +22,7 @@ import com.ratger.acreative.menus.decorationheads.support.SignInputService
 import com.ratger.acreative.menus.banner.persistence.BannedPatternRepository
 import com.ratger.acreative.menus.banner.persistence.BannedUserRepository
 import com.ratger.acreative.menus.banner.persistence.PublishedBannerRepository
-import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
+import com.ratger.acreative.menus.apply.DefaultApplyPromptPresenter
 import com.ratger.acreative.menus.edit.head.LicensedProfileLookupService
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import org.bukkit.Bukkit
@@ -90,10 +90,10 @@ class Subsystem(
     init {
         var createdMenuService: BannerMenuService? = null
 
-        val titleApplyStateManager = BannerTitleApplyStateManager(
-            plugin = hooker.plugin,
+        val titleApplyTarget = BannerTitleApplyTarget(
+            tickScheduler = hooker.tickScheduler,
             messageManager = hooker.messageManager,
-            promptService = ApplyPromptService(hooker.messageManager),
+            promptPresenter = DefaultApplyPromptPresenter(hooker.messageManager),
             onApply = { player, title -> createdMenuService?.handleBannerTitleApply(player, title) },
             onReopen = { player -> createdMenuService?.reopenAfterTitleApply(player) }
         )
@@ -141,7 +141,7 @@ class Subsystem(
             storageService = storageService,
             storageSessionManager = storageSessionManager,
             editorMenu = editorMenu,
-            titleApplyStateManager = titleApplyStateManager
+            titleApplyTarget = titleApplyTarget
         )
 
         menuService = createdMenuService

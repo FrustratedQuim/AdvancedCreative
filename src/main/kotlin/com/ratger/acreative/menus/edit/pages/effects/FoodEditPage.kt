@@ -8,7 +8,7 @@ import com.ratger.acreative.menus.edit.usecooldown.UseCooldownSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -24,7 +24,7 @@ class FoodEditPage(
     private val buttonFactory: MenuButtonFactory,
     private val openRemoveEffectsPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openApplyEffectsPage: (Player, ItemEditSession, (Player, ItemEditSession) -> Unit) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val blackSlots = setOf(0, 8, 9, 12, 14, 17, 18, 26, 27, 35, 36, 44, 45, 53)
 
@@ -141,7 +141,7 @@ class FoodEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.FOOD_NUTRITION) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.FOOD_NUTRITION) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -166,7 +166,7 @@ class FoodEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.FOOD_SATURATION) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.FOOD_SATURATION) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -213,7 +213,7 @@ class FoodEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.CONSUMABLE_SOUND) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.CONSUMABLE_SOUND) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -257,7 +257,7 @@ class FoodEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.CONSUMABLE_RANDOM_TELEPORT_DIAMETER) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }
@@ -341,7 +341,7 @@ class FoodEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.CONSUMABLE_CONSUME_SECONDS) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.CONSUMABLE_CONSUME_SECONDS) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, openBack)
                     }
                 }

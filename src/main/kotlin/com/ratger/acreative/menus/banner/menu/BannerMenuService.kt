@@ -52,7 +52,7 @@ class BannerMenuService(
     private val storageService: BannerStorageService,
     private val storageSessionManager: BannerStorageSessionManager,
     private val editorMenu: BannerEditorMenu,
-    private val titleApplyStateManager: BannerTitleApplyStateManager
+    private val titleApplyTarget: BannerTitleApplyTarget
 ) {
     private val plugin = hooker.plugin
     private val permissionLimitResolver = BannerPermissionLimitResolver()
@@ -71,7 +71,7 @@ class BannerMenuService(
         onLeave = { player -> openPublicGallery(player, sessionManager.publicState(player.uniqueId)) }
     )
 
-    fun applyTarget(): ApplyCommandTarget = titleApplyStateManager
+    fun applyTarget(): ApplyCommandTarget = titleApplyTarget
 
     fun openMainMenu(player: Player) {
         sessionManager.markLastMenuAsBanner(player.uniqueId)
@@ -177,7 +177,7 @@ class BannerMenuService(
             selectedCategoryIndex = selectedCategoryIndex,
             currentMenu = currentMenu,
             onApplyTitle = {
-                titleApplyStateManager.begin(player)
+                titleApplyTarget.begin(player)
                 player.closeInventory()
             },
             onResetTitle = { event ->
@@ -387,7 +387,7 @@ class BannerMenuService(
     fun authorSuggestions(prefix: String): List<String> = authorCache.suggest(prefix)
 
     fun handlePlayerDisconnect(player: Player) {
-        titleApplyStateManager.cancel(player)
+        titleApplyTarget.cancel(player)
         val session = editorSessionManager.getSession(player)
         if (session != null) {
             editorSessionManager.clear(player.uniqueId)
@@ -408,7 +408,7 @@ class BannerMenuService(
     }
 
     fun handlePlayerDeath(player: Player) {
-        titleApplyStateManager.cancel(player)
+        titleApplyTarget.cancel(player)
         val session = editorSessionManager.getSession(player)
         if (session != null) {
             editorSessionManager.clear(player.uniqueId)

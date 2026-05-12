@@ -10,12 +10,14 @@ import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.ManagedSystem
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.menus.MenuButtonFactory
-import com.ratger.acreative.menus.apply.ApplyCommandTarget
+import com.ratger.acreative.menus.apply.ApplyInputSpec
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
+import com.ratger.acreative.menus.apply.ApplyRequestManager
+import com.ratger.acreative.menus.apply.ApplyRequestResult
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.common.MenuUiSupport
 import com.ratger.acreative.menus.decorationheads.support.SignInputService
-import com.ratger.acreative.menus.edit.apply.core.ApplyPromptService
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.apply.DefaultApplyPromptPresenter
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
 import com.ratger.acreative.menus.edit.restrictions.ItemRestrictionSupport
 import org.bukkit.Bukkit
@@ -72,19 +74,21 @@ class PlotFlagEditorService(
     )
 
     private data class ApplyRequest(
-        val timeoutTaskId: Int,
-        val usageMessageKey: MessageKey,
         val suggestions: (String) -> List<String>,
         val onApply: (Player, String) -> Unit,
         val onReopen: (Player) -> Unit
     )
 
     private val parser = MiniMessageParser()
-    private val promptService = ApplyPromptService(hooker.messageManager)
+    private val promptPresenter = DefaultApplyPromptPresenter(hooker.messageManager)
     private val signInputService = SignInputService(hooker.plugin)
     private val buttonFactory: MenuButtonFactory = hooker.menuService.buttonFactory()
     private val sessions = mutableMapOf<UUID, PlotEditorSession>()
-    private val applyRequests = mutableMapOf<UUID, ApplyRequest>()
+    private val applyRequestManager = ApplyRequestManager<ApplyRequest>(
+        tickScheduler = hooker.tickScheduler,
+        promptPresenter = promptPresenter,
+        messageManager = hooker.messageManager
+    )
     private val menuTransitions = mutableSetOf<UUID>()
     private val mutationCooldowns = mutableSetOf<String>()
     private val emptyButton = buttonFactory.itemAsIsButton(ItemStack(Material.AIR)) { }
@@ -124,46 +128,7 @@ class PlotFlagEditorService(
         resolvedFlagsByKey = loadedByKey
         blockOptions = ItemRestrictionSupport.blockOptions()
 
-        hooker.menuService.registerApplyTarget(object : ApplyCommandTarget {
-            override fun isWaiting(player: Player): Boolean = applyRequests.containsKey(player.uniqueId)
-
-            override fun handle(player: Player, args: Array<out String>): Boolean {
-                val request = applyRequests[player.uniqueId] ?: return false
-                if (args.isEmpty()) {
-                    hooker.messageManager.sendChat(player, request.usageMessageKey)
-                    MenuSoundSupport.error(player)
-                    return true
-                }
-                if (args[0].equals("cancel", ignoreCase = true)) {
-                    clearApplyRequest(player, request)
-                    request.onReopen(player)
-                    return true
-                }
-                clearApplyRequest(player, request)
-                request.onApply(player, args.joinToString(" "))
-                return true
-            }
-
-            override fun tabComplete(player: Player, args: Array<out String>): List<String> {
-                val request = applyRequests[player.uniqueId] ?: return emptyList()
-                if (args.size == 1) {
-                    val prefix = args[0]
-                    val variants = mutableListOf<String>()
-                    if ("cancel".startsWith(prefix, ignoreCase = true)) {
-                        variants += "cancel"
-                    }
-                    variants += request.suggestions(prefix)
-                    return variants.distinct()
-                }
-                return emptyList()
-            }
-
-            override fun cancel(player: Player) {
-                val request = applyRequests.remove(player.uniqueId) ?: return
-                hooker.tickScheduler.cancel(request.timeoutTaskId)
-                promptService.clearPrompt(player)
-            }
-        })
+        hooker.menuService.registerApplyTarget(applyRequestManager)
     }
 
     fun handleCommandAlias(player: Player, rawMessage: String): Boolean {
@@ -825,7 +790,7 @@ class PlotFlagEditorService(
         val isBlockCollection = entry.definition.collectionAddMode == PlotFlagCollectionAddMode.COMMAND_AND_MENU
         return buttonFactory.actionButton(
             material = Material.STRUCTURE_VOID,
-            name = "<!i><#C7A300>◍ <#FFD700>${displayCollectionValue(entry, value)}",
+            name = "<!i><#C7A300>◎ <#FFD700>${displayCollectionValue(entry, value)}",
             lore = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы удалить"),
             itemModifier = {
                 if (isBlockCollection) {
@@ -861,7 +826,7 @@ class PlotFlagEditorService(
     private fun beginTextApply(player: Player, session: PlotEditorSession, entry: ResolvedPlotFlagDefinition) {
         beginApplyRequest(
             player = player,
-            promptKind = EditorApplyKind.LORE_TEXT,
+            inputSpec = ApplyInputSpecs.TEXT,
             usageMessageKey = MessageKey.EDIT_APPLY_USAGE_TEXT,
             suggestions = { emptyList() },
             onReopen = { reopenCurrentSession(it.uniqueId) },
@@ -883,7 +848,7 @@ class PlotFlagEditorService(
     private fun beginTimedApply(player: Player, session: PlotEditorSession, entry: ResolvedPlotFlagDefinition) {
         beginApplyRequest(
             player = player,
-            promptKind = EditorApplyKind.AMOUNT,
+            inputSpec = ApplyInputSpecs.AMOUNT,
             usageMessageKey = MessageKey.EDIT_APPLY_USAGE_AMOUNT,
             suggestions = { emptyList() },
             onReopen = { reopenCurrentSession(it.uniqueId) },
@@ -920,7 +885,7 @@ class PlotFlagEditorService(
         }
         beginApplyRequest(
             player = player,
-            promptKind = if (entry.definition.groupKey == "blocked-cmds") EditorApplyKind.COMMAND else EditorApplyKind.ITEM_ID,
+            inputSpec = if (entry.definition.groupKey == "blocked-cmds") ApplyInputSpecs.COMMAND else ApplyInputSpecs.ID,
             usageMessageKey = usageKey,
             suggestions = { prefix ->
                 if (entry.definition.groupKey == "blocked-cmds") {
@@ -986,41 +951,35 @@ class PlotFlagEditorService(
 
     private fun beginApplyRequest(
         player: Player,
-        promptKind: EditorApplyKind,
+        inputSpec: ApplyInputSpec,
         usageMessageKey: MessageKey,
         suggestions: (String) -> List<String>,
         onReopen: (Player) -> Unit,
         onApply: (Player, String) -> Unit
     ) {
-        cancelApplySilently(player)
-        val timeoutTaskId = hooker.tickScheduler.runLater(APPLY_TIMEOUT_TICKS) {
-            val online = Bukkit.getPlayer(player.uniqueId) ?: return@runLater
-            val request = applyRequests.remove(online.uniqueId) ?: return@runLater
-            promptService.clearPrompt(online)
-            request.onReopen(online)
-        }
-        applyRequests[player.uniqueId] = ApplyRequest(
-            timeoutTaskId = timeoutTaskId,
-            usageMessageKey = usageMessageKey,
+        val request = ApplyRequest(
             suggestions = suggestions,
             onApply = onApply,
             onReopen = onReopen
         )
-        promptService.showPrompt(player, promptKind, APPLY_TIMEOUT_SECONDS)
+        applyRequestManager.begin(
+            player = player,
+            inputSpec = inputSpec.copy(usageMessageKey = usageMessageKey),
+            payload = request,
+            suggestions = { payload, args -> if (args.size == 1) payload.suggestions(args[0]) else emptyList() },
+            onTimeout = { timeoutPlayer, payload -> payload.onReopen(timeoutPlayer) },
+            onCancel = { cancelPlayer, payload -> payload.onReopen(cancelPlayer) },
+            onApply = { _, payload, args ->
+                val rawInput = args.joinToString(" ")
+                ApplyRequestResult.Complete { completePlayer -> payload.onApply(completePlayer, rawInput) }
+            }
+        )
         markTransition(player.uniqueId)
         player.closeInventory()
     }
 
-    private fun clearApplyRequest(player: Player, request: ApplyRequest) {
-        applyRequests.remove(player.uniqueId)
-        hooker.tickScheduler.cancel(request.timeoutTaskId)
-        promptService.clearPrompt(player)
-    }
-
     private fun cancelApplySilently(player: Player) {
-        val request = applyRequests.remove(player.uniqueId) ?: return
-        hooker.tickScheduler.cancel(request.timeoutTaskId)
-        promptService.clearPrompt(player)
+        applyRequestManager.cancel(player)
     }
 
     private fun requestSignInput(
@@ -1469,8 +1428,6 @@ class PlotFlagEditorService(
         private const val CONFIG_ADMIN_PERMISSION = "plotsquared.edit.plotEditAdminAccess"
         private const val DEFAULT_ADMIN_PERMISSION = "acreative.acreative"
         private const val PLOT_EDIT_PERMISSION = "acreative.plots.edit"
-        private const val APPLY_TIMEOUT_SECONDS = 30
-        private const val APPLY_TIMEOUT_TICKS = APPLY_TIMEOUT_SECONDS * 20L
         private const val FLAG_MUTATION_COOLDOWN_TICKS = 2L
         private val STYLE_TAG_REGEX = Regex("<[^>]+>")
         private val WHITESPACE_REGEX = Regex("\\s+")

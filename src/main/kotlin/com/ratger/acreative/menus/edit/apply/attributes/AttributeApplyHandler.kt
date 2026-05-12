@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.attributes
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.attributes.AttributeModifierFactory
 import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.menus.edit.attributes.SlotGroupSpec
@@ -14,7 +15,8 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 
 class AttributeApplyHandler : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.ATTRIBUTE
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.ATTRIBUTE
+    override val inputSpec = ApplyInputSpecs.ATTRIBUTE
 
     private val attributeTokenMap = ItemAttributeMenuSupport.attributeTokenMap()
     private val slotTokens = mapOf(

@@ -5,7 +5,8 @@ import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.potion.PotionColorSupport
 import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
@@ -16,7 +17,8 @@ class PotionColorApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.POTION_COLOR
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.POTION_COLOR
+    override val inputSpec = ApplyInputSpecs.POTION_COLOR
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue

@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.head
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.head.HeadProfileService
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
@@ -20,7 +21,8 @@ class HeadLicensedNameApplyHandler(
     private val mutationSupport: HeadTextureMutationSupport,
     private val reopenHeadTexturePage: (Player) -> Unit
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.HEAD_LICENSED_NAME
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.HEAD_LICENSED_NAME
+    override val inputSpec = ApplyInputSpecs.NAME
 
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue

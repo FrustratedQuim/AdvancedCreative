@@ -6,7 +6,7 @@ import com.ratger.acreative.menus.edit.equippable.EquippableSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Registry
@@ -20,7 +20,7 @@ class EquippableEditPage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private data class IconOption<T>(
         val value: T,
@@ -317,7 +317,7 @@ class EquippableEditPage(
                     refreshButtons(event.menu, player, session)
                 } else if (event.isLeft || event.isShiftLeft) {
                     support.transition(session) {
-                        requestApplyInput(player, session, EditorApplyKind.EQUIP_SOUND) { reopenPlayer, reopenSession ->
+                        requestApplyInput(player, session, EditorApplyActionKind.EQUIP_SOUND) { reopenPlayer, reopenSession ->
                             open(reopenPlayer, reopenSession)
                         }
                     }

@@ -1,6 +1,6 @@
 package com.ratger.acreative.menus.edit.pages.advanced
 
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.attributes.ItemAttributeMenuSupport
 import com.ratger.acreative.menus.edit.meta.MetaActionsApplier
 import com.ratger.acreative.menus.edit.meta.MaxStackSizeSupport
@@ -22,7 +22,7 @@ class AdvancedEditMainPage(
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
     private val openSpecialParameters: (Player, ItemEditSession) -> Unit,
     private val openTextAppearance: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private data class HiddenInfoOption(val label: String, val key: String)
 
@@ -107,7 +107,7 @@ class AdvancedEditMainPage(
             this
         }, action = {
             support.transition(session) {
-                requestApplyInput(player, session, EditorApplyKind.ITEM_ID) { reopenPlayer, reopenSession ->
+                requestApplyInput(player, session, EditorApplyActionKind.ITEM_ID) { reopenPlayer, reopenSession ->
                     open(reopenPlayer, reopenSession)
                 }
             }
@@ -160,7 +160,7 @@ class AdvancedEditMainPage(
                         action = { clickEvent ->
                             if (clickEvent.isLeft || clickEvent.isShiftLeft) {
                                 support.transition(session) {
-                                    requestApplyInput(player, session, EditorApplyKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
+                                    requestApplyInput(player, session, EditorApplyActionKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
                                         open(reopenPlayer, reopenSession)
                                     }
                                 }
@@ -171,7 +171,7 @@ class AdvancedEditMainPage(
                 }
             } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.ITEM_MODEL) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }
@@ -186,7 +186,7 @@ class AdvancedEditMainPage(
             ""
         ), buttonFactory.hideAdditionalTooltip(), action = {
             support.transition(session) {
-                requestApplyInput(player, session, EditorApplyKind.AMOUNT) { reopenPlayer, reopenSession ->
+                requestApplyInput(player, session, EditorApplyActionKind.AMOUNT) { reopenPlayer, reopenSession ->
                     open(reopenPlayer, reopenSession)
                 }
             }
@@ -228,7 +228,7 @@ class AdvancedEditMainPage(
                         action = { clickEvent ->
                             if (clickEvent.isLeft || clickEvent.isShiftLeft) {
                                 support.transition(session) {
-                                    requestApplyInput(player, session, EditorApplyKind.STACK_SIZE) { reopenPlayer, reopenSession ->
+                                    requestApplyInput(player, session, EditorApplyActionKind.STACK_SIZE) { reopenPlayer, reopenSession ->
                                         open(reopenPlayer, reopenSession)
                                     }
                                 }
@@ -239,7 +239,7 @@ class AdvancedEditMainPage(
                 }
             } else if (event.isLeft || event.isShiftLeft) {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.STACK_SIZE) { reopenPlayer, reopenSession ->
+                    requestApplyInput(player, session, EditorApplyActionKind.STACK_SIZE) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession)
                     }
                 }

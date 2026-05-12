@@ -1,17 +1,24 @@
 package com.ratger.acreative.menus.edit.apply.core
 
+import com.ratger.acreative.menus.apply.ApplyInputSpec
 import com.ratger.acreative.menus.edit.ItemEditSession
 import org.bukkit.entity.Player
 
+/**
+ * Domain item-editor action handler. Each handler exposes input metadata next to
+ * its mutation logic, so adding a new editor apply no longer requires updating a
+ * separate prompt/usage registry.
+ */
 interface EditorApplyHandler {
-    val kind: EditorApplyKind
+    val kind: EditorApplyActionKind
+    val inputSpec: ApplyInputSpec
 
     fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult
 
     fun suggestions(args: Array<out String>): List<String>
 }
 
-enum class EditorApplyKind {
+enum class EditorApplyActionKind {
     ITEM_ID,
     NAME_TEXT,
     LORE_TEXT,

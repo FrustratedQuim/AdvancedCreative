@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.menu.Menu
@@ -21,7 +21,7 @@ class DeathProtectionEditPage(
     private val openAdvancedPageTwo: (Player, ItemEditSession) -> Unit,
     private val openRemoveEffectsPage: (Player, ItemEditSession) -> Unit,
     private val openApplyEffectsPage: (Player, ItemEditSession) -> Unit,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val blackSlots = setOf(0, 8, 9, 17, 18, 26, 27, 35, 36, 44, 45, 53)
 
@@ -113,7 +113,7 @@ class DeathProtectionEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.DEATH_PROTECTION_SOUND, ::open)
+                    requestApplyInput(player, session, EditorApplyActionKind.DEATH_PROTECTION_SOUND, ::open)
                 }
             },
             onReset = { event ->
@@ -152,7 +152,7 @@ class DeathProtectionEditPage(
             },
             onApply = {
                 support.transition(session) {
-                    requestApplyInput(player, session, EditorApplyKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER, ::open)
+                    requestApplyInput(player, session, EditorApplyActionKind.DEATH_PROTECTION_RANDOM_TELEPORT_DIAMETER, ::open)
                 }
             },
             onReset = { event ->

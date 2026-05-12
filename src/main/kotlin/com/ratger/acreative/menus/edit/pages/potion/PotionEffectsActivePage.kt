@@ -4,7 +4,7 @@ import com.ratger.acreative.menus.edit.potion.PotionItemSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.effects.visual.VisualEffectContextKey
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
@@ -14,7 +14,7 @@ import ru.violence.coreapi.bukkit.api.menu.event.ClickEvent
 class PotionEffectsActivePage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openVisualEffectTypePage: (Player, ItemEditSession, VisualEffectContextKey, Int, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openPotionRoot: (Player, ItemEditSession) -> Unit
 ) {
@@ -41,7 +41,7 @@ class PotionEffectsActivePage(
                 name = "<!i><#00FF40>₪ Добавить эффект <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
-                    requestApplyInput(addPlayer, addSession, EditorApplyKind.POTION_EFFECT_ADD) { reopenPlayer, reopenSession ->
+                    requestApplyInput(addPlayer, addSession, EditorApplyActionKind.POTION_EFFECT_ADD) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex)
                     }
                 }

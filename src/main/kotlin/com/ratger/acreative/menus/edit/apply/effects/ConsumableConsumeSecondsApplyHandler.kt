@@ -5,7 +5,8 @@ import com.ratger.acreative.menus.edit.api.ItemAction
 import com.ratger.acreative.menus.edit.api.ItemContext
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.effects.ConsumableComponentSupport
 import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
 import com.ratger.acreative.menus.edit.validation.ValidationService
@@ -16,7 +17,8 @@ class ConsumableConsumeSecondsApplyHandler(
     private val validationService: ValidationService,
     private val targetResolver: EditTargetResolver
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.CONSUMABLE_CONSUME_SECONDS
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.CONSUMABLE_CONSUME_SECONDS
+    override val inputSpec = ApplyInputSpecs.CONSUME_SECONDS
 
     private val presets = listOf("0.1", "0.5", "1.5", "5")
 

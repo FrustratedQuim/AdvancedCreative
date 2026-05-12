@@ -5,7 +5,7 @@ import com.ratger.acreative.menus.edit.enchant.EnchantmentSupport
 import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
 import com.ratger.acreative.menus.edit.pages.common.PagedListPageBuilder
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -13,7 +13,7 @@ import org.bukkit.entity.Player
 class EnchantmentsActivePage(
     private val support: ItemEditMenuSupport,
     private val buttonFactory: MenuButtonFactory,
-    private val requestApplyInput: (Player, ItemEditSession, EditorApplyKind, (Player, ItemEditSession) -> Unit) -> Unit,
+    private val requestApplyInput: (Player, ItemEditSession, EditorApplyActionKind, (Player, ItemEditSession) -> Unit) -> Unit,
     private val openTypeSelectPage: (Player, ItemEditSession, Int, (Player, ItemEditSession) -> Unit) -> Unit
 ) {
     private val listBuilder = PagedListPageBuilder(support, buttonFactory)
@@ -39,7 +39,7 @@ class EnchantmentsActivePage(
                 name = "<!i><#00FF40>₪ Добавить зачарование <#7BFF00>[Команда]"
             ) { addPlayer, addSession, pageIndex ->
                 support.transition(addSession) {
-                    requestApplyInput(addPlayer, addSession, EditorApplyKind.ENCHANTMENT) { reopenPlayer, reopenSession ->
+                    requestApplyInput(addPlayer, addSession, EditorApplyActionKind.ENCHANTMENT) { reopenPlayer, reopenSession ->
                         open(reopenPlayer, reopenSession, pageIndex, back)
                     }
                 }

@@ -2,7 +2,8 @@ package com.ratger.acreative.menus.edit.apply.head
 
 import com.ratger.acreative.menus.edit.apply.core.ApplyExecutionResult
 import com.ratger.acreative.menus.edit.apply.core.EditorApplyHandler
-import com.ratger.acreative.menus.edit.apply.core.EditorApplyKind
+import com.ratger.acreative.menus.edit.apply.core.EditorApplyActionKind
+import com.ratger.acreative.menus.apply.ApplyInputSpecs
 import com.ratger.acreative.menus.edit.head.HeadTextureMutationSupport
 import com.ratger.acreative.menus.edit.head.HeadTextureSource
 import com.ratger.acreative.menus.edit.ItemEditSession
@@ -11,7 +12,8 @@ import org.bukkit.entity.Player
 class HeadOnlineNameApplyHandler(
     private val mutationSupport: HeadTextureMutationSupport
 ) : EditorApplyHandler {
-    override val kind: EditorApplyKind = EditorApplyKind.HEAD_ONLINE_NAME
+    override val kind: EditorApplyActionKind = EditorApplyActionKind.HEAD_ONLINE_NAME
+    override val inputSpec = ApplyInputSpecs.NAME
     override fun apply(player: Player, session: ItemEditSession, args: Array<out String>): ApplyExecutionResult {
         if (args.size != 1) return ApplyExecutionResult.InvalidValue
         return when (mutationSupport.applyFromOnlinePlayer(session.editableItem, args[0])) {
