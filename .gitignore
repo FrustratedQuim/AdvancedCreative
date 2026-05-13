@@ -38,3 +38,7 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### AI ###
+.clinerules
+.codex-temp
