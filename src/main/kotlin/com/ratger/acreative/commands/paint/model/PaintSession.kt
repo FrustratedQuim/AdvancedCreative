@@ -56,8 +56,12 @@ data class PaintSession(
     var previewSuppressionKey: String? = null,
     var paletteRotation: Int = 0,
     var appliedZoom: Int = 1,
-    var selectedZoom: Int = 1
+    var selectedZoom: Int = 1,
+    var previewStartPoint: PaintGridPoint? = null
 ) {
+    val ownerId: UUID
+        get() = playerId
+
     fun cellsSortedTopLeft(): List<PaintCanvasCell> {
         return canvasCells.values.sortedWith(compareBy<PaintCanvasCell> { it.point.y }.thenBy { it.point.x })
     }

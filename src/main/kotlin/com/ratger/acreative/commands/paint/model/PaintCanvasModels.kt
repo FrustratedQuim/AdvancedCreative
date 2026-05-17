@@ -50,11 +50,6 @@ data class PaintCanvasSize(
     }
 }
 
-data class PaintGridPoint(
-    val x: Int,
-    val y: Int
-)
-
 data class PaintCanvasBounds(
     val minX: Int,
     val maxX: Int,
