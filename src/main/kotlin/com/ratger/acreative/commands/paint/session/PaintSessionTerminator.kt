@@ -2,7 +2,7 @@ package com.ratger.acreative.commands.paint.session
 
 import com.ratger.acreative.commands.paint.artwork.PaintArtworkService
 import com.ratger.acreative.commands.paint.model.PaintSession
-import com.ratger.acreative.commands.paint.rendering.EntityVisualFactory
+import com.ratger.acreative.commands.paint.rendering.CanvasRenderer
 import com.ratger.acreative.commands.paint.rendering.PaintPreviewCoordinator
 import com.ratger.acreative.commands.paint.resize.PaintResizeService
 import com.ratger.acreative.core.FunctionHooker
@@ -17,7 +17,7 @@ class PaintSessionTerminator(
     private val sessionManager: PaintSessionManager,
     private val previewCoordinator: PaintPreviewCoordinator,
     private val resizeService: PaintResizeService,
-    private val entityVisualFactory: EntityVisualFactory,
+    private val canvasRenderer: CanvasRenderer,
     private val toolInventoryService: PaintToolInventoryService,
     private val artworkService: PaintArtworkService,
     private val applyCanvasZoom: (Player, PaintSession, Int) -> Boolean
@@ -34,7 +34,7 @@ class PaintSessionTerminator(
         hooker.tickScheduler.cancel(session.previewTaskId)
         previewCoordinator.restoreIfNeeded(player, session)
         resizeService.removeResizePreview(player, session)
-        session.canvasCells.values.forEach(entityVisualFactory::removeVisuals)
+        canvasRenderer.removeCanvas(session)
         toolInventoryService.clear(player)
         session.inventorySnapshot.restore(player)
         artworkService.giveResult(player, session)
@@ -50,7 +50,7 @@ class PaintSessionTerminator(
                     sessionManager.removeSession(playerId)
                     hooker.tickScheduler.cancel(session.viewerTaskId)
                     hooker.tickScheduler.cancel(session.previewTaskId)
-                    session.canvasCells.values.forEach(entityVisualFactory::removeVisuals)
+                    canvasRenderer.removeCanvas(session)
                     session.resizePreview?.frame?.remove()
                 }
             }

@@ -52,7 +52,7 @@ class PaintSessionStarter(
                 hooker.messageManager.sendChat(
                     player,
                     MessageKey.ERROR_PAINT_MAP_MISSING,
-                    mapOf("map" to "????? ????? ??? ???? ${player.world.name}")
+                    mapOf("map" to "карта мира ${player.world.name}")
                 )
                 return false
             }

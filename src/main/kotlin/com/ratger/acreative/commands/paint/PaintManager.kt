@@ -190,7 +190,7 @@ class PaintManager(private val hooker: FunctionHooker) {
         sessionManager = sessionManager,
         previewCoordinator = previewCoordinator,
         resizeService = resizeService,
-        entityVisualFactory = entityVisualFactory,
+        canvasRenderer = canvasRenderer,
         toolInventoryService = toolInventoryService,
         artworkService = artworkService,
         applyCanvasZoom = ::applyCanvasZoom
@@ -543,14 +543,8 @@ class PaintManager(private val hooker: FunctionHooker) {
     private fun resolveTool(item: BukkitItemStack?): PaintToolDefinition? = toolInventoryService.resolve(item)
 
     companion object {
-        private const val MAP_WIDTH = 128
-        private const val MAP_HEIGHT = 128
         private const val PAINT_USERS_PAGE_SIZE = 45
         private const val VIEWER_UPDATE_PERIOD_TICKS = 10L
-        private const val DIRECT_USE_DEBOUNCE_MILLIS = 65L
-        private const val DIRECT_USE_SUPPRESS_AFTER_DROP_MILLIS = 250L
-        private const val DROP_ACTION_DEBOUNCE_MILLIS = 65L
-        private const val PALETTE_ROTATION_DEBOUNCE_MILLIS = 100L
         private const val LOCATION_EPSILON = 0.01
         private const val MAX_CANVAS_SIDE = 4
         private const val MAX_SESSION_DISTANCE_BLOCKS = 200.0

@@ -40,8 +40,8 @@ class HitDetectionService {
         val horizontal = canvasBounds?.let { rawHorizontal.coerceIn(it.minHorizontal, it.maxHorizontal) } ?: rawHorizontal
         val vertical = canvasBounds?.let { rawVertical.coerceIn(it.minVertical, it.maxVertical) } ?: rawVertical
 
-        var cellX = floor(horizontal + renderAnchorPoint.x.toDouble() + 0.5).toInt()
-        var cellY = renderAnchorPoint.y - floor(vertical + 0.5).toInt()
+        var cellX = floor(horizontal + renderAnchorPoint.x.toDouble() + 0.5)
+        var cellY = renderAnchorPoint.y - floor(vertical + 0.5)
         if (canvasBounds != null) {
             cellX = cellX.coerceIn(canvasBounds.minCellX, canvasBounds.maxCellX)
             cellY = cellY.coerceIn(canvasBounds.minCellY, canvasBounds.maxCellY)
@@ -65,8 +65,8 @@ class HitDetectionService {
             return null
         }
 
-        val pixelX = floor(((localHorizontal + half) / FRAME_RENDER_SIZE) * MAP_WIDTH).toInt().coerceIn(0, MAP_WIDTH - 1)
-        val pixelY = floor(((half - localVertical) / FRAME_RENDER_SIZE) * MAP_HEIGHT).toInt().coerceIn(0, MAP_HEIGHT - 1)
+        val pixelX = floor(((localHorizontal + half) / FRAME_RENDER_SIZE) * MAP_WIDTH).coerceIn(0, MAP_WIDTH - 1)
+        val pixelY = floor(((half - localVertical) / FRAME_RENDER_SIZE) * MAP_HEIGHT).coerceIn(0, MAP_HEIGHT - 1)
         val renderedGlobalX = cellX * MAP_WIDTH + pixelX
         val renderedGlobalY = cellY * MAP_HEIGHT + pixelY
         val logicalGlobalX = floorDiv(renderedGlobalX, session.appliedZoom)

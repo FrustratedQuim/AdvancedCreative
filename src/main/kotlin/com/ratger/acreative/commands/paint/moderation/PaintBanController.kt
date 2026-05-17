@@ -34,7 +34,7 @@ class PaintBanController(
             plugin = hooker.plugin,
             parser = parser,
             sharedButtonFactory = hooker.menuService.buttonFactory(),
-            title = "? ?????????? ??????"
+            title = "▍ Забаненые игроки"
         )
     }
 

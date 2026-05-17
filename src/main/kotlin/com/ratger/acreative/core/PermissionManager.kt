@@ -8,6 +8,7 @@ class PermissionManager(private val hooker: FunctionHooker) {
     data class Role(
         val key: String,
         val display: String,
+        val permissionDisplay: String,
         val prefix: String,
         val rankPermissions: List<String>,
         val permissions: List<String>
@@ -41,6 +42,7 @@ class PermissionManager(private val hooker: FunctionHooker) {
                 roles[normalizedRoleKey] = Role(
                     key = normalizedRoleKey,
                     display = display,
+                    permissionDisplay = prefix.takeUnless(String::isBlank) ?: rawDisplay,
                     prefix = prefix,
                     rankPermissions = rankPermissions,
                     permissions = permissions
@@ -67,11 +69,11 @@ class PermissionManager(private val hooker: FunctionHooker) {
 
     fun sendPermissionDenied(player: Player, permissionOrCommand: String) {
         val role = getRequiredRole(permissionOrCommand)
-        if (role != null && !role.display.equals(NONE_DISPLAY, ignoreCase = true)) {
+        if (role != null && !role.usesGenericDeniedMessage()) {
             hooker.messageManager.sendChat(
                 player,
                 MessageKey.PERMISSION_REQUIRED,
-                variables = mapOf("role_display" to role.display)
+                variables = mapOf("role_display" to role.permissionDisplay)
             )
         } else {
             hooker.messageManager.sendChat(player, MessageKey.PERMISSION_UNKNOWN)
@@ -97,8 +99,15 @@ class PermissionManager(private val hooker: FunctionHooker) {
             .trim()
     }
 
+    private fun Role.usesGenericDeniedMessage(): Boolean {
+        return display.equals(NONE_DISPLAY, ignoreCase = true) ||
+            display.equals(PLAYER_DISPLAY, ignoreCase = true) ||
+            display.equals(MODER_DISPLAY, ignoreCase = true)
+    }
+
     private companion object {
         const val NONE_DISPLAY = "none"
+        const val PLAYER_DISPLAY = "Player"
+        const val MODER_DISPLAY = "Moder"
     }
 }
-

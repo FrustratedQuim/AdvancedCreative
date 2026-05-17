@@ -6,7 +6,6 @@ import com.ratger.acreative.commands.paint.model.PaintFrameDirection
 import com.ratger.acreative.commands.paint.model.PaintGridPoint
 import com.ratger.acreative.commands.paint.model.PaintSession
 import org.bukkit.Location
-import org.bukkit.entity.Player
 import java.util.UUID
 
 class CanvasCellFactory(
@@ -15,7 +14,6 @@ class CanvasCellFactory(
 ) {
 
     fun createCell(
-        player: Player,
         snapshot: MapDataExtractor.Snapshot,
         direction: PaintFrameDirection,
         viewerIds: Collection<UUID>,
@@ -41,13 +39,12 @@ class CanvasCellFactory(
 
     fun createCell(
         point: PaintGridPoint,
-        player: Player,
         snapshot: MapDataExtractor.Snapshot,
         direction: PaintFrameDirection,
         viewerIds: Collection<UUID>,
         location: Location
     ): PaintCanvasCell? {
-        val cell = createCell(player, snapshot, direction, viewerIds, location) ?: return null
+        val cell = createCell(snapshot, direction, viewerIds, location) ?: return null
         return PaintCanvasCell(
             point = point,
             mapId = cell.mapId,

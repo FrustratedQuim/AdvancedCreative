@@ -141,7 +141,6 @@ class CanvasRenderer(
 
         val cell = cellFactory.createCell(
             plan.point,
-            player,
             renderedSnapshot,
             session.frameDirection,
             session.viewers,
@@ -218,7 +217,27 @@ class CanvasRenderer(
         val point: PaintGridPoint,
         val location: Location,
         val colors: ByteArray
-    )
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as RenderedCellPlan
+
+            if (point != other.point) return false
+            if (location != other.location) return false
+            if (!colors.contentEquals(other.colors)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = point.hashCode()
+            result = 31 * result + location.hashCode()
+            result = 31 * result + colors.contentHashCode()
+            return result
+        }
+    }
 
     companion object {
         private const val MAP_WIDTH = 128
