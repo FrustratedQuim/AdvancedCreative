@@ -25,6 +25,7 @@ import com.ratger.acreative.commands.paint.rendering.CanvasCellFactory
 import com.ratger.acreative.commands.paint.rendering.CanvasRenderer
 import com.ratger.acreative.commands.paint.rendering.EntityVisualFactory
 import com.ratger.acreative.commands.paint.rendering.MapDataSender
+import com.ratger.acreative.commands.paint.rendering.PaintAudienceResolver
 import com.ratger.acreative.commands.paint.rendering.PaintCanvasPlacementService
 import com.ratger.acreative.commands.paint.rendering.PaintCanvasPixelProjector
 import com.ratger.acreative.commands.paint.rendering.PaintPreviewCoordinator
@@ -64,10 +65,11 @@ class PaintManager(private val hooker: FunctionHooker) {
         resolveCellLocation = canvasPlacementService::resolveCellLocation,
         isEmptyFrameSpace = { player, location -> isEmptyFrameSpace(player, location) }
     )
+    private val audienceResolver = PaintAudienceResolver(hooker)
     private val entityVisualFactory = EntityVisualFactory()
     private val viewerManager = ViewerManager(entityVisualFactory)
-    private val mapDataSender = MapDataSender(hooker)
-    private val viewerTracker = PaintViewerTracker(hooker, viewerManager, mapDataSender)
+    private val mapDataSender = MapDataSender(audienceResolver)
+    private val viewerTracker = PaintViewerTracker(audienceResolver, viewerManager, mapDataSender)
     private val canvasCellFactory = CanvasCellFactory(entityVisualFactory, mapDataSender)
     private val canvasRenderer = CanvasRenderer(canvasCellFactory, mapDataSender, ::isFrameSpaceAvailable)
     private val brushStrokeResolver = BrushStrokeResolver()
@@ -175,15 +177,13 @@ class PaintManager(private val hooker: FunctionHooker) {
     private val sessionStarter = PaintSessionStarter(
         hooker = hooker,
         sessionManager = sessionManager,
-        entityVisualFactory = entityVisualFactory,
+        canvasCellFactory = canvasCellFactory,
         toolInventoryService = toolInventoryService,
         canvasPlacementService = canvasPlacementService,
         isEmptyFrameSpace = ::isEmptyFrameSpace,
-        resolveVisibleViewers = viewerTracker::resolveVisibleViewers,
-        sendFullMapDataToViewers = mapDataSender::sendToViewers,
+        resolveVisibleViewerIds = audienceResolver::resolveViewerIds,
         startViewerTask = ::startViewerTask,
-        startPreviewTask = ::startPreviewTask,
-        scheduleDelayedMapDataRefresh = ::scheduleDelayedMapDataRefresh
+        startPreviewTask = ::startPreviewTask
     )
     private val sessionTerminator = PaintSessionTerminator(
         hooker = hooker,
@@ -520,24 +520,9 @@ class PaintManager(private val hooker: FunctionHooker) {
             previewCoordinator.markCanvasChanged(session)
             MenuSoundSupport.itemFrameRemoveItem(player)
         }
-        patches.forEach { patch ->
-            mapDataSender.sendPatchesToViewers(session.viewers, listOf(patch))
-        }
+        mapDataSender.sendPatchesToSessionViewers(session, patches)
         previewCoordinator.clearStrokeState(session)
         previewCoordinator.clearHistoryState(session)
-    }
-
-    private fun scheduleDelayedMapDataRefresh(playerId: UUID, mapId: Int, viewerIds: Set<UUID>) {
-        hooker.tickScheduler.runLater(1L) {
-            val session = sessionManager.getSession(playerId) ?: return@runLater
-            if (session.canvasCells.values.none { it.mapId == mapId }) return@runLater
-            val snapshot = MapDataExtractor.extract(mapId) ?: return@runLater
-            viewerIds.forEach { viewerId ->
-                Bukkit.getPlayer(viewerId)?.let { viewer ->
-                    mapDataSender.send(viewer, snapshot)
-                }
-            }
-        }
     }
 
     private fun resolveTool(item: BukkitItemStack?): PaintToolDefinition? = toolInventoryService.resolve(item)

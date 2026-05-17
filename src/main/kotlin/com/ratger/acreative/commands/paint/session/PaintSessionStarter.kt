@@ -6,7 +6,7 @@ import com.ratger.acreative.commands.paint.model.PaintCanvasSize
 import com.ratger.acreative.commands.paint.model.PaintGridPoint
 import com.ratger.acreative.commands.paint.model.PaintInventorySnapshot
 import com.ratger.acreative.commands.paint.model.PaintSession
-import com.ratger.acreative.commands.paint.rendering.EntityVisualFactory
+import com.ratger.acreative.commands.paint.rendering.CanvasCellFactory
 import com.ratger.acreative.commands.paint.rendering.PaintCanvasPlacementService
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
@@ -21,15 +21,13 @@ import java.util.UUID
 class PaintSessionStarter(
     private val hooker: FunctionHooker,
     private val sessionManager: PaintSessionManager,
-    private val entityVisualFactory: EntityVisualFactory,
+    private val canvasCellFactory: CanvasCellFactory,
     private val toolInventoryService: PaintToolInventoryService,
     private val canvasPlacementService: PaintCanvasPlacementService,
     private val isEmptyFrameSpace: (Player, Location) -> Boolean,
-    private val resolveVisibleViewers: (Player, Location) -> List<Player>,
-    private val sendFullMapDataToViewers: (Collection<UUID>, MapDataExtractor.Snapshot) -> Unit,
+    private val resolveVisibleViewerIds: (Player, Collection<Location>) -> MutableSet<UUID>,
     private val startViewerTask: (UUID) -> Int,
-    private val startPreviewTask: (UUID) -> Int,
-    private val scheduleDelayedMapDataRefresh: (UUID, Int, Set<UUID>) -> Unit
+    private val startPreviewTask: (UUID) -> Int
 ) {
 
     fun startPainting(player: Player, size: PaintCanvasSize): Boolean {
@@ -60,22 +58,24 @@ class PaintSessionStarter(
         }
 
         val inventorySnapshot = PaintInventorySnapshot.capture(player)
-        val visibleViewers = resolveVisibleViewers(player, anchorLocation).mapTo(mutableSetOf()) { it.uniqueId }
-        mapSnapshots.values.forEach { snapshot ->
-            sendFullMapDataToViewers(visibleViewers, snapshot)
-        }
+        val visibleViewers = resolveVisibleViewerIds(player, frameLocations.values)
 
         val canvasCells = linkedMapOf<PaintGridPoint, PaintCanvasCell>()
         val logicalCells = linkedMapOf<PaintGridPoint, ByteArray>()
         mapSnapshots.forEach { (point, snapshot) ->
             val location = frameLocations.getValue(point)
-            val visuals = entityVisualFactory.createCanvasCellVisuals(snapshot.mapId, frameDirection, visibleViewers)
-            if (!entityVisualFactory.spawnVisuals(visuals, location)) {
-                canvasCells.values.forEach(entityVisualFactory::removeVisuals)
-                entityVisualFactory.removeVisuals(visuals)
+            val cellViewerIds = resolveVisibleViewerIds(player, listOf(location))
+            val canvasCell = canvasCellFactory.createCell(
+                point = point,
+                snapshot = snapshot,
+                direction = frameDirection,
+                viewerIds = cellViewerIds,
+                location = location
+            ) ?: run {
+                canvasCells.values.forEach(canvasCellFactory::removeCell)
                 return false
             }
-            canvasCells[point] = PaintCanvasCell(point, snapshot.mapId, visuals.frame, visuals.backPanel, location)
+            canvasCells[point] = canvasCell
             logicalCells[point] = snapshot.colors.copyOf()
         }
 
@@ -101,10 +101,6 @@ class PaintSessionStarter(
 
         session.viewerTaskId = startViewerTask(player.uniqueId)
         session.previewTaskId = startPreviewTask(player.uniqueId)
-
-        mapSnapshots.values.forEach { snapshot ->
-            scheduleDelayedMapDataRefresh(session.playerId, snapshot.mapId, session.viewers.toSet())
-        }
         return true
     }
 }

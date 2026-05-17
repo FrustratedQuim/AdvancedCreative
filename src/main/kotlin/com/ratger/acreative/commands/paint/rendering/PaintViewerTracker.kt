@@ -2,19 +2,21 @@ package com.ratger.acreative.commands.paint.rendering
 
 import com.ratger.acreative.commands.paint.map.MapDataExtractor
 import com.ratger.acreative.commands.paint.model.PaintSession
-import com.ratger.acreative.core.FunctionHooker
-import org.bukkit.Bukkit
-import org.bukkit.Location
 import org.bukkit.entity.Player
 
 class PaintViewerTracker(
-    private val hooker: FunctionHooker,
+    private val audienceResolver: PaintAudienceResolver,
     private val viewerManager: ViewerManager,
     private val mapDataSender: MapDataSender
 ) {
 
     fun refreshViewers(owner: Player, session: PaintSession) {
-        val desiredViewers = resolveVisibleViewers(owner, session.anchorLocation).associateBy { it.uniqueId }
+        val viewersByCell = session.canvasCells.values.associateWith { cell ->
+            audienceResolver.resolveVisiblePlayers(owner, listOf(cell.location))
+        }
+        val desiredViewers = viewersByCell.values
+            .flatten()
+            .associateBy { it.uniqueId }
         val currentViewers = session.viewers.toSet()
 
         currentViewers
@@ -22,34 +24,24 @@ class PaintViewerTracker(
             .forEach { viewerId -> viewerManager.removeViewer(session, viewerId) }
 
         val enteringViewers = desiredViewers.values.filter { it.uniqueId !in currentViewers }
+        val enteringViewerIds = enteringViewers.mapTo(linkedSetOf()) { it.uniqueId }
         enteringViewers.forEach { viewer ->
-            session.canvasCells.values.forEach { cell ->
-                MapDataExtractor.extract(cell.mapId)?.let { snapshot ->
-                    mapDataSender.send(viewer, snapshot)
-                }
+            val visibleCells = viewersByCell
+                .filterValues { viewers -> viewers.any { visibleViewer -> visibleViewer.uniqueId == viewer.uniqueId } }
+                .keys
+            viewerManager.addViewer(session, viewer.uniqueId, visibleCells)
+        }
+        if (enteringViewers.isEmpty()) return
+
+        viewersByCell.forEach { (cell, viewers) ->
+            val viewersForCell = viewers.filter { viewer ->
+                viewer.uniqueId in enteringViewerIds
+            }
+            if (viewersForCell.isEmpty()) return@forEach
+
+            MapDataExtractor.extract(cell.mapId)?.let { snapshot ->
+                mapDataSender.send(viewersForCell, snapshot)
             }
         }
-        enteringViewers.forEach { viewer -> viewerManager.addViewer(session, viewer.uniqueId) }
-    }
-
-    fun resolveVisibleViewers(owner: Player, frameLocation: Location): List<Player> {
-        val visibilityRadius = resolveVisibilityRadius()
-        return frameLocation.world?.players
-            ?.filter { viewer ->
-                viewer.isOnline &&
-                    viewer.world == owner.world &&
-                    viewer.location.distanceSquared(frameLocation) <= visibilityRadius * visibilityRadius &&
-                    !hooker.utils.isHiddenFromPlayer(viewer, owner)
-            }
-            ?: emptyList()
-    }
-
-    private fun resolveVisibilityRadius(): Double {
-        return (Bukkit.getViewDistance() * CHUNK_SIZE).coerceAtLeast(MIN_VISIBILITY_RADIUS)
-    }
-
-    private companion object {
-        private const val CHUNK_SIZE = 16.0
-        private const val MIN_VISIBILITY_RADIUS = 32.0
     }
 }

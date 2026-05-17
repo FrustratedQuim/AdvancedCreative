@@ -1,6 +1,5 @@
 package com.ratger.acreative.commands.paint.tools
 
-import com.ratger.acreative.commands.paint.map.MapDataExtractor
 import com.ratger.acreative.commands.paint.model.PaintHistoryEntry
 import com.ratger.acreative.commands.paint.model.PaintLineAnchor
 import com.ratger.acreative.commands.paint.model.PaintLogicalPixelChange
@@ -46,7 +45,7 @@ class HistoryManager(
         if (pixelChanges.isNotEmpty() || patches.isNotEmpty()) {
             previewCoordinator.markCanvasChanged(session)
         }
-        sendPatchesToViewers(session, patches)
+        mapDataSender.sendPatchesToSessionViewers(session, patches)
     }
 
     fun undoLastAction(player: Player, session: PaintSession) {
@@ -67,7 +66,7 @@ class HistoryManager(
         if (revertedChanges.isNotEmpty() || patches.isNotEmpty()) {
             previewCoordinator.markCanvasChanged(session)
         }
-        sendPatchesToViewers(session, patches)
+        mapDataSender.sendPatchesToSessionViewers(session, patches)
         previewCoordinator.clearStrokeState(session)
     }
 
@@ -84,14 +83,6 @@ class HistoryManager(
     ): Long {
         val lineAnchorBytes = if (hasLineAnchorChange) HISTORY_LINE_ANCHOR_ESTIMATE_BYTES else 0L
         return HISTORY_ENTRY_BASE_BYTES + lineAnchorBytes + changeCount * HISTORY_PIXEL_ESTIMATE_BYTES
-    }
-
-    private fun sendPatchesToViewers(session: PaintSession, patches: List<MapDataExtractor.Patch>) {
-        session.viewers.forEach { viewerId ->
-            Bukkit.getPlayer(viewerId)?.let { viewer ->
-                patches.forEach { patch -> mapDataSender.send(viewer, patch) }
-            }
-        }
     }
 
     private companion object {

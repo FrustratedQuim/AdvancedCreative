@@ -63,7 +63,7 @@ class CanvasCellFactory(
         entityVisualFactory.teleportCell(cell, newLocation)
 
         MapDataExtractor.replaceColors(cell.mapId, newColors)?.let { snapshot ->
-            mapDataSender.sendToViewers(session.viewers, snapshot)
+            mapDataSender.sendToSessionViewers(session, snapshot, newLocation)
         }
 
         return PaintCanvasCell(

@@ -138,16 +138,16 @@ class CanvasRenderer(
     ): PaintCanvasCell? {
         val snapshot = MapDataExtractor.createFilled(player.world, BACKGROUND_COLOR_ID) ?: return null
         val renderedSnapshot = MapDataExtractor.replaceColors(snapshot.mapId, plan.colors) ?: return null
+        val viewerIds = mapDataSender.resolveSessionViewerIds(session, plan.location)
 
         val cell = cellFactory.createCell(
             plan.point,
             renderedSnapshot,
             session.frameDirection,
-            session.viewers,
+            viewerIds,
             plan.location
         ) ?: return null
 
-        mapDataSender.sendToViewers(session.viewers, renderedSnapshot)
         return cell
     }
 
