@@ -2,7 +2,6 @@ package com.ratger.acreative.core
 
 import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.YamlConfiguration
-import org.bukkit.entity.EntityType
 import java.io.File
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets.UTF_8
@@ -46,12 +45,6 @@ class ConfigManager(private val hooker: FunctionHooker) {
 
     fun save() {
         managedFiles.values.forEach { managed -> managed.yaml.save(managed.file) }
-    }
-
-    fun getBlockedDisguises(): Set<EntityType> {
-        return config.getStringList("blocked-disguises")
-            .mapNotNull { runCatching { EntityType.valueOf(it) }.getOrNull() }
-            .toSet()
     }
 
     fun getNumericId(materialName: String): String {
@@ -205,7 +198,7 @@ class ConfigManager(private val hooker: FunctionHooker) {
 
         private val MAIN_CONFIG_SPEC = ConfigFileSpec(
             resourcePath = "config.yml",
-            rootKeys = setOf("cooldowns", "systems", "blocked-disguises")
+            rootKeys = setOf("cooldowns", "blocked-disguises", "systems")
         )
 
         private val CONFIG_FILES = listOf(

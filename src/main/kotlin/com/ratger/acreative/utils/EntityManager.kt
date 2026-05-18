@@ -38,7 +38,7 @@ class EntityManager(
 
     fun createArmorStand(location: Location, yaw: Float): ArmorStand {
         hooker.actionLogger.info(
-            "Spawning armor stand at ${hooker.actionLogger.locationRef(location)} yaw=${yaw.toString()}"
+            "Spawning armor stand at ${hooker.actionLogger.locationRef(location)} yaw=$yaw"
         )
         return location.world.spawn(location, ArmorStand::class.java) { stand ->
             stand.setGravity(false)
@@ -58,7 +58,7 @@ class EntityManager(
 
     fun createPlayerNPC(player: Player, location: Location, yaw: Float, isGlowing: Boolean): Triple<WrapperEntity, List<Equipment>, String> {
         hooker.actionLogger.info(
-            "Creating player NPC for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} yaw=${yaw.toString()} glowing=$isGlowing"
+            "Creating player NPC for ${hooker.actionLogger.playerRef(player)} at ${hooker.actionLogger.locationRef(location)} yaw=$yaw glowing=$isGlowing"
         )
 
         val npcUUID = UUID.randomUUID()

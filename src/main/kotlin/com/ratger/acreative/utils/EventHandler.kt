@@ -447,6 +447,10 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     fun onPlayerSwapHandItems(event: PlayerSwapHandItemsEvent) {
         if (hooker.paintManager.isPainting(event.player)) {
             event.isCancelled = true
+            return
+        }
+        if (utils.isDisguised(event.player)) {
+            event.isCancelled = true
         }
     }
 

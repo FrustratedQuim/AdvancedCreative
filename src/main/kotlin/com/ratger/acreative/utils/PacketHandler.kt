@@ -58,7 +58,7 @@ class PacketHandler(private val hooker: FunctionHooker) {
                 if (handledByPaint) return@runNow
                 val disguised = hooker.disguiseManager.disguisedPlayers.containsKey(player)
                 if (!disguised) return@runNow
-                hooker.disguiseManager.sendSwingAnimation(player)
+                hooker.disguiseManager.sendAttackAnimation(player)
             }
             pendingPaintAnimationTasks[player.uniqueId] = taskId
             return
@@ -66,7 +66,7 @@ class PacketHandler(private val hooker: FunctionHooker) {
         if (paintManager?.handleSwing(player) == true) return
         if (!hooker.disguiseManager.disguisedPlayers.containsKey(player)) return
         hooker.tickScheduler.runNow {
-            hooker.disguiseManager.sendSwingAnimation(player)
+            hooker.disguiseManager.sendAttackAnimation(player)
         }
     }
 

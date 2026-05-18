@@ -14,10 +14,10 @@ import com.ratger.acreative.core.MessageChannel
 import com.ratger.acreative.core.MessageKey
 import com.ratger.acreative.utils.PlayerStateManager.PlayerStateType
 import com.ratger.acreative.utils.PacketItemConversionSupport
+import com.ratger.acreative.utils.PlayerDisplayNameResolver
 import me.tofaa.entitylib.meta.types.PlayerMeta
 import me.tofaa.entitylib.wrapper.WrapperEntity
 import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.JoinConfiguration
 import net.minecraft.network.protocol.game.ClientboundSetPlayerTeamPacket
 import net.minecraft.world.scores.PlayerTeam
 import net.minecraft.world.scores.Scoreboard
@@ -314,15 +314,7 @@ class LayManager(private val hooker: FunctionHooker) {
     }
 
     private fun getDisplayName(player: Player): Component {
-        val team = player.scoreboard.getEntryTeam(player.name)
-        return if (team != null) {
-            val prefix = team.prefix()
-            val suffix = team.suffix()
-            val name = Component.text(player.name)
-            Component.join(JoinConfiguration.noSeparators(), prefix, name, suffix)
-        } else {
-            Component.text(player.name)
-        }
+        return PlayerDisplayNameResolver.resolve(player)
     }
 
     fun startArmorStandChecker() {

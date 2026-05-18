@@ -14,6 +14,13 @@ cooldowns: # В миллисекундах
   piss:       30000
   hideState:  1800000 # 30 минут
 
+blocked-disguises:
+  - interaction
+  - unknown
+  - lightning_bolt
+  - marker
+  - experience_orb
+
 systems:
   logger: false
   edit: true
@@ -22,63 +29,3 @@ systems:
   decorationheads: true
   plot-edit: true
   plot-massclaim: true
-
-blocked-disguises:
-  - ARROW
-  - BLOCK_DISPLAY
-  - EGG
-  - ENDER_PEARL
-  - EVOKER_FANGS
-  - EXPERIENCE_BOTTLE
-  - EXPERIENCE_ORB
-  - FALLING_BLOCK
-  - FIREWORK_ROCKET
-  - FISHING_BOBBER
-  - INTERACTION
-  - ITEM
-  - ITEM_DISPLAY
-  - LIGHTNING_BOLT
-  - LLAMA_SPIT
-  - MARKER
-  - PAINTING
-  - POTION
-  - SNOWBALL
-  - SPECTRAL_ARROW
-  - TEXT_DISPLAY
-  - TNT
-  - TRIDENT
-  - UNKNOWN
-  - BOAT
-  - OAK_BOAT
-  - OAK_CHEST_BOAT
-  - ACACIA_BOAT
-  - ACACIA_CHEST_BOAT
-  - SPRUCE_BOAT
-  - SPRUCE_CHEST_BOAT
-  - BIRCH_BOAT
-  - BIRCH_CHEST_BOAT
-  - JUNGLE_BOAT
-  - JUNGLE_CHEST_BOAT
-  - DARK_OAK_BOAT
-  - DARK_OAK_CHEST_BOAT
-  - BAMBOO_RAFT
-  - BAMBOO_CHEST_RAFT
-  - MANGROVE_BOAT
-  - MANGROVE_CHEST_BOAT
-  - CHERRY_BOAT
-  - CHERRY_CHEST_BOAT
-  - PALE_OAK_BOAT
-  - PALE_OAK_CHEST_BOAT
-  - MINECART
-  - CHEST_MINECART
-  - FURNACE_MINECART
-  - COMMAND_BLOCK_MINECART
-  - TNT_MINECART
-  - HOPPER_MINECART
-  - SPAWNER_MINECART
-  - BREEZE_WIND_CHARGE
-  - WIND_CHARGE
-  - WITHER_SKULL
-  - SMALL_FIREBALL
-  - SHULKER_BULLET
-  - DRAGON_FIREBALL

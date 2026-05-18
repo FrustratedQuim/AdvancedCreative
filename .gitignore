@@ -40,6 +40,7 @@ bin/
 .DS_Store
 
 ### AI ###
-.clinerules
-.codex-temp
-.kilo
+.clinerules/
+.codex-temp/
+.kilo/
+.codex_tmp/

@@ -87,7 +87,7 @@ class AhelpPageService(
             entry("/glow", "Переключить свечение", PluginCommandType.GLOW)
         ),
         "acreative.disguise" to listOf(
-            entry("/dis <существо> ", "Превратиться в существо", PluginCommandType.DISGUISE)
+            entry("/dis <существо>", "Превратиться в существо", PluginCommandType.DISGUISE)
         ),
         "acreative.sithead" to listOf(
             entry("/sithead toggle", "Переключить посадку на голову по клику", PluginCommandType.SITHEAD)
@@ -103,6 +103,12 @@ class AhelpPageService(
         ),
         "acreative.disguise.nick" to listOf(
             entry("/dis <существо> [-withnick]", "Скрыть ник в облике", PluginCommandType.DISGUISE)
+        ),
+        "acreative.disguise.player" to listOf(
+            entry("/dis player <игрок>", "Превратиться в онлайн-игрока", PluginCommandType.DISGUISE)
+        ),
+        "acreative.disguise.text" to listOf(
+            entry("/dis text_display <текст>", "Превратиться в текст-дисплей", PluginCommandType.DISGUISE)
         ),
         "acreative.acreative" to listOf(
             entry("/acreative", "Служебные функции", PluginCommandType.ACREATIVE)

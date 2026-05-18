@@ -59,7 +59,7 @@ commands:
     usage: /piss
   disguise:
     description: Turns the player into a mob
-    usage: /disguise <type>
+    usage: /disguise <type|player> [nick] [flags]
     aliases: [dd, dis]
   effects:
     description: Applies an effect to player
@@ -189,6 +189,12 @@ permissions:
     default: op
   acreative.disguise.nick:
     description: Allows using /disguise with nickname visibility flags
+    default: op
+  acreative.disguise.player:
+    description: Allows using /disguise player <online player>
+    default: op
+  acreative.disguise.text:
+    description: Allows using /disguise text_display <text>
     default: op
   acreative.effects:
     description: Allows using /effects

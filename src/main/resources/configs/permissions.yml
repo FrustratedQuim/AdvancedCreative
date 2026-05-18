@@ -78,6 +78,8 @@
       - "acreative.decorationbanners.storage_bypass"
       - "acreative.decorationbanners.post_bypass"
       - "acreative.decorationbanners.moderation"
+      - "acreative.disguise.player"
+      - "acreative.disguise.text"
       - "acreative.grab"
       - "acreative.slap"
       - "acreative.jar"

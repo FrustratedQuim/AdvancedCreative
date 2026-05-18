@@ -104,6 +104,14 @@ class PlayerStateManager(
         return inventorySessions[player.uniqueId]?.getCurrentMainHandItem()
     }
 
+    fun getSavedOffHandItem(player: Player): ItemStack? {
+        return inventorySessions[player.uniqueId]?.getOffHandItem()
+    }
+
+    fun getSavedArmorContents(player: Player): List<ItemStack?> {
+        return inventorySessions[player.uniqueId]?.getArmorContents() ?: emptyList()
+    }
+
     fun handleItemSwitch(player: Player, newSlot: Int) {
         inventorySessions[player.uniqueId]?.handleSlotSwitch(player, newSlot)
 
@@ -178,6 +186,14 @@ class PlayerStateManager(
 
         fun getCurrentMainHandItem(): ItemStack? {
             return hotbarItems[currentHotbarSlot]?.clone()
+        }
+
+        fun getOffHandItem(): ItemStack? {
+            return snapshot.offHand?.clone()
+        }
+
+        fun getArmorContents(): List<ItemStack?> {
+            return snapshot.armor.map { it?.clone() }
         }
 
         fun handleSlotSwitch(player: Player, newSlot: Int) {
