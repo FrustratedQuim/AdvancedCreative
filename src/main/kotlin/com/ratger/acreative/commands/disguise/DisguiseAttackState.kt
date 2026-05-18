@@ -22,6 +22,12 @@ data class DisguiseAttackContext(
     val targetEntityId: Int?
 )
 
+enum class DisguiseAttackResetMode {
+    NONE,
+    SERVER_ONLY,
+    SERVER_AND_CLIENT
+}
+
 sealed interface DisguiseAttackStatePresentation {
     data class Metadata(val entries: List<EntityData<*>>) : DisguiseAttackStatePresentation
     data class EntityStatus(val status: Int) : DisguiseAttackStatePresentation
@@ -29,6 +35,7 @@ sealed interface DisguiseAttackStatePresentation {
 
 sealed class DisguiseAttackState(
     open val durationTicks: Long,
+    open val resetMode: DisguiseAttackResetMode = DisguiseAttackResetMode.SERVER_AND_CLIENT,
     open val isToggle: Boolean = false,
     open val reapplyAfterPositionSyncWhenActive: Boolean = false,
     open val reappliesContinuouslyWhenActive: Boolean = false
@@ -44,7 +51,10 @@ sealed class DisguiseAttackState(
         return DisguiseAttackStatePresentation.Metadata(metadata)
     }
 
-    data object None : DisguiseAttackState(0L) {
+    data object None : DisguiseAttackState(
+        durationTicks = 0L,
+        resetMode = DisguiseAttackResetMode.NONE
+    ) {
         override fun apply(entity: WrapperEntity, context: DisguiseAttackContext): Boolean = false
         override fun clear(entity: WrapperEntity): Boolean = false
     }
@@ -221,8 +231,8 @@ sealed class DisguiseAttackState(
     }
 
     data object PandaRolling : DisguiseAttackState(
-        durationTicks = PANDA_ROLL_TICKS,
-        reappliesContinuouslyWhenActive = true
+        durationTicks = PANDA_NATURAL_ROLL_TICKS,
+        resetMode = DisguiseAttackResetMode.SERVER_ONLY
     ) {
         override fun apply(entity: WrapperEntity, context: DisguiseAttackContext): Boolean {
             val meta = entity.entityMeta as? PandaMeta ?: return false
@@ -265,14 +275,15 @@ sealed class DisguiseAttackState(
         }
     }
 
-    data object WolfShake : DisguiseAttackState(WOLF_SHAKE_TICKS) {
+    data object WolfShake : DisguiseAttackState(
+        durationTicks = 0L,
+        resetMode = DisguiseAttackResetMode.NONE
+    ) {
         override fun apply(entity: WrapperEntity, context: DisguiseAttackContext): Boolean = true
-        override fun clear(entity: WrapperEntity): Boolean = true
+        override fun clear(entity: WrapperEntity): Boolean = false
 
         override fun presentation(entity: WrapperEntity, active: Boolean): DisguiseAttackStatePresentation {
-            return DisguiseAttackStatePresentation.EntityStatus(
-                if (active) WOLF_START_SHAKE_STATUS else WOLF_STOP_SHAKE_STATUS
-            )
+            return DisguiseAttackStatePresentation.EntityStatus(WOLF_START_SHAKE_STATUS)
         }
     }
 
@@ -323,29 +334,33 @@ sealed class DisguiseAttackState(
     data object SnowGolemPumpkin : DisguiseAttackState(0L, isToggle = true) {
         override fun apply(entity: WrapperEntity, context: DisguiseAttackContext): Boolean {
             val meta = entity.entityMeta as? SnowGolemMeta ?: return false
-            if (meta.isHasPumpkinHat()) return false
-            meta.setHasPumpkinHat(true)
+            if (meta.isHasPumpkinHat) return false
+            meta.isHasPumpkinHat = true
             return true
         }
 
         override fun clear(entity: WrapperEntity): Boolean {
             val meta = entity.entityMeta as? SnowGolemMeta ?: return false
-            if (!meta.isHasPumpkinHat()) return false
-            meta.setHasPumpkinHat(false)
+            if (!meta.isHasPumpkinHat) return false
+            meta.isHasPumpkinHat = false
             return true
         }
 
         override fun isActive(entity: WrapperEntity): Boolean {
             val meta = entity.entityMeta as? SnowGolemMeta ?: return false
-            return meta.isHasPumpkinHat()
+            return meta.isHasPumpkinHat
         }
     }
 
     companion object {
         private const val HALF_SECOND_TICKS = 10L
+        // Sniffer sniffing is driven by synced state rather than a one-shot entity event,
+        // so we still transition it back to idling after a short presentation window.
         private const val SNIFFER_SNIFF_TICKS = 40L
-        private const val PANDA_ROLL_TICKS = 32L
-        private const val WOLF_SHAKE_TICKS = 30L
+        // Panda clears its own rolling flag in vanilla after the animation finishes,
+        // but we still reset the wrapper state locally so repeated triggers can resend
+        // a fresh rolling snapshot without forcing a client-side cancel packet.
+        private const val PANDA_NATURAL_ROLL_TICKS = 32L
 
         // Raw metadata fallback for 1.21.4 spellcaster casting-state; EntityLib exposes the meta
         // class, but not the tracked-byte setter itself.
@@ -358,8 +373,8 @@ sealed class DisguiseAttackState(
 
         private const val ACTIVE_BEE_ANGER_TICKS = Int.MAX_VALUE
 
-        // Vanilla wolf client animation uses status 8 to start shaking and 56 to cancel/reset it.
+        // Vanilla wolf client animation uses status 8 to start shaking; the animation finishes
+        // on the client without a follow-up cancel packet.
         private const val WOLF_START_SHAKE_STATUS = 8
-        private const val WOLF_STOP_SHAKE_STATUS = 56
     }
 }

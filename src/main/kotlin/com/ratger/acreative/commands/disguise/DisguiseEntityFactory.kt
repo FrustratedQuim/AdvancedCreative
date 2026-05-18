@@ -31,6 +31,7 @@ import me.tofaa.entitylib.meta.other.InteractionMeta
 import me.tofaa.entitylib.meta.other.ItemFrameMeta
 import me.tofaa.entitylib.meta.other.PaintingMeta
 import me.tofaa.entitylib.meta.other.PrimedTntMeta
+import me.tofaa.entitylib.meta.mobs.cuboid.SlimeMeta
 import me.tofaa.entitylib.meta.projectile.ItemEntityMeta
 import me.tofaa.entitylib.meta.types.LivingEntityMeta
 import me.tofaa.entitylib.meta.types.PlayerMeta
@@ -81,7 +82,8 @@ class DisguiseEntityFactory {
         owner: Player,
         type: EntityType,
         preferredMainHand: ItemStack?,
-        textDisplayText: Component? = null
+        textDisplayText: Component? = null,
+        slimeSize: Int? = null
     ): CreatedDisguise? {
         val packetType = type.toPacketEventsType() ?: return null
         val entity = createWrapper(packetType)
@@ -93,7 +95,8 @@ class DisguiseEntityFactory {
             visibleText = PlayerDisplayNameResolver.resolve(owner),
             type = type,
             renderProfile = renderProfile,
-            textDisplayText = textDisplayText
+            textDisplayText = textDisplayText,
+            slimeSize = slimeSize
         )
 
         return CreatedDisguise(
@@ -183,7 +186,8 @@ class DisguiseEntityFactory {
         visibleText: Component,
         type: EntityType,
         renderProfile: DisguiseRenderProfile,
-        textDisplayText: Component? = null
+        textDisplayText: Component? = null,
+        slimeSize: Int? = null
     ) {
         val meta = entity.entityMeta
         val item = resolveMirroredItem(type, preferredMainHand)
@@ -195,6 +199,7 @@ class DisguiseEntityFactory {
         when (meta) {
             is ItemEntityMeta -> meta.item = item
             is ItemDisplayMeta -> meta.item = item
+            is SlimeMeta -> slimeSize?.let(meta::setSize)
             is ItemFrameMeta -> {
                 meta.item = item
                 meta.orientation = ItemFrameMeta.Orientation.SOUTH
@@ -209,7 +214,7 @@ class DisguiseEntityFactory {
             is PaintingMeta -> {
                 meta.direction = Direction.SOUTH
                 randomEnumConstant<PaintingMeta.Type>()?.let { chosenType ->
-                    meta.setType(chosenType)
+                    meta.type = chosenType
                     applyPaintingVariant(meta, chosenType)
                 }
             }
@@ -244,7 +249,7 @@ class DisguiseEntityFactory {
         if (byEnumName != null) {
             byEnumName
         } else {
-            val legacyName = type.getName().removePrefix("minecraft:")
+            val legacyName = type.name.removePrefix("minecraft:")
             PaintingVariants.getByName(legacyName)
                 ?: PaintingVariants.getByName("minecraft:$legacyName")
         }
