@@ -106,7 +106,7 @@ commands:
     usage: /apply <value|cancel>
   acreative:
     description: Admin management command
-    usage: /acreative <memory|toggle <system>|status toggle|heads restore_from_dat|heads restore_from_api>
+    usage: /acreative <memory|toggle <system>|status|heads <restore_from_dat|restore_from_api>|npc ...>
 
 permissions:
   acreative.ahelp:
@@ -236,7 +236,7 @@ permissions:
   acreative.decorationheads:
     description: Allows using /decorationheads
     default: op
-  acreative.acreative:
+  acreative.admin:
     description: Allows using /acreative
     default: op
 

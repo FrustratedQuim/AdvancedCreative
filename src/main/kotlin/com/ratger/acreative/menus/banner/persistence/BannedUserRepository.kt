@@ -9,10 +9,12 @@ import java.util.UUID
 
 class BannedUserRepository(
     database: AdvancedCreativeDatabase,
+    identityService: com.ratger.acreative.core.CoreUserIdentityService,
     pageSize: Int
 ) {
     private val repository = UserBanRepository(
         database = database,
+        identityService = identityService,
         pageSize = pageSize,
         tableName = TABLE_NAME
     )
@@ -21,7 +23,11 @@ class BannedUserRepository(
 
     fun isBanned(playerUuid: UUID): Boolean = repository.isBanned(playerUuid)
 
+    fun isBanned(playerId: Long): Boolean = repository.isBanned(playerId)
+
     fun delete(playerUuid: UUID): Boolean = repository.delete(playerUuid)
+
+    fun delete(playerId: Long): Boolean = repository.delete(playerId)
 
     fun page(page: Int): BannerPageResult<BannedUserEntry> {
         val userPage = repository.page(page)

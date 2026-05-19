@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.banner.persistence
 
+import com.ratger.acreative.core.CoreUserIdentityService
 import com.ratger.acreative.menus.banner.model.BannerCategory
 import com.ratger.acreative.menus.banner.model.BannerGalleryState
 import com.ratger.acreative.menus.banner.model.BannerPageResult
@@ -14,10 +15,11 @@ import java.util.UUID
 
 class PublishedBannerRepository(
     private val database: AdvancedCreativeDatabase,
+    private val identityService: CoreUserIdentityService,
     private val pageSize: Int
 ) {
     data class PublicationIdentity(
-        val authorUuid: UUID,
+        val authorId: Long,
         val patternSignature: String,
         val category: BannerCategory
     )
@@ -31,6 +33,9 @@ class PublishedBannerRepository(
         patternSignature: String,
         publishedAtEpochMillis: Long
     ): Long {
+        val authorId = requireNotNull(identityService.resolveUserId(authorUuid)) {
+            "CoreApi user not found for authorUuid=$authorUuid"
+        }
         val normalizedTitle = title?.trim().orEmpty()
         val loweredTitle = normalizedTitle.lowercase(Locale.ROOT)
         val loweredAuthor = authorName.lowercase(Locale.ROOT)
@@ -41,7 +46,7 @@ class PublishedBannerRepository(
             val generatedId = conn.prepareStatement(
                 """
                 INSERT INTO banner_publications(
-                    author_uuid,
+                    author_id,
                     author_name,
                     author_name_lower,
                     title,
@@ -55,7 +60,7 @@ class PublishedBannerRepository(
                 """.trimIndent(),
                 PreparedStatement.RETURN_GENERATED_KEYS
             ).use { ps ->
-                ps.setString(1, authorUuid.toString())
+                ps.setLong(1, authorId)
                 ps.setString(2, authorName)
                 ps.setString(3, loweredAuthor)
                 ps.setString(4, normalizedTitle.ifBlank { null })
@@ -102,10 +107,13 @@ class PublishedBannerRepository(
         }
     }
 
-    fun countByAuthor(authorUuid: UUID): Int = database.connection().use { conn ->
-        conn.prepareStatement("SELECT COUNT(*) FROM banner_publications WHERE author_uuid=?").use { ps ->
-            ps.setString(1, authorUuid.toString())
-            ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
+    fun countByAuthor(authorUuid: UUID): Int {
+        val authorId = identityService.resolveUserId(authorUuid) ?: return 0
+        return database.connection().use { conn ->
+            conn.prepareStatement("SELECT COUNT(*) FROM banner_publications WHERE author_id=?").use { ps ->
+                ps.setLong(1, authorId)
+                ps.executeQuery().use { rs -> if (rs.next()) rs.getInt(1) else 0 }
+            }
         }
     }
 
@@ -116,22 +124,24 @@ class PublishedBannerRepository(
         }
     }
 
-    fun hasPublicationHistory(authorUuid: UUID, patternSignature: String, category: BannerCategory): Boolean =
-        database.connection().use { conn ->
+    fun hasPublicationHistory(authorUuid: UUID, patternSignature: String, category: BannerCategory): Boolean {
+        val authorId = identityService.resolveUserId(authorUuid) ?: return false
+        return database.connection().use { conn ->
             conn.prepareStatement(
                 """
                 SELECT 1
                 FROM banner_publications
-                WHERE author_uuid=? AND pattern_signature=? AND category_key=?
+                WHERE author_id=? AND pattern_signature=? AND category_key=?
                 LIMIT 1
                 """.trimIndent()
             ).use { ps ->
-                ps.setString(1, authorUuid.toString())
+                ps.setLong(1, authorId)
                 ps.setString(2, patternSignature)
                 ps.setString(3, category.key)
                 ps.executeQuery().use(ResultSet::next)
             }
         }
+    }
 
     fun existsPublishedToday(patternSignature: String, category: BannerCategory, dayStartEpochMillis: Long): Boolean =
         database.connection().use { conn ->
@@ -153,7 +163,7 @@ class PublishedBannerRepository(
     fun publicationIdentity(id: Long): PublicationIdentity? = database.connection().use { conn ->
         conn.prepareStatement(
             """
-            SELECT author_uuid, pattern_signature, category_key
+            SELECT author_id, pattern_signature, category_key
             FROM banner_publications
             WHERE id=?
             LIMIT 1
@@ -165,11 +175,9 @@ class PublishedBannerRepository(
                     return@use null
                 }
 
-                val authorUuid = runCatching { UUID.fromString(rs.getString("author_uuid")) }.getOrNull()
-                    ?: return@use null
                 val category = BannerCategory.fromKey(rs.getString("category_key"))
                 PublicationIdentity(
-                    authorUuid = authorUuid,
+                    authorId = rs.getLong("author_id"),
                     patternSignature = rs.getString("pattern_signature"),
                     category = category
                 )
@@ -267,7 +275,7 @@ class PublishedBannerRepository(
                 add("publication.category_key=?")
             }
             if (state.authorFilterUuid != null) {
-                add("publication.author_uuid=?")
+                add("publication.author_id=?")
             }
             if (!state.authorFilterName.isNullOrBlank()) {
                 add("publication.author_name_lower=?")
@@ -295,7 +303,12 @@ class PublishedBannerRepository(
                 ps.setString(index++, state.category.key)
             }
             if (state.authorFilterUuid != null) {
-                ps.setString(index++, state.authorFilterUuid.toString())
+                val authorId = identityService.resolveUserId(state.authorFilterUuid)
+                if (authorId == null) {
+                    ps.setLong(index++, Long.MIN_VALUE)
+                } else {
+                    ps.setLong(index++, authorId)
+                }
             }
             if (!state.authorFilterName.isNullOrBlank()) {
                 ps.setString(index++, state.authorFilterName.lowercase(Locale.ROOT))
@@ -317,7 +330,7 @@ class PublishedBannerRepository(
                 add(
                     PublishedBannerEntry(
                         id = rs.getLong("id"),
-                        authorUuid = UUID.fromString(rs.getString("author_uuid")),
+                        authorId = rs.getLong("author_id"),
                         authorName = rs.getString("author_name"),
                         title = rs.getString("title"),
                         category = BannerCategory.fromKey(rs.getString("category_key")),

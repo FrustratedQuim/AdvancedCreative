@@ -17,7 +17,11 @@ class BannerModerationService(
     private val publicationService: BannerPublicationService,
     playerLookupService: BannerPlayerLookupService
 ) {
-    private val userBanService = UserBanService(bannedUserRepository.sharedRepository(), playerLookupService)
+    private val userBanService = UserBanService(
+        repository = bannedUserRepository.sharedRepository(),
+        profileResolver = playerLookupService,
+        identityService = playerLookupService.identityService()
+    )
 
     enum class PatternToggleResult {
         BANNED,
@@ -53,7 +57,7 @@ class BannerModerationService(
         }
     }
 
-    fun isUserBanned(playerUuid: UUID): Boolean = bannedUserRepository.isBanned(playerUuid)
+    fun isUserBanned(playerUuid: UUID): Boolean = userBanService.isBanned(playerUuid)
 
     fun bannedPatternsPage(page: Int): BannerPageResult<BannedPatternEntry> = bannedPatternRepository.page(page)
 
@@ -61,5 +65,7 @@ class BannerModerationService(
 
     fun unbanPattern(patternSignature: String): Boolean = bannedPatternRepository.delete(patternSignature)
 
-    fun unbanUser(playerUuid: UUID): Boolean = bannedUserRepository.delete(playerUuid)
+    fun unbanUser(playerUuid: UUID): Boolean = userBanService.unban(playerUuid)
+
+    fun unbanUser(playerId: Long): Boolean = userBanService.unban(playerId)
 }

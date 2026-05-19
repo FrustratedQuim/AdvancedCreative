@@ -1,44 +1,56 @@
 package com.ratger.acreative.moderation.userban
 
+import com.ratger.acreative.core.CoreUserIdentityService
 import com.ratger.acreative.persistence.AdvancedCreativeDatabase
 import java.sql.ResultSet
 import java.util.Locale
 import java.util.UUID
 
 interface UserBanStorage {
-    fun find(playerUuid: UUID): UserBanEntry?
+    fun find(playerId: Long): UserBanEntry?
 
-    fun isBanned(playerUuid: UUID): Boolean
+    fun isBanned(playerId: Long): Boolean
 
     fun save(entry: UserBanEntry)
 
-    fun delete(playerUuid: UUID): Boolean
+    fun delete(playerId: Long): Boolean
 
     fun page(page: Int): UserBanPageResult<UserBanEntry>
 }
 
 class UserBanRepository(
     private val database: AdvancedCreativeDatabase,
+    private val identityService: CoreUserIdentityService,
     private val pageSize: Int,
     tableName: String
 ) : UserBanStorage {
     private val tableName: String = tableName.also(::validateTableName)
 
-    override fun find(playerUuid: UUID): UserBanEntry? = database.connection().use { conn ->
-        conn.prepareStatement("SELECT * FROM $tableName WHERE player_uuid=? LIMIT 1").use { ps ->
-            ps.setString(1, playerUuid.toString())
+    fun find(playerUuid: UUID): UserBanEntry? {
+        val playerId = identityService.resolveUserId(playerUuid) ?: return null
+        return find(playerId)
+    }
+
+    override fun find(playerId: Long): UserBanEntry? = database.connection().use { conn ->
+        conn.prepareStatement("SELECT * FROM $tableName WHERE player_id=? LIMIT 1").use { ps ->
+            ps.setLong(1, playerId)
             ps.executeQuery().use { rs -> if (rs.next()) readCurrentEntry(rs) else null }
         }
     }
 
-    override fun isBanned(playerUuid: UUID): Boolean = find(playerUuid) != null
+    fun isBanned(playerUuid: UUID): Boolean {
+        val playerId = identityService.resolveUserId(playerUuid) ?: return false
+        return isBanned(playerId)
+    }
+
+    override fun isBanned(playerId: Long): Boolean = find(playerId) != null
 
     override fun save(entry: UserBanEntry) {
         database.connection().use { conn ->
             conn.prepareStatement(
                 """
                 INSERT OR REPLACE INTO $tableName(
-                    player_uuid,
+                    player_id,
                     player_name,
                     player_name_lower,
                     reason,
@@ -49,7 +61,7 @@ class UserBanRepository(
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent()
             ).use { ps ->
-                ps.setString(1, entry.playerUuid.toString())
+                ps.setLong(1, entry.playerId)
                 ps.setString(2, entry.playerName)
                 ps.setString(3, entry.playerName.lowercase(Locale.ROOT))
                 ps.setString(4, entry.reason)
@@ -61,9 +73,14 @@ class UserBanRepository(
         }
     }
 
-    override fun delete(playerUuid: UUID): Boolean = database.connection().use { conn ->
-        conn.prepareStatement("DELETE FROM $tableName WHERE player_uuid=?").use { ps ->
-            ps.setString(1, playerUuid.toString())
+    fun delete(playerUuid: UUID): Boolean {
+        val playerId = identityService.resolveUserId(playerUuid) ?: return false
+        return delete(playerId)
+    }
+
+    override fun delete(playerId: Long): Boolean = database.connection().use { conn ->
+        conn.prepareStatement("DELETE FROM $tableName WHERE player_id=?").use { ps ->
+            ps.setLong(1, playerId)
             ps.executeUpdate() > 0
         }
     }
@@ -108,7 +125,7 @@ class UserBanRepository(
     }
 
     private fun readCurrentEntry(rs: ResultSet): UserBanEntry = UserBanEntry(
-        playerUuid = UUID.fromString(rs.getString("player_uuid")),
+        playerId = rs.getLong("player_id"),
         playerName = rs.getString("player_name"),
         reason = rs.getString("reason"),
         profileSnapshot = rs.getString("skin_value")?.let { UserProfileSnapshot(it, rs.getString("skin_signature")) },

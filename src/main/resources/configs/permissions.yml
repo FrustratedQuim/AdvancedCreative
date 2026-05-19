@@ -65,9 +65,9 @@
     display: "Moder"
     prefix: "<#9C4804><b>ᴍ<#AF5105>ᴏ<#C25A05>ᴅ<#D56206>ᴇ<#E86B06>ʀ</b>"
     rank-permissions:
-      - "acreative.acreative"
+      - "acreative.admin"
     permissions:
-      - "acreative.acreative"
+      - "acreative.admin"
       - "acreative.sithead.other"
       - "acreative.freeze.other"
       - "acreative.effects.other"

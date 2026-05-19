@@ -16,6 +16,7 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
             "toggle" -> handleToggle(player, args.drop(1))
             "status" -> handleStatus(player, args.drop(1))
             "heads" -> handleHeads(player, args.drop(1))
+            "npc" -> hooker.npcManager.commandService().handle(player, args.drop(1))
             else -> hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_ARGUMENT)
         }
     }
@@ -62,8 +63,13 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
 
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         if (sender !is Player) return emptyList()
+        if (args.size > 1 && args[0].equals("npc", ignoreCase = true)) {
+            return hooker.npcManager.commandService().tabComplete(sender, args.drop(1))
+        }
+
         return when (args.size) {
-            1 -> listOf("memory", "heads", "toggle", "status").filter { it.startsWith(args[0], ignoreCase = true) }
+            1 -> listOf("memory", "heads", "toggle", "status", "npc")
+                .filter { it.startsWith(args[0], ignoreCase = true) }
             2 -> when {
                 args[0].equals("heads", ignoreCase = true) -> {
                     listOf("restore_from_dat", "restore_from_api")

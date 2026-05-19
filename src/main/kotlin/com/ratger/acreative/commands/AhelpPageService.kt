@@ -110,8 +110,9 @@ class AhelpPageService(
         "acreative.disguise.text" to listOf(
             entry("/dis text_display <текст>", "Превратиться в текст-дисплей", PluginCommandType.DISGUISE)
         ),
-        "acreative.acreative" to listOf(
-            entry("/acreative", "Служебные функции", PluginCommandType.ACREATIVE)
+        "acreative.admin" to listOf(
+            entry("/acreative", "Служебные функции", PluginCommandType.ACREATIVE),
+            entry("/acreative npc ...", "Управление NPC-профилями", PluginCommandType.ACREATIVE)
         ),
         "acreative.sithead.other" to listOf(
             entry("/sithead <цель> [игрок]", "Посадить на голову другого", PluginCommandType.SITHEAD)

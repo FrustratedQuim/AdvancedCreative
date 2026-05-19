@@ -1,14 +1,12 @@
 package com.ratger.acreative.moderation.userban
 
-import java.util.UUID
-
 data class UserProfileSnapshot(
     val value: String,
     val signature: String?
 )
 
 data class UserBanEntry(
-    val playerUuid: UUID,
+    val playerId: Long,
     val playerName: String,
     val reason: String?,
     val profileSnapshot: UserProfileSnapshot?,

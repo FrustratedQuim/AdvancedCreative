@@ -59,8 +59,8 @@ class Subsystem(
 
     private val catalogRepository = CatalogRepository(hooker.database)
     private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
-    private val recentRepository = RecentRepository(hooker.database, playerRecentLimit)
-    private val savedPagesRepository = SavedPagesRepository(hooker.database)
+    private val recentRepository = RecentRepository(hooker.database, hooker.coreUserIdentityService, playerRecentLimit)
+    private val savedPagesRepository = SavedPagesRepository(hooker.database, hooker.coreUserIdentityService)
 
     private val requestFactory = MinecraftHeadsRequestFactory(
         baseUrl = config.getString("decoration-heads.api.base-url", "https://minecraft-heads.com")!!,

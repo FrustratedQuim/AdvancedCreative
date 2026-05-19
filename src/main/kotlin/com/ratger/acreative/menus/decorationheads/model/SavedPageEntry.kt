@@ -1,7 +1,5 @@
 package com.ratger.acreative.menus.decorationheads.model
 
-import java.util.UUID
-
 enum class SavedPageSourceMode {
     CATEGORY,
     SEARCH
@@ -9,7 +7,7 @@ enum class SavedPageSourceMode {
 
 data class SavedPageEntry(
     val id: Long,
-    val playerUuid: UUID,
+    val playerId: Long,
     val sourceMode: SavedPageSourceMode,
     val categoryKey: String,
     val sourcePage: Int,

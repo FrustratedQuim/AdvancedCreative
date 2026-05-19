@@ -1,12 +1,14 @@
 package com.ratger.acreative.moderation.userban
 
+import com.ratger.acreative.core.CoreUserIdentityService
 import ru.violence.coreapi.common.api.user.User
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 
 class UserBanService(
     private val repository: UserBanStorage,
-    private val profileResolver: UserProfileResolver
+    private val profileResolver: UserProfileResolver,
+    private val identityService: CoreUserIdentityService
 ) {
     sealed class ToggleResult {
         data object Unbanned : ToggleResult()
@@ -14,15 +16,15 @@ class UserBanService(
     }
 
     fun toggle(user: User, reason: String?): CompletableFuture<ToggleResult> {
-        val alreadyBanned = repository.find(user.getUniqueId())
+        val alreadyBanned = repository.find(identityService.resolveUserId(user))
         if (alreadyBanned != null) {
-            repository.delete(user.getUniqueId())
+            repository.delete(identityService.resolveUserId(user))
             return CompletableFuture.completedFuture(ToggleResult.Unbanned)
         }
 
         return profileResolver.resolveSkinSnapshotAsync(user).thenApply { snapshot ->
             val entry = UserBanEntry(
-                playerUuid = user.getUniqueId(),
+                playerId = identityService.resolveUserId(user),
                 playerName = user.getName(),
                 reason = reason?.trim()?.takeIf { it.isNotBlank() },
                 profileSnapshot = snapshot,
@@ -33,11 +35,21 @@ class UserBanService(
         }
     }
 
-    fun isBanned(playerUuid: UUID): Boolean = repository.isBanned(playerUuid)
+    fun isBanned(playerUuid: UUID): Boolean {
+        val playerId = identityService.resolveUserId(playerUuid) ?: return false
+        return repository.isBanned(playerId)
+    }
+
+    fun isBanned(playerId: Long): Boolean = repository.isBanned(playerId)
 
     fun page(page: Int): UserBanPageResult<UserBanEntry> = repository.page(page)
 
-    fun unban(playerUuid: UUID): Boolean = repository.delete(playerUuid)
+    fun unban(playerUuid: UUID): Boolean {
+        val playerId = identityService.resolveUserId(playerUuid) ?: return false
+        return repository.delete(playerId)
+    }
+
+    fun unban(playerId: Long): Boolean = repository.delete(playerId)
 }
 
 fun interface UserProfileResolver {

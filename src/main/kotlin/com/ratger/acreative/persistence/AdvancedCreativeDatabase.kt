@@ -17,7 +17,6 @@ class AdvancedCreativeDatabase(
             configureDatabase(conn)
             conn.autoCommit = false
             createTables(conn)
-            migratePaintUsers(conn)
             createIndexes(conn)
             validateForeignKeys(conn)
             conn.commit()
@@ -45,11 +44,11 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS edit_personal_items (
-                    player_uuid TEXT NOT NULL,
+                    player_id INTEGER NOT NULL,
                     content_hash TEXT NOT NULL,
                     item_data BLOB NOT NULL,
                     last_used_at INTEGER NOT NULL,
-                    PRIMARY KEY(player_uuid, content_hash)
+                    PRIMARY KEY(player_id, content_hash)
                 )
                 """.trimIndent()
             )
@@ -65,7 +64,7 @@ class AdvancedCreativeDatabase(
                 """
                 CREATE TABLE IF NOT EXISTS banner_publications (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    author_uuid TEXT NOT NULL,
+                    author_id INTEGER NOT NULL,
                     author_name TEXT NOT NULL,
                     author_name_lower TEXT NOT NULL,
                     title TEXT,
@@ -90,7 +89,7 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS banner_blocked_players (
-                    player_uuid TEXT PRIMARY KEY,
+                    player_id INTEGER PRIMARY KEY,
                     player_name TEXT NOT NULL,
                     player_name_lower TEXT NOT NULL,
                     reason TEXT,
@@ -103,7 +102,7 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS paint_users (
-                    player_uuid TEXT PRIMARY KEY,
+                    player_id INTEGER PRIMARY KEY,
                     rules_confirmed INTEGER NOT NULL DEFAULT 0,
                     player_name TEXT,
                     player_name_lower TEXT,
@@ -130,12 +129,12 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS head_recent_entries (
-                    player_uuid TEXT NOT NULL,
+                    player_id INTEGER NOT NULL,
                     position INTEGER NOT NULL,
                     stable_key TEXT NOT NULL,
                     last_used_at INTEGER NOT NULL,
-                    PRIMARY KEY(player_uuid, position),
-                    UNIQUE(player_uuid, stable_key),
+                    PRIMARY KEY(player_id, position),
+                    UNIQUE(player_id, stable_key),
                     FOREIGN KEY(stable_key) REFERENCES head_catalog_entries(stable_key) ON DELETE RESTRICT
                 )
                 """.trimIndent()
@@ -144,7 +143,7 @@ class AdvancedCreativeDatabase(
                 """
                 CREATE TABLE IF NOT EXISTS head_saved_pages (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    player_uuid TEXT NOT NULL,
+                    player_id INTEGER NOT NULL,
                     source_mode TEXT NOT NULL,
                     category_key TEXT NOT NULL,
                     source_page INTEGER NOT NULL,
@@ -154,106 +153,20 @@ class AdvancedCreativeDatabase(
                     map_color_key TEXT,
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL,
-                    UNIQUE(player_uuid, source_mode, category_key, source_page, search_query_key)
+                    UNIQUE(player_id, source_mode, category_key, source_page, search_query_key)
                 )
                 """.trimIndent()
             )
             st.executeUpdate(
                 """
                 CREATE TABLE IF NOT EXISTS banner_storage_items (
-                    player_uuid TEXT NOT NULL,
+                    player_id INTEGER NOT NULL,
                     slot_index INTEGER NOT NULL,
                     banner_item_data BLOB NOT NULL,
-                    PRIMARY KEY(player_uuid, slot_index)
+                    PRIMARY KEY(player_id, slot_index)
                 )
                 """.trimIndent()
             )
-        }
-    }
-
-    private fun migratePaintUsers(conn: Connection) {
-        if (tableExists(conn, "paint_rule_confirmations")) {
-            conn.createStatement().use { st ->
-                st.executeUpdate(
-                    """
-                    INSERT OR IGNORE INTO paint_users(player_uuid)
-                    SELECT player_uuid
-                    FROM paint_rule_confirmations
-                    """.trimIndent()
-                )
-                st.executeUpdate(
-                    """
-                    UPDATE paint_users
-                    SET rules_confirmed=1
-                    WHERE player_uuid IN (SELECT player_uuid FROM paint_rule_confirmations)
-                    """.trimIndent()
-                )
-                st.executeUpdate("DROP TABLE paint_rule_confirmations")
-            }
-        }
-
-        if (tableExists(conn, "paint_blocked_players")) {
-            conn.createStatement().use { st ->
-                st.executeUpdate(
-                    """
-                    INSERT OR IGNORE INTO paint_users(player_uuid)
-                    SELECT player_uuid
-                    FROM paint_blocked_players
-                    """.trimIndent()
-                )
-                st.executeUpdate(
-                    """
-                    UPDATE paint_users
-                    SET player_name=(
-                            SELECT player_name
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        ),
-                        player_name_lower=(
-                            SELECT player_name_lower
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        ),
-                        ban_reason=(
-                            SELECT reason
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        ),
-                        skin_value=(
-                            SELECT skin_value
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        ),
-                        skin_signature=(
-                            SELECT skin_signature
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        ),
-                        paint_banned=1,
-                        banned_at=(
-                            SELECT blocked_at
-                            FROM paint_blocked_players
-                            WHERE paint_blocked_players.player_uuid=paint_users.player_uuid
-                        )
-                    WHERE player_uuid IN (SELECT player_uuid FROM paint_blocked_players)
-                    """.trimIndent()
-                )
-                st.executeUpdate("DROP TABLE paint_blocked_players")
-            }
-        }
-    }
-
-    private fun tableExists(conn: Connection, tableName: String): Boolean {
-        conn.prepareStatement(
-            """
-            SELECT 1
-            FROM sqlite_master
-            WHERE type='table' AND name=?
-            LIMIT 1
-            """.trimIndent()
-        ).use { ps ->
-            ps.setString(1, tableName)
-            ps.executeQuery().use { rs -> return rs.next() }
         }
     }
 
@@ -262,16 +175,16 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE INDEX IF NOT EXISTS idx_edit_personal_items_player_last_used
-                ON edit_personal_items(player_uuid, last_used_at DESC, content_hash ASC)
+                ON edit_personal_items(player_id, last_used_at DESC, content_hash ASC)
                 """.trimIndent()
             )
-            st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_banner_publications_author_uuid ON banner_publications(author_uuid)")
+            st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_banner_publications_author_id ON banner_publications(author_id)")
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_banner_publications_author_name_lower ON banner_publications(author_name_lower)")
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_banner_publications_category_key ON banner_publications(category_key)")
             st.executeUpdate(
                 """
                 CREATE INDEX IF NOT EXISTS idx_banner_publications_author_pattern_category
-                ON banner_publications(author_uuid, pattern_signature, category_key)
+                ON banner_publications(author_id, pattern_signature, category_key)
                 """.trimIndent()
             )
             st.executeUpdate(
@@ -325,13 +238,13 @@ class AdvancedCreativeDatabase(
             st.executeUpdate(
                 """
                 CREATE INDEX IF NOT EXISTS idx_head_saved_pages_player_id
-                ON head_saved_pages(player_uuid, id ASC)
+                ON head_saved_pages(player_id, id ASC)
                 """.trimIndent()
             )
             st.executeUpdate(
                 """
                 CREATE INDEX IF NOT EXISTS idx_banner_storage_items_player_slot
-                ON banner_storage_items(player_uuid, slot_index ASC)
+                ON banner_storage_items(player_id, slot_index ASC)
                 """.trimIndent()
             )
         }

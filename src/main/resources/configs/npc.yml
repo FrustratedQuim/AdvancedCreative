@@ -1,0 +1,10 @@
+npc:
+  storage:
+    directory: "npcs"
+  visibility-radius: 100.0
+  viewer-sync-ticks: 10
+  look:
+    track-radius: 20.0
+    update-ticks: 2
+  nick:
+    vertical-offset: 2.05

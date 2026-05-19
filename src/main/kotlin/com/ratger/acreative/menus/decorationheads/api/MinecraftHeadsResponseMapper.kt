@@ -1,13 +1,12 @@
 package com.ratger.acreative.menus.decorationheads.api
 
+import com.ratger.acreative.core.TextureValueEncodingSupport
 import com.ratger.acreative.menus.decorationheads.model.Entry
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
-import java.nio.charset.StandardCharsets
-import java.util.Base64
 
 class MinecraftHeadsResponseMapper {
     private companion object {
@@ -79,8 +78,5 @@ class MinecraftHeadsResponseMapper {
         return "$TEXTURE_HOST_PREFIX$suffix"
     }
 
-    private fun encodeTextureValue(url: String): String {
-        val payload = "{\"textures\":{\"SKIN\":{\"url\":\"$url\"}}}"
-        return Base64.getEncoder().encodeToString(payload.toByteArray(StandardCharsets.UTF_8))
-    }
+    private fun encodeTextureValue(url: String): String = TextureValueEncodingSupport.encode(url)
 }

@@ -755,7 +755,7 @@ class BannerMenuService(
 
     private fun unbanUserFromMenu(player: Player, entry: BannedUserEntry, currentPage: Int, currentMenu: Menu? = null) {
         executor.submit {
-            moderationService.unbanUser(entry.playerUuid)
+            moderationService.unbanUser(entry.playerId)
             runSync {
                 if (!player.isOnline) {
                     return@runSync

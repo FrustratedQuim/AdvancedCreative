@@ -5,6 +5,7 @@ import com.ratger.acreative.commands.CommandManager
 import com.ratger.acreative.commands.PluginCommandType
 import com.ratger.acreative.commands.crawl.CrawlManager
 import com.ratger.acreative.commands.admin.AdminManager
+import com.ratger.acreative.commands.admin.npc.NpcManager
 import com.ratger.acreative.commands.disguise.DisguiseManager
 import com.ratger.acreative.commands.effects.EffectsManager
 import com.ratger.acreative.commands.freeze.FreezeManager
@@ -41,6 +42,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     lateinit var configManager: ConfigManager
         private set
     lateinit var messageManager: MessageManager
+        private set
+    lateinit var coreUserIdentityService: CoreUserIdentityService
         private set
     lateinit var permissionManager: PermissionManager
         private set
@@ -102,6 +105,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         private set
     lateinit var itemdbManager: ItemdbManager
         private set
+    lateinit var npcManager: NpcManager
+        private set
     lateinit var utils: Utils
         private set
     lateinit var packetHandler: PacketHandler
@@ -147,6 +152,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
     fun slapManagerOrNull(): SlapManager? = if (this::slapManager.isInitialized) slapManager else null
     fun grabManagerOrNull(): GrabManager? = if (this::grabManager.isInitialized) grabManager else null
     fun jarManagerOrNull(): JarManager? = if (this::jarManager.isInitialized) jarManager else null
+    fun npcManagerOrNull(): NpcManager? = if (this::npcManager.isInitialized) npcManager else null
     fun menuServiceOrNull(): MenuService? = if (this::menuService.isInitialized) menuService else null
     fun subsystemOrNull(): Subsystem? = if (this::subsystem.isInitialized) subsystem else null
     fun bannerSubsystemOrNull(): BannerSubsystem? = if (this::bannerSubsystem.isInitialized) bannerSubsystem else null
@@ -164,6 +170,7 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         utils = Utils(this)
 
         messageManager = MessageManager(this)
+        coreUserIdentityService = CoreUserIdentityService()
         permissionManager = PermissionManager(this)
         accountLinkRequirementService = AccountLinkRequirementService(this)
         serverPerformanceService = ServerPerformanceService()
@@ -193,6 +200,8 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         jarManager = JarManager(this)
         slapManager = SlapManager(this)
         itemdbManager = ItemdbManager(this)
+        npcManager = NpcManager(this)
+        npcManager.init()
         menuService = MenuService(this)
         plotFlagEditorService = PlotFlagEditorService(this)
         plotAccessGuardService = PlotAccessGuardService(this)
@@ -265,6 +274,9 @@ class FunctionHooker(val plugin: AdvancedCreative) {
         }
         if (this::paintManager.isInitialized) {
             paintManager.shutdown()
+        }
+        if (this::npcManager.isInitialized) {
+            npcManager.shutdown()
         }
         if (this::tickScheduler.isInitialized) {
             tickScheduler.shutdown()

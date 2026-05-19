@@ -1426,7 +1426,7 @@ class PlotFlagEditorService(
         private const val CONFIG_ENABLED_FLAGS = "plotsquared.edit.enabled-flags"
         private const val CONFIG_ROLE_FLAGS = "plotsquared.edit.role-flags"
         private const val CONFIG_ADMIN_PERMISSION = "plotsquared.edit.plotEditAdminAccess"
-        private const val DEFAULT_ADMIN_PERMISSION = "acreative.acreative"
+        private const val DEFAULT_ADMIN_PERMISSION = "acreative.admin"
         private const val PLOT_EDIT_PERMISSION = "acreative.plots.edit"
         private const val FLAG_MUTATION_COOLDOWN_TICKS = 2L
         private val STYLE_TAG_REGEX = Regex("<[^>]+>")

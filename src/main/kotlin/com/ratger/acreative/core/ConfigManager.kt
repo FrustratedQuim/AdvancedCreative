@@ -207,6 +207,7 @@ class ConfigManager(private val hooker: FunctionHooker) {
             ConfigFileSpec(resourcePath = "configs/plotsquared.yml", rootKeys = setOf("plotsquared")),
             ConfigFileSpec(resourcePath = "configs/decoration-heads.yml", rootKeys = setOf("decoration-heads")),
             ConfigFileSpec(resourcePath = "configs/banner.yml", rootKeys = setOf("banner")),
+            ConfigFileSpec(resourcePath = "configs/npc.yml", rootKeys = setOf("npc")),
             ConfigFileSpec(resourcePath = "configs/itemdb.yml", rootKeys = setOf(STRING_TO_NUMERIC_IDS_ROOT))
         )
     }

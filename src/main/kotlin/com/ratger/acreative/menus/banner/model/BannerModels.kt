@@ -46,7 +46,7 @@ data class BannerPatternDescriptor(
 
 data class PublishedBannerEntry(
     val id: Long,
-    val authorUuid: UUID,
+    val authorId: Long,
     val authorName: String,
     val title: String?,
     val category: BannerCategory,

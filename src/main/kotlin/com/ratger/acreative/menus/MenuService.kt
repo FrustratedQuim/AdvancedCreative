@@ -113,7 +113,7 @@ class MenuService(
     private val personalDataExecutor = Executors.newSingleThreadExecutor { r ->
         Thread(r, "acreative-edit-personal-items").apply { isDaemon = true }
     }
-    private val personalItemsRepository = PersonalItemsRepository(hooker.database, 21)
+    private val personalItemsRepository = PersonalItemsRepository(hooker.database, hooker.coreUserIdentityService, 21)
     private val personalItemsService = PersonalItemsService(personalItemsRepository, personalDataExecutor, 21)
     private var periodicPersonalItemsFlushTask: BukkitTask? = null
 

@@ -1,6 +1,7 @@
 package com.ratger.acreative.commands.paint.persistence
 
 import com.ratger.acreative.commands.paint.agreement.PaintRuleConfirmationRepository
+import com.ratger.acreative.core.CoreUserIdentityService
 import com.ratger.acreative.moderation.userban.UserBanEntry
 import com.ratger.acreative.moderation.userban.UserBanPageResult
 import com.ratger.acreative.moderation.userban.UserBanStorage
@@ -12,62 +13,69 @@ import java.util.UUID
 
 class PaintUserStateRepository(
     private val database: AdvancedCreativeDatabase,
+    private val identityService: CoreUserIdentityService,
     private val pageSize: Int
 ) : PaintRuleConfirmationRepository, UserBanStorage {
-    override fun hasConfirmed(playerId: UUID): Boolean = database.connection().use { conn ->
-        conn.prepareStatement(
-            """
-            SELECT 1
-            FROM paint_users
-            WHERE player_uuid=? AND rules_confirmed=1
-            LIMIT 1
-            """.trimIndent()
-        ).use { ps ->
-            ps.setString(1, playerId.toString())
-            ps.executeQuery().use { rs -> rs.next() }
+    override fun hasConfirmed(playerId: UUID): Boolean {
+        val userId = identityService.resolveUserId(playerId) ?: return false
+        return database.connection().use { conn ->
+            conn.prepareStatement(
+                """
+                SELECT 1
+                FROM paint_users
+                WHERE player_id=? AND rules_confirmed=1
+                LIMIT 1
+                """.trimIndent()
+            ).use { ps ->
+                ps.setLong(1, userId)
+                ps.executeQuery().use { rs -> rs.next() }
+            }
         }
     }
 
     override fun saveConfirmed(playerId: UUID) {
+        val userId = requireNotNull(identityService.resolveUserId(playerId)) {
+            "CoreApi user not found for playerUuid=$playerId"
+        }
         database.connection().use { conn ->
             conn.prepareStatement(
                 """
-                INSERT INTO paint_users(player_uuid, rules_confirmed)
+                INSERT INTO paint_users(player_id, rules_confirmed)
                 VALUES (?, 1)
-                ON CONFLICT(player_uuid) DO UPDATE SET
+                ON CONFLICT(player_id) DO UPDATE SET
                     rules_confirmed=1
                 """.trimIndent()
             ).use { ps ->
-                ps.setString(1, playerId.toString())
+                ps.setLong(1, userId)
                 ps.executeUpdate()
             }
         }
     }
 
-    override fun find(playerUuid: UUID): UserBanEntry? = database.connection().use { conn ->
+    override fun find(playerId: Long): UserBanEntry? = database.connection().use { conn ->
         conn.prepareStatement(
             """
             SELECT *
             FROM paint_users
-            WHERE player_uuid=? AND paint_banned=1
+            WHERE player_id=? AND paint_banned=1
             LIMIT 1
             """.trimIndent()
         ).use { ps ->
-            ps.setString(1, playerUuid.toString())
+            ps.setLong(1, playerId)
             ps.executeQuery().use { rs -> if (rs.next()) readCurrentEntry(rs) else null }
         }
     }
 
-    override fun isBanned(playerUuid: UUID): Boolean = database.connection().use { conn ->
+    override fun isBanned(playerId: Long): Boolean = database.connection().use { conn ->
         conn.prepareStatement(
             """
             SELECT 1
             FROM paint_users
-            WHERE player_uuid=? AND paint_banned=1
+            WHERE player_id=? AND paint_banned=1
             LIMIT 1
             """.trimIndent()
         ).use { ps ->
-            ps.setString(1, playerUuid.toString())
+            ps.setLong(1, playerId)
             ps.executeQuery().use { rs -> rs.next() }
         }
     }
@@ -77,7 +85,7 @@ class PaintUserStateRepository(
             conn.prepareStatement(
                 """
                 INSERT INTO paint_users(
-                    player_uuid,
+                    player_id,
                     player_name,
                     player_name_lower,
                     ban_reason,
@@ -87,7 +95,7 @@ class PaintUserStateRepository(
                     banned_at
                 )
                 VALUES (?, ?, ?, ?, ?, ?, 1, ?)
-                ON CONFLICT(player_uuid) DO UPDATE SET
+                ON CONFLICT(player_id) DO UPDATE SET
                     player_name=excluded.player_name,
                     player_name_lower=excluded.player_name_lower,
                     ban_reason=excluded.ban_reason,
@@ -97,7 +105,7 @@ class PaintUserStateRepository(
                     banned_at=excluded.banned_at
                 """.trimIndent()
             ).use { ps ->
-                ps.setString(1, entry.playerUuid.toString())
+                ps.setLong(1, entry.playerId)
                 ps.setString(2, entry.playerName)
                 ps.setString(3, entry.playerName.lowercase(Locale.ROOT))
                 ps.setString(4, entry.reason)
@@ -109,17 +117,17 @@ class PaintUserStateRepository(
         }
     }
 
-    override fun delete(playerUuid: UUID): Boolean = database.connection().use { conn ->
+    override fun delete(playerId: Long): Boolean = database.connection().use { conn ->
         conn.prepareStatement(
             """
             UPDATE paint_users
             SET paint_banned=0,
                 ban_reason=NULL,
                 banned_at=NULL
-            WHERE player_uuid=? AND paint_banned=1
+            WHERE player_id=? AND paint_banned=1
             """.trimIndent()
         ).use { ps ->
-            ps.setString(1, playerUuid.toString())
+            ps.setLong(1, playerId)
             ps.executeUpdate() > 0
         }
     }
@@ -165,7 +173,7 @@ class PaintUserStateRepository(
     }
 
     private fun readCurrentEntry(rs: ResultSet): UserBanEntry = UserBanEntry(
-        playerUuid = UUID.fromString(rs.getString("player_uuid")),
+        playerId = rs.getLong("player_id"),
         playerName = rs.getString("player_name"),
         reason = rs.getString("ban_reason"),
         profileSnapshot = rs.getString("skin_value")?.let { UserProfileSnapshot(it, rs.getString("skin_signature")) },

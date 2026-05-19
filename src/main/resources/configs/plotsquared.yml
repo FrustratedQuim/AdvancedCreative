@@ -1,6 +1,6 @@
 ﻿plotsquared:
   edit:
-    plotEditAdminAccess: "acreative.acreative"
+    plotEditAdminAccess: "acreative.admin"
     enabled-flags:
       - "time"
       - "weather"

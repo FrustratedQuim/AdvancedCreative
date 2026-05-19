@@ -22,13 +22,13 @@ class PaintBanController(
     parser: MiniMessageParser,
     pageSize: Int
 ) {
-    val repository = PaintUserStateRepository(hooker.database, pageSize)
+    val repository = PaintUserStateRepository(hooker.database, hooker.coreUserIdentityService, pageSize)
 
     private val executor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
         Thread(runnable, "acreative-paint-moderation").apply { isDaemon = true }
     }
-    private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService())
-    private val userBanService = UserBanService(repository, playerLookupService)
+    private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService(), hooker.coreUserIdentityService)
+    private val userBanService = UserBanService(repository, playerLookupService, hooker.coreUserIdentityService)
     private val userBanMenuRenderer by lazy {
         UserBanMenuRenderer(
             plugin = hooker.plugin,
@@ -125,7 +125,7 @@ class PaintBanController(
 
     private fun unbanUserFromMenu(player: Player, entry: UserBanEntry, currentPage: Int, currentMenu: Menu? = null) {
         executor.submit {
-            val removed = userBanService.unban(entry.playerUuid)
+            val removed = userBanService.unban(entry.playerId)
             runSync {
                 if (!player.isOnline) return@runSync
                 if (removed) {

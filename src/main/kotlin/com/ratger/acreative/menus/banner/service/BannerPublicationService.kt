@@ -68,7 +68,7 @@ class BannerPublicationService(
         if (deleted) {
             if (identity != null) {
                 publicationHistoryCache.forgetPublication(
-                    authorUuid = identity.authorUuid,
+                    authorId = identity.authorId,
                     patternSignature = identity.patternSignature,
                     category = identity.category
                 )

@@ -69,7 +69,7 @@ class LicensedProfileLookupService {
 
     private fun lookupSessionProfile(uuid: UUID): SessionProfilePayload {
         val undashed = uuid.toString().replace("-", "")
-        val response = sendJsonGet("https://sessionserver.mojang.com/session/minecraft/profile/$undashed")
+        val response = sendJsonGet("https://sessionserver.mojang.com/session/minecraft/profile/$undashed?unsigned=false")
         if (response.statusCode() == 404) throw IllegalStateException("Session profile не найден.")
         if (response.statusCode() !in 200..299) throw IllegalStateException("sessionserver HTTP ${response.statusCode()}")
         return parseSessionProfilePayload(response.body())

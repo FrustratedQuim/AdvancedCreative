@@ -2,6 +2,7 @@ package com.ratger.acreative.utils
 
 import com.ratger.acreative.commands.sit.SitStyle
 import com.ratger.acreative.core.FunctionHooker
+import com.destroystokyo.paper.event.player.PlayerUseUnknownEntityEvent
 import com.destroystokyo.paper.event.player.PlayerStartSpectatingEntityEvent
 import com.destroystokyo.paper.event.player.PlayerStopSpectatingEntityEvent
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -48,6 +49,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         hooker.plotAccessGuardService.clearPlayerSpectating(player)
         hooker.commandManager.cooldownService.clearPlayer(player.uniqueId)
         hooker.disguiseManager.onViewerDisconnect(player.uniqueId)
+        hooker.npcManager.onViewerDisconnect(player.uniqueId)
         utils.unsetAllPoses(player, true)
         utils.unsetAllStates(player)
         utils.checkGlowDisable(player)
@@ -336,6 +338,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
         val joiningPlayer = event.player
         hooker.menuService.handlePlayerJoin(joiningPlayer)
         hooker.disguiseManager.onViewerJoin(joiningPlayer)
+        hooker.npcManager.onViewerJoin(joiningPlayer)
         hooker.layManager.onViewerJoin(joiningPlayer)
         hooker.jarManager.onViewerJoin(joiningPlayer)
         hideManager.reapplyAllHides(joiningPlayer)
@@ -345,12 +348,19 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerKick(event: PlayerKickEvent) {
         hooker.disguiseManager.onViewerDisconnect(event.player.uniqueId)
+        hooker.npcManager.onViewerDisconnect(event.player.uniqueId)
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
         hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
+        hooker.npcManager.onViewerWorldOrRespawn(event.player)
         hooker.layManager.onViewerJoin(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerUseUnknownEntity(event: PlayerUseUnknownEntityEvent) {
+        hooker.npcManager.handleUseUnknownEntity(event)
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -519,6 +529,7 @@ class EventHandler(val hooker: FunctionHooker) : Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         hooker.disguiseManager.onViewerWorldOrRespawn(event.player)
+        hooker.npcManager.onViewerWorldOrRespawn(event.player)
         hooker.layManager.onViewerJoin(event.player)
         hooker.glowManager.refreshGlow(event.player)
     }

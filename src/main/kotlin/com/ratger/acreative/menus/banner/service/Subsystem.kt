@@ -46,12 +46,12 @@ class Subsystem(
         Thread(runnable, "acreative-banner").apply { isDaemon = true }
     }
 
-    private val publishedBannerRepository = PublishedBannerRepository(hooker.database, 45)
+    private val publishedBannerRepository = PublishedBannerRepository(hooker.database, hooker.coreUserIdentityService, 45)
     private val bannedPatternRepository = BannedPatternRepository(hooker.database, 45)
-    private val bannedUserRepository = BannedUserRepository(hooker.database, 45)
+    private val bannedUserRepository = BannedUserRepository(hooker.database, hooker.coreUserIdentityService, 45)
     private val permissionLimitResolver = BannerPermissionLimitResolver()
     private val authorCache = BannerAuthorCache(publishedBannerRepository)
-    private val publicationHistoryCache = BannerPublicationHistoryCache(publishedBannerRepository)
+    private val publicationHistoryCache = BannerPublicationHistoryCache(hooker.coreUserIdentityService, publishedBannerRepository)
     private val galleryService = BannerGalleryService(publishedBannerRepository, BannerTakeCooldownService())
     private val publicationService = BannerPublicationService(
         publishedBannerRepository,
@@ -61,7 +61,7 @@ class Subsystem(
         BannerPublicationConfigResolver(hooker),
         permissionLimitResolver
     )
-    private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService())
+    private val playerLookupService = BannerPlayerLookupService(LicensedProfileLookupService(), hooker.coreUserIdentityService)
     private val moderationService = BannerModerationService(
         bannedPatternRepository = bannedPatternRepository,
         bannedUserRepository = bannedUserRepository,
@@ -74,7 +74,7 @@ class Subsystem(
     private val sessionManager = BannerSessionManager()
     private val editorSessionManager = BannerEditorSessionManager()
     private val storageSessionManager = BannerStorageSessionManager()
-    private val storageRepository = BannerStorageRepository(hooker.database)
+    private val storageRepository = BannerStorageRepository(hooker.database, hooker.coreUserIdentityService)
     private val storageService = BannerStorageService(
         repository = storageRepository,
         normalizer = BannerStorageItemNormalizer(BannerStorageNameSupport()),
