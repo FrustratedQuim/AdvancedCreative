@@ -1,5 +1,6 @@
 package com.ratger.acreative.menus.edit.text
 
+import com.ratger.acreative.core.PluginCacheDirectory
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -17,10 +18,10 @@ class VanillaTranslationResolver(
     private val logger: Logger,
     private val minecraftVersion: String = "1.21.4"
 ) {
+    private val cacheDirectory: Path = PluginCacheDirectory.ensure(dataDirectory)
     private val httpClient: HttpClient = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(3))
         .build()
-    private val cacheDirectory: Path = dataDirectory.resolve("lang-cache")
     private val bundles = ConcurrentHashMap<String, Map<String, String>>()
 
     fun resolve(translationKey: String, locale: Locale): String? {

@@ -31,7 +31,9 @@ class MinecraftHeadsHttpClient(
         return candidates.mapNotNull { el ->
             val obj = el.jsonObject
             val id = obj["id"]?.jsonPrimitive?.contentOrNull?.toIntOrNull() ?: return@mapNotNull null
-            val name = obj["n"]?.jsonPrimitive?.contentOrNull ?: return@mapNotNull null
+            val name = obj["n"]?.jsonPrimitive?.contentOrNull
+                ?: obj["name"]?.jsonPrimitive?.contentOrNull
+                ?: return@mapNotNull null
             MinecraftHeadsCategoryDto(id, name)
         }
     }

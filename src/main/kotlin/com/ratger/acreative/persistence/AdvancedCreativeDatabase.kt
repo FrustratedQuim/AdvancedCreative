@@ -128,6 +128,15 @@ class AdvancedCreativeDatabase(
             )
             st.executeUpdate(
                 """
+                CREATE TABLE IF NOT EXISTS head_api_categories (
+                    category_id INTEGER PRIMARY KEY,
+                    api_name TEXT NOT NULL UNIQUE,
+                    updated_at INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+            st.executeUpdate(
+                """
                 CREATE TABLE IF NOT EXISTS head_recent_entries (
                     player_id INTEGER NOT NULL,
                     position INTEGER NOT NULL,
@@ -233,6 +242,12 @@ class AdvancedCreativeDatabase(
                 """
                 CREATE INDEX IF NOT EXISTS idx_head_catalog_entries_category_display_name
                 ON head_catalog_entries(source_category_id, display_name COLLATE NOCASE ASC)
+                """.trimIndent()
+            )
+            st.executeUpdate(
+                """
+                CREATE INDEX IF NOT EXISTS idx_head_api_categories_api_name
+                ON head_api_categories(api_name COLLATE NOCASE ASC)
                 """.trimIndent()
             )
             st.executeUpdate(

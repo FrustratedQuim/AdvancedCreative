@@ -11,6 +11,8 @@ import com.ratger.acreative.menus.decorationheads.menu.MenuRenderer
 import com.ratger.acreative.menus.decorationheads.menu.MenuService
 import com.ratger.acreative.menus.decorationheads.menu.SessionManager
 import com.ratger.acreative.menus.decorationheads.persistence.CatalogRepository
+import com.ratger.acreative.menus.decorationheads.persistence.CategoryMappingRepository
+import com.ratger.acreative.menus.decorationheads.persistence.CategoryMappingSnapshotStorage
 import com.ratger.acreative.menus.decorationheads.persistence.RecentRepository
 import com.ratger.acreative.menus.decorationheads.persistence.SavedPagesRepository
 import com.ratger.acreative.menus.decorationheads.support.TemporaryMenuButtonOverrideSupport
@@ -58,6 +60,8 @@ class Subsystem(
     )
 
     private val catalogRepository = CatalogRepository(hooker.database)
+    private val categoryMappingRepository = CategoryMappingRepository(hooker.database)
+    private val categoryMappingSnapshotStorage = CategoryMappingSnapshotStorage(plugin.dataFolder, plugin.logger)
     private val playerRecentLimit = config.getInt("decoration-heads.player-recent-limit", 45)
     private val recentRepository = RecentRepository(hooker.database, hooker.coreUserIdentityService, playerRecentLimit)
     private val savedPagesRepository = SavedPagesRepository(hooker.database, hooker.coreUserIdentityService)
@@ -74,6 +78,12 @@ class Subsystem(
         readTimeoutMs = config.getLong("decoration-heads.api.read-timeout-ms", 7000L)
     )
     private val mapper = MinecraftHeadsResponseMapper()
+    private val categoryMappingCacheService = CategoryMappingCacheService(
+        categoryRegistry = categoryRegistry,
+        categoryResolver = categoryResolver,
+        repository = categoryMappingRepository,
+        snapshotStorage = categoryMappingSnapshotStorage
+    )
 
     private val catalogService = CatalogService(
         cache = cache,
@@ -122,6 +132,7 @@ class Subsystem(
         mapper = mapper,
         categoryRegistry = categoryRegistry,
         categoryResolver = categoryResolver,
+        categoryMappingCacheService = categoryMappingCacheService,
         logger = hooker.plugin.logger
     )
     private val restoreService = HeadCatalogRestoreService(
@@ -136,6 +147,7 @@ class Subsystem(
 
     fun init() {
         recentService.init()
+        syncService.loadCachedCategoryMappings()
         executor.submit {
             syncService.refreshCategoryMappings()
             catalogService.warmRecentPublishedPages(config.getInt("decoration-heads.warm-pages", 1))

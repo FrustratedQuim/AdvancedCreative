@@ -469,8 +469,8 @@ class MenuService(
     }
 
     private fun resolveCategoryNameById(categoryId: Int): String {
-        val mapped = categoryRegistry.definitions.firstOrNull { categoryId in categoryResolver.resolveUiCategoryToApiIds(it.key) }
-        return mapped?.displayName ?: "Unknown"
+        val uiCategoryKey = categoryResolver.resolveUiCategoryKey(categoryId) ?: return "Unknown"
+        return categoryRegistry.byKey(uiCategoryKey)?.displayName ?: "Unknown"
     }
 
     private fun recentCategoryOptions(): List<CategoryOption> {

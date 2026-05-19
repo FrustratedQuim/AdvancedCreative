@@ -12,9 +12,23 @@ class SyncService(
     private val mapper: MinecraftHeadsResponseMapper,
     private val categoryRegistry: CategoryRegistry,
     private val categoryResolver: CategoryResolver,
+    private val categoryMappingCacheService: CategoryMappingCacheService,
     private val logger: java.util.logging.Logger
 ) {
     fun hasApiKey(): Boolean = client.hasApiKey()
+
+    fun loadCachedCategoryMappings() {
+        val result = runCatching { categoryMappingCacheService.loadCachedMappings() }
+            .onFailure {
+                logger.warning("Decoration heads cached category restore failed: ${it.message}")
+            }
+            .getOrNull() ?: return
+
+        result.warnings.forEach(logger::warning)
+        if (result.source != null) {
+            logger.info("Decoration heads category mappings restored from ${result.source.name.lowercase()}")
+        }
+    }
 
     fun refreshCategoryMappings() {
         runCatching {
@@ -51,7 +65,7 @@ class SyncService(
     }
 
     private fun syncCategoryMappings(): List<String> {
-        val categories = client.fetchCategories().associate { it.name to it.id }
-        return categoryResolver.applyApiCategories(categories, categoryRegistry.definitions)
+        val categories = client.fetchCategories()
+        return categoryMappingCacheService.refreshFromApi(categories).warnings
     }
 }
