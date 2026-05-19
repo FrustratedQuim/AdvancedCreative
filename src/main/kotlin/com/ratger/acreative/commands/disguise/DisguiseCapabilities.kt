@@ -121,6 +121,11 @@ object DisguiseCapabilityResolver {
         attackState = DisguiseAttackState.SnowGolemPumpkin
     )
 
+    private val piglinDancePreset = humanoidCombatPreset.copy(
+        attackAnimation = DisguiseAttackAnimation.None,
+        attackState = DisguiseAttackState.PiglinDancing
+    )
+
     private val staticLivingPreset = DisguiseCapabilities(
         supportsSneakState = true
     )
@@ -160,8 +165,9 @@ object DisguiseCapabilityResolver {
             EntityType.BOGGED,
             EntityType.PILLAGER,
             EntityType.WITCH,
-            EntityType.PIGLIN,
             EntityType.PIGLIN_BRUTE -> humanoidCombatPreset
+
+            EntityType.PIGLIN -> piglinDancePreset
 
             EntityType.EVOKER,
             EntityType.ILLUSIONER -> humanoidSpellcastingPreset
@@ -203,7 +209,6 @@ object DisguiseCapabilityResolver {
             EntityType.GHAST,
             EntityType.LLAMA,
             EntityType.TRADER_LLAMA,
-            EntityType.PARROT,
             EntityType.TURTLE,
             EntityType.PHANTOM,
             EntityType.COD,
@@ -218,6 +223,8 @@ object DisguiseCapabilityResolver {
             EntityType.CAMEL,
             EntityType.BREEZE,
             EntityType.WITHER -> livingPreset
+            
+            EntityType.PARROT -> livingPreset
 
             EntityType.ENDERMAN -> endermanPreset
 

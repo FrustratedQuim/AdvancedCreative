@@ -8,6 +8,7 @@ import me.tofaa.entitylib.meta.mobs.BeeMeta
 import me.tofaa.entitylib.meta.mobs.PandaMeta
 import me.tofaa.entitylib.meta.mobs.SnifferMeta
 import me.tofaa.entitylib.meta.mobs.golem.SnowGolemMeta
+import me.tofaa.entitylib.meta.mobs.monster.piglin.PiglinMeta
 import me.tofaa.entitylib.meta.mobs.passive.ArmadilloMeta
 import me.tofaa.entitylib.meta.mobs.PolarBearMeta
 import me.tofaa.entitylib.meta.mobs.golem.ShulkerMeta
@@ -328,6 +329,27 @@ sealed class DisguiseAttackState(
         override fun isActive(entity: WrapperEntity): Boolean {
             val meta = entity.entityMeta as? BeeMeta ?: return false
             return meta.angerTicks > 0
+        }
+    }
+
+    data object PiglinDancing : DisguiseAttackState(0L, isToggle = true) {
+        override fun apply(entity: WrapperEntity, context: DisguiseAttackContext): Boolean {
+            val meta = entity.entityMeta as? PiglinMeta ?: return false
+            if (meta.isDancing) return false
+            meta.isDancing = true
+            return true
+        }
+
+        override fun clear(entity: WrapperEntity): Boolean {
+            val meta = entity.entityMeta as? PiglinMeta ?: return false
+            if (!meta.isDancing) return false
+            meta.isDancing = false
+            return true
+        }
+
+        override fun isActive(entity: WrapperEntity): Boolean {
+            val meta = entity.entityMeta as? PiglinMeta ?: return false
+            return meta.isDancing
         }
     }
 
