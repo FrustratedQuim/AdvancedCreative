@@ -99,7 +99,7 @@ class CategoryMappingSnapshotStorage(
     }
 
     private companion object {
-        const val FILE_NAME = "heads-categories-cache.json"
+        const val FILE_NAME = "heads-categories.json"
         const val SCHEMA_VERSION = 1
     }
 }

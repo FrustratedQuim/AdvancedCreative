@@ -250,6 +250,7 @@ data class PlotFlagDefinition(
             booleanPreset("notify-enter", "Уведомление о входе", "Переключает уведомления о входе игрока на участок.", "minecraft:bell", "NotifyEnterFlag", "Включить", "Выключить"),
             booleanPreset("notify-leave", "Уведомление о выходе", "Переключает уведомления о выходе игрока с участка.", "minecraft:goat_horn", "NotifyLeaveFlag", "Включить", "Выключить"),
             booleanPreset("hide-info", "Скрытие инфо", "Переключает возможность /plot info", "minecraft:tinted_glass", "HideInfoFlag", "Скрыть", "Показывать"),
+            booleanPreset("pvp", "PvP", "Переключает возможность игроков атаковать друг друга на участке.", "minecraft:player_head", "PvpFlag", "Включить", "Выключить"),
 
             booleanPreset("animal-interact", "Взаимодействие с мирными мобами", "Управляет взаимодействием гостей с мирными животными.", "minecraft:wheat", "AnimalInteractFlag", "Разрешить", "Запретить"),
             booleanPreset("animal-attack", "Убийство животных", "Управляет атакой гостей по мирным животным.", "minecraft:iron_sword", "AnimalAttackFlag", "Разрешить", "Запретить"),

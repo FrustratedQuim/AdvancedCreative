@@ -11,6 +11,7 @@
       - "heal"
       - "beacon-effects"
       - "plot-paint"
+      - "pvp"
       - "music"
       - "titles"
       - "plot-title"
@@ -94,6 +95,7 @@
         - "heal"
         - "beacon-effects"
         - "plot-paint"
+        - "pvp"
       rise:
         - "music"
         - "titles"
