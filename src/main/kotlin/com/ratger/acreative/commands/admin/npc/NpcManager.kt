@@ -56,7 +56,15 @@ class NpcManager(
         parser = MiniMessageParser(),
         visibilityRadius = config.getDouble("npc.visibility-radius", 100.0),
         trackingRadius = config.getDouble("npc.look.track-radius", 20.0),
-        nickVerticalOffset = config.getDouble("npc.nick.vertical-offset", 2.0),
+        nickDisplaySettings = NpcNickDisplaySettings(
+            verticalOffset = config.getDouble("npc.nick.vertical-offset", 2.0),
+            visibilityRadius = config.getDouble(
+                "npc.nick.visibility-radius",
+                config.getDouble("npc.nick.view-range", 25.0)
+            ).coerceAtLeast(0.0),
+            viewRange = config.getDouble("npc.nick.client-view-range", 1.0).coerceAtLeast(0.0).toFloat(),
+            isSeeThrough = config.getBoolean("npc.nick.see-through", false)
+        ),
         viewerSyncTicks = config.getLong("npc.viewer-sync-ticks", 10L),
         lookUpdateTicks = config.getLong("npc.look.update-ticks", config.getLong("npc.look-update-ticks", 2L)),
         onInteract = ::handleNpcInteraction

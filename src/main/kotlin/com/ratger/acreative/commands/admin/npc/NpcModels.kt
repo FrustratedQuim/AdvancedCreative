@@ -63,6 +63,13 @@ data class NpcProfile(
     )
 }
 
+data class NpcNickDisplaySettings(
+    val verticalOffset: Double,
+    val visibilityRadius: Double,
+    val viewRange: Float,
+    val isSeeThrough: Boolean
+)
+
 enum class NpcInteractionType {
     LEFT_CLICK,
     RIGHT_CLICK

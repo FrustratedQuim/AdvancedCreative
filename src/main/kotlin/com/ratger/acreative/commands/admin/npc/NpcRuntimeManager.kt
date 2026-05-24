@@ -43,7 +43,7 @@ class NpcRuntimeManager(
     private val parser: MiniMessageParser,
     private val visibilityRadius: Double,
     private val trackingRadius: Double,
-    private val nickVerticalOffset: Double,
+    private val nickDisplaySettings: NpcNickDisplaySettings,
     private val viewerSyncTicks: Long,
     private val lookUpdateTicks: Long,
     private val onInteract: (Player, NpcProfile, NpcInteractionType) -> Unit
@@ -53,6 +53,7 @@ class NpcRuntimeManager(
         val playerEntity: WrapperPlayer,
         val nickEntity: WrapperEntity,
         val teamName: String,
+        var isNickSpawned: Boolean,
         var lastYaw: Float,
         var lastPitch: Float
     )
@@ -212,7 +213,12 @@ class NpcRuntimeManager(
         val nickEntity = WrapperEntity(EntityTypes.TEXT_DISPLAY)
         applyNickMeta(nickEntity, profile)
         nickEntity.addViewer(viewer.uniqueId)
-        nickEntity.spawn(packetLocation(spawnLocation.clone().add(0.0, nickVerticalOffset, 0.0), 0f))
+        val isNickSpawned = if (shouldViewerSeeNick(viewer, spawnLocation)) {
+            nickEntity.spawn(packetLocation(nickDisplayLocation(spawnLocation), 0f))
+            true
+        } else {
+            false
+        }
 
         interactionProfilesByViewer
             .getOrPut(viewer.uniqueId) { linkedMapOf() }[playerEntity.entityId] = profile.name
@@ -222,6 +228,7 @@ class NpcRuntimeManager(
             playerEntity = playerEntity,
             nickEntity = nickEntity,
             teamName = teamName,
+            isNickSpawned = isNickSpawned,
             lastYaw = desiredRotation.yaw,
             lastPitch = desiredRotation.pitch
         )
@@ -233,10 +240,13 @@ class NpcRuntimeManager(
         val positionChanged = hasPositionChanged(currentLocation.x, currentLocation.y, currentLocation.z, spawnLocation)
         if (positionChanged) {
             instance.playerEntity.teleport(packetLocation(spawnLocation, desiredRotation.yaw, desiredRotation.pitch))
-            instance.nickEntity.teleport(packetLocation(spawnLocation.clone().add(0.0, nickVerticalOffset, 0.0), 0f))
+            if (instance.isNickSpawned) {
+                instance.nickEntity.teleport(packetLocation(nickDisplayLocation(spawnLocation), 0f))
+            }
             instance.lastYaw = desiredRotation.yaw
             instance.lastPitch = desiredRotation.pitch
         }
+        syncNickVisibility(viewer, spawnLocation, instance)
         updateViewerRotation(viewer, spawnLocation, instance)
     }
 
@@ -261,6 +271,7 @@ class NpcRuntimeManager(
                     removeViewerInstance(profileName, viewerId)
                     return@forEach
                 }
+                syncNickVisibility(viewer, spawnLocation, instance)
                 updateViewerRotation(viewer, spawnLocation, instance)
             }
         }
@@ -321,7 +332,8 @@ class NpcRuntimeManager(
         meta.isShadow = true
         meta.isUseDefaultBackground = false
         meta.backgroundColor = 0
-        meta.isSeeThrough = true
+        meta.isSeeThrough = nickDisplaySettings.isSeeThrough
+        meta.viewRange = nickDisplaySettings.viewRange
         meta.scale = Vector3f(1f, 1f, 1f)
         meta.billboardConstraints = AbstractDisplayMeta.BillboardConstraints.VERTICAL
     }
@@ -412,6 +424,27 @@ class NpcRuntimeManager(
         return viewer.location.distanceSquared(spawnLocation) <= trackingRadius * trackingRadius
     }
 
+    private fun shouldViewerSeeNick(viewer: Player, spawnLocation: Location): Boolean {
+        if (!viewer.isOnline || viewer.world != spawnLocation.world) {
+            return false
+        }
+        return viewer.location.distanceSquared(spawnLocation) <= nickDisplaySettings.visibilityRadius * nickDisplaySettings.visibilityRadius
+    }
+
+    private fun syncNickVisibility(viewer: Player, spawnLocation: Location, instance: ViewerNpcInstance) {
+        val shouldSpawnNick = shouldViewerSeeNick(viewer, spawnLocation)
+        if (shouldSpawnNick == instance.isNickSpawned) {
+            return
+        }
+
+        if (shouldSpawnNick) {
+            instance.nickEntity.spawn(packetLocation(nickDisplayLocation(spawnLocation), 0f))
+        } else {
+            instance.nickEntity.despawn()
+        }
+        instance.isNickSpawned = shouldSpawnNick
+    }
+
     private fun resolveViewRotation(spawnLocation: Location, viewer: Player): ViewRotation {
         if (!shouldViewerTrackNpc(viewer, spawnLocation)) {
             return ViewRotation(
@@ -441,6 +474,10 @@ class NpcRuntimeManager(
         yaw,
         pitch
     )
+
+    private fun nickDisplayLocation(spawnLocation: Location): Location {
+        return spawnLocation.clone().add(0.0, nickDisplaySettings.verticalOffset, 0.0)
+    }
 
     private fun hasPositionChanged(currentX: Double, currentY: Double, currentZ: Double, desiredLocation: Location): Boolean {
         return abs(currentX - desiredLocation.x) > POSITION_EPSILON ||

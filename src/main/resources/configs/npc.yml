@@ -8,3 +8,6 @@ npc:
     update-ticks: 2
   nick:
     vertical-offset: 2.05
+    visibility-radius: 25.0
+    client-view-range: 1.0
+    see-through: false
