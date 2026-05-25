@@ -606,11 +606,13 @@ class MenuButtonFactory(
         lore: List<String>,
         glintWhenEnabled: Boolean = true,
         itemModifier: (ItemBuilder.() -> ItemBuilder)? = null,
+        soundProfile: MenuSoundSupport.ButtonSoundProfile = MenuSoundSupport.ButtonSoundProfile.CLICK,
         action: (ClickEvent) -> Unit
     ): Button = actionButton(
         material = material,
         name = if (enabled) enabledName else disabledName,
         lore = lore,
+        soundProfile = soundProfile,
         itemModifier = {
             if (enabled && glintWhenEnabled) {
                 glint(true)

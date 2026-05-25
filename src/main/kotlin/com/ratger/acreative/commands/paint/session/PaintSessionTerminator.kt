@@ -29,6 +29,9 @@ class PaintSessionTerminator(
         if (session.appliedZoom != 1) {
             applyCanvasZoom(player, session, 1)
         }
+        val shouldGiveArtwork = artworkService.hasArtwork(session)
+        // Capture the artwork before canvas teardown clears the rendered cell collection.
+        val artworkCells = session.cellsSortedTopLeft()
         previewCoordinator.clearRuntimeState(player.uniqueId)
         hooker.tickScheduler.cancel(session.viewerTaskId)
         hooker.tickScheduler.cancel(session.previewTaskId)
@@ -37,7 +40,9 @@ class PaintSessionTerminator(
         canvasRenderer.removeCanvas(session)
         toolInventoryService.clear(player)
         session.inventorySnapshot.restore(player)
-        artworkService.giveResult(player, session)
+        if (shouldGiveArtwork) {
+            artworkService.giveResult(player, artworkCells, player.name, session.seriesCode)
+        }
         hooker.playerStateManager.deactivateState(player, PlayerStateType.PAINTING)
         MenuSoundSupport.paintComplete(player)
     }

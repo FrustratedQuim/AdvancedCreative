@@ -4,17 +4,12 @@ import com.ratger.acreative.menus.MenuButtonFactory
 import com.ratger.acreative.menus.common.MenuSoundSupport
 import com.ratger.acreative.menus.edit.ItemEditMenuSupport
 import com.ratger.acreative.menus.edit.ItemEditSession
-import com.ratger.acreative.menus.edit.effects.EdibleMenuSupport
-import com.ratger.acreative.menus.edit.effects.FoodComponentSupport
-import com.ratger.acreative.menus.edit.equippable.EquippableSupport
+import com.ratger.acreative.menus.edit.simple.SimpleEdibleToggleSupport
+import com.ratger.acreative.menus.edit.simple.SimpleHeadEquippableToggleSupport
+import com.ratger.acreative.menus.edit.simple.SimpleThrowableToggleSupport
 import com.ratger.acreative.menus.edit.text.ItemTextStyleService
-import com.ratger.acreative.menus.edit.text.VanillaRuLocalization
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
-import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
-import org.bukkit.inventory.EquipmentSlot
 import ru.violence.coreapi.bukkit.api.menu.Menu
 import ru.violence.coreapi.bukkit.api.menu.MenuRows
 
@@ -62,111 +57,63 @@ class SimpleEditMenu(
         ))
     }
 
-    private fun buildThrowableButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildThrowableButton(player: Player, session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.SNOWBALL,
+        enabled = throwableConfigured(session),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Кидающийся предмет: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Кидающийся предмет: <#FF1500>Выкл",
+        lore = TOGGLE_LORE,
         soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
-        name = "<!i><#C7A300>☄ <#FFD700>Сделать предмет кидающимся",
-        lore = actionLore(throwableConfigured(session)),
-        itemModifier = {
-            if (throwableConfigured(session)) {
-                glint(true)
-            }
-            this
-        },
         action = { event ->
-            if (session.simpleThrowableApplied) return@actionButton
-            val hadCustomName = textStyleService.hasCustomName(session.editableItem)
-            val previousMeta = session.editableItem.itemMeta
-            val previousType = session.editableItem.type
-            val previousAmount = session.editableItem.amount
-            val previousDefaultMaxStack = previousType.maxStackSize
-            val previousCustomMaxStack = if (previousMeta != null && previousMeta.hasMaxStackSize()) {
-                previousMeta.maxStackSize
-            } else {
-                null
-            }
-            val previousTargetMaxStack = previousCustomMaxStack ?: previousDefaultMaxStack
-            val converted = session.editableItem.withType(Material.SNOWBALL)
-            val convertedMeta = converted.itemMeta ?: return@actionButton
-            convertedMeta.itemModel = NamespacedKey.minecraft(previousType.key.key)
-            if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
-                convertedMeta.setMaxStackSize(previousTargetMaxStack)
-            }
-            if (!hadCustomName) {
-                val localizedDefaultName = VanillaRuLocalization.itemName(previousType.key.key)
-                convertedMeta.customName(Component.text(localizedDefaultName).decoration(TextDecoration.ITALIC, false))
-            }
-            converted.itemMeta = convertedMeta
-            val targetMaxStack = if (previousTargetMaxStack != Material.SNOWBALL.maxStackSize) {
-                previousTargetMaxStack
-            } else {
-                Material.SNOWBALL.maxStackSize
-            }
-            converted.amount = previousAmount.coerceIn(1, targetMaxStack)
-            session.editableItem = converted
-            session.simpleThrowableApplied = true
+            SimpleThrowableToggleSupport.toggle(session, textStyleService)
             MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )
 
-    private fun buildEdibleButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildEdibleButton(player: Player, session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.APPLE,
+        enabled = edibleConfigured(session),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Съедобность: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Съедобность: <#FF1500>Выкл",
+        lore = TOGGLE_LORE,
         soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
-        name = "<!i><#C7A300>🍖 <#FFD700>Сделать предмет съедобным",
-        lore = actionLore(edibleConfigured(session)),
         itemModifier = {
             buttonFactory.zeroFoodPreview().invoke(this)
-            if (edibleConfigured(session)) {
-                glint(true)
-            }
             this
         },
         action = { event ->
-            if (session.simpleEdibleApplied) return@actionButton
-            EdibleMenuSupport.ensureEnabledWithDefaults(session.editableItem)
-            FoodComponentSupport.setCanAlwaysEat(session.editableItem, true)
-            FoodComponentSupport.setSaturation(session.editableItem, 6f)
-            FoodComponentSupport.setNutrition(session.editableItem, 5)
-            session.simpleEdibleApplied = true
+            SimpleEdibleToggleSupport.toggle(session)
             MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )
 
-    private fun buildHeadEquippableButton(player: Player, session: ItemEditSession) = buttonFactory.actionButton(
+    private fun buildHeadEquippableButton(player: Player, session: ItemEditSession) = buttonFactory.toggleButton(
         material = Material.IRON_HELMET,
+        enabled = headEquippableConfigured(session),
+        enabledName = "<!i><#C7A300>◎ <#FFD700>Надевание на голову: <#00FF40>Вкл",
+        disabledName = "<!i><#C7A300>⭘ <#FFD700>Надевание на голову: <#FF1500>Выкл",
+        lore = TOGGLE_LORE,
         soundProfile = MenuSoundSupport.ButtonSoundProfile.NONE,
-        name = "<!i><#C7A300>🔔 <#FFD700>Позволить надевать на голову",
-        lore = actionLore(headEquippableConfigured(session)),
         itemModifier = {
             buttonFactory.hideAttributes().invoke(this)
-            if (headEquippableConfigured(session)) {
-                glint(true)
-            }
             this
         },
         action = { event ->
-            if (session.simpleHeadEquippableApplied) return@actionButton
-            EquippableSupport.setSlot(session.editableItem, EquipmentSlot.HEAD)
-            session.simpleHeadEquippableApplied = true
+            SimpleHeadEquippableToggleSupport.toggle(session)
             MenuSoundSupport.success(player)
             refreshButtons(event.menu, player, session)
         }
     )
 
-    private fun actionLore(applied: Boolean): List<String> {
-        if (!applied) return listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить")
-        return listOf(
-            "<!i><#FFD700>Нажмите, <#FFE68A>чтобы совершить",
-            "",
-            "<!i><dark_green>▍ <#00FF40>Выполнено"
-        )
+    private fun throwableConfigured(session: ItemEditSession): Boolean = SimpleThrowableToggleSupport.isEnabled(session)
+
+    private fun edibleConfigured(session: ItemEditSession): Boolean = SimpleEdibleToggleSupport.isEnabled(session)
+
+    private fun headEquippableConfigured(session: ItemEditSession): Boolean = SimpleHeadEquippableToggleSupport.isEnabled(session)
+
+    private companion object {
+        private val TOGGLE_LORE = listOf("<!i><#FFD700>Нажмите, <#FFE68A>чтобы изменить")
     }
-
-    private fun throwableConfigured(session: ItemEditSession): Boolean = session.simpleThrowableApplied
-
-    private fun edibleConfigured(session: ItemEditSession): Boolean = session.simpleEdibleApplied
-
-    private fun headEquippableConfigured(session: ItemEditSession): Boolean = session.simpleHeadEquippableApplied
 }

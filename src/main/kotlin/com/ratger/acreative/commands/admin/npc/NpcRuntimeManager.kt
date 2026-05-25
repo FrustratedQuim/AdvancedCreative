@@ -304,10 +304,15 @@ class NpcRuntimeManager(
         }
     }
 
-    private fun updateViewerRotation(viewer: Player, spawnLocation: Location, instance: ViewerNpcInstance) {
+    private fun updateViewerRotation(
+        viewer: Player,
+        spawnLocation: Location,
+        instance: ViewerNpcInstance,
+        force: Boolean = false
+    ) {
         val desiredRotation = resolveViewRotation(spawnLocation, viewer)
-        val yawChanged = normalizedAngleDiff(instance.lastYaw, desiredRotation.yaw) > YAW_EPSILON
-        val pitchChanged = abs(instance.lastPitch - desiredRotation.pitch) > PITCH_EPSILON
+        val yawChanged = force || normalizedAngleDiff(instance.lastYaw, desiredRotation.yaw) > YAW_EPSILON
+        val pitchChanged = force || abs(instance.lastPitch - desiredRotation.pitch) > PITCH_EPSILON
         if (!yawChanged && !pitchChanged) {
             return
         }

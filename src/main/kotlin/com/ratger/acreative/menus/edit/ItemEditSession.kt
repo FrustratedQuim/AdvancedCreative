@@ -37,9 +37,6 @@ data class ItemEditSession(
     val virtualLoreRawLines: MutableList<String> = mutableListOf(),
     var loreRawFocusIndex: Int = 0,
     var rawTextStyleStateInitialized: Boolean = false,
-    var simpleThrowableApplied: Boolean = false,
-    var simpleEdibleApplied: Boolean = false,
-    var simpleHeadEquippableApplied: Boolean = false,
     var visualEffectContext: VisualEffectContextKey? = null,
     var visualEffectDraft: VisualEffectDraft = VisualEffectDraft(),
     var visualEffectLastTypePage: Int = 0,
@@ -50,5 +47,8 @@ data class ItemEditSession(
     var attributeDraftAmount: String = "1",
     var attributeDraftOperation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
     var attributeDraftSlot: SlotGroupSpec = SlotGroupSpec.ANY,
-    var attributeDraftLastTypePage: Int = 0
+    var attributeDraftLastTypePage: Int = 0,
+    var simpleThrowableSnapshot: ItemStack? = null,
+    var simpleEdibleSnapshot: ItemStack? = null,
+    var simpleHeadEquippableSnapshot: ItemStack? = null
 )

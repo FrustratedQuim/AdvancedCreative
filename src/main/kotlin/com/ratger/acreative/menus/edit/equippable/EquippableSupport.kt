@@ -92,6 +92,17 @@ object EquippableSupport {
         item.itemMeta = meta
     }
 
+    fun restoreExplicitState(item: ItemStack, snapshot: ItemStack) {
+        val meta = item.itemMeta ?: return
+        val snapshotMeta = snapshot.itemMeta
+        if (snapshotMeta?.hasEquippable() == true) {
+            meta.setEquippable(snapshotMeta.equippable)
+        } else {
+            meta.setEquippable(null)
+        }
+        item.itemMeta = meta
+    }
+
     fun setDispensable(item: ItemStack, value: Boolean): Boolean =
         mutateFromExistingOrPrototype(item) { isDispensable = value }
 

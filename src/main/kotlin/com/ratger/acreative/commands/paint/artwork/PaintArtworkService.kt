@@ -1,5 +1,6 @@
 package com.ratger.acreative.commands.paint.artwork
 
+import com.ratger.acreative.commands.paint.map.MapDataExtractor
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.menus.edit.map.MapItemSupport
 import com.ratger.acreative.menus.edit.meta.MiniMessageParser
@@ -18,14 +19,29 @@ class PaintArtworkService(
     private val hooker: FunctionHooker,
     private val parser: MiniMessageParser
 ) {
+    fun hasArtwork(session: PaintSession): Boolean {
+        return session.logicalCells.values.any { colors ->
+            colors.any { color -> color != MapDataExtractor.DEFAULT_CANVAS_COLOR_ID }
+        }
+    }
+
     fun giveResult(player: Player, session: PaintSession) {
-        val cells = session.cellsSortedTopLeft()
+        if (!hasArtwork(session)) return
+        giveResult(player, session.cellsSortedTopLeft(), player.name, session.seriesCode)
+    }
+
+    fun giveResult(
+        player: Player,
+        cells: List<PaintCanvasCell>,
+        author: String,
+        seriesCode: String
+    ) {
         if (cells.size <= 1) {
             val only = cells.firstOrNull() ?: return
-            giveSingleMapItem(player, createArtworkMapItem(only.mapId, null, null, player.name, session.seriesCode))
+            giveSingleMapItem(player, createArtworkMapItem(only.mapId, null, null, author, seriesCode))
             return
         }
-        giveItem(player, createArtworkShulker(cells, player.name, session.seriesCode))
+        giveItem(player, createArtworkShulker(cells, author, seriesCode))
     }
 
     private fun createArtworkMapItem(
