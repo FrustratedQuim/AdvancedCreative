@@ -65,9 +65,11 @@ data class NpcProfile(
 
 data class NpcNickDisplaySettings(
     val verticalOffset: Double,
+    val additionalYOffset: Double,
     val visibilityRadius: Double,
     val viewRange: Float,
-    val isSeeThrough: Boolean
+    val isSeeThrough: Boolean,
+    val scale: Float
 )
 
 enum class NpcInteractionType {

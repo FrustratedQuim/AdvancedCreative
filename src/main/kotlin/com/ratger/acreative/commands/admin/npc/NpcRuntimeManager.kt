@@ -339,7 +339,7 @@ class NpcRuntimeManager(
         meta.backgroundColor = 0
         meta.isSeeThrough = nickDisplaySettings.isSeeThrough
         meta.viewRange = nickDisplaySettings.viewRange
-        meta.scale = Vector3f(1f, 1f, 1f)
+        meta.scale = Vector3f(nickDisplaySettings.scale, nickDisplaySettings.scale, nickDisplaySettings.scale)
         meta.billboardConstraints = AbstractDisplayMeta.BillboardConstraints.VERTICAL
     }
 
@@ -481,7 +481,7 @@ class NpcRuntimeManager(
     )
 
     private fun nickDisplayLocation(spawnLocation: Location): Location {
-        return spawnLocation.clone().add(0.0, nickDisplaySettings.verticalOffset, 0.0)
+        return spawnLocation.clone().add(0.0, nickDisplaySettings.verticalOffset + nickDisplaySettings.additionalYOffset, 0.0)
     }
 
     private fun hasPositionChanged(currentX: Double, currentY: Double, currentZ: Double, desiredLocation: Location): Boolean {

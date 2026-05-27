@@ -58,12 +58,14 @@ class NpcManager(
         trackingRadius = config.getDouble("npc.look.track-radius", 20.0),
         nickDisplaySettings = NpcNickDisplaySettings(
             verticalOffset = config.getDouble("npc.nick.vertical-offset", 2.0),
+            additionalYOffset = config.getDouble("npc.nick.additional-y-offset", -0.1),
             visibilityRadius = config.getDouble(
                 "npc.nick.visibility-radius",
                 config.getDouble("npc.nick.view-range", 25.0)
             ).coerceAtLeast(0.0),
             viewRange = config.getDouble("npc.nick.client-view-range", 1.0).coerceAtLeast(0.0).toFloat(),
-            isSeeThrough = config.getBoolean("npc.nick.see-through", false)
+            isSeeThrough = config.getBoolean("npc.nick.see-through", false),
+            scale = config.getDouble("npc.nick.scale", 0.75).toFloat().coerceAtLeast(0f)
         ),
         viewerSyncTicks = config.getLong("npc.viewer-sync-ticks", 10L),
         lookUpdateTicks = config.getLong("npc.look.update-ticks", config.getLong("npc.look-update-ticks", 2L)),
