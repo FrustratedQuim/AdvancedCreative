@@ -37,6 +37,7 @@ enum class PluginCommandType(
     DECORATIONHEADS("decorationheads", managedSystem = ManagedSystem.DECORATION_HEADS),
     PLOT_EDIT("plots.edit", managedSystem = ManagedSystem.PLOT_EDIT),
     PLOT_USAGE("plots.usage"),
+    PLOT_OWNER_MANAGE("plots.owner.manage"),
     PLOT_MASSCLAIM("plots.massclaim", managedSystem = ManagedSystem.PLOT_MASSCLAIM),
     BANNEREDIT("banneredit", permissionNode = "acreative.decorationbanners", managedSystem = ManagedSystem.DECORATION_BANNERS),
     EDIT("edit", managedSystem = ManagedSystem.EDIT),
@@ -49,4 +50,3 @@ enum class PluginCommandType(
         fun fromId(id: String): PluginCommandType? = byId[id.lowercase()]
     }
 }
-

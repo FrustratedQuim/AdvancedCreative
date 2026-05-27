@@ -1,5 +1,6 @@
 package com.ratger.acreative.integration.plotsquared.commands
 
+import com.plotsquared.core.PlotSquared
 import com.plotsquared.core.player.PlotPlayer
 import com.plotsquared.core.plot.Plot
 import com.ratger.acreative.core.ManagedSystem
@@ -13,8 +14,8 @@ import org.bukkit.command.PluginCommand
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import ru.violence.coreapi.bukkit.api.util.BukkitHelper
-import ru.violence.coreapi.bukkit.api.util.ext.player
 import ru.violence.coreapi.bukkit.api.util.ext.user
+import java.lang.Runnable
 import java.util.Locale
 import java.util.UUID
 
@@ -35,6 +36,7 @@ class PlotCommandService(
 
     private val registeredCommands = LinkedHashMap<String, RegisteredRootCommand>()
     private val ownerSuggestions = PlotOwnerSuggestionService()
+    private val ownerExtensionService = PlotOwnerService()
     private val massClaimService = PlotMassClaimService(hooker)
     private val usageInfoService = PlotUsageInfoService()
 
@@ -181,6 +183,22 @@ class PlotCommandService(
                 massClaimService.handle(player, args.getOrNull(commandIndex + 1), args.getOrNull(commandIndex + 2))
                 true
             }
+            in ADD_OWNER_COMMANDS -> {
+                if (!player.hasPermission(PLOT_OWNER_MANAGE_PERMISSION)) {
+                    hooker.permissionManager.sendPermissionDenied(player, PLOT_OWNER_MANAGE_PERMISSION)
+                    return true
+                }
+                handleOwnerExtension(player, args, commandIndex, addOwner = true)
+                true
+            }
+            in REMOVE_OWNER_COMMANDS -> {
+                if (!player.hasPermission(PLOT_OWNER_MANAGE_PERMISSION)) {
+                    hooker.permissionManager.sendPermissionDenied(player, PLOT_OWNER_MANAGE_PERMISSION)
+                    return true
+                }
+                handleOwnerExtension(player, args, commandIndex, addOwner = false)
+                true
+            }
             else -> false
         }
     }
@@ -257,6 +275,12 @@ class PlotCommandService(
                 (1..PlotMassClaimService.MAX_MASSCLAIM_SIZE)
                     .map(Int::toString)
                     .filter { it.startsWith(args[commandIndex + 2], ignoreCase = true) }
+            }
+            in ADD_OWNER_COMMANDS if args.size == commandIndex + 2 && player.hasPermission(PLOT_OWNER_MANAGE_PERMISSION) -> {
+                completeCsv(args[commandIndex + 1], onlinePlayerNames())
+            }
+            in REMOVE_OWNER_COMMANDS if args.size == commandIndex + 2 && player.hasPermission(PLOT_OWNER_MANAGE_PERMISSION) -> {
+                completeCsv(args[commandIndex + 1], currentPlotOwnerNames(player, args))
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
@@ -348,7 +372,7 @@ class PlotCommandService(
                 ?.user
             ?: return null
 
-        return user.player?.name ?: user.name
+        return user.name
     }
 
     private fun resolvePlotScopedUserName(
@@ -398,6 +422,105 @@ class PlotCommandService(
         return ownerSuggestions.resolveScopedNames(plot.members + plot.trusted + plot.denied)
     }
 
+    private fun currentPlotOwnerNames(player: Player, args: Array<out String>): List<String> {
+        val plot = resolveTargetPlot(player, args) ?: return emptyList()
+        return ownerSuggestions.resolveScopedNames(plot.owners)
+    }
+
+    private fun handleOwnerExtension(
+        player: Player,
+        args: Array<out String>,
+        commandIndex: Int,
+        addOwner: Boolean
+    ) {
+        val rawTargetName = args.getOrNull(commandIndex + 1)?.trim()
+        if (rawTargetName.isNullOrEmpty()) {
+            hooker.messageManager.sendChat(
+                player,
+                if (addOwner) MessageKey.PLOT_OWNER_ADD_USAGE else MessageKey.PLOT_OWNER_REMOVE_USAGE
+            )
+            return
+        }
+
+        val plot = resolveTargetPlot(player, args) ?: run {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_EDIT_NOT_ON_PLOT)
+            return
+        }
+        if (!plot.hasOwner()) {
+            hooker.messageManager.sendChat(player, MessageKey.PLOT_OWNER_UNOWNED)
+            return
+        }
+
+        resolveExistingPlotUser(rawTargetName) { resolved ->
+            if (resolved == null) {
+                Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
+                    if (!player.isOnline) {
+                        return@Runnable
+                    }
+                    sendUnknownPlayer(player)
+                })
+                return@resolveExistingPlotUser
+            }
+
+            Bukkit.getScheduler().runTask(hooker.plugin, Runnable {
+                if (!player.isOnline) {
+                    return@Runnable
+                }
+                val outcome = if (addOwner) {
+                    ownerExtensionService.addOwner(plot, resolved.uuid)
+                } else {
+                    ownerExtensionService.removeOwner(plot, resolved.uuid)
+                }
+                val ownerVariables = mapOf("player" to resolved.name)
+
+                when (outcome) {
+                    is PlotOwnerService.Outcome.Success -> {
+                        invalidateOwnerSuggestions()
+                        outcome.affectedOwnerIds.forEach(::invalidateHomeCount)
+                        hooker.messageManager.sendChat(
+                            player,
+                            if (addOwner) MessageKey.PLOT_OWNER_ADD_SUCCESS else MessageKey.PLOT_OWNER_REMOVE_SUCCESS,
+                            ownerVariables
+                        )
+                    }
+                    PlotOwnerService.Outcome.AlreadyOwner -> {
+                        hooker.messageManager.sendChat(player, MessageKey.PLOT_OWNER_ALREADY_OWNER, ownerVariables)
+                    }
+                    PlotOwnerService.Outcome.NoFreeOwnerSlot -> {
+                        hooker.messageManager.sendChat(player, MessageKey.PLOT_OWNER_NO_FREE_SLOT)
+                    }
+                    PlotOwnerService.Outcome.NotOwner -> {
+                        hooker.messageManager.sendChat(player, MessageKey.PLOT_OWNER_NOT_OWNER, ownerVariables)
+                    }
+                    PlotOwnerService.Outcome.CannotRemoveLastOwner -> {
+                        hooker.messageManager.sendChat(player, MessageKey.PLOT_OWNER_CANNOT_REMOVE_LAST)
+                    }
+                }
+            })
+        }
+    }
+
+    private fun resolveExistingPlotUser(input: String, callback: (ResolvedPlotUser?) -> Unit) {
+        val canonicalName = resolveExistingUserName(input) ?: run {
+            callback(null)
+            return
+        }
+
+        Bukkit.getOnlinePlayers()
+            .firstOrNull { it.name.equals(canonicalName, ignoreCase = true) }
+            ?.let { onlinePlayer ->
+                callback(ResolvedPlotUser(onlinePlayer.uniqueId, onlinePlayer.name))
+                return
+            }
+
+        PlotSquared.get().impromptuUUIDPipeline.getSingle(canonicalName) { uuid, throwable ->
+            if (throwable != null || uuid == null) {
+                callback(null)
+                return@getSingle
+            }
+            callback(ResolvedPlotUser(uuid, canonicalName))
+        }
+    }
 
     private fun completeCsv(raw: String, values: List<String>): List<String> {
         val segments = splitCsvSegments(raw)
@@ -460,6 +583,11 @@ class PlotCommandService(
 
     private fun normalizeNameKey(name: String): String = name.trim().lowercase(Locale.ROOT)
 
+    private data class ResolvedPlotUser(
+        val uuid: UUID,
+        val name: String
+    )
+
 
     private companion object {
         private const val PLOT_SQUARED_PLUGIN_NAME = "PlotSquared"
@@ -475,14 +603,17 @@ class PlotCommandService(
         private val HOME_COMMANDS = setOf("home", "h")
         private val KICK_COMMANDS = setOf("kick")
         private val REMOVE_COMMANDS = setOf("remove", "r", "untrust", "ut", "undeny", "ud", "unban")
+        private val ADD_OWNER_COMMANDS = setOf("addowner")
+        private val REMOVE_OWNER_COMMANDS = setOf("removeowner")
         private val LIST_COMMANDS = setOf("list", "l", "find", "search")
         private val USAGE_COMMANDS = setOf("usage", "us")
         private val GRANT_PLAYER_SUBCOMMANDS = setOf("add", "check")
         private val OWNER_SUBCOMMANDS = setOf("owner", "setowner", "so", "seto")
-        private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "usage", "massclaim")
+        private val ROOT_CUSTOM_SUBCOMMANDS = listOf("edit", "usage", "massclaim", "addowner", "removeowner")
         private val MASSCLAIM_COMMANDS = setOf("massclaim", "mc")
         private const val PLOT_USAGE_PERMISSION = "acreative.plots.usage"
         private const val PLOT_USAGE_OTHER_PERMISSION = "acreative.plots.usage.other"
         private const val PLOT_MASSCLAIM_PERMISSION = "acreative.plots.massclaim"
+        private const val PLOT_OWNER_MANAGE_PERMISSION = "acreative.plots.owner.manage"
     }
 }

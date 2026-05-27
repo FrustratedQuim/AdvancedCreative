@@ -233,6 +233,9 @@ permissions:
   acreative.plots.usage.other:
     description: Allows using /plot usage <player> for online players
     default: op
+  acreative.plots.owner.manage:
+    description: Allows using /plot addowner and /plot removeowner
+    default: op
   acreative.decorationheads:
     description: Allows using /decorationheads
     default: op

@@ -62,6 +62,10 @@ class AhelpPageService(
         "acreative.plots.massclaim" to listOf(
             entry("/p mc <ширина> <длина>", "Занять большой участок", PluginCommandType.PLOT_MASSCLAIM)
         ),
+        "acreative.plots.owner.manage" to listOf(
+            entry("/p addowner <игрок>", "Добавить владельца", PluginCommandType.PLOT_OWNER_MANAGE),
+            entry("/p removeowner <игрок>", "Удалить владельца", PluginCommandType.PLOT_OWNER_MANAGE)
+        ),
         "acreative.glide" to listOf(
             entry("/glide", "Переключить парение без элитр", PluginCommandType.GLIDE)
         ),

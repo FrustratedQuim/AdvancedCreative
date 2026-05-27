@@ -72,6 +72,7 @@
       - "acreative.freeze.other"
       - "acreative.effects.other"
       - "acreative.plots.usage.other"
+      - "acreative.plots.owner.manage"
       - "acreative.hide.bypass"
       - "acreative.paint.bypass"
       - "acreative.paint.moderation"
