@@ -159,6 +159,11 @@ class NpcManager(
         return ProfileResult.Success(updatedProfile)
     }
 
+    fun getProfile(profileName: String): ProfileResult {
+        val profile = registry.find(profileName) ?: return ProfileResult.ProfileNotFound
+        return ProfileResult.Success(profile)
+    }
+
     fun updateEquipment(player: Player, profileName: String): ProfileResult {
         val updatedProfile = registry.update(profileName) { profile ->
             profile.copy(equipment = equipmentCodec.captureFrom(player))

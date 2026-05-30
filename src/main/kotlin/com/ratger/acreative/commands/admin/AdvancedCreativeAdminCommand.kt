@@ -64,7 +64,7 @@ class AdvancedCreativeAdminCommand(hooker: FunctionHooker) : ExecutableCommand(h
     override fun tabComplete(sender: CommandSender, args: Array<out String>): List<String> {
         if (sender !is Player) return emptyList()
         if (args.size > 1 && args[0].equals("npc", ignoreCase = true)) {
-            return hooker.npcManager.commandService().tabComplete(sender, args.drop(1))
+            return hooker.npcManager.commandService().tabComplete(args.drop(1))
         }
 
         return when (args.size) {

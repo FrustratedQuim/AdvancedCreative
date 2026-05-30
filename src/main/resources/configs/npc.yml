@@ -7,7 +7,7 @@ npc:
     track-radius: 20.0
     update-ticks: 2
   nick:
-    vertical-offset: 2.05
+    vertical-offset: 2.10
     additional-y-offset: -0.1
     visibility-radius: 25.0
     client-view-range: 1.0

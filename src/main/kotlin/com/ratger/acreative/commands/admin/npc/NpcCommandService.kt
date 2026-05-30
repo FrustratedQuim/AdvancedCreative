@@ -2,6 +2,7 @@ package com.ratger.acreative.commands.admin.npc
 
 import com.ratger.acreative.core.FunctionHooker
 import com.ratger.acreative.core.MessageKey
+import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
 
 class NpcCommandService(
@@ -14,6 +15,7 @@ class NpcCommandService(
             "remove" -> handleRemove(player, args.drop(1))
             "skin" -> handleSkin(player, args.drop(1))
             "nick" -> handleNick(player, args.drop(1))
+            "getnick" -> handleGetNick(player, args.drop(1))
             "equip" -> handleEquip(player, args.drop(1))
             "tp" -> handleTeleport(player, args.drop(1))
             "tpohere" -> handleTeleportHere(player, args.drop(1))
@@ -21,9 +23,9 @@ class NpcCommandService(
         }
     }
 
-    fun tabComplete(player: Player, args: List<String>): List<String> {
+    fun tabComplete(args: List<String>): List<String> {
         return when (args.size) {
-            1 -> listOf("create", "remove", "skin", "nick", "equip", "tp", "tpohere")
+            1 -> listOf("create", "remove", "skin", "nick", "getnick", "equip", "tp", "tpohere")
                 .filter { it.startsWith(args[0], ignoreCase = true) }
 
             2 -> when {
@@ -31,6 +33,7 @@ class NpcCommandService(
                 args[0].equals("remove", ignoreCase = true) ||
                 args[0].equals("skin", ignoreCase = true) ||
                     args[0].equals("nick", ignoreCase = true) ||
+                    args[0].equals("getnick", ignoreCase = true) ||
                     args[0].equals("equip", ignoreCase = true) ||
                     args[0].equals("tp", ignoreCase = true) ||
                     args[0].equals("tpohere", ignoreCase = true) ->
@@ -165,6 +168,35 @@ class NpcCommandService(
         }
     }
 
+    private fun handleGetNick(player: Player, args: List<String>) {
+        val profileName = args.getOrNull(0)
+        if (profileName.isNullOrBlank()) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_VALUE)
+            return
+        }
+        if (args.size > 1) {
+            hooker.messageManager.sendChat(player, MessageKey.ERROR_UNKNOWN_ARGUMENT)
+            return
+        }
+
+        when (val result = npcManager.getProfile(profileName)) {
+            NpcManager.ProfileResult.ProfileNotFound -> hooker.messageManager.sendChat(
+                player,
+                MessageKey.NPC_PROFILE_NOT_FOUND,
+                mapOf("name" to profileName)
+            )
+            is NpcManager.ProfileResult.Success -> {
+                val suggestion = encodeNickForSuggestion(result.profile.effectiveVisualNick())
+                hooker.messageManager.sendSuggestionChat(
+                    player = player,
+                    message = hooker.messageManager.renderMiniMessage("<dark_green>▍ <#00FF40>Нажмите, чтобы скопировать"),
+                    suggestion = suggestion,
+                    hoverText = buildNickHover(suggestion)
+                )
+            }
+        }
+    }
+
     private fun handleEquip(player: Player, args: List<String>) {
         val profileName = args.getOrNull(0)
         if (profileName.isNullOrBlank()) {
@@ -247,5 +279,20 @@ class NpcCommandService(
         } else {
             org.bukkit.Bukkit.getScheduler().runTask(hooker.plugin, Runnable { action() })
         }
+    }
+
+    private fun encodeNickForSuggestion(nick: String): String {
+        return nick
+            .replace("\r\n", "\n")
+            .replace('\r', '\n')
+            .replace("\n", "\\n")
+    }
+
+    private fun buildNickHover(suggestion: String): Component {
+        return Component.text()
+            .append(hooker.messageManager.renderMiniMessage("<#7BFF00>Будет вставлено:"))
+            .append(Component.newline())
+            .append(Component.text(suggestion))
+            .build()
     }
 }

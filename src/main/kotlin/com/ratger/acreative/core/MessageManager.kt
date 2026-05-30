@@ -1,6 +1,8 @@
 package com.ratger.acreative.core
 
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickEvent
+import net.kyori.adventure.text.event.HoverEvent
 import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
@@ -36,8 +38,25 @@ class MessageManager(
         send(player, MessageChannel.CHAT, key, variables)
     }
 
+    fun sendComponentChat(player: Player, message: Component) {
+        player.sendMessage(message)
+    }
+
     fun sendMiniMessageChat(player: Player, message: String) {
         player.sendMessage(renderMiniMessage(message))
+    }
+
+    fun sendSuggestionChat(
+        player: Player,
+        message: Component,
+        suggestion: String,
+        hoverText: Component? = null
+    ) {
+        var interactiveMessage = message.clickEvent(ClickEvent.suggestCommand(suggestion))
+        if (hoverText != null) {
+            interactiveMessage = interactiveMessage.hoverEvent(HoverEvent.showText(hoverText))
+        }
+        sendComponentChat(player, interactiveMessage)
     }
 
     fun sendActionBar(player: Player, key: MessageKey, variables: Map<String, String> = emptyMap()) {
