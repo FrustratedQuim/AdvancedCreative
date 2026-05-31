@@ -10,61 +10,33 @@ class ActionLogger(
 ) {
     private val prefix = "[ACreative/logger]"
     private val throttleState = ConcurrentHashMap<String, Long>()
+    private enum class LogSeverity { INFO, WARNING, SEVERE }
 
     fun isEnabled(): Boolean = hooker.systemToggleService.isEnabled(ManagedSystem.LOGGER)
 
-    fun info(message: String) {
-        if (!isEnabled()) return
-        hooker.plugin.logger.info("$prefix $message")
-    }
+    fun info(message: String) = emit(LogSeverity.INFO) { message }
 
-    fun info(message: () -> String) {
-        if (!isEnabled()) return
-        hooker.plugin.logger.info("$prefix ${message()}")
-    }
+    fun info(message: () -> String) = emit(LogSeverity.INFO, message)
 
-    fun auditInfo(message: String) {
-        hooker.plugin.logger.info("$prefix $message")
-    }
+    fun auditInfo(message: String) = emit(LogSeverity.INFO) { message }
 
-    fun auditInfo(message: () -> String) {
-        hooker.plugin.logger.info("$prefix ${message()}")
-    }
+    fun auditInfo(message: () -> String) = emit(LogSeverity.INFO, message)
 
-    fun warning(message: String) {
-        if (!isEnabled()) return
-        hooker.plugin.logger.warning("$prefix $message")
-    }
+    fun warning(message: String) = emit(LogSeverity.WARNING) { message }
 
-    fun warning(message: () -> String) {
-        if (!isEnabled()) return
-        hooker.plugin.logger.warning("$prefix ${message()}")
-    }
+    fun warning(message: () -> String) = emit(LogSeverity.WARNING, message)
 
-    fun auditWarning(message: String) {
-        hooker.plugin.logger.warning("$prefix $message")
-    }
+    fun auditWarning(message: String) = emit(LogSeverity.WARNING) { message }
 
-    fun auditWarning(message: () -> String) {
-        hooker.plugin.logger.warning("$prefix ${message()}")
-    }
+    fun auditWarning(message: () -> String) = emit(LogSeverity.WARNING, message)
 
-    fun severe(message: String) {
-        if (!isEnabled()) return
-        hooker.plugin.logger.severe("$prefix $message")
-    }
+    fun severe(message: String) = emit(LogSeverity.SEVERE) { message }
 
-    fun infoThrottled(key: String, intervalMs: Long, message: () -> String) {
-        if (!isEnabled()) return
-        if (!markThrottle(key, intervalMs)) return
-        hooker.plugin.logger.info("$prefix ${message()}")
-    }
+    fun infoThrottled(key: String, intervalMs: Long, message: () -> String) =
+        emitThrottled(LogSeverity.INFO, key, intervalMs, message)
 
-    fun warningThrottled(key: String, intervalMs: Long, message: () -> String) {
-        if (!isEnabled()) return
-        if (!markThrottle(key, intervalMs)) return
-        hooker.plugin.logger.warning("$prefix ${message()}")
-    }
+    fun warningThrottled(key: String, intervalMs: Long, message: () -> String) =
+        emitThrottled(LogSeverity.WARNING, key, intervalMs, message)
 
     fun playerRef(player: Player): String = "${player.name} (${player.uniqueId})"
 
@@ -82,6 +54,22 @@ class ActionLogger(
     fun commandRef(label: String, args: Array<out String>): String {
         val commandArgs = if (args.isEmpty()) "" else " ${args.joinToString(" ")}"
         return "/$label$commandArgs"
+    }
+
+    private fun emit(severity: LogSeverity, message: () -> String) {
+        if (!isEnabled()) return
+        val formattedMessage = "$prefix ${message()}"
+        when (severity) {
+            LogSeverity.INFO -> hooker.plugin.logger.info(formattedMessage)
+            LogSeverity.WARNING -> hooker.plugin.logger.warning(formattedMessage)
+            LogSeverity.SEVERE -> hooker.plugin.logger.severe(formattedMessage)
+        }
+    }
+
+    private fun emitThrottled(severity: LogSeverity, key: String, intervalMs: Long, message: () -> String) {
+        if (!isEnabled()) return
+        if (!markThrottle(key, intervalMs)) return
+        emit(severity, message)
     }
 
     private fun markThrottle(key: String, intervalMs: Long): Boolean {
