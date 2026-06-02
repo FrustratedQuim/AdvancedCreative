@@ -420,6 +420,6 @@ class PlotAccessGuardService(
         private const val EVERYONE_TOKEN = "*"
         private const val POST_COMMAND_CHECK_DELAY_TICKS = 1L
         private const val MAX_HEAD_PASSENGER_DEPTH = 10
-        private val DENY_OR_KICK_COMMANDS = setOf("deny", "d", "ban", "kick")
+        private val DENY_OR_KICK_COMMANDS = setOf("deny", "d", "ban", "kick", "k")
     }
 }

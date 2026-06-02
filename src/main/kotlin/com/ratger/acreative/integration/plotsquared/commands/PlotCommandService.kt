@@ -102,12 +102,12 @@ class PlotCommandService(
         val rewritten = copyArgs(args)
 
         return when (commandName) {
-            in KNOWN_USER_COMMANDS if args.size > commandIndex + 1 -> {
+            in GLOBAL_USER_TARGET_COMMANDS if args.size > commandIndex + 1 -> {
                 rewriteCsvArgument(
                     player,
                     rewritten,
                     commandIndex + 1,
-                    allowEveryone = commandName in EVERYONE_TARGET_COMMANDS,
+                    allowEveryone = supportsEveryoneTarget(commandName),
                     resolver = ::resolveExistingUserName
                 )
             }
@@ -115,7 +115,7 @@ class PlotCommandService(
                 rewritePlotOwnerArgument(rewritten, commandIndex + 1)
             }
             in KICK_COMMANDS if args.size > commandIndex + 1 -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
+                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = supportsEveryoneTarget(commandName)) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
                         (plot.playersInPlot
                             .mapNotNull { it.name.takeIf(String::isNotBlank) }
@@ -124,7 +124,7 @@ class PlotCommandService(
                 }
             }
             in REMOVE_COMMANDS if args.size > commandIndex + 1 -> {
-                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = false) { input ->
+                rewriteCsvArgument(player, rewritten, commandIndex + 1, allowEveryone = supportsEveryoneTarget(commandName)) { input ->
                     resolvePlotScopedUserName(player, rewritten, input) { plot ->
                         ownerSuggestions.resolveScopedNames(plot.members + plot.trusted + plot.denied)
                     }
@@ -251,8 +251,8 @@ class PlotCommandService(
         }
 
         return when (commandName) {
-            in KNOWN_USER_COMMANDS if args.size == commandIndex + 2 -> {
-                completeCsv(args[commandIndex + 1], knownUserCommandCompletions(commandName))
+            in GLOBAL_USER_TARGET_COMMANDS if args.size == commandIndex + 2 -> {
+                completeTargetSuggestions(args[commandIndex + 1], globalUserCommandCompletions(player), commandName)
             }
             in VISIT_COMMANDS if args.size == commandIndex + 2 -> {
                 completeCsv(args[commandIndex + 1], ownerSuggestions.plotOwnerNames(MAX_TAB_RESULTS))
@@ -283,10 +283,10 @@ class PlotCommandService(
                 completeCsv(args[commandIndex + 1], currentPlotOwnerNames(player, args))
             }
             in KICK_COMMANDS if args.size == commandIndex + 2 -> {
-                completeCsv(args[commandIndex + 1], currentPlotPlayerNames(player, args))
+                completeTargetSuggestions(args[commandIndex + 1], currentPlotPlayerNames(player, args), commandName, player.name)
             }
             in REMOVE_COMMANDS if args.size == commandIndex + 2 -> {
-                completeCsv(args[commandIndex + 1], currentPlotRelationNames(player, args))
+                completeTargetSuggestions(args[commandIndex + 1], currentPlotRelationNames(player, args), commandName, player.name)
             }
             in LIST_COMMANDS if args.size == commandIndex + 3 && args[commandIndex + 1].equals("player", ignoreCase = true) -> {
                 completeCsv(args[commandIndex + 2], ownerSuggestions.plotOwnerNames(MAX_TAB_RESULTS))
@@ -395,8 +395,25 @@ class PlotCommandService(
             .sortedWith(String.CASE_INSENSITIVE_ORDER)
             .toList()
 
-    private fun knownUserCommandCompletions(commandName: String): List<String> =
-        if (commandName in EVERYONE_TARGET_COMMANDS) onlinePlayerNames() + EVERYONE_TOKEN else onlinePlayerNames()
+    private fun globalUserCommandCompletions(player: Player): List<String> = excludeName(onlinePlayerNames(), player.name)
+
+    private fun completeTargetSuggestions(
+        raw: String,
+        values: List<String>,
+        commandName: String,
+        excludedName: String? = null
+    ): List<String> = completeCsv(raw, valuesWithSpecialTargets(excludeName(values, excludedName), commandName))
+
+    private fun valuesWithSpecialTargets(values: List<String>, commandName: String): List<String> =
+        if (supportsEveryoneTarget(commandName)) values + EVERYONE_TOKEN else values
+
+    private fun supportsEveryoneTarget(commandName: String): Boolean =
+        commandName in EVERYONE_SUPPORTED_COMMANDS
+
+    private fun excludeName(values: List<String>, excludedName: String?): List<String> {
+        val normalizedExcludedName = excludedName?.takeIf(String::isNotBlank)?.let(::normalizeNameKey) ?: return values
+        return values.filterNot { normalizeNameKey(it) == normalizedExcludedName }
+    }
 
     private fun completeHomePages(player: Player, raw: String): List<String> {
         val pageCount = ownerSuggestions.countHomeBasePlots(PlotPlayer.from(player).uuid)
@@ -595,14 +612,17 @@ class PlotCommandService(
         private const val MAX_TAB_RESULTS = 100
 
         private val ROOT_ALIASES = setOf("plots", "p", "plot", "ps", "plotsquared", "p2", "2", "plotme")
-        private val EVERYONE_TARGET_COMMANDS = setOf("add", "trust", "t")
-        private val KNOWN_USER_COMMANDS = EVERYONE_TARGET_COMMANDS + setOf(
-            "deny", "d", "ban", "setowner", "owner", "so", "seto"
+        private val GLOBAL_USER_TARGET_COMMANDS = setOf(
+            "add", "trust", "t", "deny", "d", "ban", "setowner", "owner", "so", "seto"
+        )
+        private val EVERYONE_SUPPORTED_COMMANDS = setOf(
+            "add", "trust", "t", "deny", "d", "ban", "kick", "k",
+            "remove", "r", "untrust", "ut", "undeny", "ud", "unban", "pardon"
         )
         private val VISIT_COMMANDS = setOf("visit", "v", "tp", "teleport", "goto", "warp")
         private val HOME_COMMANDS = setOf("home", "h")
-        private val KICK_COMMANDS = setOf("kick")
-        private val REMOVE_COMMANDS = setOf("remove", "r", "untrust", "ut", "undeny", "ud", "unban")
+        private val KICK_COMMANDS = setOf("kick", "k")
+        private val REMOVE_COMMANDS = setOf("remove", "r", "untrust", "ut", "undeny", "ud", "unban", "pardon")
         private val ADD_OWNER_COMMANDS = setOf("addowner")
         private val REMOVE_OWNER_COMMANDS = setOf("removeowner")
         private val LIST_COMMANDS = setOf("list", "l", "find", "search")
