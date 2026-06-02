@@ -37,13 +37,13 @@
     rank-permissions:
       - "group.don_shine_perms"
     permissions:
-      - "acreative.paint"
       - "acreative.plots.massclaim"
   spark:
     display: "<#cd56fc><b>ѕᴘᴀʀᴋ</b>"
     rank-permissions:
       - "group.don_spark_perms"
     permissions:
+      - "acreative.paint"
       - "acreative.glow"
       - "acreative.disguise"
   sunny:
